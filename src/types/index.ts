@@ -68,7 +68,8 @@ export const MOCK_USER: UserProfile = {
   companyCode: '123456789',
   address: 'Vilniaus g. 1, Vilnius',
   contactPerson: 'Vardenis Pavardenis',
-  email: 'test@example.com',
+  email: 'sarunas.zekonis@gmail.com',
   phone: '+37060012345',
   paymentStatus: 'active',
 };
+
