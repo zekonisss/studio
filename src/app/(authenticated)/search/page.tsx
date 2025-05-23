@@ -63,7 +63,7 @@ function getReportsFromLocalStorage(): Report[] {
     if (reportsJSON) {
       return JSON.parse(reportsJSON).map((report: any) => ({
         ...report,
-        createdAt: new Date(report.createdAt),
+        createdAt: new Date(report.createdAt), // Ensure createdAt is a Date object
       }));
     }
   }
@@ -86,12 +86,13 @@ export default function SearchPage() {
     setIsLoading(true);
     setNoResults(false);
     setSearchResults([]);
-    setSearchPerformed(true); 
-    await new Promise(resolve => setTimeout(resolve, 1000)); 
-    
+    setSearchPerformed(true);
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
     const allLocalReports = getReportsFromLocalStorage();
     let combinedDataSource = [...allLocalReports];
 
+    // Add mock reports only if they are not already present from local storage
     mockReportsBase.forEach(mockReport => {
         if (!combinedDataSource.some(lr => lr.id === mockReport.id)) {
             combinedDataSource.push(mockReport);
@@ -103,12 +104,12 @@ export default function SearchPage() {
 
     if (query) {
       results = combinedDataSource.filter(
-        report => 
-          report.fullName.toLowerCase().includes(query) || 
-          report.id.toLowerCase().includes(query) ||
+        report =>
+          report.fullName.toLowerCase().includes(query) ||
+          report.id.toLowerCase().includes(query) || // Though users likely won't search by ID
           (report.birthYear && report.birthYear.toString().includes(query)) ||
-          report.category.toLowerCase().includes(query) ||
-          report.tags.some(tag => tag.toLowerCase().includes(query)) ||
+          report.category.toLowerCase().includes(query.replace(/ /g, '_')) || // Allow searching category labels with spaces
+          report.tags.some(tag => tag.toLowerCase().includes(query.replace(/ /g, '_'))) || // Allow searching tag labels with spaces
           report.comment.toLowerCase().includes(query) ||
           (report.reporterCompanyName && report.reporterCompanyName.toLowerCase().includes(query))
       ).sort((a,b) => b.createdAt.getTime() - a.createdAt.getTime()); // Sort newest first
@@ -120,7 +121,8 @@ export default function SearchPage() {
       setNoResults(true);
     }
     setIsLoading(false);
-    // In a real app, you'd also log this search to /searchLogs
+    // In a real app, you'd also log this search to /searchLogs, here we can simulate:
+    // console.log("Search logged (simulated):", { userId: "current_user_id", searchText: query, resultsCount: results.length, timestamp: new Date() });
   };
 
   return (
@@ -184,7 +186,7 @@ export default function SearchPage() {
           </CardContent>
         </Card>
       )}
-      
+
       {!isLoading && !searchPerformed && !noResults && (
          <Card className="shadow-md text-center py-10">
              <CardContent>
@@ -223,7 +225,7 @@ export default function SearchPage() {
                       </h4>
                       <Badge variant={report.category === 'kuro_vagyste' || report.category === 'zala_irangai' ? 'destructive' : 'secondary'} className="text-base py-1 px-3">{report.category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</Badge>
                     </div>
-                    
+
                     {report.tags && report.tags.length > 0 && (
                       <div>
                         <h4 className="font-semibold text-sm text-muted-foreground mb-1 flex items-center">
@@ -274,5 +276,3 @@ export default function SearchPage() {
     </div>
   );
 }
-
-    
