@@ -3,12 +3,13 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { Report } from "@/types";
 import { useAuth } from "@/hooks/use-auth";
-import { Loader2, History as HistoryIcon, User, CalendarDays, Tag, MessageSquare, AlertTriangle, Trash2, Eye, PlusCircle } from "lucide-react";
+import { Loader2, History as HistoryIcon, User, CalendarDays, Tag, MessageSquare, AlertTriangle, Trash2, Eye, PlusCircle, Building2, Image as ImageIcon } from "lucide-react";
 import { format } from 'date-fns';
 import { lt } from 'date-fns/locale';
 import {
@@ -21,7 +22,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+} from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { MOCK_USER } from "@/types"; // Import MOCK_USER to compare IDs
 
@@ -47,6 +57,7 @@ const mockUserReportsBase: Report[] = [
     tags: ["pasikartojantis", "pavojingas_vairavimas"],
     comment: "GPS duomenys rodo pakartotinį greičio viršijimą gyvenvietėse. Buvo įspėta, tačiau situacija kartojasi.",
     imageUrl: "https://placehold.co/300x200.png",
+    dataAiHint: "speeding ticket",
     createdAt: new Date("2024-01-10T16:45:00Z"),
   },
 ];
@@ -78,17 +89,17 @@ export default function ReportHistoryPage() {
   const [reports, setReports] = useState<Report[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [selectedReportForDetails, setSelectedReportForDetails] = useState<Report | null>(null);
 
   useEffect(() => {
     const fetchReports = async () => {
       setIsLoading(true);
       if (user) {
-        await new Promise(resolve => setTimeout(resolve, 500)); // Simulate short delay
+        await new Promise(resolve => setTimeout(resolve, 500)); 
         
         const localUserReports = getReportsFromLocalStorage().filter(r => r.reporterId === user.id);
         let combinedReports = [...localUserReports];
 
-        // Add mock reports only if they are for the current user and not already present from local storage
         if (user.id === MOCK_USER.id) { 
           mockUserReportsBase.forEach(mockReport => {
             if (!combinedReports.some(lr => lr.id === mockReport.id)) {
@@ -96,22 +107,21 @@ export default function ReportHistoryPage() {
             }
           });
         }
-        // Sort reports by creation date, newest first
         setReports(combinedReports.sort((a,b) => b.createdAt.getTime() - a.createdAt.getTime()));
       }
       setIsLoading(false);
     };
-    if (user) { // Ensure user is loaded before fetching
+    if (user) { 
       fetchReports();
     } else {
-      setIsLoading(false); // Not logged in, no reports to show from local for "this user"
+      setIsLoading(false); 
       setReports([]);
     }
   }, [user]);
 
   const handleDeleteReport = async (reportId: string) => {
     setDeletingId(reportId);
-    await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1000)); 
 
     const allLocalReports = getReportsFromLocalStorage();
     const updatedLocalReports = allLocalReports.filter(report => report.id !== reportId);
@@ -126,7 +136,15 @@ export default function ReportHistoryPage() {
     setDeletingId(null);
   };
 
-  if (isLoading && !user) { // Show loader if auth is still loading
+  const handleViewDetails = (report: Report) => {
+    setSelectedReportForDetails(report);
+  };
+
+  const closeDetailsModal = () => {
+    setSelectedReportForDetails(null);
+  };
+
+  if (isLoading && !user) { 
     return (
       <div className="flex justify-center items-center h-[calc(100vh-10rem)]">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -134,7 +152,7 @@ export default function ReportHistoryPage() {
     );
   }
   
-  if (!user) { // If user is definitively null (auth finished loading and no user)
+  if (!user) { 
      return (
         <div className="container mx-auto py-8 text-center">
             <AlertTriangle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -147,7 +165,7 @@ export default function ReportHistoryPage() {
     );
   }
   
-   if (isLoading) { // Show loader if user is present but reports are loading
+   if (isLoading) { 
     return (
       <div className="flex justify-center items-center h-[calc(100vh-10rem)]">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -230,13 +248,10 @@ export default function ReportHistoryPage() {
                   )}
               </CardContent>
               <CardFooter className="flex justify-end gap-2 pt-4">
-                 <Button variant="ghost" size="sm" asChild>
-                  {/* Placeholder for view page, actual view logic not implemented beyond history display */}
-                  <Link href={`#view-${report.id}`}> 
+                 <Button variant="ghost" size="sm" onClick={() => handleViewDetails(report)}> 
                     <Eye className="mr-2 h-4 w-4" />
                     Peržiūrėti (Detalės)
-                  </Link>
-                </Button>
+                  </Button>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button variant="destructive" size="sm" disabled={deletingId === report.id || report.reporterId !== user?.id}>
@@ -263,6 +278,80 @@ export default function ReportHistoryPage() {
             </Card>
           ))}
         </div>
+      )}
+
+      {selectedReportForDetails && (
+        <Dialog open={!!selectedReportForDetails} onOpenChange={(isOpen) => { if (!isOpen) closeDetailsModal(); }}>
+          <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="flex items-center text-xl">
+                <FileText className="mr-2 h-5 w-5 text-primary" /> Pranešimo Detalės
+              </DialogTitle>
+              <DialogDescription>
+                Išsami informacija apie pranešimą.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4 space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+              <div className="space-y-1">
+                <h4 className="text-sm font-medium text-muted-foreground flex items-center"><User className="mr-2 h-4 w-4" />Vairuotojas</h4>
+                <p className="text-base text-foreground">{selectedReportForDetails.fullName}</p>
+              </div>
+              {selectedReportForDetails.birthYear && (
+                <div className="space-y-1">
+                  <h4 className="text-sm font-medium text-muted-foreground flex items-center"><CalendarDays className="mr-2 h-4 w-4" />Gimimo Metai</h4>
+                  <p className="text-base text-foreground">{selectedReportForDetails.birthYear}</p>
+                </div>
+              )}
+              <div className="space-y-1">
+                <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Tag className="mr-2 h-4 w-4" />Kategorija</h4>
+                <Badge variant={selectedReportForDetails.category === 'kuro_vagyste' || selectedReportForDetails.category === 'zala_irangai' ? 'destructive' : 'secondary'} className="text-sm">
+                  {selectedReportForDetails.category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                </Badge>
+              </div>
+              {selectedReportForDetails.tags && selectedReportForDetails.tags.length > 0 && (
+                <div className="space-y-1">
+                  <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Tag className="mr-2 h-4 w-4" />Žymos</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedReportForDetails.tags.map(tag => (
+                      <Badge key={tag} variant="outline" className="text-sm">{tag.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div className="space-y-1">
+                <h4 className="text-sm font-medium text-muted-foreground flex items-center"><MessageSquare className="mr-2 h-4 w-4" />Komentaras</h4>
+                <p className="text-base text-foreground whitespace-pre-wrap bg-secondary/30 p-3 rounded-md">{selectedReportForDetails.comment}</p>
+              </div>
+              {selectedReportForDetails.imageUrl && (
+                <div className="space-y-1">
+                  <h4 className="text-sm font-medium text-muted-foreground flex items-center"><ImageIcon className="mr-2 h-4 w-4" />Pridėtas Failas/Nuotrauka</h4>
+                  <div className="relative aspect-video w-full overflow-hidden rounded-md border">
+                    <Image 
+                        src={selectedReportForDetails.imageUrl} 
+                        alt={`Pranešimo nuotrauka ${selectedReportForDetails.fullName}`} 
+                        layout="fill" 
+                        objectFit="contain" 
+                        data-ai-hint={selectedReportForDetails.dataAiHint || "report image"}
+                    />
+                  </div>
+                </div>
+              )}
+               <div className="space-y-1">
+                <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Building2 className="mr-2 h-4 w-4" />Pranešė Įmonė</h4>
+                <p className="text-base text-foreground">{selectedReportForDetails.reporterCompanyName || 'Nenurodyta'}</p>
+              </div>
+               <div className="space-y-1">
+                <h4 className="text-sm font-medium text-muted-foreground flex items-center"><CalendarDays className="mr-2 h-4 w-4" />Pranešimo Data</h4>
+                <p className="text-base text-foreground">{format(new Date(selectedReportForDetails.createdAt), "yyyy-MM-dd HH:mm:ss", { locale: lt })}</p>
+              </div>
+            </div>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button type="button" variant="outline">Uždaryti</Button>
+              </DialogClose>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );
