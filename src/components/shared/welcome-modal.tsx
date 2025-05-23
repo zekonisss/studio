@@ -26,15 +26,15 @@ export function WelcomeModal({ isOpen, onClose }: WelcomeModalProps) {
           </div>
           <AlertDialogTitle className="text-center text-2xl">Sveiki atvykę į DriverShield!</AlertDialogTitle>
           <AlertDialogDescription className="text-center text-md text-muted-foreground space-y-3 pt-2">
-            <p>
+            <div>
               DriverShield yra platforma, skirta padėti įmonėms sumažinti rizikas, susijusias su vairuotojų veikla.
-            </p>
-            <p>
+            </div>
+            <div>
               <strong>Svarbu:</strong> Prašome naudoti šią sistemą atsakingai ir laikantis visų taikomų duomenų apsaugos bei privatumo įstatymų. Įkelkite tik tikslią ir patikrintą informaciją.
-            </p>
-            <p>
+            </div>
+            <div>
               Jūs esate atsakingi už įkeliamų duomenų teisingumą ir teisėtumą.
-            </p>
+            </div>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter className="sm:justify-center">
