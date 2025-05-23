@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useState } from "react"; // Added import
+import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
@@ -11,11 +12,32 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ReportSchema, type ReportFormValues } from "@/lib/schemas";
-import { reportCategories, reportTags, ReportCategory, ReportTag } from "@/types";
+import { reportCategories, reportTags, ReportCategory, ReportTag, Report } from "@/types";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, FilePlus2, User, CalendarDays, Tag, MessageSquare, Paperclip } from "lucide-react";
 import { useRouter } from "next/navigation";
+
+const LOCAL_STORAGE_REPORTS_KEY = 'driverShieldReports';
+
+function getReportsFromLocalStorage(): Report[] {
+  if (typeof window !== 'undefined') {
+    const reportsJSON = localStorage.getItem(LOCAL_STORAGE_REPORTS_KEY);
+    if (reportsJSON) {
+      return JSON.parse(reportsJSON).map((report: any) => ({
+        ...report,
+        createdAt: new Date(report.createdAt), // Ensure createdAt is a Date object
+      }));
+    }
+  }
+  return [];
+}
+
+function saveReportsToLocalStorage(reports: Report[]): void {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(LOCAL_STORAGE_REPORTS_KEY, JSON.stringify(reports));
+  }
+}
 
 export default function AddReportPage() {
   const { user } = useAuth();
@@ -44,16 +66,32 @@ export default function AddReportPage() {
     }
 
     // Simulate API call
-    console.log("Report Data:", { ...values, reporterId: user.id, createdAt: new Date() });
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await new Promise(resolve => setTimeout(resolve, 1000)); // Keep short delay for feedback
+    
+    const allReports = getReportsFromLocalStorage();
+    const newReport: Report = {
+      id: `report-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+      reporterId: user.id,
+      reporterCompanyName: user.companyName,
+      fullName: values.fullName,
+      birthYear: values.birthYear && values.birthYear !== '' ? Number(values.birthYear) : undefined,
+      category: values.category,
+      tags: values.tags || [],
+      comment: values.comment,
+      // imageUrl: not storing image in localStorage for this demo
+      createdAt: new Date(),
+    };
+
+    allReports.push(newReport);
+    saveReportsToLocalStorage(allReports);
     
     toast({
       title: "Pranešimas Sėkmingai Pateiktas!",
-      description: `Pranešimas apie ${values.fullName} buvo įrašytas į sistemą.`,
+      description: `Pranešimas apie ${values.fullName} buvo įrašytas į naršyklės atmintį.`,
     });
     form.reset();
     setIsSubmitting(false);
-    router.push("/reports/history"); // Redirect to report history after submission
+    router.push("/reports/history");
   }
 
   return (
@@ -201,7 +239,7 @@ export default function AddReportPage() {
                       <Input type="file" onChange={(e) => field.onChange(e.target.files ? e.target.files[0] : null)} className="text-base file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"/>
                     </FormControl>
                     <FormDescription>
-                      Galite pridėti nuotrauką ar dokumentą (iki 5MB). Leidžiami formatai: JPG, PNG, PDF.
+                      Galite pridėti nuotrauką ar dokumentą (iki 5MB). Leidžiami formatai: JPG, PNG, PDF. Šioje demo versijoje failai nebus išsaugomi.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -223,3 +261,5 @@ export default function AddReportPage() {
     </div>
   );
 }
+
+    

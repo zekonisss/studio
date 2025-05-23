@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
@@ -14,12 +15,14 @@ import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { format } from 'date-fns';
 import { lt } from 'date-fns/locale';
+import Link from "next/link";
 
-// Mock data for search results
-const mockReports: Report[] = [
+
+// Mock data for search results (base data)
+const mockReportsBase: Report[] = [
   {
     id: "report1",
-    reporterId: "user1",
+    reporterId: "user1", // Different reporter
     reporterCompanyName: "UAB Logistika LT",
     fullName: "Jonas Jonaitis",
     birthYear: 1985,
@@ -31,41 +34,89 @@ const mockReports: Report[] = [
   },
   {
     id: "report2",
-    reporterId: "user2",
+    reporterId: "user2", // Different reporter
     reporterCompanyName: "UAB Greiti Pervežimai",
     fullName: "Petras Petraitis",
     category: "zala_irangai",
     tags: ["rekomenduojama_patikrinti"],
-    comment: "Grįžus iš reiso, pastebėta didelė žala priekabos šonui. Vairuotojas teigia nieko nepastebėjęs. Rekomenduojama atlikti nuodugnesnį tyrimą.",
+    comment: "Grįžus iš reiso, pastebėta didelė žala priekabos šonui. Vairuotojas teigia nieko nepastebejęs. Rekomenduojama atlikti nuodugnesnį tyrimą.",
     createdAt: new Date("2023-11-01T14:00:00Z"),
   },
+  { // Add one of the mockUserReportsBase here to ensure it's searchable if not in local
+    id: "report-user-2", // from mockUserReportsBase in history page
+    reporterId: "dev-user-123",
+    reporterCompanyName: 'UAB "Bandomoji Įmonė"',
+    fullName: "Zita Zitaite",
+    category: "greicio_virijimas",
+    tags: ["pasikartojantis", "pavojingas_vairavimas"],
+    comment: "GPS duomenys rodo pakartotinį greičio viršijimą gyvenvietėse. Buvo įspėta, tačiau situacija kartojasi.",
+    imageUrl: "https://placehold.co/300x200.png",
+    createdAt: new Date("2024-01-10T16:45:00Z"),
+  },
 ];
+
+const LOCAL_STORAGE_REPORTS_KEY = 'driverShieldReports';
+
+function getReportsFromLocalStorage(): Report[] {
+  if (typeof window !== 'undefined') {
+    const reportsJSON = localStorage.getItem(LOCAL_STORAGE_REPORTS_KEY);
+    if (reportsJSON) {
+      return JSON.parse(reportsJSON).map((report: any) => ({
+        ...report,
+        createdAt: new Date(report.createdAt),
+      }));
+    }
+  }
+  return [];
+}
 
 
 export default function SearchPage() {
   const [searchResults, setSearchResults] = useState<Report[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [noResults, setNoResults] = useState(false);
+  const [searchPerformed, setSearchPerformed] = useState(false);
 
   const form = useForm<SearchFormValues>({
     resolver: zodResolver(SearchSchema),
     defaultValues: { query: "" },
   });
 
-  // Simulate search API call
   const handleSearch = async (values: SearchFormValues) => {
     setIsLoading(true);
     setNoResults(false);
     setSearchResults([]);
-    await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate delay
+    setSearchPerformed(true); 
+    await new Promise(resolve => setTimeout(resolve, 1000)); 
     
-    const query = values.query.toLowerCase();
-    const results = mockReports.filter(
-      report => report.fullName.toLowerCase().includes(query) || report.id.includes(query) // Example search by name or code (id)
-    );
+    const allLocalReports = getReportsFromLocalStorage();
+    let combinedDataSource = [...allLocalReports];
+
+    mockReportsBase.forEach(mockReport => {
+        if (!combinedDataSource.some(lr => lr.id === mockReport.id)) {
+            combinedDataSource.push(mockReport);
+        }
+    });
+
+    const query = values.query.toLowerCase().trim();
+    let results: Report[] = [];
+
+    if (query) {
+      results = combinedDataSource.filter(
+        report => 
+          report.fullName.toLowerCase().includes(query) || 
+          report.id.toLowerCase().includes(query) ||
+          (report.birthYear && report.birthYear.toString().includes(query)) ||
+          report.category.toLowerCase().includes(query) ||
+          report.tags.some(tag => tag.toLowerCase().includes(query)) ||
+          report.comment.toLowerCase().includes(query) ||
+          (report.reporterCompanyName && report.reporterCompanyName.toLowerCase().includes(query))
+      ).sort((a,b) => b.createdAt.getTime() - a.createdAt.getTime()); // Sort newest first
+    }
+
 
     setSearchResults(results);
-    if (results.length === 0) {
+    if (results.length === 0 && query) {
       setNoResults(true);
     }
     setIsLoading(false);
@@ -81,7 +132,7 @@ export default function SearchPage() {
             Vairuotojų Paieška
           </CardTitle>
           <CardDescription>
-            Įveskite vairuotojo vardą, pavardę ar unikalų kodą, kad rastumėte susijusią informaciją.
+            Įveskite vairuotojo vardą, pavardę, įmonės kodą, pranešimo raktažodį ar kitą informaciją.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -94,7 +145,7 @@ export default function SearchPage() {
                   <FormItem className="flex-grow w-full sm:w-auto">
                     <FormLabel className="sr-only">Paieškos frazė</FormLabel>
                     <FormControl>
-                      <Input placeholder="Vardas Pavardė arba kodas..." {...field} className="text-base h-12"/>
+                      <Input placeholder="Vardas Pavardė, kodas, raktažodis..." {...field} className="text-base h-12"/>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -120,7 +171,7 @@ export default function SearchPage() {
         </div>
       )}
 
-      {!isLoading && noResults && (
+      {!isLoading && searchPerformed && noResults && (
         <Card className="shadow-md">
           <CardHeader className="items-center text-center">
              <AlertCircle className="h-12 w-12 text-destructive mb-3" />
@@ -133,6 +184,16 @@ export default function SearchPage() {
           </CardContent>
         </Card>
       )}
+      
+      {!isLoading && !searchPerformed && !noResults && (
+         <Card className="shadow-md text-center py-10">
+             <CardContent>
+                <SearchIcon className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-50" />
+                <p className="text-muted-foreground">Įveskite paieškos frazę aukščiau, kad rastumėte pranešimus.</p>
+            </CardContent>
+        </Card>
+      )}
+
 
       {!isLoading && searchResults.length > 0 && (
         <div>
@@ -160,7 +221,7 @@ export default function SearchPage() {
                       <h4 className="font-semibold text-sm text-muted-foreground mb-1 flex items-center">
                         <Tag className="mr-1.5 h-4 w-4" /> Kategorija
                       </h4>
-                      <Badge variant="secondary" className="text-base py-1 px-3">{report.category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</Badge>
+                      <Badge variant={report.category === 'kuro_vagyste' || report.category === 'zala_irangai' ? 'destructive' : 'secondary'} className="text-base py-1 px-3">{report.category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</Badge>
                     </div>
                     
                     {report.tags && report.tags.length > 0 && (
@@ -193,11 +254,16 @@ export default function SearchPage() {
                       </div>
                     </div>
                   )}
+                   {!report.imageUrl && (
+                     <div className="md:col-span-1 flex items-center justify-center bg-muted/20 rounded-md border border-dashed">
+                        <p className="text-sm text-muted-foreground p-4 text-center">Nuotrauka ar failas nepridėtas.</p>
+                    </div>
+                  )}
                 </CardContent>
                 <CardFooter className="bg-muted/30 p-3 text-xs text-muted-foreground border-t">
                   <div className="flex justify-between w-full items-center">
-                    <span>Pranešė: {report.reporterCompanyName || 'Privatus asmuo'}</span>
-                    <span>Data: {format(report.createdAt, "yyyy-MM-dd HH:mm", { locale: lt })}</span>
+                    <span>Pranešė: {report.reporterCompanyName || 'Privatus asmuo'} (ID: {report.reporterId.substring(0,12)}...)</span>
+                    <span>Data: {format(new Date(report.createdAt), "yyyy-MM-dd HH:mm", { locale: lt })}</span>
                   </div>
                 </CardFooter>
               </Card>
@@ -208,3 +274,5 @@ export default function SearchPage() {
     </div>
   );
 }
+
+    

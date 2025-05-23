@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -22,10 +23,10 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { useToast } from "@/hooks/use-toast";
+import { MOCK_USER } from "@/types"; // Import MOCK_USER to compare IDs
 
-
-// Mock data for reports
-const mockUserReports: Report[] = [
+// Mock data for reports (base data)
+const mockUserReportsBase: Report[] = [
   {
     id: "report-user-1",
     reporterId: "dev-user-123",
@@ -50,6 +51,27 @@ const mockUserReports: Report[] = [
   },
 ];
 
+const LOCAL_STORAGE_REPORTS_KEY = 'driverShieldReports';
+
+function getReportsFromLocalStorage(): Report[] {
+  if (typeof window !== 'undefined') {
+    const reportsJSON = localStorage.getItem(LOCAL_STORAGE_REPORTS_KEY);
+    if (reportsJSON) {
+      return JSON.parse(reportsJSON).map((report: any) => ({
+        ...report,
+        createdAt: new Date(report.createdAt),
+      }));
+    }
+  }
+  return [];
+}
+
+function saveReportsToLocalStorage(reports: Report[]): void {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(LOCAL_STORAGE_REPORTS_KEY, JSON.stringify(reports));
+  }
+}
+
 export default function ReportHistoryPage() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -61,34 +83,78 @@ export default function ReportHistoryPage() {
     const fetchReports = async () => {
       setIsLoading(true);
       if (user) {
-        // Simulate API call to fetch reports by user.reporterId
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        setReports(mockUserReports.filter(r => r.reporterId === user.id));
+        await new Promise(resolve => setTimeout(resolve, 500)); // Simulate short delay
+        
+        const localUserReports = getReportsFromLocalStorage().filter(r => r.reporterId === user.id);
+        let combinedReports = [...localUserReports];
+
+        // Add mock reports only if they are for the current user and not already present from local storage
+        if (user.id === MOCK_USER.id) { 
+          mockUserReportsBase.forEach(mockReport => {
+            if (!combinedReports.some(lr => lr.id === mockReport.id)) {
+              combinedReports.push(mockReport);
+            }
+          });
+        }
+        // Sort reports by creation date, newest first
+        setReports(combinedReports.sort((a,b) => b.createdAt.getTime() - a.createdAt.getTime()));
       }
       setIsLoading(false);
     };
-    fetchReports();
+    if (user) { // Ensure user is loaded before fetching
+      fetchReports();
+    } else {
+      setIsLoading(false); // Not logged in, no reports to show from local for "this user"
+      setReports([]);
+    }
   }, [user]);
 
   const handleDeleteReport = async (reportId: string) => {
     setDeletingId(reportId);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+
+    const allLocalReports = getReportsFromLocalStorage();
+    const updatedLocalReports = allLocalReports.filter(report => report.id !== reportId);
+    saveReportsToLocalStorage(updatedLocalReports);
+    
     setReports(prevReports => prevReports.filter(report => report.id !== reportId));
+    
     toast({
       title: "Pranešimas pašalintas",
-      description: "Pasirinktas pranešimas buvo sėkmingai pašalintas.",
+      description: "Pasirinktas pranešimas buvo sėkmingai pašalintas iš naršyklės atminties.",
     });
     setDeletingId(null);
   };
 
-  if (isLoading) {
+  if (isLoading && !user) { // Show loader if auth is still loading
     return (
       <div className="flex justify-center items-center h-[calc(100vh-10rem)]">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
       </div>
     );
   }
+  
+  if (!user) { // If user is definitively null (auth finished loading and no user)
+     return (
+        <div className="container mx-auto py-8 text-center">
+            <AlertTriangle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h1 className="text-xl font-semibold">Neprisijungęs vartotojas</h1>
+            <p className="text-muted-foreground">Prašome prisijungti, kad matytumėte pranešimų istoriją.</p>
+            <Button asChild className="mt-4">
+                <Link href="/auth/login">Prisijungti</Link>
+            </Button>
+        </div>
+    );
+  }
+  
+   if (isLoading) { // Show loader if user is present but reports are loading
+    return (
+      <div className="flex justify-center items-center h-[calc(100vh-10rem)]">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
+  }
+
 
   return (
     <div className="container mx-auto py-8">
@@ -137,7 +203,7 @@ export default function ReportHistoryPage() {
                       {report.fullName}
                     </CardTitle>
                     <CardDescription className="text-sm">
-                      Pranešta: {format(report.createdAt, "yyyy-MM-dd HH:mm", { locale: lt })}
+                      Pranešta: {format(new Date(report.createdAt), "yyyy-MM-dd HH:mm", { locale: lt })}
                     </CardDescription>
                   </div>
                   <Badge variant={report.category === 'kuro_vagyste' || report.category === 'zala_irangai' ? 'destructive' : 'secondary'}>
@@ -154,17 +220,26 @@ export default function ReportHistoryPage() {
                     ))}
                   </div>
                 )}
+                 {report.imageUrl && (
+                    <div className="mt-2">
+                        <p className="text-xs text-muted-foreground">Pridėtas failas (demonstracinė nuoroda):</p>
+                        <Link href={report.imageUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline truncate block max-w-xs">
+                           {report.imageUrl}
+                        </Link>
+                    </div>
+                  )}
               </CardContent>
               <CardFooter className="flex justify-end gap-2 pt-4">
                  <Button variant="ghost" size="sm" asChild>
-                  <Link href={`/reports/view/${report.id}`}> {/* Placeholder view page */}
+                  {/* Placeholder for view page, actual view logic not implemented beyond history display */}
+                  <Link href={`#view-${report.id}`}> 
                     <Eye className="mr-2 h-4 w-4" />
-                    Peržiūrėti
+                    Peržiūrėti (Detalės)
                   </Link>
                 </Button>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button variant="destructive" size="sm" disabled={deletingId === report.id}>
+                    <Button variant="destructive" size="sm" disabled={deletingId === report.id || report.reporterId !== user?.id}>
                       {deletingId === report.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
                       Pašalinti
                     </Button>
@@ -173,7 +248,7 @@ export default function ReportHistoryPage() {
                     <AlertDialogHeader>
                       <AlertDialogTitle>Ar tikrai norite pašalinti šį pranešimą?</AlertDialogTitle>
                       <AlertDialogDescription>
-                        Šis veiksmas yra negrįžtamas. Pranešimas apie <span className="font-semibold">{report.fullName}</span> bus visam laikui pašalintas iš sistemos.
+                        Šis veiksmas yra negrįžtamas. Pranešimas apie <span className="font-semibold">{report.fullName}</span> bus visam laikui pašalintas iš naršyklės atminties.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -192,3 +267,5 @@ export default function ReportHistoryPage() {
     </div>
   );
 }
+
+    
