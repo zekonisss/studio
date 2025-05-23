@@ -1,5 +1,4 @@
 
-
 export interface UserProfile {
   id: string;
   companyName: string;
@@ -19,7 +18,7 @@ export interface Report {
   reporterCompanyName?: string; // Denormalized for display
   fullName: string; // Full name of the person being reported
   birthYear?: number;
-  category: string; // e.g., 'fuel_theft', 'equipment_damage', 'misconduct'
+  category: string; // e.g., 'kuro_vagyste', 'zala_technikai', 'netinkamas_elgesys'
   tags: string[];
   comment: string;
   imageUrl?: string;
@@ -37,14 +36,14 @@ export interface SearchLog {
 
 export type ReportCategory = 
   | 'kuro_vagyste' 
-  | 'zala_irangai' 
+  | 'zala_technikai' 
   | 'netinkamas_elgesys' 
   | 'greicio_virijimas'
   | 'kita';
 
 export const reportCategories: { value: ReportCategory, label: string }[] = [
   { value: 'kuro_vagyste', label: 'Kuro vagystė' },
-  { value: 'zala_irangai', label: 'Žala įrangai' },
+  { value: 'zala_technikai', label: 'Žala technikai' },
   { value: 'netinkamas_elgesys', label: 'Netinkamas elgesys' },
   { value: 'greicio_virijimas', label: 'Greičio viršijimas' },
   { value: 'kita', label: 'Kita' },

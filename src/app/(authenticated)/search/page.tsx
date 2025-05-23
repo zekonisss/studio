@@ -39,7 +39,7 @@ const mockReportsBase: Report[] = [
     reporterId: "user2", // Different reporter
     reporterCompanyName: "UAB Greiti Pervežimai",
     fullName: "Petras Petraitis",
-    category: "zala_irangai",
+    category: "zala_technikai", // Updated category
     tags: ["rekomenduojama_patikrinti"],
     comment: "Grįžus iš reiso, pastebėta didelė žala priekabos šonui. Vairuotojas teigia nieko nepastebejęs. Rekomenduojama atlikti nuodugnesnį tyrimą.",
     createdAt: new Date("2023-11-01T14:00:00Z"),
@@ -256,7 +256,7 @@ export default function SearchPage() {
                       <h4 className="font-semibold text-sm text-muted-foreground mb-1 flex items-center">
                         <Tag className="mr-1.5 h-4 w-4" /> Kategorija
                       </h4>
-                      <Badge variant={report.category === 'kuro_vagyste' || report.category === 'zala_irangai' ? 'destructive' : 'secondary'} className="text-base py-1 px-3">{report.category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</Badge>
+                      <Badge variant={report.category === 'kuro_vagyste' || report.category === 'zala_technikai' ? 'destructive' : 'secondary'} className="text-base py-1 px-3">{report.category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</Badge>
                     </div>
 
                     {report.tags && report.tags.length > 0 && (
@@ -309,5 +309,3 @@ export default function SearchPage() {
     </div>
   );
 }
-
-    
