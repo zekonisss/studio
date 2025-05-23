@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -35,16 +36,18 @@ export default function DashboardPage() {
         <h2 className="text-2xl font-semibold mb-6 text-foreground">Greitieji Veiksmai</h2>
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {quickActions.map((action) => (
-            <Card key={action.href} className="hover:shadow-xl transition-shadow duration-300">
+            <Card key={action.href} className="hover:shadow-xl transition-shadow duration-300 flex flex-col">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-lg font-medium">{action.label}</CardTitle>
                 <action.icon className="h-6 w-6 text-muted-foreground" />
               </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-4">{action.description}</p>
-                <Button asChild className="w-full" variant="default">
-                  <Link href={action.href}>Eiti</Link>
-                </Button>
+              <CardContent className="flex flex-col flex-grow">
+                <p className="text-sm text-muted-foreground mb-4 line-clamp-3 min-h-16">{action.description}</p>
+                <div className="mt-auto">
+                  <Button asChild className="w-full" variant="default">
+                    <Link href={action.href}>Eiti</Link>
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           ))}
