@@ -236,7 +236,11 @@ export default function AddReportPage() {
                   <FormItem>
                     <FormLabel className="flex items-center text-base"><Paperclip className="mr-2 h-4 w-4 text-muted-foreground" />Pridėti Paveikslėlį ar Failą (nebūtina)</FormLabel>
                     <FormControl>
-                      <Input type="file" onChange={(e) => field.onChange(e.target.files ? e.target.files[0] : null)} className="text-base file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"/>
+                      <Input 
+                        type="file" 
+                        onChange={(e) => field.onChange(e.target.files ? e.target.files[0] : null)} 
+                        className="text-base py-2.5 file:mr-4 file:py-[9px] file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
+                      />
                     </FormControl>
                     <FormDescription>
                       Galite pridėti nuotrauką ar dokumentą (iki 5MB). Leidžiami formatai: JPG, PNG, PDF. Šioje demo versijoje failai nebus išsaugomi.
@@ -261,5 +265,7 @@ export default function AddReportPage() {
     </div>
   );
 }
+
+    
 
     
