@@ -239,7 +239,7 @@ export default function AddReportPage() {
                       <Input 
                         type="file" 
                         onChange={(e) => field.onChange(e.target.files ? e.target.files[0] : null)} 
-                        className="text-base py-2.5 file:mr-4 file:py-1 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
+                        className="text-base py-2.5 file:mr-4 file:py-0 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
                       />
                     </FormControl>
                     <FormDescription>
