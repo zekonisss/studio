@@ -1,8 +1,10 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import type { SearchLog } from "@/types";
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2, ListChecks, AlertTriangle, SearchCheck } from "lucide-react";
@@ -10,34 +12,76 @@ import { format } from 'date-fns';
 import { lt } from 'date-fns/locale';
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { MOCK_USER } from "@/types";
 
-// Mock data for search logs
-const mockSearchLogs: SearchLog[] = [
-  { id: "log1", userId: "dev-user-123", searchText: "Jonas Jonaitis", timestamp: new Date("2024-03-10T10:00:00Z"), resultsCount: 2 },
-  { id: "log2", userId: "dev-user-123", searchText: "AB123XYZ", timestamp: new Date("2024-03-09T15:30:00Z"), resultsCount: 0 },
-  { id: "log3", userId: "dev-user-123", searchText: "Petras Petraitis", timestamp: new Date("2024-03-09T11:20:00Z"), resultsCount: 1 },
-  { id: "log4", userId: "dev-user-123", searchText: "Ona Onaitė", timestamp: new Date("2024-03-08T17:45:00Z"), resultsCount: 5 },
+// Base mock data for search logs, used to seed localStorage for MOCK_USER if empty
+const mockSearchLogsBase: SearchLog[] = [
+  { id: "mocklog1", userId: "dev-user-123", searchText: "Jonas Jonaitis (Demo)", timestamp: new Date("2024-03-10T10:00:00Z"), resultsCount: 2 },
+  { id: "mocklog2", userId: "dev-user-123", searchText: "AB123XYZ (Demo)", timestamp: new Date("2024-03-09T15:30:00Z"), resultsCount: 0 },
+  { id: "mocklog3", userId: "dev-user-123", searchText: "Petras Petraitis (Demo)", timestamp: new Date("2024-03-09T11:20:00Z"), resultsCount: 1 },
 ];
 
+const LOCAL_STORAGE_SEARCH_LOGS_KEY = 'driverShieldSearchLogs';
+
+function getSearchLogsFromLocalStorage(): SearchLog[] {
+  if (typeof window !== 'undefined') {
+    const logsJSON = localStorage.getItem(LOCAL_STORAGE_SEARCH_LOGS_KEY);
+    if (logsJSON) {
+      return JSON.parse(logsJSON).map((log: any) => ({
+        ...log,
+        timestamp: new Date(log.timestamp),
+      }));
+    }
+  }
+  return [];
+}
+
+function saveSearchLogsToLocalStorage(logs: SearchLog[]): void {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(LOCAL_STORAGE_SEARCH_LOGS_KEY, JSON.stringify(logs));
+  }
+}
+
 export default function SearchHistoryPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [searchLogs, setSearchLogs] = useState<SearchLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchSearchLogs = async () => {
-      setIsLoading(true);
-      if (user) {
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        setSearchLogs(mockSearchLogs.filter(log => log.userId === user.id));
+      if (!user) {
+        setSearchLogs([]);
+        setIsLoading(false);
+        return;
       }
+
+      setIsLoading(true);
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 500)); 
+      
+      let userLogs = getSearchLogsFromLocalStorage().filter(log => log.userId === user.id);
+
+      if (user.id === MOCK_USER.id && userLogs.length === 0) {
+        // If mock user and no logs in localStorage for them, seed with base mock data
+        const mockUserLogs = mockSearchLogsBase.filter(log => log.userId === MOCK_USER.id);
+        if (mockUserLogs.length > 0) {
+           const allLogs = getSearchLogsFromLocalStorage(); // get all logs to not overwrite others
+           const otherUserLogs = allLogs.filter(log => log.userId !== MOCK_USER.id);
+           saveSearchLogsToLocalStorage([...otherUserLogs, ...mockUserLogs]);
+           userLogs = mockUserLogs; // Use these newly seeded logs
+        }
+      }
+      
+      setSearchLogs(userLogs.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()));
       setIsLoading(false);
     };
-    fetchSearchLogs();
-  }, [user]);
 
-  if (isLoading) {
+    if (!authLoading) { // Only fetch if auth state is resolved
+        fetchSearchLogs();
+    }
+  }, [user, authLoading]);
+
+  if (authLoading || (isLoading && !searchLogs.length)) {
     return (
       <div className="flex justify-center items-center h-[calc(100vh-10rem)]">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -117,3 +161,4 @@ export default function SearchHistoryPage() {
   );
 }
 
+    

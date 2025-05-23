@@ -1,4 +1,5 @@
 
+
 export interface UserProfile {
   id: string;
   companyName: string;
@@ -22,6 +23,7 @@ export interface Report {
   tags: string[];
   comment: string;
   imageUrl?: string;
+  dataAiHint?: string; // For placeholder images
   createdAt: Date;
 }
 
@@ -73,3 +75,4 @@ export const MOCK_USER: UserProfile = {
   paymentStatus: 'active',
 };
 
+    

@@ -9,7 +9,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { SearchSchema, type SearchFormValues } from "@/lib/schemas";
-import type { Report } from "@/types";
+import type { Report, SearchLog } from "@/types";
+import { useAuth } from "@/hooks/use-auth";
 import { Loader2, Search as SearchIcon, User, CalendarDays, Tag, MessageSquare, AlertCircle, FileText, Image as ImageIcon } from "lucide-react";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
@@ -31,6 +32,7 @@ const mockReportsBase: Report[] = [
     comment: "Vairuotojas buvo pastebėtas neteisėtai nupylinėjantis kurą iš įmonės sunkvežimio. Tai jau antras kartas per pastaruosius 6 mėnesius. Taip pat gauta informacija apie pavojingą vairavimą mieste.",
     imageUrl: "https://placehold.co/600x400.png",
     createdAt: new Date("2023-10-15T10:30:00Z"),
+    dataAiHint: "truck fuel"
   },
   {
     id: "report2",
@@ -52,10 +54,12 @@ const mockReportsBase: Report[] = [
     comment: "GPS duomenys rodo pakartotinį greičio viršijimą gyvenvietėse. Buvo įspėta, tačiau situacija kartojasi.",
     imageUrl: "https://placehold.co/300x200.png",
     createdAt: new Date("2024-01-10T16:45:00Z"),
+    dataAiHint: "speeding ticket"
   },
 ];
 
 const LOCAL_STORAGE_REPORTS_KEY = 'driverShieldReports';
+const LOCAL_STORAGE_SEARCH_LOGS_KEY = 'driverShieldSearchLogs';
 
 function getReportsFromLocalStorage(): Report[] {
   if (typeof window !== 'undefined') {
@@ -63,15 +67,35 @@ function getReportsFromLocalStorage(): Report[] {
     if (reportsJSON) {
       return JSON.parse(reportsJSON).map((report: any) => ({
         ...report,
-        createdAt: new Date(report.createdAt), // Ensure createdAt is a Date object
+        createdAt: new Date(report.createdAt),
       }));
     }
   }
   return [];
 }
 
+function getSearchLogsFromLocalStorage(): SearchLog[] {
+  if (typeof window !== 'undefined') {
+    const logsJSON = localStorage.getItem(LOCAL_STORAGE_SEARCH_LOGS_KEY);
+    if (logsJSON) {
+      return JSON.parse(logsJSON).map((log: any) => ({
+        ...log,
+        timestamp: new Date(log.timestamp),
+      }));
+    }
+  }
+  return [];
+}
+
+function saveSearchLogsToLocalStorage(logs: SearchLog[]): void {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(LOCAL_STORAGE_SEARCH_LOGS_KEY, JSON.stringify(logs));
+  }
+}
+
 
 export default function SearchPage() {
+  const { user } = useAuth();
   const [searchResults, setSearchResults] = useState<Report[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [noResults, setNoResults] = useState(false);
@@ -92,7 +116,6 @@ export default function SearchPage() {
     const allLocalReports = getReportsFromLocalStorage();
     let combinedDataSource = [...allLocalReports];
 
-    // Add mock reports only if they are not already present from local storage
     mockReportsBase.forEach(mockReport => {
         if (!combinedDataSource.some(lr => lr.id === mockReport.id)) {
             combinedDataSource.push(mockReport);
@@ -106,13 +129,13 @@ export default function SearchPage() {
       results = combinedDataSource.filter(
         report =>
           report.fullName.toLowerCase().includes(query) ||
-          report.id.toLowerCase().includes(query) || // Though users likely won't search by ID
+          report.id.toLowerCase().includes(query) || 
           (report.birthYear && report.birthYear.toString().includes(query)) ||
-          report.category.toLowerCase().includes(query.replace(/ /g, '_')) || // Allow searching category labels with spaces
-          report.tags.some(tag => tag.toLowerCase().includes(query.replace(/ /g, '_'))) || // Allow searching tag labels with spaces
+          report.category.toLowerCase().includes(query.replace(/ /g, '_')) || 
+          report.tags.some(tag => tag.toLowerCase().includes(query.replace(/ /g, '_'))) || 
           report.comment.toLowerCase().includes(query) ||
           (report.reporterCompanyName && report.reporterCompanyName.toLowerCase().includes(query))
-      ).sort((a,b) => b.createdAt.getTime() - a.createdAt.getTime()); // Sort newest first
+      ).sort((a,b) => b.createdAt.getTime() - a.createdAt.getTime());
     }
 
 
@@ -121,8 +144,18 @@ export default function SearchPage() {
       setNoResults(true);
     }
     setIsLoading(false);
-    // In a real app, you'd also log this search to /searchLogs, here we can simulate:
-    // console.log("Search logged (simulated):", { userId: "current_user_id", searchText: query, resultsCount: results.length, timestamp: new Date() });
+    
+    if (user && query) {
+      const newSearchLog: SearchLog = {
+        id: `searchlog-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+        userId: user.id,
+        searchText: values.query,
+        timestamp: new Date(),
+        resultsCount: results.length,
+      };
+      const existingLogs = getSearchLogsFromLocalStorage();
+      saveSearchLogsToLocalStorage([newSearchLog, ...existingLogs]);
+    }
   };
 
   return (
@@ -252,7 +285,7 @@ export default function SearchPage() {
                         <ImageIcon className="mr-1.5 h-4 w-4" /> Pridėtas failas/nuotrauka
                       </h4>
                       <div className="aspect-video w-full relative rounded-lg overflow-hidden border border-border shadow-sm">
-                        <Image src={report.imageUrl} alt={`Vaizdas pranešimui apie ${report.fullName}`} layout="fill" objectFit="cover" data-ai-hint="incident document" />
+                        <Image src={report.imageUrl} alt={`Vaizdas pranešimui apie ${report.fullName}`} layout="fill" objectFit="cover" data-ai-hint={report.dataAiHint || "incident document"} />
                       </div>
                     </div>
                   )}
@@ -276,3 +309,5 @@ export default function SearchPage() {
     </div>
   );
 }
+
+    
