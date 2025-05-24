@@ -51,9 +51,9 @@ export const reportCategories: { value: ReportCategoryValue, label: string }[] =
   { value: 'avaringumas', label: 'Avaringumas' },
   { value: 'neblaivumas_darbe', label: 'Neblaivumas darbo metu' },
   { value: 'technikos_pazeidimai', label: 'Technikos pažeidimai' },
-  { value: 'netinkamas_elgesys_darbe', label: 'Netinkamas elgesys darbe' },
+  { value: 'netinkamas_elgesys_darbe', label: 'Netinkamas elgesys darbe (kolegų atžvilgiu, agresija, necenzūrinė kalba ir pan.)' },
   { value: 'neaiskinamas_neatvykimas', label: 'Nepaaiškinamas neatvykimas į darbą' },
-  { value: 'kreipimasis_institucijos', label: 'Kreipimasis į institucijas' },
+  { value: 'kreipimasis_institucijos', label: 'Kreipimasis į institucijas (pvz., darbo inspekciją dėl netikslumų ar keršto)' },
   { value: 'kita', label: 'Kita' },
 ];
 
@@ -88,7 +88,7 @@ export const MOCK_USER: UserProfile = {
   phone: '+37060012345',
   paymentStatus: 'active',
   isAdmin: true,
-  accountActivatedAt: new Date(new Date().setMonth(new Date().getMonth() - 11)).toISOString(), // Activated 11 months ago
+  accountActivatedAt: new Date(new Date().setMonth(new Date().getMonth() - 11)).toISOString(), 
 };
 
 export const MOCK_ADDITIONAL_USER_1: UserProfile = {
@@ -101,7 +101,7 @@ export const MOCK_ADDITIONAL_USER_1: UserProfile = {
   phone: '+37060054321',
   paymentStatus: 'active',
   isAdmin: false,
-  accountActivatedAt: new Date(new Date().setDate(new Date().getDate() - 10)).toISOString(), // Activated 10 days ago
+  accountActivatedAt: new Date(new Date().setDate(new Date().getDate() - 10)).toISOString(), 
 };
 
 export const MOCK_ADDITIONAL_USER_2: UserProfile = {
@@ -114,7 +114,7 @@ export const MOCK_ADDITIONAL_USER_2: UserProfile = {
   phone: '+37060098765',
   paymentStatus: 'inactive',
   isAdmin: false,
-  accountActivatedAt: new Date('2023-01-15T00:00:00.000Z').toISOString(), // Was active, now inactive
+  accountActivatedAt: new Date('2023-01-15T00:00:00.000Z').toISOString(),
 };
 
 export const MOCK_ADDITIONAL_USER_3: UserProfile = {
@@ -127,7 +127,7 @@ export const MOCK_ADDITIONAL_USER_3: UserProfile = {
   phone: '+37060011122',
   paymentStatus: 'pending_verification',
   isAdmin: false,
-  accountActivatedAt: undefined, // Not yet active
+  accountActivatedAt: undefined, 
 };
 
 
@@ -172,8 +172,8 @@ export const MOCK_USER_REPORTS: Report[] = [
     reporterCompanyName: 'UAB "DriverShield Demo"',
     fullName: "Antanas Antanaitis",
     birthYear: 1992,
-    category: "netinkamas_elgesys_darbe", // Updated
-    tags: ["konfliktiskas", "konfliktas_su_klientu"], // Updated
+    category: "netinkamas_elgesys_darbe",
+    tags: ["konfliktiskas", "konfliktas_su_klientu"], 
     comment: "Vairuotojas buvo nemandagus su klientu, atsisakė padėti iškrauti prekes. Klientas pateikė skundą.",
     createdAt: new Date("2024-02-20T09:15:00Z"),
   },
@@ -182,7 +182,7 @@ export const MOCK_USER_REPORTS: Report[] = [
     reporterId: "dev-user-123",
     reporterCompanyName: 'UAB "DriverShield Demo"',
     fullName: "Zita Zitaite",
-    category: "avaringumas", // Updated (was greicio_virijimas)
+    category: "avaringumas", 
     tags: ["pasikartojantis", "pavojingas_vairavimas"],
     comment: "GPS duomenys rodo pakartotinį greičio viršijimą gyvenvietėse. Buvo įspėta, tačiau situacija kartojasi.",
     imageUrl: "https://placehold.co/600x400.png",
@@ -199,7 +199,7 @@ export const MOCK_GENERAL_REPORTS: Report[] = [
     fullName: "Jonas Jonaitis",
     birthYear: 1985,
     category: "kuro_vagyste",
-    tags: ["pasikartojantis", "pavojingas_vairavimas", "neatsakingas_poziuris"], // Updated
+    tags: ["pasikartojantis", "neatsakingas_poziuris"], 
     comment: "Vairuotojas buvo pastebėtas neteisėtai nupylinėjantis kurą iš įmonės sunkvežimio. Tai jau antras kartas per pastaruosius 6 mėnesius. Taip pat gauta informacija apie pavojingą vairavimą mieste.",
     imageUrl: "https://placehold.co/600x400.png",
     createdAt: new Date("2023-10-15T10:30:00Z"),
@@ -210,19 +210,19 @@ export const MOCK_GENERAL_REPORTS: Report[] = [
     reporterId: "user-generic-2",
     reporterCompanyName: "UAB Greiti Pervežimai",
     fullName: "Petras Petraitis",
-    category: "technikos_pazeidimai", // Updated
-    tags: ["rekomenduojama_patikrinti", "neatsakingas_poziuris"], // Updated
+    category: "technikos_pazeidimai", 
+    tags: ["rekomenduojama_patikrinti", "neatsakingas_poziuris"],
     comment: "Grįžus iš reiso, pastebėta didelė žala priekabos šonui. Vairuotojas teigia nieko nepastebejęs. Rekomenduojama atlikti nuodugnesnį tyrimą.",
     createdAt: new Date("2023-11-01T14:00:00Z"),
   },
   {
     id: "report-general-3-from-456",
-    reporterId: "dev-user-456", // MOCK_ADDITIONAL_USER_1 ID
+    reporterId: "dev-user-456", 
     reporterCompanyName: 'UAB "Greiti Ratai"',
     fullName: "Kazys Kazlauskas",
     birthYear: 1978,
-    category: "netinkamas_elgesys_darbe", // Updated
-    tags: ["konfliktiskas", "pakenkta_reputacijai"], // Updated
+    category: "netinkamas_elgesys_darbe",
+    tags: ["konfliktiskas", "pakenkta_reputacijai"],
     comment: "Vėlavo pristatyti krovinį 2 valandas be pateisinamos priežasties, grubiai bendravo su sandėlio darbuotojais.",
     imageUrl: "https://placehold.co/600x400.png",
     dataAiHint: "angry driver",
@@ -247,3 +247,44 @@ export const combineAndDeduplicateReports = (...reportArrays: Report[][]): Repor
   return Array.from(uniqueReportsMap.values()).sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 };
 
+const LOCAL_STORAGE_REPORTS_KEY = 'driverShieldReports';
+const LOCAL_STORAGE_SEARCH_LOGS_KEY = 'driverShieldSearchLogs';
+
+
+export function getReportsFromLocalStoragePublic(): Report[] {
+  if (typeof window !== 'undefined') {
+    const reportsJSON = localStorage.getItem(LOCAL_STORAGE_REPORTS_KEY);
+    if (reportsJSON) {
+      return JSON.parse(reportsJSON).map((report: any) => ({
+        ...report,
+        createdAt: new Date(report.createdAt),
+      }));
+    }
+  }
+  return [];
+}
+
+export function saveReportsToLocalStoragePublic(reports: Report[]): void {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(LOCAL_STORAGE_REPORTS_KEY, JSON.stringify(reports));
+  }
+}
+
+export function getSearchLogsFromLocalStoragePublic(): SearchLog[] {
+  if (typeof window !== 'undefined') {
+    const logsJSON = localStorage.getItem(LOCAL_STORAGE_SEARCH_LOGS_KEY);
+    if (logsJSON) {
+      return JSON.parse(logsJSON).map((log: any) => ({
+        ...log,
+        timestamp: new Date(log.timestamp),
+      }));
+    }
+  }
+  return [];
+}
+
+export function saveSearchLogsToLocalStoragePublic(logs: SearchLog[]): void {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(LOCAL_STORAGE_SEARCH_LOGS_KEY, JSON.stringify(logs));
+  }
+}
