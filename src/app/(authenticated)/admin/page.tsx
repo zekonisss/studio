@@ -43,7 +43,7 @@ function saveReportsToLocalStorage(reports: Report[]): void {
   }
 }
 
-const DESTRUCTIVE_REPORT_CATEGORIES: ReportCategoryValue[] = ['kuro_vagyste', 'neblaivumas_darbe', 'technikos_pazeidimai', 'avaringumas'];
+const DESTRUCTIVE_REPORT_CATEGORIES: ReportCategoryValue[] = ['kuro_vagyste', 'neblaivumas_darbe', 'zala_technikai', 'avaringumas'];
 
 const getNationalityLabel = (nationalityCode?: string) => {
     if (!nationalityCode) return "Nenurodyta";
@@ -222,8 +222,8 @@ export default function AdminPage() {
       saveReportsToLocalStorage(updatedLocalReports);
     }
     toast({
-      title: "Pranešimas pašalintas",
-      description: "Pasirinktas pranešimas buvo sėkmingai pašalintas.",
+      title: "Įrašas pašalintas",
+      description: "Pasirinktas įrašas buvo sėkmingai pašalintas.",
     });
     setDeletingReportId(null);
   };
@@ -288,7 +288,7 @@ export default function AdminPage() {
             <Users className="mr-2 h-5 w-5" /> Vartotojų Valdymas
           </TabsTrigger>
           <TabsTrigger value="reports" className="text-base py-2.5">
-            <FileText className="mr-2 h-5 w-5" /> Pranešimų Valdymas
+            <FileText className="mr-2 h-5 w-5" /> Įrašų Valdymas
           </TabsTrigger>
           <TabsTrigger value="stats" className="text-base py-2.5">
             <BarChart3 className="mr-2 h-5 w-5" /> Statistika
@@ -384,9 +384,9 @@ export default function AdminPage() {
         <TabsContent value="reports">
           <Card className="shadow-xl">
             <CardHeader>
-              <CardTitle>Visi Pranešimai ({allReports.length})</CardTitle>
+              <CardTitle>Visi Įrašai ({allReports.length})</CardTitle>
               <CardDescription>
-                Visų vartotojų pateikti pranešimai sistemoje.
+                Visų vartotojų pateikti įrašai sistemoje.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -394,10 +394,10 @@ export default function AdminPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Praneštas Asmuo</TableHead>
+                      <TableHead>Asmuo Įraše</TableHead>
                       <TableHead className="hidden sm:table-cell">Kategorija</TableHead>
                       <TableHead className="hidden md:table-cell">Pateikė Įmonė</TableHead>
-                      <TableHead className="text-center hidden lg:table-cell">Data</TableHead>
+                      <TableHead className="text-center hidden lg:table-cell">Pateikimo Data</TableHead>
                       <TableHead className="text-right">Veiksmai</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -421,15 +421,15 @@ export default function AdminPage() {
                             </Button>
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
-                                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive hover:bg-destructive/10" title="Šalinti pranešimą" disabled={deletingReportId === report.id}>
+                                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive hover:bg-destructive/10" title="Šalinti įrašą" disabled={deletingReportId === report.id}>
                                   {deletingReportId === report.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                                 </Button>
                               </AlertDialogTrigger>
                               <AlertDialogContent>
                                 <AlertDialogHeader>
-                                  <AlertDialogTitle>Ar tikrai norite pašalinti šį pranešimą?</AlertDialogTitle>
+                                  <AlertDialogTitle>Ar tikrai norite pašalinti šį įrašą?</AlertDialogTitle>
                                   <AlertDialogDescription>
-                                    Šis veiksmas yra negrįžtamas. Pranešimas apie <span className="font-semibold">{report.fullName}</span> bus visam laikui pašalintas.
+                                    Šis veiksmas yra negrįžtamas. Įrašas apie <span className="font-semibold">{report.fullName}</span> bus visam laikui pašalintas.
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
@@ -449,7 +449,7 @@ export default function AdminPage() {
               ) : (
                  <div className="flex flex-col items-center justify-center py-10 text-center">
                     <AlertTriangle className="h-12 w-12 text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground">Pranešimų nerasta.</p>
+                    <p className="text-muted-foreground">Įrašų nerasta.</p>
                  </div>
               )}
             </CardContent>
@@ -480,10 +480,10 @@ export default function AdminPage() {
           <DialogContent className="sm:max-w-lg">
             <DialogHeader>
               <DialogTitle className="flex items-center text-xl">
-                <FileText className="mr-2 h-5 w-5 text-primary" /> Pranešimo Detalės
+                <FileText className="mr-2 h-5 w-5 text-primary" /> Įrašo Detalės
               </DialogTitle>
               <DialogDescription>
-                Išsami informacija apie administratoriaus peržiūrimą pranešimą.
+                Išsami informacija apie administratoriaus peržiūrimą įrašą.
               </DialogDescription>
             </DialogHeader>
             <div className="py-4 space-y-4 max-h-[60vh] overflow-y-auto pr-2">
@@ -529,26 +529,26 @@ export default function AdminPage() {
                   <div className="w-full overflow-hidden rounded-md border">
                     <NextImage
                         src={selectedReportForDetails.imageUrl}
-                        alt={`Pranešimo nuotrauka ${selectedReportForDetails.fullName}`}
+                        alt={`Įrašo nuotrauka ${selectedReportForDetails.fullName}`}
                         width={600}
                         height={400}
                         layout="responsive"
                         objectFit="contain"
-                        data-ai-hint={selectedReportForDetails.dataAiHint || "report image"}
+                        data-ai-hint={selectedReportForDetails.dataAiHint || "entry image"}
                     />
                   </div>
                 </div>
               )}
                <div className="space-y-1">
-                <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Building2 className="mr-2 h-4 w-4" />Pranešė Įmonė</h4>
+                <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Building2 className="mr-2 h-4 w-4" />Pateikė Įmonė</h4>
                 <p className="text-base text-foreground">{selectedReportForDetails.reporterCompanyName || 'Nenurodyta'}</p>
               </div>
               <div className="space-y-1">
-                <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Users className="mr-2 h-4 w-4" />Pranešėjo ID</h4>
+                <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Users className="mr-2 h-4 w-4" />Pateikėjo ID</h4>
                 <p className="text-xs text-foreground bg-secondary/30 p-2 rounded-md">{selectedReportForDetails.reporterId}</p>
               </div>
                <div className="space-y-1">
-                <h4 className="text-sm font-medium text-muted-foreground flex items-center"><CalendarDays className="mr-2 h-4 w-4" />Pranešimo Data</h4>
+                <h4 className="text-sm font-medium text-muted-foreground flex items-center"><CalendarDays className="mr-2 h-4 w-4" />Pateikimo Data</h4>
                 <p className="text-base text-foreground">{formatDateFn(new Date(selectedReportForDetails.createdAt), "yyyy-MM-dd HH:mm:ss", { locale: lt })}</p>
               </div>
             </div>

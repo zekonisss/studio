@@ -36,7 +36,7 @@ import { useToast } from "@/hooks/use-toast";
 import { MOCK_USER, MOCK_USER_REPORTS, countries } from "@/types";
 
 const LOCAL_STORAGE_REPORTS_KEY = 'driverShieldReports';
-const DESTRUCTIVE_REPORT_CATEGORIES: ReportCategoryValue[] = ['kuro_vagyste', 'neblaivumas_darbe', 'technikos_pazeidimai', 'avaringumas'];
+const DESTRUCTIVE_REPORT_CATEGORIES: ReportCategoryValue[] = ['kuro_vagyste', 'neblaivumas_darbe', 'zala_technikai', 'avaringumas'];
 
 function getReportsFromLocalStorage(): Report[] {
   if (typeof window !== 'undefined') {
@@ -105,8 +105,8 @@ export default function ReportHistoryPage() {
     setReports(prevReports => prevReports.filter(report => report.id !== reportId));
 
     toast({
-      title: "Pranešimas pašalintas",
-      description: "Pasirinktas pranešimas buvo sėkmingai pašalintas iš naršyklės atminties.",
+      title: "Įrašas pašalintas",
+      description: "Pasirinktas įrašas buvo sėkmingai pašalintas iš naršyklės atminties.",
     });
     setDeletingId(null);
   };
@@ -139,7 +139,7 @@ export default function ReportHistoryPage() {
         <div className="container mx-auto py-8 text-center">
             <AlertTriangle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <h1 className="text-xl font-semibold">Neprisijungęs vartotojas</h1>
-            <p className="text-muted-foreground">Prašome prisijungti, kad matytumėte pranešimų istoriją.</p>
+            <p className="text-muted-foreground">Prašome prisijungti, kad matytumėte įrašų istoriją.</p>
             <Button asChild className="mt-4">
                 <Link href="/auth/login">Prisijungti</Link>
             </Button>
@@ -162,14 +162,14 @@ export default function ReportHistoryPage() {
         <div>
           <h1 className="text-3xl font-bold text-foreground flex items-center">
             <HistoryIcon className="mr-3 h-8 w-8 text-primary" />
-            Mano Pranešimų Istorija
+            Mano Įrašų Istorija
           </h1>
-          <p className="text-muted-foreground mt-1">Peržiūrėkite ir tvarkykite savo pateiktus pranešimus.</p>
+          <p className="text-muted-foreground mt-1">Peržiūrėkite ir tvarkykite savo pateiktus įrašus.</p>
         </div>
         <Button asChild>
           <Link href="/reports/add">
             <PlusCircle className="mr-2 h-5 w-5" />
-            Pridėti Naują Pranešimą
+            Pridėti Naują Įrašą
           </Link>
         </Button>
       </div>
@@ -178,16 +178,16 @@ export default function ReportHistoryPage() {
         <Card className="shadow-md text-center">
           <CardHeader>
             <AlertTriangle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <CardTitle className="text-xl">Pranešimų Nerasta</CardTitle>
+            <CardTitle className="text-xl">Įrašų Nerasta</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">
-              Jūs dar nesate pateikę jokių pranešimų.
+              Jūs dar nesate pateikę jokių įrašų.
             </p>
           </CardContent>
           <CardFooter className="justify-center">
             <Button asChild>
-              <Link href="/reports/add">Sukurti Pirmą Pranešimą</Link>
+              <Link href="/reports/add">Sukurti Pirmą Įrašą</Link>
             </Button>
           </CardFooter>
         </Card>
@@ -203,7 +203,7 @@ export default function ReportHistoryPage() {
                       {report.fullName}
                     </CardTitle>
                     <CardDescription className="text-sm">
-                      Pranešta: {format(new Date(report.createdAt), "yyyy-MM-dd HH:mm", { locale: lt })}
+                      Pateikta: {format(new Date(report.createdAt), "yyyy-MM-dd HH:mm", { locale: lt })}
                     </CardDescription>
                   </div>
                   <Badge variant={DESTRUCTIVE_REPORT_CATEGORIES.includes(report.category as ReportCategoryValue) ? 'destructive' : 'secondary'}>
@@ -243,9 +243,9 @@ export default function ReportHistoryPage() {
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
-                      <AlertDialogTitle>Ar tikrai norite pašalinti šį pranešimą?</AlertDialogTitle>
+                      <AlertDialogTitle>Ar tikrai norite pašalinti šį įrašą?</AlertDialogTitle>
                       <AlertDialogDescription>
-                        Šis veiksmas yra negrįžtamas. Pranešimas apie <span className="font-semibold">{report.fullName}</span> bus visam laikui pašalintas iš naršyklės atminties.
+                        Šis veiksmas yra negrįžtamas. Įrašas apie <span className="font-semibold">{report.fullName}</span> bus visam laikui pašalintas iš naršyklės atminties.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -267,10 +267,10 @@ export default function ReportHistoryPage() {
           <DialogContent className="sm:max-w-lg">
             <DialogHeader>
               <DialogTitle className="flex items-center text-xl">
-                <FileText className="mr-2 h-5 w-5 text-primary" /> Pranešimo Detalės
+                <FileText className="mr-2 h-5 w-5 text-primary" /> Įrašo Detalės
               </DialogTitle>
               <DialogDescription>
-                Išsami informacija apie pranešimą.
+                Išsami informacija apie įrašą.
               </DialogDescription>
             </DialogHeader>
             <div className="py-4 space-y-4 max-h-[60vh] overflow-y-auto pr-2">
@@ -316,22 +316,22 @@ export default function ReportHistoryPage() {
                   <div className="w-full overflow-hidden rounded-md border">
                     <Image
                         src={selectedReportForDetails.imageUrl}
-                        alt={`Pranešimo nuotrauka ${selectedReportForDetails.fullName}`}
+                        alt={`Įrašo nuotrauka ${selectedReportForDetails.fullName}`}
                         width={600}
                         height={400}
                         layout="responsive"
                         objectFit="contain"
-                        data-ai-hint={selectedReportForDetails.dataAiHint || "report image"}
+                        data-ai-hint={selectedReportForDetails.dataAiHint || "entry image"}
                     />
                   </div>
                 </div>
               )}
                <div className="space-y-1">
-                <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Building2 className="mr-2 h-4 w-4" />Pranešė Įmonė</h4>
+                <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Building2 className="mr-2 h-4 w-4" />Pateikė Įmonė</h4>
                 <p className="text-base text-foreground">{selectedReportForDetails.reporterCompanyName || 'Nenurodyta'}</p>
               </div>
                <div className="space-y-1">
-                <h4 className="text-sm font-medium text-muted-foreground flex items-center"><CalendarDays className="mr-2 h-4 w-4" />Pranešimo Data</h4>
+                <h4 className="text-sm font-medium text-muted-foreground flex items-center"><CalendarDays className="mr-2 h-4 w-4" />Pateikimo Data</h4>
                 <p className="text-base text-foreground">{format(new Date(selectedReportForDetails.createdAt), "yyyy-MM-dd HH:mm:ss", { locale: lt })}</p>
               </div>
             </div>
@@ -346,5 +346,3 @@ export default function ReportHistoryPage() {
     </div>
   );
 }
-
-    

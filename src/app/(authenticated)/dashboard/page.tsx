@@ -16,9 +16,9 @@ export default function DashboardPage() {
 
   const quickActions = [
     { label: "Atlikti Paiešką", href: "/search", icon: Search, description: "Greitai raskite vairuotojo informaciją." },
-    { label: "Pridėti Pranešimą", href: "/reports/add", icon: FilePlus2, description: "Registruokite naują įvykį ar pažeidimą." },
+    { label: "Pridėti Įrašą", href: "/reports/add", icon: FilePlus2, description: "Registruokite naują įvykį ar pažeidimą." },
     { label: "Mano Paskyra", href: "/account", icon: UserCircle, description: "Peržiūrėkite ir tvarkykite paskyros duomenis." },
-    { label: "Pranešimų Istorija", href: "/reports/history", icon: History, description: "Matykite visus savo pridėtus pranešimus." },
+    { label: "Įrašų Istorija", href: "/reports/history", icon: History, description: "Matykite visus savo pridėtus įrašus." },
   ];
 
   const subscriptionEndDate = user?.accountActivatedAt ? addYears(new Date(user.accountActivatedAt), 1) : null;
@@ -68,7 +68,7 @@ export default function DashboardPage() {
           <CardContent className="space-y-6">
             <div className="flex items-center justify-between p-4 bg-secondary/50 rounded-md">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Jūsų Pridėti Pranešimai</p>
+                <p className="text-sm font-medium text-muted-foreground">Jūsų Pridėti Įrašai</p>
                 <p className="text-2xl font-bold">12</p> {/* Placeholder */}
               </div>
               <Button variant="outline" size="sm" asChild>

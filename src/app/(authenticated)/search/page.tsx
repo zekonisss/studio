@@ -21,7 +21,7 @@ import { MOCK_GENERAL_REPORTS, combineAndDeduplicateReports, countries } from "@
 
 const LOCAL_STORAGE_REPORTS_KEY = 'driverShieldReports';
 const LOCAL_STORAGE_SEARCH_LOGS_KEY = 'driverShieldSearchLogs';
-const DESTRUCTIVE_REPORT_CATEGORIES: ReportCategoryValue[] = ['kuro_vagyste', 'neblaivumas_darbe', 'technikos_pazeidimai', 'avaringumas'];
+const DESTRUCTIVE_REPORT_CATEGORIES: ReportCategoryValue[] = ['kuro_vagyste', 'neblaivumas_darbe', 'zala_technikai', 'avaringumas'];
 
 
 function getReportsFromLocalStorage(): Report[] {
@@ -131,7 +131,7 @@ export default function SearchPage() {
             Vairuotojų Paieška
           </CardTitle>
           <CardDescription>
-            Įveskite vairuotojo vardą, pavardę, pilietybę, įmonės kodą, pranešimo raktažodį ar kitą informaciją.
+            Įveskite vairuotojo vardą, pavardę, pilietybę, įmonės kodą, įrašo raktažodį ar kitą informaciją.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -188,7 +188,7 @@ export default function SearchPage() {
          <Card className="shadow-md text-center py-10">
              <CardContent>
                 <SearchIcon className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-50" />
-                <p className="text-muted-foreground">Įveskite paieškos frazę aukščiau, kad rastumėte pranešimus.</p>
+                <p className="text-muted-foreground">Įveskite paieškos frazę aukščiau, kad rastumėte įrašus.</p>
             </CardContent>
         </Card>
       )}
@@ -266,7 +266,7 @@ export default function SearchPage() {
                       <div className="w-full overflow-hidden rounded-lg border border-border shadow-sm">
                         <Image
                           src={report.imageUrl}
-                          alt={`Vaizdas pranešimui apie ${report.fullName}`}
+                          alt={`Vaizdas įrašui apie ${report.fullName}`}
                           width={600}
                           height={400}
                           layout="responsive"
@@ -284,7 +284,7 @@ export default function SearchPage() {
                 </CardContent>
                 <CardFooter className="bg-muted/30 p-3 text-xs text-muted-foreground border-t">
                   <div className="flex justify-between w-full items-center">
-                    <span>Pranešė: {report.reporterCompanyName || 'Privatus asmuo'} (ID: {report.reporterId.substring(0,12)}...)</span>
+                    <span>Pateikė: {report.reporterCompanyName || 'Privatus asmuo'} (ID: {report.reporterId.substring(0,12)}...)</span>
                     <span>Data: {format(new Date(report.createdAt), "yyyy-MM-dd HH:mm", { locale: lt })}</span>
                   </div>
                 </CardFooter>
@@ -296,5 +296,3 @@ export default function SearchPage() {
     </div>
   );
 }
-
-    

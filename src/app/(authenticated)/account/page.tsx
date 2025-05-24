@@ -20,8 +20,8 @@ import { getAllUsers, saveAllUsers } from "@/types";
 
 // Mock data (same as used in respective history pages, filtered for this user)
 const mockUserReports: Report[] = [
-  { id: "report-user-1", reporterId: "dev-user-123", reporterCompanyName: 'UAB "Bandomoji Įmonė"', fullName: "Antanas Antanaitis", birthYear: 1992, category: "netinkamas_elgesys", tags: ["konfliktiskas"], comment: "Vairuotojas buvo nemandagus su klientu.", createdAt: new Date("2024-02-20T09:15:00Z") },
-  { id: "report-user-2", reporterId: "dev-user-123", reporterCompanyName: 'UAB "Bandomoji Įmonė"', fullName: "Zita Zitaite", category: "greicio_virijimas", tags: ["pasikartojantis"], comment: "GPS rodo greičio viršijimą.", createdAt: new Date("2024-01-10T16:45:00Z") },
+  { id: "report-user-1", reporterId: "dev-user-123", reporterCompanyName: 'UAB "DriverShield Demo"', fullName: "Antanas Antanaitis", birthYear: 1992, category: "netinkamas_elgesys_darbe", tags: ["konfliktiskas"], comment: "Vairuotojas buvo nemandagus su klientu.", createdAt: new Date("2024-02-20T09:15:00Z") },
+  { id: "report-user-2", reporterId: "dev-user-123", reporterCompanyName: 'UAB "DriverShield Demo"', fullName: "Zita Zitaite", category: "avaringumas", tags: ["pasikartojantis"], comment: "GPS rodo greičio viršijimą.", createdAt: new Date("2024-01-10T16:45:00Z") },
 ];
 const mockSearchLogs: SearchLog[] = [
   { id: "log1", userId: "dev-user-123", searchText: "Jonas Jonaitis", timestamp: new Date("2024-03-10T10:00:00Z"), resultsCount: 2 },
@@ -136,7 +136,7 @@ export default function AccountPage() {
       <Tabs value={activeTab} onValueChange={onTabChange} className="w-full">
         <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 mb-6">
           <TabsTrigger value="details" className="text-base py-2.5">Įmonės Duomenys</TabsTrigger>
-          <TabsTrigger value="reports" className="text-base py-2.5">Mano Pranešimai</TabsTrigger>
+          <TabsTrigger value="reports" className="text-base py-2.5">Mano Įrašai</TabsTrigger>
           <TabsTrigger value="searches" className="text-base py-2.5">Paieškų Istorija</TabsTrigger>
           <TabsTrigger value="payment" className="text-base py-2.5">Mokėjimai</TabsTrigger>
         </TabsList>
@@ -170,8 +170,8 @@ export default function AccountPage() {
         <TabsContent value="reports">
           <Card className="shadow-xl">
             <CardHeader>
-              <CardTitle className="text-xl flex items-center"><History className="mr-2 h-5 w-5 text-primary"/>Jūsų Pateikti Pranešimai</CardTitle>
-              <CardDescription>Trumpas jūsų pateiktų pranešimų sąrašas. Išsamią istoriją rasite <Link href="/reports/history" className="text-primary hover:underline">čia</Link>.</CardDescription>
+              <CardTitle className="text-xl flex items-center"><History className="mr-2 h-5 w-5 text-primary"/>Jūsų Pateikti Įrašai</CardTitle>
+              <CardDescription>Trumpas jūsų pateiktų įrašų sąrašas. Išsamią istoriją rasite <Link href="/reports/history" className="text-primary hover:underline">čia</Link>.</CardDescription>
             </CardHeader>
             <CardContent>
               {mockUserReports.length > 0 ? (
@@ -187,11 +187,11 @@ export default function AccountPage() {
                     </li>
                   ))}
                 </ul>
-              ) : <p className="text-muted-foreground">Pranešimų nerasta.</p>}
+              ) : <p className="text-muted-foreground">Įrašų nerasta.</p>}
                {mockUserReports.length > 3 && (
                  <div className="mt-6 text-center">
                     <Button variant="outline" asChild>
-                        <Link href="/reports/history">Žiūrėti Visus Pranešimus</Link>
+                        <Link href="/reports/history">Žiūrėti Visus Įrašus</Link>
                     </Button>
                  </div>
                 )}
@@ -249,7 +249,7 @@ export default function AccountPage() {
                             <p className="mt-3 text-sm text-green-600">
                                 Galioja iki: <span className="font-medium">{formatDateFn(addYears(new Date(user.accountActivatedAt), 1), "yyyy 'm.' MMMM dd 'd.'", { locale: lt })}</span>
                             </p>
-                            <p className="text-sm text-green-600">Kaina: <span className="font-medium">29.99 €/mėn (Metinė kaina: 346.00 € be PVM)</span></p>
+                            <p className="text-sm text-green-600">Mėnesinė kaina: <span className="font-medium">29.99 € (Metinė kaina: 346.00 € be PVM)</span></p>
                         </div>
                     ) : user.paymentStatus === 'pending_payment' ? (
                          <div className="p-6 border rounded-lg bg-yellow-50 border-yellow-200">

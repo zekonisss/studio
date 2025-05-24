@@ -25,11 +25,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 const mainNavItems = [
   { href: "/dashboard", label: "Valdymo Skydas", icon: LayoutDashboard },
   { href: "/search", label: "Paieška", icon: Search },
-  { href: "/reports/add", label: "Pridėti Pranešimą", icon: FilePlus2 },
+  { href: "/reports/add", label: "Pridėti Įrašą", icon: FilePlus2 },
 ];
 
 const historyNavItems = [
- { href: "/reports/history", label: "Pranešimų Istorija", icon: History },
+ { href: "/reports/history", label: "Įrašų Istorija", icon: History },
  { href: "/search/history", label: "Paieškų Istorija", icon: ListChecks },
 ];
 

@@ -61,7 +61,7 @@ export default function AddReportPage() {
   async function onSubmit(values: ReportFormValues) {
     setIsSubmitting(true);
     if (!user) {
-      toast({ variant: "destructive", title: "Klaida", description: "Turite būti prisijungęs, kad galėtumėte pateikti pranešimą." });
+      toast({ variant: "destructive", title: "Klaida", description: "Turite būti prisijungęs, kad galėtumėte pateikti įrašą." });
       setIsSubmitting(false);
       return;
     }
@@ -80,7 +80,7 @@ export default function AddReportPage() {
       tags: values.tags || [],
       comment: values.comment,
       imageUrl: values.image ? "https://placehold.co/600x400.png" : undefined,
-      dataAiHint: values.image ? "document attachment" : undefined,
+      dataAiHint: values.image ? "entry attachment" : undefined,
       createdAt: new Date(),
     };
 
@@ -88,8 +88,8 @@ export default function AddReportPage() {
     saveReportsToLocalStorage(allReports);
     
     toast({
-      title: "Pranešimas Sėkmingai Pateiktas!",
-      description: `Pranešimas apie ${values.fullName} buvo įrašytas į naršyklės atmintį.`,
+      title: "Įrašas Sėkmingai Pateiktas!",
+      description: `Įrašas apie ${values.fullName} buvo įrašytas į naršyklės atmintį.`,
     });
     form.reset();
     setIsSubmitting(false);
@@ -102,7 +102,7 @@ export default function AddReportPage() {
         <CardHeader>
           <CardTitle className="text-2xl flex items-center">
             <FilePlus2 className="mr-3 h-7 w-7 text-primary" />
-            Registruoti Naują Pranešimą
+            Pridėti Naują Įrašą
           </CardTitle>
           <CardDescription>
             Užpildykite žemiau esančią formą, norėdami pateikti informaciją apie vairuotojo pažeidimą ar įvykį.
@@ -283,7 +283,7 @@ export default function AddReportPage() {
                 ) : (
                   <FilePlus2 className="mr-2 h-5 w-5" />
                 )}
-                Pateikti Pranešimą
+                Pateikti Įrašą
               </Button>
             </form>
           </Form>
