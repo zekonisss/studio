@@ -50,7 +50,7 @@ export default function AddReportPage() {
     defaultValues: {
       fullName: "",
       nationality: "",
-      birthYear: undefined,
+      birthYear: '', // Changed from undefined to empty string
       category: "",
       tags: [],
       comment: "",
@@ -179,7 +179,14 @@ export default function AddReportPage() {
                       <SelectContent>
                         {reportCategories.map(cat => (
                           <SelectItem key={cat.value} value={cat.value} className="text-base">
-                            {cat.label}
+                             {cat.value === 'kreipimasis_institucijos' ? (
+                              <>
+                                {cat.label.split('(')[0]}
+                                <span className="text-xs text-muted-foreground ml-1">({cat.label.split('(')[1]})</span>
+                              </>
+                            ) : (
+                              cat.label
+                            )}
                           </SelectItem>
                         ))}
                       </SelectContent>
