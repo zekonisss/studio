@@ -8,6 +8,7 @@ export interface UserProfile {
   email: string;
   phone: string;
   paymentStatus: 'active' | 'inactive' | 'pending_verification';
+  isAdmin?: boolean; // Added isAdmin flag
   // Raw Firebase User object can be included if needed
   // firebaseUser?: any; 
 }
@@ -72,6 +73,7 @@ export const MOCK_USER: UserProfile = {
   email: 'sarunas.zekonis@gmail.com',
   phone: '+37060012345',
   paymentStatus: 'active',
+  isAdmin: true, // Set MOCK_USER as admin
 };
 
     

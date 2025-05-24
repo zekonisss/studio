@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -16,7 +17,8 @@ import {
   ChevronDown,
   ChevronUp,
   Settings,
-  ShieldQuestion
+  ShieldQuestion,
+  ShieldAlert // Added for Admin
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
@@ -43,6 +45,10 @@ const accountNavItems = [
   { href: "/account", label: "Mano Paskyra", icon: UserCircle },
   { href: "/account/settings", label: "Nustatymai", icon: Settings }, // Placeholder
   { href: "/support", label: "Pagalba & DUK", icon: ShieldQuestion }, // Placeholder
+];
+
+const adminNavItems = [
+  { href: "/admin", label: "Admin Skydas", icon: ShieldAlert },
 ];
 
 
@@ -146,6 +152,31 @@ export function SidebarNav() {
                 ))}
               </AccordionContent>
             </AccordionItem>
+            {user?.isAdmin && (
+              <AccordionItem value="item-admin" className="border-none">
+                <AccordionTrigger className="px-2 py-2 text-xs font-semibold uppercase text-muted-foreground tracking-wider hover:no-underline hover:bg-sidebar-accent rounded-md [&[data-state=open]>svg]:text-sidebar-accent-foreground">
+                  Administratorius
+                </AccordionTrigger>
+                <AccordionContent className="pt-2 space-y-1">
+                  {adminNavItems.map((item) => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={cn(
+                        buttonVariants({ variant: pathname.startsWith(item.href) ? "secondary" : "ghost", size: "sm" }),
+                        "w-full justify-start rounded-md text-sm font-medium pl-6",
+                        pathname.startsWith(item.href)
+                          ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                          : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                      )}
+                    >
+                      <item.icon className="mr-3 h-4 w-4 flex-shrink-0" />
+                      {item.label}
+                    </Link>
+                  ))}
+                </AccordionContent>
+              </AccordionItem>
+            )}
           </Accordion>
         </nav>
       </ScrollArea>
