@@ -5,12 +5,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import Link from "next/link";
-import { Search, FilePlus2, History, UserCircle, BarChart3, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Search, FilePlus2, History, UserCircle, BarChart3, AlertTriangle, CheckCircle2, UserCog, Loader2 } from "lucide-react";
 import Image from "next/image";
+import { format as formatDateFn, addYears, addMonths, isBefore } from 'date-fns';
+import { lt } from 'date-fns/locale';
 
-// export const metadata: Metadata = { // Cannot be used in client component
-//   title: 'Valdymo Skydas - DriverShield',
-// };
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -21,6 +20,9 @@ export default function DashboardPage() {
     { label: "Mano Paskyra", href: "/account", icon: UserCircle, description: "Peržiūrėkite ir tvarkykite paskyros duomenis." },
     { label: "Pranešimų Istorija", href: "/reports/history", icon: History, description: "Matykite visus savo pridėtus pranešimus." },
   ];
+
+  const subscriptionEndDate = user?.accountActivatedAt ? addYears(new Date(user.accountActivatedAt), 1) : null;
+  const showExpirationWarning = user?.paymentStatus === 'active' && subscriptionEndDate && isBefore(subscriptionEndDate, addMonths(new Date(), 1));
 
   return (
     <div className="container mx-auto py-8 px-4 md:px-0">
@@ -42,7 +44,7 @@ export default function DashboardPage() {
                 <action.icon className="h-6 w-6 text-muted-foreground" />
               </CardHeader>
               <CardContent className="flex flex-col flex-grow">
-                <p className="text-sm text-muted-foreground mb-4 line-clamp-3 min-h-16">{action.description}</p>
+                <p className="text-sm text-muted-foreground mb-4 line-clamp-3 min-h-[calc(1.25rem*3)]">{action.description}</p> {/* approx 3 lines */}
                 <div className="mt-auto">
                   <Button asChild className="w-full" variant="default">
                     <Link href={action.href}>Eiti</Link>
@@ -82,15 +84,20 @@ export default function DashboardPage() {
                 <Link href="/search/history">Žiūrėti Istoriją</Link>
               </Button>
             </div>
-            <div className="p-4 border border-dashed border-yellow-500 bg-yellow-50 rounded-md text-yellow-700">
-              <div className="flex items-start">
-                <AlertTriangle className="h-5 w-5 mr-3 mt-0.5 flex-shrink-0 text-yellow-600" />
-                <div>
-                  <h4 className="font-semibold">Svarbus Pranešimas</h4>
-                  <p className="text-sm">Artėja metinio abonemento pabaiga. Prašome nepamiršti jo pratęsti laiku.</p>
+            {showExpirationWarning && subscriptionEndDate && (
+                <div className="p-4 border border-dashed border-yellow-500 bg-yellow-50 rounded-md text-yellow-700">
+                <div className="flex items-start">
+                    <AlertTriangle className="h-5 w-5 mr-3 mt-0.5 flex-shrink-0 text-yellow-600" />
+                    <div>
+                    <h4 className="font-semibold">Svarbus Pranešimas</h4>
+                    <p className="text-sm">
+                        Artėja metinio abonemento pabaiga ({formatDateFn(subscriptionEndDate, "yyyy-MM-dd", { locale: lt })}). 
+                        Prašome nepamiršti jo pratęsti laiku.
+                    </p>
+                    </div>
                 </div>
-              </div>
-            </div>
+                </div>
+            )}
           </CardContent>
         </Card>
 
@@ -112,11 +119,32 @@ export default function DashboardPage() {
               <Link href="/support">Pagalba ir DUK</Link>
             </Button>
             <div className="mt-4 pt-4 border-t">
-                <p className="text-sm font-semibold flex items-center">
-                  <CheckCircle2 className="h-5 w-5 mr-2 text-green-600"/>
-                  Mokėjimo Statusas: <span className="ml-1 font-bold text-green-700">Aktyvus</span>
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">Jūsų metinė prenumerata galioja iki 2025-03-15.</p>
+                {user && user.paymentStatus === 'active' && subscriptionEndDate ? (
+                    <>
+                        <p className="text-sm font-semibold flex items-center">
+                        <CheckCircle2 className="h-5 w-5 mr-2 text-green-600"/>
+                        Mokėjimo Statusas: <span className="ml-1 font-bold text-green-700">Aktyvus</span>
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                            Jūsų metinė prenumerata galioja iki {formatDateFn(subscriptionEndDate, "yyyy-MM-dd", { locale: lt })}.
+                        </p>
+                    </>
+                ) : user && user.paymentStatus === 'pending_payment' ? (
+                    <p className="text-sm font-semibold flex items-center text-yellow-700">
+                        <Loader2 className="h-5 w-5 mr-2 text-yellow-600 animate-spin"/>
+                        Mokėjimo Statusas: <span className="ml-1 font-bold">Laukia apmokėjimo</span>
+                    </p>
+                ) : user && user.paymentStatus === 'pending_verification' ? (
+                    <p className="text-sm font-semibold flex items-center text-orange-600">
+                        <UserCog className="h-5 w-5 mr-2 text-orange-600"/>
+                        Mokėjimo Statusas: <span className="ml-1 font-bold">Laukia patvirtinimo</span>
+                    </p>
+                ) : (
+                    <p className="text-sm font-semibold flex items-center text-red-700">
+                        <AlertTriangle className="h-5 w-5 mr-2 text-red-600"/>
+                        Mokėjimo Statusas: <span className="ml-1 font-bold">Neaktyvus</span>
+                    </p>
+                )}
             </div>
           </CardContent>
         </Card>

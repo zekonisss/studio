@@ -15,7 +15,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Loader2, ShieldAlert, Users, FileText, AlertTriangle, Trash2, Eye, MoreHorizontal, BarChart3, UserCheck, UserX, UserCog, CalendarDays, Building2, Tag, MessageSquare, Image as ImageIcon, CheckCircle2, CreditCard, Send, Briefcase, MapPin, Phone, Mail, ShieldCheck as ShieldCheckIcon, User as UserIcon } from "lucide-react";
 import type { UserProfile, Report } from "@/types";
 import { getAllUsers, saveAllUsers, MOCK_GENERAL_REPORTS, combineAndDeduplicateReports } from "@/types";
-import { format } from 'date-fns';
+import { format as formatDateFn, addYears } from 'date-fns';
 import { lt } from 'date-fns/locale';
 import { useToast } from "@/hooks/use-toast";
 import NextImage from "next/image";
@@ -74,9 +74,14 @@ export default function AdminPage() {
     if (!targetUser) return;
 
     const oldStatus = targetUser.paymentStatus;
+    let newAccountActivatedAt = targetUser.accountActivatedAt;
+
+    if (newStatus === 'active' && oldStatus !== 'active') {
+        newAccountActivatedAt = new Date().toISOString();
+    }
 
     const updatedUsers = allUsersState.map(u => 
-      u.id === userId ? { ...u, paymentStatus: newStatus } : u
+      u.id === userId ? { ...u, paymentStatus: newStatus, accountActivatedAt: newAccountActivatedAt } : u
     );
     setAllUsersState(updatedUsers);
     saveAllUsers(updatedUsers); 
@@ -316,7 +321,7 @@ export default function AdminPage() {
                         </TableCell>
                         <TableCell className="hidden md:table-cell">{report.reporterCompanyName || "Nenurodyta"}</TableCell>
                         <TableCell className="text-center hidden lg:table-cell text-muted-foreground">
-                          {format(new Date(report.createdAt), "yyyy-MM-dd HH:mm", { locale: lt })}
+                          {formatDateFn(new Date(report.createdAt), "yyyy-MM-dd HH:mm", { locale: lt })}
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex gap-1 justify-end">
@@ -447,7 +452,7 @@ export default function AdminPage() {
               </div>
                <div className="space-y-1">
                 <h4 className="text-sm font-medium text-muted-foreground flex items-center"><CalendarDays className="mr-2 h-4 w-4" />Pranešimo Data</h4>
-                <p className="text-base text-foreground">{format(new Date(selectedReportForDetails.createdAt), "yyyy-MM-dd HH:mm:ss", { locale: lt })}</p>
+                <p className="text-base text-foreground">{formatDateFn(new Date(selectedReportForDetails.createdAt), "yyyy-MM-dd HH:mm:ss", { locale: lt })}</p>
               </div>
             </div>
             <DialogFooter>
@@ -480,6 +485,15 @@ export default function AdminPage() {
               <div className="md:col-span-2">
                 <UserInfoField label="Būsena" value={getStatusText(selectedUserForDetails.paymentStatus)} icon={CheckCircle2} />
               </div>
+               {selectedUserForDetails.accountActivatedAt && selectedUserForDetails.paymentStatus === 'active' && (
+                <div className="md:col-span-2">
+                    <UserInfoField 
+                        label="Paskyra Aktyvi Iki" 
+                        value={formatDateFn(addYears(new Date(selectedUserForDetails.accountActivatedAt), 1), "yyyy-MM-dd")} 
+                        icon={CalendarDays} 
+                    />
+                </div>
+                )}
               <UserInfoField label="Administratorius" value={selectedUserForDetails.isAdmin} icon={ShieldAlert} />
               <UserInfoField label="Sutiko su taisyklėmis" value={selectedUserForDetails.agreeToTerms} icon={ShieldCheckIcon} />
               <div className="md:col-span-2">

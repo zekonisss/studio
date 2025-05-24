@@ -9,9 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
-import { Loader2, UserCircle, Building2, Briefcase, MapPin, User as UserIcon, Mail, Phone, History, ListChecks, Edit3, Save, CreditCard, ShieldCheck } from "lucide-react";
+import { Loader2, UserCircle, Building2, Briefcase, MapPin, User as UserIcon, Mail, Phone, History, ListChecks, Edit3, Save, CreditCard, ShieldCheck, CalendarDays } from "lucide-react";
 import type { Report, SearchLog, UserProfile } from "@/types";
-import { format } from "date-fns";
+import { format as formatDateFn, addYears } from "date-fns";
 import { lt } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
@@ -69,7 +69,6 @@ export default function AccountPage() {
     if (!user) return;
 
     setIsEditing(false);
-    // Simulate API call to update user details
     console.log("Saving data:", formData);
     await new Promise(resolve => setTimeout(resolve, 1000));
     
@@ -80,15 +79,14 @@ export default function AccountPage() {
         companyCode: formData.companyCode,
         address: formData.address,
         contactPerson: formData.contactPerson,
-        email: formData.email, // Email change should ideally be handled with verification
+        email: formData.email,
         phone: formData.phone,
     };
 
     const updatedUsersList = allUsers.map(u => u.id === user.id ? updatedUser : u);
     saveAllUsers(updatedUsersList);
-    updateUserInContext(updatedUser as UserProfile); // Update user in AuthContext and localStorage session
+    updateUserInContext(updatedUser as UserProfile); 
 
-    // In real app, Firebase would update and context would refresh
   };
   
   const onTabChange = (value: string) => {
@@ -174,14 +172,14 @@ export default function AccountPage() {
             <CardContent>
               {mockUserReports.length > 0 ? (
                 <ul className="space-y-4">
-                  {mockUserReports.slice(0, 3).map(report => ( // Show first 3
+                  {mockUserReports.slice(0, 3).map(report => ( 
                     <li key={report.id} className="p-4 border rounded-md hover:bg-muted/30 transition-colors">
                       <div className="flex justify-between items-start">
                         <h4 className="font-semibold text-foreground">{report.fullName}</h4>
                         <Badge variant="secondary">{report.category.replace(/_/g, ' ')}</Badge>
                       </div>
                       <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{report.comment}</p>
-                      <p className="text-xs text-muted-foreground mt-2">Pateikta: {format(report.createdAt, "yyyy-MM-dd HH:mm", { locale: lt })}</p>
+                      <p className="text-xs text-muted-foreground mt-2">Pateikta: {formatDateFn(report.createdAt, "yyyy-MM-dd HH:mm", { locale: lt })}</p>
                     </li>
                   ))}
                 </ul>
@@ -206,12 +204,12 @@ export default function AccountPage() {
             <CardContent>
               {mockSearchLogs.length > 0 ? (
                 <ul className="space-y-3">
-                  {mockSearchLogs.slice(0, 5).map(log => ( // Show first 5
+                  {mockSearchLogs.slice(0, 5).map(log => ( 
                     <li key={log.id} className="flex justify-between items-center p-3 border rounded-md hover:bg-muted/30 transition-colors">
                       <span className="font-medium text-foreground">{log.searchText}</span>
                       <div className="flex items-center gap-x-4">
                         <Badge variant={log.resultsCount > 0 ? "default" : "outline"}>{log.resultsCount} {log.resultsCount === 1 ? "rez." : "rez."}</Badge>
-                        <span className="text-sm text-muted-foreground">{format(log.timestamp, "yyyy-MM-dd HH:mm", { locale: lt })}</span>
+                        <span className="text-sm text-muted-foreground">{formatDateFn(log.timestamp, "yyyy-MM-dd HH:mm", { locale: lt })}</span>
                       </div>
                     </li>
                   ))}
@@ -235,21 +233,54 @@ export default function AccountPage() {
                     <CardDescription>Tvarkykite savo prenumeratą ir peržiūrėkite mokėjimų istoriją.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                    <div className="p-6 border rounded-lg bg-green-50 border-green-200">
-                        <div className="flex items-center">
-                            <ShieldCheck className="h-8 w-8 text-green-600 mr-4"/>
-                            <div>
-                                <h4 className="text-lg font-semibold text-green-800">Aktyvi Prenumerata</h4>
-                                <p className="text-sm text-green-700">Jūsų DriverShield metinė prenumerata yra aktyvi.</p>
+                    {user.paymentStatus === 'active' && user.accountActivatedAt ? (
+                        <div className="p-6 border rounded-lg bg-green-50 border-green-200">
+                            <div className="flex items-center">
+                                <ShieldCheck className="h-8 w-8 text-green-600 mr-4"/>
+                                <div>
+                                    <h4 className="text-lg font-semibold text-green-800">Aktyvi Prenumerata</h4>
+                                    <p className="text-sm text-green-700">Jūsų DriverShield metinė prenumerata yra aktyvi.</p>
+                                </div>
+                            </div>
+                            <p className="mt-3 text-sm text-green-600">
+                                Galioja iki: <span className="font-medium">{formatDateFn(addYears(new Date(user.accountActivatedAt), 1), "yyyy 'm.' MMMM dd 'd.'", { locale: lt })}</span>
+                            </p>
+                            <p className="text-sm text-green-600">Metinė kaina: <span className="font-medium">1188 €</span></p>
+                        </div>
+                    ) : user.paymentStatus === 'pending_payment' ? (
+                         <div className="p-6 border rounded-lg bg-yellow-50 border-yellow-200">
+                            <div className="flex items-center">
+                                <Loader2 className="h-8 w-8 text-yellow-600 mr-4 animate-spin"/>
+                                <div>
+                                    <h4 className="text-lg font-semibold text-yellow-800">Laukiama Apmokėjimo</h4>
+                                    <p className="text-sm text-yellow-700">Jūsų paskyros aktyvavimas laukia mokėjimo patvirtinimo.</p>
+                                </div>
                             </div>
                         </div>
-                        <p className="mt-3 text-sm text-green-600">Galioja iki: <span className="font-medium">2025 m. Kovo 15 d.</span></p>
-                        <p className="text-sm text-green-600">Metinė kaina: <span className="font-medium">1188 €</span></p>
-                    </div>
+                    ) : user.paymentStatus === 'pending_verification' ? (
+                         <div className="p-6 border rounded-lg bg-orange-50 border-orange-200">
+                            <div className="flex items-center">
+                                <UserCog className="h-8 w-8 text-orange-600 mr-4"/>
+                                <div>
+                                    <h4 className="text-lg font-semibold text-orange-800">Laukiama Patvirtinimo</h4>
+                                    <p className="text-sm text-orange-700">Jūsų paskyros registracija laukia administratoriaus patvirtinimo.</p>
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                         <div className="p-6 border rounded-lg bg-red-50 border-red-200">
+                            <div className="flex items-center">
+                                <AlertTriangle className="h-8 w-8 text-red-600 mr-4"/>
+                                <div>
+                                    <h4 className="text-lg font-semibold text-red-800">Paskyra Neaktyvi</h4>
+                                    <p className="text-sm text-red-700">Jūsų DriverShield prenumerata nėra aktyvi.</p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                     
                     <div>
                         <h4 className="font-semibold mb-2 text-foreground">Mokėjimo Istorija</h4>
-                        {/* Placeholder for payment history table/list */}
                         <p className="text-sm text-muted-foreground">Šiuo metu mokėjimų istorijos rodymas nėra įgyvendintas. Ateityje čia matysite savo sąskaitas.</p>
                     </div>
 

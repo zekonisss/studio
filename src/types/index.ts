@@ -7,10 +7,10 @@ export interface UserProfile {
   contactPerson: string;
   email: string;
   phone: string;
-  paymentStatus: 'active' | 'inactive' | 'pending_verification' | 'pending_payment'; // Added pending_payment for future
+  paymentStatus: 'active' | 'inactive' | 'pending_verification' | 'pending_payment';
   isAdmin?: boolean;
-  // Fields for newly registered users that might not be in MOCK_USER initially
-  password?: string; // Only for temporary storage before real auth
+  accountActivatedAt?: string; // Date ISO string when the account was last set to 'active'
+  password?: string; 
   agreeToTerms?: boolean;
 }
 
@@ -25,14 +25,14 @@ export interface Report {
   comment: string;
   imageUrl?: string;
   dataAiHint?: string;
-  createdAt: Date; // Ensure this is always a Date object
+  createdAt: Date; 
 }
 
 export interface SearchLog {
   id: string;
   userId: string;
   searchText: string;
-  timestamp: Date; // Ensure this is always a Date object
+  timestamp: Date; 
   resultsCount: number;
 }
 
@@ -76,6 +76,7 @@ export const MOCK_USER: UserProfile = {
   phone: '+37060012345',
   paymentStatus: 'active',
   isAdmin: true,
+  accountActivatedAt: new Date(new Date().setMonth(new Date().getMonth() - 11)).toISOString(), // Activated 11 months ago
 };
 
 export const MOCK_ADDITIONAL_USER_1: UserProfile = {
@@ -88,6 +89,7 @@ export const MOCK_ADDITIONAL_USER_1: UserProfile = {
   phone: '+37060054321',
   paymentStatus: 'active',
   isAdmin: false,
+  accountActivatedAt: new Date(new Date().setDate(new Date().getDate() - 10)).toISOString(), // Activated 10 days ago
 };
 
 export const MOCK_ADDITIONAL_USER_2: UserProfile = {
@@ -100,6 +102,7 @@ export const MOCK_ADDITIONAL_USER_2: UserProfile = {
   phone: '+37060098765',
   paymentStatus: 'inactive',
   isAdmin: false,
+  accountActivatedAt: new Date('2023-01-15T00:00:00.000Z').toISOString(), // Was active, now inactive
 };
 
 export const MOCK_ADDITIONAL_USER_3: UserProfile = {
@@ -110,43 +113,42 @@ export const MOCK_ADDITIONAL_USER_3: UserProfile = {
   contactPerson: 'Laura Laurinavičė',
   email: 'laura@logist.lt',
   phone: '+37060011122',
-  paymentStatus: 'pending_verification', // This user will be pending
+  paymentStatus: 'pending_verification',
   isAdmin: false,
+  accountActivatedAt: undefined, // Not yet active
 };
 
 
 export const MOCK_ALL_USERS: UserProfile[] = [MOCK_USER, MOCK_ADDITIONAL_USER_1, MOCK_ADDITIONAL_USER_2, MOCK_ADDITIONAL_USER_3];
 
-// LocalStorage keys
 const LOCAL_STORAGE_USERS_KEY = 'driverShieldAllUsers';
 
-// Function to get all users (from MOCK_ALL_USERS and localStorage)
 export function getAllUsers(): UserProfile[] {
-  let combinedUsers: UserProfile[] = [...MOCK_ALL_USERS];
+  let combinedUsers: UserProfile[] = [...MOCK_ALL_USERS.map(u => ({...u}))]; // Create copies to avoid modifying mocks directly
   if (typeof window !== 'undefined') {
     const storedUsersJSON = localStorage.getItem(LOCAL_STORAGE_USERS_KEY);
     if (storedUsersJSON) {
       try {
         const localUsers: UserProfile[] = JSON.parse(storedUsersJSON);
-        // Merge and deduplicate, giving preference to localStorage for existing mock IDs if they were modified
         const usersMap = new Map<string, UserProfile>();
-        MOCK_ALL_USERS.forEach(user => usersMap.set(user.id, user));
-        localUsers.forEach(user => usersMap.set(user.id, user)); // Overwrites mocks if ID matches
+        
+        // Add initial mock users to map
+        MOCK_ALL_USERS.forEach(user => usersMap.set(user.id, {...user}));
+        
+        // Add/overwrite with local users
+        localUsers.forEach(user => usersMap.set(user.id, user)); 
         combinedUsers = Array.from(usersMap.values());
       } catch (e) {
         console.error("Failed to parse users from localStorage", e);
-        // Fallback to mocks if parsing fails
-         localStorage.removeItem(LOCAL_STORAGE_USERS_KEY); // Clear corrupted data
+        localStorage.removeItem(LOCAL_STORAGE_USERS_KEY);
       }
     } else {
-      // Initialize localStorage with MOCK_ALL_USERS if it's empty
       localStorage.setItem(LOCAL_STORAGE_USERS_KEY, JSON.stringify(MOCK_ALL_USERS));
     }
   }
   return combinedUsers;
 }
 
-// Function to save all users to localStorage
 export function saveAllUsers(users: UserProfile[]): void {
   if (typeof window !== 'undefined') {
     localStorage.setItem(LOCAL_STORAGE_USERS_KEY, JSON.stringify(users));
@@ -174,8 +176,8 @@ export const MOCK_USER_REPORTS: Report[] = [
     category: "greicio_virijimas",
     tags: ["pasikartojantis", "pavojingas_vairavimas"],
     comment: "GPS duomenys rodo pakartotinį greičio viršijimą gyvenvietėse. Buvo įspėta, tačiau situacija kartojasi.",
-    imageUrl: "https://placehold.co/300x200.png",
-    dataAiHint: "speeding ticket",
+    imageUrl: "https://placehold.co/600x400.png",
+    dataAiHint: "speeding ticket document",
     createdAt: new Date("2024-01-10T16:45:00Z"),
   },
 ];
@@ -230,7 +232,6 @@ export const combineAndDeduplicateReports = (...reportArrays: Report[][]): Repor
   const uniqueReportsMap = new Map<string, Report>();
   combined.forEach(report => {
     if (!uniqueReportsMap.has(report.id)) {
-      // Ensure createdAt is a Date object before storing
       uniqueReportsMap.set(report.id, { ...report, createdAt: new Date(report.createdAt) });
     }
   });
