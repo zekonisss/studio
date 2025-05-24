@@ -23,25 +23,25 @@ export interface Report {
   comment: string;
   imageUrl?: string;
   dataAiHint?: string;
-  createdAt: Date;
+  createdAt: Date; // Ensure this is always a Date object
 }
 
 export interface SearchLog {
   id: string;
   userId: string;
   searchText: string;
-  timestamp: Date;
+  timestamp: Date; // Ensure this is always a Date object
   resultsCount: number;
 }
 
-export type ReportCategory =
+export type ReportCategoryValue =
   | 'kuro_vagyste'
   | 'zala_technikai'
   | 'netinkamas_elgesys'
   | 'greicio_virijimas'
   | 'kita';
 
-export const reportCategories: { value: ReportCategory, label: string }[] = [
+export const reportCategories: { value: ReportCategoryValue, label: string }[] = [
   { value: 'kuro_vagyste', label: 'Kuro vagystė' },
   { value: 'zala_technikai', label: 'Žala technikai' },
   { value: 'netinkamas_elgesys', label: 'Netinkamas elgesys' },
@@ -49,13 +49,13 @@ export const reportCategories: { value: ReportCategory, label: string }[] = [
   { value: 'kita', label: 'Kita' },
 ];
 
-export type ReportTag =
+export type ReportTagValue =
   | 'pasikartojantis'
   | 'pavojingas_vairavimas'
   | 'konfliktiskas'
   | 'rekomenduojama_patikrinti';
 
-export const reportTags: { value: ReportTag, label: string }[] = [
+export const reportTags: { value: ReportTagValue, label: string }[] = [
   { value: 'pasikartojantis', label: 'Pasikartojantis pažeidimas' },
   { value: 'pavojingas_vairavimas', label: 'Pavojingas vairavimas' },
   { value: 'konfliktiskas', label: 'Konfliktiškas asmuo' },
@@ -66,7 +66,7 @@ export const reportTags: { value: ReportTag, label: string }[] = [
 
 export const MOCK_USER: UserProfile = {
   id: 'dev-user-123',
-  companyName: 'UAB "DriverShield Demo"', // Updated company name for clarity
+  companyName: 'UAB "DriverShield Demo"',
   companyCode: '123456789',
   address: 'Vilniaus g. 1, Vilnius',
   contactPerson: 'Vardenis Pavardenis',
@@ -100,14 +100,26 @@ export const MOCK_ADDITIONAL_USER_2: UserProfile = {
   isAdmin: false,
 };
 
-export const MOCK_ALL_USERS: UserProfile[] = [MOCK_USER, MOCK_ADDITIONAL_USER_1, MOCK_ADDITIONAL_USER_2];
+export const MOCK_ADDITIONAL_USER_3: UserProfile = {
+  id: 'dev-user-101',
+  companyName: 'MB "Logist"',
+  companyCode: '555444333',
+  address: 'Panevėžio g. 10, Panevėžys',
+  contactPerson: 'Laura Laurinavičė',
+  email: 'laura@logist.lt',
+  phone: '+37060011122',
+  paymentStatus: 'pending_verification',
+  isAdmin: false,
+};
 
 
-// Base reports specifically by MOCK_USER (previously mockUserReportsBase)
+export const MOCK_ALL_USERS: UserProfile[] = [MOCK_USER, MOCK_ADDITIONAL_USER_1, MOCK_ADDITIONAL_USER_2, MOCK_ADDITIONAL_USER_3];
+
+
 export const MOCK_USER_REPORTS: Report[] = [
   {
     id: "report-user-1",
-    reporterId: "dev-user-123", // MOCK_USER ID
+    reporterId: "dev-user-123",
     reporterCompanyName: 'UAB "DriverShield Demo"',
     fullName: "Antanas Antanaitis",
     birthYear: 1992,
@@ -118,7 +130,7 @@ export const MOCK_USER_REPORTS: Report[] = [
   },
   {
     id: "report-user-2",
-    reporterId: "dev-user-123", // MOCK_USER ID
+    reporterId: "dev-user-123",
     reporterCompanyName: 'UAB "DriverShield Demo"',
     fullName: "Zita Zitaite",
     category: "greicio_virijimas",
@@ -130,7 +142,6 @@ export const MOCK_USER_REPORTS: Report[] = [
   },
 ];
 
-// General mock reports, can be from various reporters (previously mockReportsBase)
 export const MOCK_GENERAL_REPORTS: Report[] = [
   {
     id: "report-general-1",
@@ -155,23 +166,35 @@ export const MOCK_GENERAL_REPORTS: Report[] = [
     comment: "Grįžus iš reiso, pastebėta didelė žala priekabos šonui. Vairuotojas teigia nieko nepastebejęs. Rekomenduojama atlikti nuodugnesnį tyrimą.",
     createdAt: new Date("2023-11-01T14:00:00Z"),
   },
+  {
+    id: "report-general-3-from-456",
+    reporterId: "dev-user-456", // MOCK_ADDITIONAL_USER_1 ID
+    reporterCompanyName: 'UAB "Greiti Ratai"',
+    fullName: "Kazys Kazlauskas",
+    birthYear: 1978,
+    category: "netinkamas_elgesys",
+    tags: ["konfliktiskas"],
+    comment: "Vėlavo pristatyti krovinį 2 valandas be pateisinamos priežasties, grubiai bendravo su sandėlio darbuotojais.",
+    imageUrl: "https://placehold.co/600x400.png",
+    dataAiHint: "angry driver",
+    createdAt: new Date("2024-03-01T11:00:00Z"),
+  },
 ];
 
-// Base mock data for search logs of MOCK_USER (previously mockSearchLogsBase)
 export const MOCK_USER_SEARCH_LOGS: SearchLog[] = [
   { id: "mocklog1", userId: "dev-user-123", searchText: "Jonas Jonaitis (Demo)", timestamp: new Date("2024-03-10T10:00:00Z"), resultsCount: 2 },
   { id: "mocklog2", userId: "dev-user-123", searchText: "AB123XYZ (Demo)", timestamp: new Date("2024-03-09T15:30:00Z"), resultsCount: 0 },
   { id: "mocklog3", userId: "dev-user-123", searchText: "Petras Petraitis (Demo)", timestamp: new Date("2024-03-09T11:20:00Z"), resultsCount: 1 },
 ];
 
-// Helper to combine and deduplicate reports by ID
 export const combineAndDeduplicateReports = (...reportArrays: Report[][]): Report[] => {
   const combined = reportArrays.flat();
   const uniqueReportsMap = new Map<string, Report>();
   combined.forEach(report => {
     if (!uniqueReportsMap.has(report.id)) {
-      uniqueReportsMap.set(report.id, report);
+      // Ensure createdAt is a Date object before storing
+      uniqueReportsMap.set(report.id, { ...report, createdAt: new Date(report.createdAt) });
     }
   });
-  return Array.from(uniqueReportsMap.values()).sort((a,b) => b.createdAt.getTime() - a.createdAt.getTime());
+  return Array.from(uniqueReportsMap.values()).sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 };
