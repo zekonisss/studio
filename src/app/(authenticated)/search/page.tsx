@@ -91,7 +91,7 @@ export default function SearchPage() {
           report.tags.some(tag => tag.toLowerCase().includes(query.replace(/ /g, '_'))) ||
           report.comment.toLowerCase().includes(query) ||
           (report.reporterCompanyName && report.reporterCompanyName.toLowerCase().includes(query))
-      ).sort((a,b) => b.createdAt.getTime() - a.createdAt.getTime());
+      ).sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     }
 
 
@@ -240,8 +240,16 @@ export default function SearchPage() {
                        <h4 className="font-semibold text-sm text-muted-foreground mb-2 flex items-center">
                         <ImageIcon className="mr-1.5 h-4 w-4" /> Pridėtas failas/nuotrauka
                       </h4>
-                      <div className="aspect-video w-full relative rounded-lg overflow-hidden border border-border shadow-sm">
-                        <Image src={report.imageUrl} alt={`Vaizdas pranešimui apie ${report.fullName}`} layout="fill" objectFit="cover" data-ai-hint={report.dataAiHint || "incident document"} />
+                      <div className="w-full overflow-hidden rounded-lg border border-border shadow-sm">
+                        <Image
+                          src={report.imageUrl}
+                          alt={`Vaizdas pranešimui apie ${report.fullName}`}
+                          width={600}
+                          height={400}
+                          layout="responsive"
+                          objectFit="contain"
+                          data-ai-hint={report.dataAiHint || "incident document"}
+                        />
                       </div>
                     </div>
                   )}
@@ -265,3 +273,5 @@ export default function SearchPage() {
     </div>
   );
 }
+
+    

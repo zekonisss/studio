@@ -345,11 +345,13 @@ export default function AdminPage() {
               {selectedReportForDetails.imageUrl && (
                 <div className="space-y-1">
                   <h4 className="text-sm font-medium text-muted-foreground flex items-center"><ImageIcon className="mr-2 h-4 w-4" />Pridėtas Failas/Nuotrauka</h4>
-                  <div className="relative aspect-video w-full overflow-hidden rounded-md border">
-                    <NextImage // Use NextImage
+                  <div className="w-full overflow-hidden rounded-md border">
+                    <NextImage 
                         src={selectedReportForDetails.imageUrl}
                         alt={`Pranešimo nuotrauka ${selectedReportForDetails.fullName}`}
-                        layout="fill"
+                        width={600}
+                        height={400}
+                        layout="responsive"
                         objectFit="contain"
                         data-ai-hint={selectedReportForDetails.dataAiHint || "report image"}
                     />
@@ -380,3 +382,5 @@ export default function AdminPage() {
     </div>
   );
 }
+
+    
