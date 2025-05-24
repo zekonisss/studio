@@ -73,7 +73,7 @@ export const MOCK_USER: UserProfile = {
   email: 'sarunas.zekonis@gmail.com',
   phone: '+37060012345',
   paymentStatus: 'active',
-  isAdmin: true, // Set MOCK_USER as admin
+  isAdmin: true, // Ensure MOCK_USER is admin
 };
 
     
