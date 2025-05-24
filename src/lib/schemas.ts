@@ -1,3 +1,4 @@
+
 import { z } from 'zod';
 
 export const SignUpSchema = z.object({
@@ -26,6 +27,7 @@ export type LoginFormValues = z.infer<typeof LoginSchema>;
 
 export const ReportSchema = z.object({
   fullName: z.string().min(3, { message: "Vardas ir pavardė turi būti bent 3 simbolių ilgio." }),
+  nationality: z.string().optional(),
   birthYear: z.number().int().min(1900).max(new Date().getFullYear()).optional().or(z.literal('')),
   category: z.string().min(1, { message: "Kategorija yra privaloma." }),
   tags: z.array(z.string()).optional(),
@@ -40,3 +42,4 @@ export const SearchSchema = z.object({
 });
 
 export type SearchFormValues = z.infer<typeof SearchSchema>;
+

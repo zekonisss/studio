@@ -12,10 +12,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ReportSchema, type ReportFormValues } from "@/lib/schemas";
-import { reportCategories, reportTags, ReportCategory, ReportTag, Report } from "@/types";
+import { reportCategories, reportTags, Report, countries } from "@/types";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, FilePlus2, User, CalendarDays, Tag, MessageSquare, Paperclip } from "lucide-react";
+import { Loader2, FilePlus2, User, CalendarDays, Tag, MessageSquare, Paperclip, Globe } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 const LOCAL_STORAGE_REPORTS_KEY = 'driverShieldReports';
@@ -49,6 +49,7 @@ export default function AddReportPage() {
     resolver: zodResolver(ReportSchema),
     defaultValues: {
       fullName: "",
+      nationality: "",
       birthYear: undefined,
       category: "",
       tags: [],
@@ -65,8 +66,7 @@ export default function AddReportPage() {
       return;
     }
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000)); // Keep short delay for feedback
+    await new Promise(resolve => setTimeout(resolve, 1000)); 
     
     const allReports = getReportsFromLocalStorage();
     const newReport: Report = {
@@ -74,6 +74,7 @@ export default function AddReportPage() {
       reporterId: user.id,
       reporterCompanyName: user.companyName,
       fullName: values.fullName,
+      nationality: values.nationality,
       birthYear: values.birthYear && values.birthYear !== '' ? Number(values.birthYear) : undefined,
       category: values.category,
       tags: values.tags || [],
@@ -119,6 +120,31 @@ export default function AddReportPage() {
                     <FormControl>
                       <Input placeholder="Vardenis Pavardenis" {...field} className="text-base py-2.5"/>
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="nationality"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center text-base"><Globe className="mr-2 h-4 w-4 text-muted-foreground" />Pilietybė (nebūtina)</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger className="text-base py-2.5 h-auto">
+                          <SelectValue placeholder="Pasirinkite pilietybę..." />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {countries.map(country => (
+                          <SelectItem key={country.value} value={country.value} className="text-base">
+                            {country.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}

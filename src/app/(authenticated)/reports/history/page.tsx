@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import type { Report, ReportCategoryValue } from "@/types";
 import { useAuth } from "@/hooks/use-auth";
-import { Loader2, History as HistoryIcon, User, CalendarDays, Tag, MessageSquare, AlertTriangle, Trash2, Eye, PlusCircle, Building2, Image as ImageIcon, FileText } from "lucide-react";
+import { Loader2, History as HistoryIcon, User, CalendarDays, Tag, MessageSquare, AlertTriangle, Trash2, Eye, PlusCircle, Building2, Image as ImageIcon, FileText, Globe } from "lucide-react";
 import { format } from 'date-fns';
 import { lt } from 'date-fns/locale';
 import {
@@ -33,7 +33,7 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { MOCK_USER, MOCK_USER_REPORTS } from "@/types";
+import { MOCK_USER, MOCK_USER_REPORTS, countries } from "@/types";
 
 const LOCAL_STORAGE_REPORTS_KEY = 'driverShieldReports';
 const DESTRUCTIVE_REPORT_CATEGORIES: ReportCategoryValue[] = ['kuro_vagyste', 'neblaivumas_darbe', 'technikos_pazeidimai', 'avaringumas'];
@@ -118,6 +118,13 @@ export default function ReportHistoryPage() {
   const closeDetailsModal = () => {
     setSelectedReportForDetails(null);
   };
+  
+  const getNationalityLabel = (nationalityCode?: string) => {
+    if (!nationalityCode) return "Nenurodyta";
+    const country = countries.find(c => c.value === nationalityCode);
+    return country ? country.label : nationalityCode;
+  };
+
 
   if (isLoading && !user) {
     return (
@@ -271,6 +278,12 @@ export default function ReportHistoryPage() {
                 <h4 className="text-sm font-medium text-muted-foreground flex items-center"><User className="mr-2 h-4 w-4" />Vairuotojas</h4>
                 <p className="text-base text-foreground">{selectedReportForDetails.fullName}</p>
               </div>
+              {selectedReportForDetails.nationality && (
+                <div className="space-y-1">
+                  <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Globe className="mr-2 h-4 w-4" />Pilietybė</h4>
+                  <p className="text-base text-foreground">{getNationalityLabel(selectedReportForDetails.nationality)}</p>
+                </div>
+              )}
               {selectedReportForDetails.birthYear && (
                 <div className="space-y-1">
                   <h4 className="text-sm font-medium text-muted-foreground flex items-center"><CalendarDays className="mr-2 h-4 w-4" />Gimimo Metai</h4>

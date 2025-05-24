@@ -11,12 +11,12 @@ import { Input } from "@/components/ui/input";
 import { SearchSchema, type SearchFormValues } from "@/lib/schemas";
 import type { Report, SearchLog, ReportCategoryValue } from "@/types";
 import { useAuth } from "@/hooks/use-auth";
-import { Loader2, Search as SearchIcon, User, CalendarDays, Tag, MessageSquare, AlertCircle, FileText, Image as ImageIcon } from "lucide-react";
+import { Loader2, Search as SearchIcon, User, CalendarDays, Tag, MessageSquare, AlertCircle, FileText, Image as ImageIcon, Globe } from "lucide-react";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { format } from 'date-fns';
 import { lt } from 'date-fns/locale';
-import { MOCK_GENERAL_REPORTS, combineAndDeduplicateReports } from "@/types";
+import { MOCK_GENERAL_REPORTS, combineAndDeduplicateReports, countries } from "@/types";
 
 
 const LOCAL_STORAGE_REPORTS_KEY = 'driverShieldReports';
@@ -56,6 +56,12 @@ function saveSearchLogsToLocalStorage(logs: SearchLog[]): void {
   }
 }
 
+const getNationalityLabel = (nationalityCode?: string) => {
+    if (!nationalityCode) return "";
+    const country = countries.find(c => c.value === nationalityCode);
+    return country ? country.label : nationalityCode;
+};
+
 
 export default function SearchPage() {
   const { user } = useAuth();
@@ -87,6 +93,7 @@ export default function SearchPage() {
         report =>
           report.fullName.toLowerCase().includes(query) ||
           report.id.toLowerCase().includes(query) ||
+          (report.nationality && getNationalityLabel(report.nationality).toLowerCase().includes(query)) ||
           (report.birthYear && report.birthYear.toString().includes(query)) ||
           report.category.toLowerCase().includes(query.replace(/ /g, '_')) ||
           report.tags.some(tag => tag.toLowerCase().includes(query.replace(/ /g, '_'))) ||
@@ -124,7 +131,7 @@ export default function SearchPage() {
             Vairuotojų Paieška
           </CardTitle>
           <CardDescription>
-            Įveskite vairuotojo vardą, pavardę, įmonės kodą, pranešimo raktažodį ar kitą informaciją.
+            Įveskite vairuotojo vardą, pavardę, pilietybę, įmonės kodą, pranešimo raktažodį ar kitą informaciją.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -137,7 +144,7 @@ export default function SearchPage() {
                   <FormItem className="flex-grow w-full sm:w-auto">
                     <FormLabel className="sr-only">Paieškos frazė</FormLabel>
                     <FormControl>
-                      <Input placeholder="Vardas Pavardė, kodas, raktažodis..." {...field} className="text-base h-12"/>
+                      <Input placeholder="Vardas Pavardė, pilietybė, kodas, raktažodis..." {...field} className="text-base h-12"/>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -196,20 +203,35 @@ export default function SearchPage() {
             {searchResults.map((report) => (
               <Card key={report.id} className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow">
                 <CardHeader className="bg-muted/30 p-4 border-b">
-                  <CardTitle className="text-xl flex items-center">
-                    <User className="mr-2 h-5 w-5 text-primary" />
-                    {report.fullName}
-                  </CardTitle>
-                  {report.birthYear && (
-                     <CardDescription className="flex items-center text-sm">
-                        <CalendarDays className="mr-1.5 h-4 w-4 text-muted-foreground" />
-                        Gimimo metai: {report.birthYear}
-                    </CardDescription>
-                  )}
+                  <div className="flex justify-between items-start">
+                    <div>
+                        <CardTitle className="text-xl flex items-center">
+                            <User className="mr-2 h-5 w-5 text-primary" />
+                            {report.fullName}
+                        </CardTitle>
+                        <div className="flex items-center text-sm space-x-4">
+                            {report.nationality && (
+                                <span className="flex items-center text-muted-foreground">
+                                    <Globe className="mr-1.5 h-4 w-4" />
+                                    {getNationalityLabel(report.nationality)}
+                                </span>
+                            )}
+                            {report.birthYear && (
+                                <span className="flex items-center text-muted-foreground">
+                                    <CalendarDays className="mr-1.5 h-4 w-4" />
+                                    G.m.: {report.birthYear}
+                                </span>
+                            )}
+                        </div>
+                    </div>
+                    <Badge variant={DESTRUCTIVE_REPORT_CATEGORIES.includes(report.category as ReportCategoryValue) ? 'destructive' : 'secondary'} className="text-base py-1 px-3 ml-auto self-start">
+                        {report.category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                    </Badge>
+                  </div>
                 </CardHeader>
                 <CardContent className="p-4 md:p-6 grid md:grid-cols-3 gap-6">
                   <div className="md:col-span-2 space-y-4">
-                    <div>
+                     <div>
                       <h4 className="font-semibold text-sm text-muted-foreground mb-1 flex items-center">
                         <Tag className="mr-1.5 h-4 w-4" /> Kategorija
                       </h4>

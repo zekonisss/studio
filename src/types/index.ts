@@ -19,6 +19,7 @@ export interface Report {
   reporterId: string;
   reporterCompanyName?: string;
   fullName: string;
+  nationality?: string;
   birthYear?: number;
   category: string; // Should match ReportCategoryValue
   tags: string[]; // Should match ReportTagValue elements
@@ -35,6 +36,21 @@ export interface SearchLog {
   timestamp: Date; 
   resultsCount: number;
 }
+
+export const countries: { value: string, label: string }[] = [
+  { value: 'LT', label: 'Lietuva' },
+  { value: 'LV', label: 'Latvija' },
+  { value: 'EE', label: 'Estija' },
+  { value: 'PL', label: 'Lenkija' },
+  { value: 'DE', label: 'Vokietija' },
+  { value: 'UA', label: 'Ukraina' },
+  { value: 'BY', label: 'Baltarusija' },
+  { value: 'RU', label: 'Rusija (teroristinė valstybė)' },
+  { value: 'GB', label: 'Jungtinė Karalystė' },
+  { value: 'US', label: 'JAV' },
+  { value: 'OTHER', label: 'Kita / Nenurodyta' }
+  // Čia galima pridėti daugiau šalių pagal poreikį
+];
 
 export type ReportCategoryValue =
   | 'kuro_vagyste'
@@ -53,7 +69,7 @@ export const reportCategories: { value: ReportCategoryValue, label: string }[] =
   { value: 'technikos_pazeidimai', label: 'Technikos pažeidimai' },
   { value: 'netinkamas_elgesys_darbe', label: 'Netinkamas elgesys darbe (kolegų atžvilgiu, agresija, necenzūrinė kalba ir pan.)' },
   { value: 'neaiskinamas_neatvykimas', label: 'Nepaaiškinamas neatvykimas į darbą' },
-  { value: 'kreipimasis_institucijos', label: 'Kreipimasis į institucijas (pvz., darbo inspekciją dėl netikslumų ar keršto)' },
+  { value: 'kreipimasis_institucijos', label: "Kreipimasis į institucijas (pvz., darbo inspekciją dėl netikslumų ar keršto)" },
   { value: 'kita', label: 'Kita' },
 ];
 
@@ -171,6 +187,7 @@ export const MOCK_USER_REPORTS: Report[] = [
     reporterId: "dev-user-123",
     reporterCompanyName: 'UAB "DriverShield Demo"',
     fullName: "Antanas Antanaitis",
+    nationality: "LT",
     birthYear: 1992,
     category: "netinkamas_elgesys_darbe",
     tags: ["konfliktiskas", "konfliktas_su_klientu"], 
@@ -182,6 +199,7 @@ export const MOCK_USER_REPORTS: Report[] = [
     reporterId: "dev-user-123",
     reporterCompanyName: 'UAB "DriverShield Demo"',
     fullName: "Zita Zitaite",
+    nationality: "LT",
     category: "avaringumas", 
     tags: ["pasikartojantis", "pavojingas_vairavimas"],
     comment: "GPS duomenys rodo pakartotinį greičio viršijimą gyvenvietėse. Buvo įspėta, tačiau situacija kartojasi.",
@@ -197,6 +215,7 @@ export const MOCK_GENERAL_REPORTS: Report[] = [
     reporterId: "user-generic-1",
     reporterCompanyName: "UAB Logistika LT",
     fullName: "Jonas Jonaitis",
+    nationality: "PL",
     birthYear: 1985,
     category: "kuro_vagyste",
     tags: ["pasikartojantis", "neatsakingas_poziuris"], 
@@ -210,6 +229,7 @@ export const MOCK_GENERAL_REPORTS: Report[] = [
     reporterId: "user-generic-2",
     reporterCompanyName: "UAB Greiti Pervežimai",
     fullName: "Petras Petraitis",
+    nationality: "UA",
     category: "technikos_pazeidimai", 
     tags: ["rekomenduojama_patikrinti", "neatsakingas_poziuris"],
     comment: "Grįžus iš reiso, pastebėta didelė žala priekabos šonui. Vairuotojas teigia nieko nepastebejęs. Rekomenduojama atlikti nuodugnesnį tyrimą.",
@@ -220,6 +240,7 @@ export const MOCK_GENERAL_REPORTS: Report[] = [
     reporterId: "dev-user-456", 
     reporterCompanyName: 'UAB "Greiti Ratai"',
     fullName: "Kazys Kazlauskas",
+    nationality: "BY",
     birthYear: 1978,
     category: "netinkamas_elgesys_darbe",
     tags: ["konfliktiskas", "pakenkta_reputacijai"],
@@ -288,3 +309,4 @@ export function saveSearchLogsToLocalStoragePublic(logs: SearchLog[]): void {
     localStorage.setItem(LOCAL_STORAGE_SEARCH_LOGS_KEY, JSON.stringify(logs));
   }
 }
+

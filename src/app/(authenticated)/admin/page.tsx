@@ -12,9 +12,9 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Loader2, ShieldAlert, Users, FileText, AlertTriangle, Trash2, Eye, MoreHorizontal, BarChart3, UserCheck, UserX, UserCog, CalendarDays, Building2, Tag, MessageSquare, Image as ImageIcon, CheckCircle2, CreditCard, Send, Briefcase, MapPin, Phone, Mail, ShieldCheck as ShieldCheckIcon, User as UserIcon } from "lucide-react";
+import { Loader2, ShieldAlert, Users, FileText, AlertTriangle, Trash2, Eye, MoreHorizontal, BarChart3, UserCheck, UserX, UserCog, CalendarDays, Building2, Tag, MessageSquare, Image as ImageIcon, CheckCircle2, CreditCard, Send, Briefcase, MapPin, Phone, Mail, ShieldCheck as ShieldCheckIcon, User as UserIcon, Globe } from "lucide-react";
 import type { UserProfile, Report, ReportCategoryValue } from "@/types";
-import { getAllUsers, saveAllUsers, MOCK_GENERAL_REPORTS, combineAndDeduplicateReports } from "@/types";
+import { getAllUsers, saveAllUsers, MOCK_GENERAL_REPORTS, combineAndDeduplicateReports, countries } from "@/types";
 import { format as formatDateFn, addYears } from 'date-fns';
 import { lt } from 'date-fns/locale';
 import { useToast } from "@/hooks/use-toast";
@@ -44,6 +44,11 @@ function saveReportsToLocalStorage(reports: Report[]): void {
 
 const DESTRUCTIVE_REPORT_CATEGORIES: ReportCategoryValue[] = ['kuro_vagyste', 'neblaivumas_darbe', 'technikos_pazeidimai', 'avaringumas'];
 
+const getNationalityLabel = (nationalityCode?: string) => {
+    if (!nationalityCode) return "Nenurodyta";
+    const country = countries.find(c => c.value === nationalityCode);
+    return country ? country.label : nationalityCode;
+};
 
 export default function AdminPage() {
   const { user: adminUser, loading: authLoading } = useAuth();
@@ -99,7 +104,6 @@ export default function AdminPage() {
         toastTitle = "Paskyra Aktyvuota";
         toastDescription = `Vartotojo ${targetUser.companyName} mokėjimas 'gautas'. Paskyra sėkmingai aktyvuota.`;
     } else if (newStatus === 'active' && oldStatus === 'pending_verification') {
-        // Direct activation from pending_verification (e.g., if admin confirms identity and payment at once)
         toastTitle = "Paskyra Patvirtinta ir Aktyvuota";
         toastDescription = `Vartotojo ${targetUser.companyName} paskyra patvirtinta ir aktyvuota. Vartotojui 'išsiųstos' instrukcijos.`;
     }
@@ -401,9 +405,15 @@ export default function AdminPage() {
             </DialogHeader>
             <div className="py-4 space-y-4 max-h-[60vh] overflow-y-auto pr-2">
               <div className="space-y-1">
-                <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Users className="mr-2 h-4 w-4" />Vairuotojas</h4>
+                <h4 className="text-sm font-medium text-muted-foreground flex items-center"><User className="mr-2 h-4 w-4" />Vairuotojas</h4>
                 <p className="text-base text-foreground">{selectedReportForDetails.fullName}</p>
               </div>
+               {selectedReportForDetails.nationality && (
+                <div className="space-y-1">
+                  <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Globe className="mr-2 h-4 w-4" />Pilietybė</h4>
+                  <p className="text-base text-foreground">{getNationalityLabel(selectedReportForDetails.nationality)}</p>
+                </div>
+              )}
               {selectedReportForDetails.birthYear && (
                 <div className="space-y-1">
                   <h4 className="text-sm font-medium text-muted-foreground flex items-center"><CalendarDays className="mr-2 h-4 w-4" />Gimimo Metai</h4>
