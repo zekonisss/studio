@@ -1,5 +1,4 @@
 
-
 export interface UserProfile {
   id: string;
   companyName: string;
@@ -8,8 +7,11 @@ export interface UserProfile {
   contactPerson: string;
   email: string;
   phone: string;
-  paymentStatus: 'active' | 'inactive' | 'pending_verification';
+  paymentStatus: 'active' | 'inactive' | 'pending_verification' | 'pending_payment'; // Added pending_payment for future
   isAdmin?: boolean;
+  // Fields for newly registered users that might not be in MOCK_USER initially
+  password?: string; // Only for temporary storage before real auth
+  agreeToTerms?: boolean;
 }
 
 export interface Report {
@@ -108,12 +110,48 @@ export const MOCK_ADDITIONAL_USER_3: UserProfile = {
   contactPerson: 'Laura Laurinavičė',
   email: 'laura@logist.lt',
   phone: '+37060011122',
-  paymentStatus: 'pending_verification',
+  paymentStatus: 'pending_verification', // This user will be pending
   isAdmin: false,
 };
 
 
 export const MOCK_ALL_USERS: UserProfile[] = [MOCK_USER, MOCK_ADDITIONAL_USER_1, MOCK_ADDITIONAL_USER_2, MOCK_ADDITIONAL_USER_3];
+
+// LocalStorage keys
+const LOCAL_STORAGE_USERS_KEY = 'driverShieldAllUsers';
+
+// Function to get all users (from MOCK_ALL_USERS and localStorage)
+export function getAllUsers(): UserProfile[] {
+  let combinedUsers: UserProfile[] = [...MOCK_ALL_USERS];
+  if (typeof window !== 'undefined') {
+    const storedUsersJSON = localStorage.getItem(LOCAL_STORAGE_USERS_KEY);
+    if (storedUsersJSON) {
+      try {
+        const localUsers: UserProfile[] = JSON.parse(storedUsersJSON);
+        // Merge and deduplicate, giving preference to localStorage for existing mock IDs if they were modified
+        const usersMap = new Map<string, UserProfile>();
+        MOCK_ALL_USERS.forEach(user => usersMap.set(user.id, user));
+        localUsers.forEach(user => usersMap.set(user.id, user)); // Overwrites mocks if ID matches
+        combinedUsers = Array.from(usersMap.values());
+      } catch (e) {
+        console.error("Failed to parse users from localStorage", e);
+        // Fallback to mocks if parsing fails
+         localStorage.removeItem(LOCAL_STORAGE_USERS_KEY); // Clear corrupted data
+      }
+    } else {
+      // Initialize localStorage with MOCK_ALL_USERS if it's empty
+      localStorage.setItem(LOCAL_STORAGE_USERS_KEY, JSON.stringify(MOCK_ALL_USERS));
+    }
+  }
+  return combinedUsers;
+}
+
+// Function to save all users to localStorage
+export function saveAllUsers(users: UserProfile[]): void {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(LOCAL_STORAGE_USERS_KEY, JSON.stringify(users));
+  }
+}
 
 
 export const MOCK_USER_REPORTS: Report[] = [

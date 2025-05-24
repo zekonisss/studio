@@ -12,13 +12,13 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Loader2, ShieldAlert, Users, FileText, AlertTriangle, Trash2, Eye, MoreHorizontal, BarChart3, UserCheck, UserX, UserCog, CalendarDays, Building2, Tag, MessageSquare, Image as ImageIcon } from "lucide-react";
+import { Loader2, ShieldAlert, Users, FileText, AlertTriangle, Trash2, Eye, MoreHorizontal, BarChart3, UserCheck, UserX, UserCog, CalendarDays, Building2, Tag, MessageSquare, Image as ImageIcon, CheckCircle2 } from "lucide-react";
 import type { UserProfile, Report } from "@/types";
-import { MOCK_ALL_USERS as initialMockUsers, MOCK_GENERAL_REPORTS, combineAndDeduplicateReports } from "@/types";
+import { getAllUsers, saveAllUsers, MOCK_GENERAL_REPORTS, combineAndDeduplicateReports } from "@/types";
 import { format } from 'date-fns';
 import { lt } from 'date-fns/locale';
 import { useToast } from "@/hooks/use-toast";
-import NextImage from "next/image"; // Renamed to avoid conflict with Lucide's Image icon
+import NextImage from "next/image"; 
 
 const LOCAL_STORAGE_REPORTS_KEY = 'driverShieldReports';
 
@@ -42,37 +42,60 @@ function saveReportsToLocalStorage(reports: Report[]): void {
 }
 
 export default function AdminPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user: adminUser, loading: authLoading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
 
   const [allReports, setAllReports] = useState<Report[]>([]);
-  const [mockUsers, setMockUsers] = useState<UserProfile[]>(initialMockUsers);
+  const [allUsersState, setAllUsersState] = useState<UserProfile[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [selectedReportForDetails, setSelectedReportForDetails] = useState<Report | null>(null);
   const [deletingReportId, setDeletingReportId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!authLoading && (!user || !user.isAdmin)) {
+    if (!authLoading && (!adminUser || !adminUser.isAdmin)) {
       router.replace('/dashboard');
     }
-    if (user && user.isAdmin) {
+    if (adminUser && adminUser.isAdmin) {
+      const fetchedUsers = getAllUsers();
+      setAllUsersState(fetchedUsers.sort((a,b) => (a.companyName || "").localeCompare(b.companyName || "")));
+      
       const localReports = getReportsFromLocalStorage();
       const combined = combineAndDeduplicateReports(localReports, MOCK_GENERAL_REPORTS);
       setAllReports(combined.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
       setIsLoadingData(false);
     }
-  }, [user, authLoading, router]);
+  }, [adminUser, authLoading, router]);
 
   const handleUserStatusChange = (userId: string, newStatus: UserProfile['paymentStatus']) => {
-    setMockUsers(prevUsers =>
-      prevUsers.map(u => (u.id === userId ? { ...u, paymentStatus: newStatus } : u))
+    const updatedUsers = allUsersState.map(u => 
+      u.id === userId ? { ...u, paymentStatus: newStatus } : u
     );
-    const targetUser = mockUsers.find(u=>u.id === userId);
+    setAllUsersState(updatedUsers);
+    saveAllUsers(updatedUsers); // Save updated list to localStorage
+
+    const targetUser = updatedUsers.find(u=>u.id === userId);
+    let statusText = "";
+    switch(newStatus) {
+        case 'active': statusText = 'Aktyvi'; break;
+        case 'inactive': statusText = 'Neaktyvi'; break;
+        case 'pending_verification': statusText = 'Laukiama patvirtinimo'; break;
+        case 'pending_payment': statusText = 'Laukiama apmokėjimo'; break;
+        default: statusText = newStatus;
+    }
+
     toast({
       title: "Vartotojo būsena pakeista",
-      description: `Vartotojo ${targetUser?.companyName} būsena nustatyta į "${newStatus === 'active' ? 'Aktyvi' : newStatus === 'inactive' ? 'Neaktyvi' : 'Laukiama patvirtinimo'}".`,
+      description: `Vartotojo ${targetUser?.companyName} (${targetUser?.email}) būsena nustatyta į "${statusText}".`,
     });
+
+    if (newStatus === 'active' && targetUser?.paymentStatus !== 'active') {
+         toast({
+            title: "Simuliuojamas pranešimas vartotojui",
+            description: `Vartotojui ${targetUser?.email} "išsiųstos" instrukcijos dėl apmokėjimo ir paskyra aktyvuota.`,
+            duration: 5000,
+         });
+    }
   };
 
   const handleViewReportDetails = (report: Report) => {
@@ -84,21 +107,15 @@ export default function AdminPage() {
   };
 
   const handleDeleteReport = async (reportId: string) => {
-    setDeletingReportId(reportId); // For loading state on button
-    
-    // Simulate API call
+    setDeletingReportId(reportId); 
     await new Promise(resolve => setTimeout(resolve, 700));
-
     const updatedReports = allReports.filter(report => report.id !== reportId);
     setAllReports(updatedReports);
-
-    // Also remove from localStorage if it exists there
     const localReports = getReportsFromLocalStorage();
     const updatedLocalReports = localReports.filter(report => report.id !== reportId);
     if (localReports.length !== updatedLocalReports.length) {
       saveReportsToLocalStorage(updatedLocalReports);
     }
-    
     toast({
       title: "Pranešimas pašalintas",
       description: "Pasirinktas pranešimas buvo sėkmingai pašalintas.",
@@ -107,13 +124,34 @@ export default function AdminPage() {
   };
 
 
-  if (authLoading || !user || !user.isAdmin || isLoadingData) {
+  if (authLoading || !adminUser || !adminUser.isAdmin || isLoadingData) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
       </div>
     );
   }
+  
+  const getStatusBadgeVariant = (status: UserProfile['paymentStatus']) => {
+    switch (status) {
+      case 'active': return 'default';
+      case 'pending_verification': return 'secondary';
+      case 'pending_payment': return 'outline'; // A different style for this
+      case 'inactive': return 'destructive';
+      default: return 'outline';
+    }
+  };
+
+  const getStatusText = (status: UserProfile['paymentStatus']) => {
+     switch (status) {
+      case 'active': return 'Aktyvi';
+      case 'pending_verification': return 'Laukia Patvirtinimo';
+      case 'pending_payment': return 'Laukia Apmokėjimo';
+      case 'inactive': return 'Neaktyvi';
+      default: return status;
+    }
+  }
+
 
   return (
     <div className="container mx-auto py-8">
@@ -140,32 +178,32 @@ export default function AdminPage() {
         <TabsContent value="users">
           <Card className="shadow-xl">
             <CardHeader>
-              <CardTitle>Registruoti Vartotojai ({mockUsers.length})</CardTitle>
+              <CardTitle>Registruoti Vartotojai ({allUsersState.length})</CardTitle>
               <CardDescription>
                 Platformoje registruotų įmonių (vartotojų) sąrašas.
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {mockUsers.length > 0 ? (
+              {allUsersState.length > 0 ? (
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Įmonės Pavadinimas</TableHead>
                       <TableHead className="hidden md:table-cell">Kontaktinis Asmuo</TableHead>
                       <TableHead className="hidden lg:table-cell">El. Paštas</TableHead>
-                      <TableHead className="text-center">Mokėjimo Būsena</TableHead>
+                      <TableHead className="text-center">Būsena</TableHead>
                       <TableHead className="text-right">Veiksmai</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {mockUsers.map((u) => (
+                    {allUsersState.map((u) => (
                       <TableRow key={u.id}>
                         <TableCell className="font-medium">{u.companyName}</TableCell>
                         <TableCell className="hidden md:table-cell">{u.contactPerson}</TableCell>
                         <TableCell className="hidden lg:table-cell">{u.email}</TableCell>
                         <TableCell className="text-center">
-                          <Badge variant={u.paymentStatus === 'active' ? 'default' : (u.paymentStatus === 'pending_verification' ? 'secondary' : 'destructive')}>
-                            {u.paymentStatus === 'active' ? 'Aktyvi' : (u.paymentStatus === 'pending_verification' ? 'Laukiama patv.' : 'Neaktyvi')}
+                          <Badge variant={getStatusBadgeVariant(u.paymentStatus)}>
+                            {getStatusText(u.paymentStatus)}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right">
@@ -179,6 +217,11 @@ export default function AdminPage() {
                             <DropdownMenuContent align="end">
                               <DropdownMenuLabel>Keisti Būseną</DropdownMenuLabel>
                               <DropdownMenuSeparator />
+                              {u.paymentStatus === 'pending_verification' && (
+                                <DropdownMenuItem onClick={() => handleUserStatusChange(u.id, 'active')}>
+                                  <CheckCircle2 className="mr-2 h-4 w-4 text-green-600" /> Patvirtinti ir Aktyvuoti
+                                </DropdownMenuItem>
+                              )}
                               <DropdownMenuItem onClick={() => handleUserStatusChange(u.id, 'active')} disabled={u.paymentStatus === 'active'}>
                                 <UserCheck className="mr-2 h-4 w-4" /> Aktyvuoti
                               </DropdownMenuItem>
@@ -186,7 +229,10 @@ export default function AdminPage() {
                                  <UserX className="mr-2 h-4 w-4" /> Deaktyvuoti
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => handleUserStatusChange(u.id, 'pending_verification')} disabled={u.paymentStatus === 'pending_verification'}>
-                                <UserCog className="mr-2 h-4 w-4" /> Nustatyti "Laukiama patvirtinimo"
+                                <UserCog className="mr-2 h-4 w-4" /> Nustatyti "Laukia Patvirtinimo"
+                              </DropdownMenuItem>
+                               <DropdownMenuItem onClick={() => handleUserStatusChange(u.id, 'pending_payment')} disabled={u.paymentStatus === 'pending_payment'}>
+                                <UserCog className="mr-2 h-4 w-4" /> Nustatyti "Laukia Apmokėjimo"
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -297,7 +343,6 @@ export default function AdminPage() {
             </CardContent>
           </Card>
         </TabsContent>
-
       </Tabs>
 
       {selectedReportForDetails && (
@@ -382,5 +427,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
-    

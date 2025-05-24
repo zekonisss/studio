@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -9,11 +10,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2, UserCircle, Building2, Briefcase, MapPin, User as UserIcon, Mail, Phone, History, ListChecks, Edit3, Save, CreditCard, ShieldCheck } from "lucide-react";
-import type { Report, SearchLog } from "@/types";
+import type { Report, SearchLog, UserProfile } from "@/types";
 import { format } from "date-fns";
 import { lt } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
+import { getAllUsers, saveAllUsers } from "@/types";
+
 
 // Mock data (same as used in respective history pages, filtered for this user)
 const mockUserReports: Report[] = [
@@ -26,7 +29,7 @@ const mockSearchLogs: SearchLog[] = [
 ];
 
 export default function AccountPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, updateUserInContext } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isEditing, setIsEditing] = useState(false);
@@ -63,11 +66,28 @@ export default function AccountPage() {
   };
 
   const handleSave = async () => {
+    if (!user) return;
+
+    setIsEditing(false);
     // Simulate API call to update user details
     console.log("Saving data:", formData);
     await new Promise(resolve => setTimeout(resolve, 1000));
-    setIsEditing(false);
-    // Update user in AuthContext (mock)
+    
+    const allUsers = getAllUsers();
+    const updatedUser = { 
+        ...user, 
+        companyName: formData.companyName,
+        companyCode: formData.companyCode,
+        address: formData.address,
+        contactPerson: formData.contactPerson,
+        email: formData.email, // Email change should ideally be handled with verification
+        phone: formData.phone,
+    };
+
+    const updatedUsersList = allUsers.map(u => u.id === user.id ? updatedUser : u);
+    saveAllUsers(updatedUsersList);
+    updateUserInContext(updatedUser as UserProfile); // Update user in AuthContext and localStorage session
+
     // In real app, Firebase would update and context would refresh
   };
   
@@ -92,7 +112,7 @@ export default function AccountPage() {
       {isEditing && name ? (
         <Input id={name} name={name} value={value} onChange={onChange} className="text-base" />
       ) : (
-        <p className="text-base text-foreground bg-secondary/30 p-2.5 rounded-md min-h-[40px] flex items-center">{value}</p>
+        <p className="text-base text-foreground bg-secondary/30 p-2.5 rounded-md min-h-[40px] flex items-center">{value || "-"}</p>
       )}
     </div>
   );
