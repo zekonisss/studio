@@ -7,7 +7,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import type { Report } from "@/types";
+import type { Report, ReportCategoryValue } from "@/types";
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2, History as HistoryIcon, User, CalendarDays, Tag, MessageSquare, AlertTriangle, Trash2, Eye, PlusCircle, Building2, Image as ImageIcon, FileText } from "lucide-react";
 import { format } from 'date-fns';
@@ -33,9 +33,10 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { MOCK_USER, MOCK_USER_REPORTS, combineAndDeduplicateReports } from "@/types";
+import { MOCK_USER, MOCK_USER_REPORTS } from "@/types";
 
 const LOCAL_STORAGE_REPORTS_KEY = 'driverShieldReports';
+const DESTRUCTIVE_REPORT_CATEGORIES: ReportCategoryValue[] = ['kuro_vagyste', 'neblaivumas_darbe', 'technikos_pazeidimai', 'avaringumas'];
 
 function getReportsFromLocalStorage(): Report[] {
   if (typeof window !== 'undefined') {
@@ -75,7 +76,6 @@ export default function ReportHistoryPage() {
 
         if (user.id === MOCK_USER.id) {
           const userSpecificMocks = MOCK_USER_REPORTS.filter(mr => mr.reporterId === user.id);
-          // Ensure mock reports for the current user are added if not already in localStorage
           userSpecificMocks.forEach(mockReport => {
             if (!combinedReportsForUser.some(lr => lr.id === mockReport.id)) {
               combinedReportsForUser.push(mockReport);
@@ -199,7 +199,7 @@ export default function ReportHistoryPage() {
                       Pranešta: {format(new Date(report.createdAt), "yyyy-MM-dd HH:mm", { locale: lt })}
                     </CardDescription>
                   </div>
-                  <Badge variant={report.category === 'kuro_vagyste' || report.category === 'zala_technikai' ? 'destructive' : 'secondary'}>
+                  <Badge variant={DESTRUCTIVE_REPORT_CATEGORIES.includes(report.category as ReportCategoryValue) ? 'destructive' : 'secondary'}>
                     {report.category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                   </Badge>
                 </div>
@@ -279,7 +279,7 @@ export default function ReportHistoryPage() {
               )}
               <div className="space-y-1">
                 <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Tag className="mr-2 h-4 w-4" />Kategorija</h4>
-                <Badge variant={selectedReportForDetails.category === 'kuro_vagyste' || selectedReportForDetails.category === 'zala_technikai' ? 'destructive' : 'secondary'} className="text-sm">
+                <Badge variant={DESTRUCTIVE_REPORT_CATEGORIES.includes(selectedReportForDetails.category as ReportCategoryValue) ? 'destructive' : 'secondary'} className="text-sm">
                   {selectedReportForDetails.category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                 </Badge>
               </div>

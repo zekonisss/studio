@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { SearchSchema, type SearchFormValues } from "@/lib/schemas";
-import type { Report, SearchLog } from "@/types";
+import type { Report, SearchLog, ReportCategoryValue } from "@/types";
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2, Search as SearchIcon, User, CalendarDays, Tag, MessageSquare, AlertCircle, FileText, Image as ImageIcon } from "lucide-react";
 import Image from "next/image";
@@ -21,6 +21,8 @@ import { MOCK_GENERAL_REPORTS, combineAndDeduplicateReports } from "@/types";
 
 const LOCAL_STORAGE_REPORTS_KEY = 'driverShieldReports';
 const LOCAL_STORAGE_SEARCH_LOGS_KEY = 'driverShieldSearchLogs';
+const DESTRUCTIVE_REPORT_CATEGORIES: ReportCategoryValue[] = ['kuro_vagyste', 'neblaivumas_darbe', 'technikos_pazeidimai', 'avaringumas'];
+
 
 function getReportsFromLocalStorage(): Report[] {
   if (typeof window !== 'undefined') {
@@ -75,7 +77,6 @@ export default function SearchPage() {
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     const allLocalReports = getReportsFromLocalStorage();
-    // Combine reports from localStorage and general mock reports, then deduplicate
     const combinedDataSource = combineAndDeduplicateReports(allLocalReports, MOCK_GENERAL_REPORTS);
 
     const query = values.query.toLowerCase().trim();
@@ -212,7 +213,7 @@ export default function SearchPage() {
                       <h4 className="font-semibold text-sm text-muted-foreground mb-1 flex items-center">
                         <Tag className="mr-1.5 h-4 w-4" /> Kategorija
                       </h4>
-                      <Badge variant={report.category === 'kuro_vagyste' || report.category === 'zala_technikai' ? 'destructive' : 'secondary'} className="text-base py-1 px-3">{report.category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</Badge>
+                      <Badge variant={DESTRUCTIVE_REPORT_CATEGORIES.includes(report.category as ReportCategoryValue) ? 'destructive' : 'secondary'} className="text-base py-1 px-3">{report.category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</Badge>
                     </div>
 
                     {report.tags && report.tags.length > 0 && (

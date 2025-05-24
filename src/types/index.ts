@@ -20,8 +20,8 @@ export interface Report {
   reporterCompanyName?: string;
   fullName: string;
   birthYear?: number;
-  category: string;
-  tags: string[];
+  category: string; // Should match ReportCategoryValue
+  tags: string[]; // Should match ReportTagValue elements
   comment: string;
   imageUrl?: string;
   dataAiHint?: string;
@@ -38,16 +38,22 @@ export interface SearchLog {
 
 export type ReportCategoryValue =
   | 'kuro_vagyste'
-  | 'zala_technikai'
-  | 'netinkamas_elgesys'
-  | 'greicio_virijimas'
+  | 'avaringumas'
+  | 'neblaivumas_darbe'
+  | 'technikos_pazeidimai'
+  | 'netinkamas_elgesys_darbe'
+  | 'neaiskinamas_neatvykimas'
+  | 'kreipimasis_institucijos'
   | 'kita';
 
 export const reportCategories: { value: ReportCategoryValue, label: string }[] = [
   { value: 'kuro_vagyste', label: 'Kuro vagystė' },
-  { value: 'zala_technikai', label: 'Žala technikai' },
-  { value: 'netinkamas_elgesys', label: 'Netinkamas elgesys' },
-  { value: 'greicio_virijimas', label: 'Greičio viršijimas' },
+  { value: 'avaringumas', label: 'Avaringumas' },
+  { value: 'neblaivumas_darbe', label: 'Neblaivumas darbo metu' },
+  { value: 'technikos_pazeidimai', label: 'Technikos pažeidimai' },
+  { value: 'netinkamas_elgesys_darbe', label: 'Netinkamas elgesys darbe' },
+  { value: 'neaiskinamas_neatvykimas', label: 'Nepaaiškinamas neatvykimas į darbą' },
+  { value: 'kreipimasis_institucijos', label: 'Kreipimasis į institucijas' },
   { value: 'kita', label: 'Kita' },
 ];
 
@@ -55,13 +61,19 @@ export type ReportTagValue =
   | 'pasikartojantis'
   | 'pavojingas_vairavimas'
   | 'konfliktiskas'
-  | 'rekomenduojama_patikrinti';
+  | 'rekomenduojama_patikrinti'
+  | 'pakenkta_reputacijai'
+  | 'konfliktas_su_klientu'
+  | 'neatsakingas_poziuris';
 
 export const reportTags: { value: ReportTagValue, label: string }[] = [
   { value: 'pasikartojantis', label: 'Pasikartojantis pažeidimas' },
   { value: 'pavojingas_vairavimas', label: 'Pavojingas vairavimas' },
   { value: 'konfliktiskas', label: 'Konfliktiškas asmuo' },
   { value: 'rekomenduojama_patikrinti', label: 'Rekomenduojama papildomai patikrinti' },
+  { value: 'pakenkta_reputacijai', label: 'Pakenkta įmonės reputacijai' },
+  { value: 'konfliktas_su_klientu', label: 'Sukeltas konfliktas su klientu' },
+  { value: 'neatsakingas_poziuris', label: 'Neatsakingas požiūris į darbą' },
 ];
 
 // --- MOCK DATA ---
@@ -124,7 +136,7 @@ export const MOCK_ALL_USERS: UserProfile[] = [MOCK_USER, MOCK_ADDITIONAL_USER_1,
 const LOCAL_STORAGE_USERS_KEY = 'driverShieldAllUsers';
 
 export function getAllUsers(): UserProfile[] {
-  let combinedUsers: UserProfile[] = [...MOCK_ALL_USERS.map(u => ({...u}))]; // Create copies to avoid modifying mocks directly
+  let combinedUsers: UserProfile[] = [...MOCK_ALL_USERS.map(u => ({...u}))]; 
   if (typeof window !== 'undefined') {
     const storedUsersJSON = localStorage.getItem(LOCAL_STORAGE_USERS_KEY);
     if (storedUsersJSON) {
@@ -132,10 +144,7 @@ export function getAllUsers(): UserProfile[] {
         const localUsers: UserProfile[] = JSON.parse(storedUsersJSON);
         const usersMap = new Map<string, UserProfile>();
         
-        // Add initial mock users to map
         MOCK_ALL_USERS.forEach(user => usersMap.set(user.id, {...user}));
-        
-        // Add/overwrite with local users
         localUsers.forEach(user => usersMap.set(user.id, user)); 
         combinedUsers = Array.from(usersMap.values());
       } catch (e) {
@@ -163,8 +172,8 @@ export const MOCK_USER_REPORTS: Report[] = [
     reporterCompanyName: 'UAB "DriverShield Demo"',
     fullName: "Antanas Antanaitis",
     birthYear: 1992,
-    category: "netinkamas_elgesys",
-    tags: ["konfliktiskas"],
+    category: "netinkamas_elgesys_darbe", // Updated
+    tags: ["konfliktiskas", "konfliktas_su_klientu"], // Updated
     comment: "Vairuotojas buvo nemandagus su klientu, atsisakė padėti iškrauti prekes. Klientas pateikė skundą.",
     createdAt: new Date("2024-02-20T09:15:00Z"),
   },
@@ -173,7 +182,7 @@ export const MOCK_USER_REPORTS: Report[] = [
     reporterId: "dev-user-123",
     reporterCompanyName: 'UAB "DriverShield Demo"',
     fullName: "Zita Zitaite",
-    category: "greicio_virijimas",
+    category: "avaringumas", // Updated (was greicio_virijimas)
     tags: ["pasikartojantis", "pavojingas_vairavimas"],
     comment: "GPS duomenys rodo pakartotinį greičio viršijimą gyvenvietėse. Buvo įspėta, tačiau situacija kartojasi.",
     imageUrl: "https://placehold.co/600x400.png",
@@ -190,7 +199,7 @@ export const MOCK_GENERAL_REPORTS: Report[] = [
     fullName: "Jonas Jonaitis",
     birthYear: 1985,
     category: "kuro_vagyste",
-    tags: ["pasikartojantis", "pavojingas_vairavimas"],
+    tags: ["pasikartojantis", "pavojingas_vairavimas", "neatsakingas_poziuris"], // Updated
     comment: "Vairuotojas buvo pastebėtas neteisėtai nupylinėjantis kurą iš įmonės sunkvežimio. Tai jau antras kartas per pastaruosius 6 mėnesius. Taip pat gauta informacija apie pavojingą vairavimą mieste.",
     imageUrl: "https://placehold.co/600x400.png",
     createdAt: new Date("2023-10-15T10:30:00Z"),
@@ -201,8 +210,8 @@ export const MOCK_GENERAL_REPORTS: Report[] = [
     reporterId: "user-generic-2",
     reporterCompanyName: "UAB Greiti Pervežimai",
     fullName: "Petras Petraitis",
-    category: "zala_technikai",
-    tags: ["rekomenduojama_patikrinti"],
+    category: "technikos_pazeidimai", // Updated
+    tags: ["rekomenduojama_patikrinti", "neatsakingas_poziuris"], // Updated
     comment: "Grįžus iš reiso, pastebėta didelė žala priekabos šonui. Vairuotojas teigia nieko nepastebejęs. Rekomenduojama atlikti nuodugnesnį tyrimą.",
     createdAt: new Date("2023-11-01T14:00:00Z"),
   },
@@ -212,8 +221,8 @@ export const MOCK_GENERAL_REPORTS: Report[] = [
     reporterCompanyName: 'UAB "Greiti Ratai"',
     fullName: "Kazys Kazlauskas",
     birthYear: 1978,
-    category: "netinkamas_elgesys",
-    tags: ["konfliktiskas"],
+    category: "netinkamas_elgesys_darbe", // Updated
+    tags: ["konfliktiskas", "pakenkta_reputacijai"], // Updated
     comment: "Vėlavo pristatyti krovinį 2 valandas be pateisinamos priežasties, grubiai bendravo su sandėlio darbuotojais.",
     imageUrl: "https://placehold.co/600x400.png",
     dataAiHint: "angry driver",
@@ -237,3 +246,4 @@ export const combineAndDeduplicateReports = (...reportArrays: Report[][]): Repor
   });
   return Array.from(uniqueReportsMap.values()).sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 };
+

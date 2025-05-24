@@ -13,7 +13,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Loader2, ShieldAlert, Users, FileText, AlertTriangle, Trash2, Eye, MoreHorizontal, BarChart3, UserCheck, UserX, UserCog, CalendarDays, Building2, Tag, MessageSquare, Image as ImageIcon, CheckCircle2, CreditCard, Send, Briefcase, MapPin, Phone, Mail, ShieldCheck as ShieldCheckIcon, User as UserIcon } from "lucide-react";
-import type { UserProfile, Report } from "@/types";
+import type { UserProfile, Report, ReportCategoryValue } from "@/types";
 import { getAllUsers, saveAllUsers, MOCK_GENERAL_REPORTS, combineAndDeduplicateReports } from "@/types";
 import { format as formatDateFn, addYears } from 'date-fns';
 import { lt } from 'date-fns/locale';
@@ -41,6 +41,9 @@ function saveReportsToLocalStorage(reports: Report[]): void {
     localStorage.setItem(LOCAL_STORAGE_REPORTS_KEY, JSON.stringify(reports));
   }
 }
+
+const DESTRUCTIVE_REPORT_CATEGORIES: ReportCategoryValue[] = ['kuro_vagyste', 'neblaivumas_darbe', 'technikos_pazeidimai', 'avaringumas'];
+
 
 export default function AdminPage() {
   const { user: adminUser, loading: authLoading } = useAuth();
@@ -96,6 +99,7 @@ export default function AdminPage() {
         toastTitle = "Paskyra Aktyvuota";
         toastDescription = `Vartotojo ${targetUser.companyName} mokėjimas 'gautas'. Paskyra sėkmingai aktyvuota.`;
     } else if (newStatus === 'active' && oldStatus === 'pending_verification') {
+        // Direct activation from pending_verification (e.g., if admin confirms identity and payment at once)
         toastTitle = "Paskyra Patvirtinta ir Aktyvuota";
         toastDescription = `Vartotojo ${targetUser.companyName} paskyra patvirtinta ir aktyvuota. Vartotojui 'išsiųstos' instrukcijos.`;
     }
@@ -315,7 +319,7 @@ export default function AdminPage() {
                       <TableRow key={report.id}>
                         <TableCell className="font-medium">{report.fullName}</TableCell>
                         <TableCell className="hidden sm:table-cell">
-                           <Badge variant={report.category === 'kuro_vagyste' || report.category === 'zala_technikai' ? 'destructive' : 'secondary'}>
+                           <Badge variant={DESTRUCTIVE_REPORT_CATEGORIES.includes(report.category as ReportCategoryValue) ? 'destructive' : 'secondary'}>
                              {report.category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                            </Badge>
                         </TableCell>
@@ -408,7 +412,7 @@ export default function AdminPage() {
               )}
               <div className="space-y-1">
                 <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Tag className="mr-2 h-4 w-4" />Kategorija</h4>
-                <Badge variant={selectedReportForDetails.category === 'kuro_vagyste' || selectedReportForDetails.category === 'zala_technikai' ? 'destructive' : 'secondary'} className="text-sm">
+                <Badge variant={DESTRUCTIVE_REPORT_CATEGORIES.includes(selectedReportForDetails.category as ReportCategoryValue) ? 'destructive' : 'secondary'} className="text-sm">
                   {selectedReportForDetails.category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                 </Badge>
               </div>
