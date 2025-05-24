@@ -13,7 +13,7 @@ interface AuthContextType {
   login: (values: LoginFormValues) => Promise<void>;
   signup: (values: SignUpFormValues) => Promise<void>;
   logout: () => Promise<void>;
-  sendVerificationEmail: () => Promise<void>; // Kept for consistency, though not fully used now
+  sendVerificationEmail: () => Promise<void>; 
   updateUserInContext: (updatedUser: UserProfile) => void;
 }
 
@@ -31,13 +31,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (storedUserJson) {
         try {
           const storedUser = JSON.parse(storedUserJson);
-          const allSystemUsers = getAllUsers(); // Get all users including those from localStorage
+          const allSystemUsers = getAllUsers(); 
           const currentUserData = allSystemUsers.find(u => u.id === storedUser.id);
           
           if (currentUserData) {
-             setUser(currentUserData); // Use potentially updated data from combined source
+             setUser(currentUserData); 
           } else {
-            // User in session storage not found in main user list, clear session
             localStorage.removeItem('driverShieldUser');
              setUser(null);
           }
@@ -55,7 +54,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const updateUserInContext = (updatedUser: UserProfile) => {
     setUser(updatedUser);
-    localStorage.setItem('driverShieldUser', JSON.stringify(updatedUser)); // Update session storage
+    localStorage.setItem('driverShieldUser', JSON.stringify(updatedUser)); 
   };
 
   const login = async (values: LoginFormValues) => {
@@ -68,22 +67,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (foundUser) {
       if (foundUser.paymentStatus === 'pending_verification') {
         setLoading(false);
-        router.push('/auth/pending-approval'); // Redirect to pending page
-        throw new Error("Jūsų paskyra laukia administratoriaus patvirtinimo.");
+        router.push('/auth/pending-approval');
+        throw new Error("Jūsų paskyra laukia administratoriaus tapatybės patvirtinimo.");
       }
-      // In a real app, you'd verify the password here. For demo, only email and status check.
+      if (foundUser.paymentStatus === 'pending_payment') {
+        setLoading(false);
+        router.push('/auth/pending-approval');
+        throw new Error("Jūsų paskyra laukia apmokėjimo patvirtinimo. Instrukcijos jums buvo 'išsiųstos'.");
+      }
       if (foundUser.paymentStatus === 'inactive') {
         setLoading(false);
         throw new Error("Jūsų paskyra yra neaktyvi. Susisiekite su administratoriumi.");
       }
-      setUser(foundUser);
-      localStorage.setItem('driverShieldUser', JSON.stringify(foundUser));
-      router.push('/dashboard');
+      // Only allow login if status is 'active' (or if it's an admin for MOCK_USER)
+      if (foundUser.paymentStatus === 'active' || (foundUser.id === MOCK_USER.id && MOCK_USER.isAdmin)) {
+        setUser(foundUser);
+        localStorage.setItem('driverShieldUser', JSON.stringify(foundUser));
+        router.push('/dashboard');
+      } else {
+        setLoading(false);
+        throw new Error("Paskyra nėra aktyvi arba neturite prieigos.");
+      }
     } else if (values.email === MOCK_USER.email) { // Fallback for the main mock user if not in localStorage yet
        if (MOCK_USER.paymentStatus === 'pending_verification') {
         setLoading(false);
         router.push('/auth/pending-approval');
-        throw new Error("Jūsų paskyra laukia administratoriaus patvirtinimo.");
+        throw new Error("Jūsų paskyra laukia administratoriaus tapatybės patvirtinimo.");
+      }
+      if (MOCK_USER.paymentStatus === 'pending_payment') {
+        setLoading(false);
+        router.push('/auth/pending-approval');
+        throw new Error("Jūsų paskyra laukia apmokėjimo patvirtinimo. Instrukcijos jums buvo 'išsiųstos'.");
       }
       setUser(MOCK_USER);
       localStorage.setItem('driverShieldUser', JSON.stringify(MOCK_USER));
@@ -115,17 +129,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       contactPerson: values.contactPerson,
       email: values.email,
       phone: values.phone,
-      // password: values.password, // Don't store plain password, even in demo localStorage for long.
-                                    // Real Firebase auth handles this.
-      paymentStatus: 'pending_verification',
-      isAdmin: false, // New users are not admins by default
+      paymentStatus: 'pending_verification', // Initial status
+      isAdmin: false, 
       agreeToTerms: values.agreeToTerms,
     };
 
     const updatedUsers = [...allUsers, newUserProfile];
-    saveAllUsers(updatedUsers); // Save to localStorage
+    saveAllUsers(updatedUsers); 
     
-    console.log("New user registered (pending approval):", newUserProfile);
+    console.log("New user registered (pending verification):", newUserProfile);
     router.push('/auth/pending-approval');
     setLoading(false);
   };
@@ -140,8 +152,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
   
   const sendVerificationEmail = async () => {
-    // This was for email verification, now it's admin approval.
-    // We can repurpose or log.
     console.log("Simulating admin notification / user pending state...");
     await new Promise(resolve => setTimeout(resolve, 1000));
   };

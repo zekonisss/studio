@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Loader2, ShieldAlert, Users, FileText, AlertTriangle, Trash2, Eye, MoreHorizontal, BarChart3, UserCheck, UserX, UserCog, CalendarDays, Building2, Tag, MessageSquare, Image as ImageIcon, CheckCircle2 } from "lucide-react";
+import { Loader2, ShieldAlert, Users, FileText, AlertTriangle, Trash2, Eye, MoreHorizontal, BarChart3, UserCheck, UserX, UserCog, CalendarDays, Building2, Tag, MessageSquare, Image as ImageIcon, CheckCircle2, CreditCard, Send } from "lucide-react";
 import type { UserProfile, Report } from "@/types";
 import { getAllUsers, saveAllUsers, MOCK_GENERAL_REPORTS, combineAndDeduplicateReports } from "@/types";
 import { format } from 'date-fns';
@@ -68,34 +68,38 @@ export default function AdminPage() {
   }, [adminUser, authLoading, router]);
 
   const handleUserStatusChange = (userId: string, newStatus: UserProfile['paymentStatus']) => {
+    const targetUser = allUsersState.find(u => u.id === userId);
+    if (!targetUser) return;
+
+    const oldStatus = targetUser.paymentStatus;
+
     const updatedUsers = allUsersState.map(u => 
       u.id === userId ? { ...u, paymentStatus: newStatus } : u
     );
     setAllUsersState(updatedUsers);
-    saveAllUsers(updatedUsers); // Save updated list to localStorage
+    saveAllUsers(updatedUsers); 
 
-    const targetUser = updatedUsers.find(u=>u.id === userId);
-    let statusText = "";
-    switch(newStatus) {
-        case 'active': statusText = 'Aktyvi'; break;
-        case 'inactive': statusText = 'Neaktyvi'; break;
-        case 'pending_verification': statusText = 'Laukiama patvirtinimo'; break;
-        case 'pending_payment': statusText = 'Laukiama apmokėjimo'; break;
-        default: statusText = newStatus;
+    let toastTitle = "Vartotojo būsena pakeista";
+    let toastDescription = `Vartotojo ${targetUser.companyName} (${targetUser.email}) būsena nustatyta į "${getStatusText(newStatus)}".`;
+
+    if (newStatus === 'pending_payment' && oldStatus === 'pending_verification') {
+        toastTitle = "Tapatybė patvirtinta";
+        toastDescription = `Vartotojo ${targetUser.companyName} tapatybė patvirtinta. Būsena: Laukia apmokėjimo. Vartotojui 'išsiųstos' mokėjimo instrukcijos.`;
+    } else if (newStatus === 'active' && oldStatus === 'pending_payment') {
+        toastTitle = "Paskyra Aktyvuota";
+        toastDescription = `Vartotojo ${targetUser.companyName} mokėjimas 'gautas'. Paskyra sėkmingai aktyvuota.`;
+    } else if (newStatus === 'active' && oldStatus === 'pending_verification') {
+        // This case might be less common now, but kept for fallback
+        toastTitle = "Paskyra Patvirtinta ir Aktyvuota";
+        toastDescription = `Vartotojo ${targetUser.companyName} paskyra patvirtinta ir aktyvuota. Vartotojui 'išsiųstos' instrukcijos.`;
     }
+
 
     toast({
-      title: "Vartotojo būsena pakeista",
-      description: `Vartotojo ${targetUser?.companyName} (${targetUser?.email}) būsena nustatyta į "${statusText}".`,
+      title: toastTitle,
+      description: toastDescription,
+      duration: 7000,
     });
-
-    if (newStatus === 'active' && targetUser?.paymentStatus !== 'active') {
-         toast({
-            title: "Simuliuojamas pranešimas vartotojui",
-            description: `Vartotojui ${targetUser?.email} "išsiųstos" instrukcijos dėl apmokėjimo ir paskyra aktyvuota.`,
-            duration: 5000,
-         });
-    }
   };
 
   const handleViewReportDetails = (report: Report) => {
@@ -136,7 +140,7 @@ export default function AdminPage() {
     switch (status) {
       case 'active': return 'default';
       case 'pending_verification': return 'secondary';
-      case 'pending_payment': return 'outline'; // A different style for this
+      case 'pending_payment': return 'outline'; 
       case 'inactive': return 'destructive';
       default: return 'outline';
     }
@@ -145,7 +149,7 @@ export default function AdminPage() {
   const getStatusText = (status: UserProfile['paymentStatus']) => {
      switch (status) {
       case 'active': return 'Aktyvi';
-      case 'pending_verification': return 'Laukia Patvirtinimo';
+      case 'pending_verification': return 'Laukia Tapatybės Patvirtinimo';
       case 'pending_payment': return 'Laukia Apmokėjimo';
       case 'inactive': return 'Neaktyvi';
       default: return status;
@@ -218,22 +222,33 @@ export default function AdminPage() {
                               <DropdownMenuLabel>Keisti Būseną</DropdownMenuLabel>
                               <DropdownMenuSeparator />
                               {u.paymentStatus === 'pending_verification' && (
-                                <DropdownMenuItem onClick={() => handleUserStatusChange(u.id, 'active')}>
-                                  <CheckCircle2 className="mr-2 h-4 w-4 text-green-600" /> Patvirtinti ir Aktyvuoti
+                                <DropdownMenuItem onClick={() => handleUserStatusChange(u.id, 'pending_payment')}>
+                                  <Send className="mr-2 h-4 w-4 text-blue-600" /> Patvirtinti tapatybę, Siųsti mok. instrukcijas
                                 </DropdownMenuItem>
                               )}
-                              <DropdownMenuItem onClick={() => handleUserStatusChange(u.id, 'active')} disabled={u.paymentStatus === 'active'}>
-                                <UserCheck className="mr-2 h-4 w-4" /> Aktyvuoti
+                               {u.paymentStatus === 'pending_payment' && (
+                                <DropdownMenuItem onClick={() => handleUserStatusChange(u.id, 'active')}>
+                                  <CreditCard className="mr-2 h-4 w-4 text-green-600" /> Aktyvuoti (Mokėjimas Gautas)
+                                </DropdownMenuItem>
+                              )}
+                              {u.paymentStatus !== 'active' && u.paymentStatus !== 'pending_payment' && u.paymentStatus !== 'pending_verification' && ( // General activate if not in pending flow
+                                <DropdownMenuItem onClick={() => handleUserStatusChange(u.id, 'active')}>
+                                  <UserCheck className="mr-2 h-4 w-4" /> Aktyvuoti
+                                </DropdownMenuItem>
+                              )}
+                              {u.paymentStatus === 'active' && ( // Only allow deactivation for active users from main flow
+                                <DropdownMenuItem onClick={() => handleUserStatusChange(u.id, 'inactive')}>
+                                  <UserX className="mr-2 h-4 w-4" /> Deaktyvuoti
+                                </DropdownMenuItem>
+                              )}
+                               <DropdownMenuItem onClick={() => handleUserStatusChange(u.id, 'pending_verification')} disabled={u.paymentStatus === 'pending_verification'}>
+                                <UserCog className="mr-2 h-4 w-4" /> Nustatyti "Laukia Tapatybės Patvirtinimo"
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleUserStatusChange(u.id, 'inactive')} disabled={u.paymentStatus === 'inactive'}>
-                                 <UserX className="mr-2 h-4 w-4" /> Deaktyvuoti
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleUserStatusChange(u.id, 'pending_verification')} disabled={u.paymentStatus === 'pending_verification'}>
-                                <UserCog className="mr-2 h-4 w-4" /> Nustatyti "Laukia Patvirtinimo"
-                              </DropdownMenuItem>
+                              {/* Remove direct "Set to Pending Payment" as it's part of a flow now
                                <DropdownMenuItem onClick={() => handleUserStatusChange(u.id, 'pending_payment')} disabled={u.paymentStatus === 'pending_payment'}>
                                 <UserCog className="mr-2 h-4 w-4" /> Nustatyti "Laukia Apmokėjimo"
                               </DropdownMenuItem>
+                              */}
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </TableCell>
