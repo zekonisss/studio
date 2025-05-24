@@ -13,7 +13,7 @@ interface AuthContextType {
   login: (values: LoginFormValues) => Promise<void>;
   signup: (values: SignUpFormValues) => Promise<void>;
   logout: () => Promise<void>;
-  sendVerificationEmail: () => Promise<void>; 
+  sendVerificationEmail: () => Promise<void>;
   updateUserInContext: (updatedUser: UserProfile) => void;
 }
 
@@ -31,11 +31,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (storedUserJson) {
         try {
           const storedUser = JSON.parse(storedUserJson);
-          const allSystemUsers = getAllUsers(); 
+          const allSystemUsers = getAllUsers();
           const currentUserData = allSystemUsers.find(u => u.id === storedUser.id);
-          
+
           if (currentUserData) {
-             setUser(currentUserData); 
+             setUser(currentUserData);
           } else {
             localStorage.removeItem('driverShieldUser');
              setUser(null);
@@ -54,13 +54,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const updateUserInContext = (updatedUser: UserProfile) => {
     setUser(updatedUser);
-    localStorage.setItem('driverShieldUser', JSON.stringify(updatedUser)); 
+    localStorage.setItem('driverShieldUser', JSON.stringify(updatedUser));
   };
 
   const login = async (values: LoginFormValues) => {
     setLoading(true);
     await new Promise(resolve => setTimeout(resolve, 1000));
-    
+
     const allSystemUsers = getAllUsers();
     const foundUser = allSystemUsers.find(u => u.email === values.email);
 
@@ -72,7 +72,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
       if (foundUser.paymentStatus === 'pending_payment') {
         setLoading(false);
-        router.push('/auth/pending-approval');
+        router.push('/auth/pending-approval'); // Redirect to pending, message indicates payment needed
         throw new Error("Jūsų paskyra laukia apmokėjimo patvirtinimo. Instrukcijos jums buvo 'išsiųstos'.");
       }
       if (foundUser.paymentStatus === 'inactive') {
@@ -125,18 +125,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       id: newUserId,
       companyName: values.companyName,
       companyCode: values.companyCode,
+      vatCode: values.vatCode || undefined,
       address: values.address,
       contactPerson: values.contactPerson,
       email: values.email,
       phone: values.phone,
       paymentStatus: 'pending_verification', // Initial status
-      isAdmin: false, 
+      isAdmin: false,
       agreeToTerms: values.agreeToTerms,
     };
 
     const updatedUsers = [...allUsers, newUserProfile];
-    saveAllUsers(updatedUsers); 
-    
+    saveAllUsers(updatedUsers);
+
     console.log("New user registered (pending verification):", newUserProfile);
     router.push('/auth/pending-approval');
     setLoading(false);
@@ -150,7 +151,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     router.push('/auth/login');
     setLoading(false);
   };
-  
+
   const sendVerificationEmail = async () => {
     console.log("Simulating admin notification / user pending state...");
     await new Promise(resolve => setTimeout(resolve, 1000));

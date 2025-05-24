@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
-import { Loader2, UserCircle, Building2, Briefcase, MapPin, User as UserIcon, Mail, Phone, History, ListChecks, Edit3, Save, CreditCard, ShieldCheck, CalendarDays } from "lucide-react";
+import { Loader2, UserCircle, Building2, Briefcase, MapPin, User as UserIcon, Mail, Phone, History, ListChecks, Edit3, Save, CreditCard, ShieldCheck, CalendarDays, Percent, AlertTriangle, UserCog } from "lucide-react";
 import type { Report, SearchLog, UserProfile } from "@/types";
 import { format as formatDateFn, addYears } from "date-fns";
 import { lt } from "date-fns/locale";
@@ -36,6 +36,7 @@ export default function AccountPage() {
   const [formData, setFormData] = useState({
     companyName: "",
     companyCode: "",
+    vatCode: "",
     address: "",
     contactPerson: "",
     email: "",
@@ -48,6 +49,7 @@ export default function AccountPage() {
       setFormData({
         companyName: user.companyName,
         companyCode: user.companyCode,
+        vatCode: user.vatCode || "",
         address: user.address,
         contactPerson: user.contactPerson,
         email: user.email,
@@ -71,12 +73,13 @@ export default function AccountPage() {
     setIsEditing(false);
     console.log("Saving data:", formData);
     await new Promise(resolve => setTimeout(resolve, 1000));
-    
+
     const allUsers = getAllUsers();
-    const updatedUser = { 
-        ...user, 
+    const updatedUser = {
+        ...user,
         companyName: formData.companyName,
         companyCode: formData.companyCode,
+        vatCode: formData.vatCode || undefined,
         address: formData.address,
         contactPerson: formData.contactPerson,
         email: formData.email,
@@ -85,10 +88,10 @@ export default function AccountPage() {
 
     const updatedUsersList = allUsers.map(u => u.id === user.id ? updatedUser : u);
     saveAllUsers(updatedUsersList);
-    updateUserInContext(updatedUser as UserProfile); 
+    updateUserInContext(updatedUser as UserProfile);
 
   };
-  
+
   const onTabChange = (value: string) => {
     setActiveTab(value);
     router.push(`/account?tab=${value}`, { scroll: false });
@@ -148,6 +151,7 @@ export default function AccountPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <InfoField label="Įmonės Pavadinimas" value={isEditing ? formData.companyName : user.companyName} icon={Building2} name="companyName" isEditing={isEditing} onChange={handleInputChange} />
                 <InfoField label="Įmonės Kodas" value={isEditing ? formData.companyCode : user.companyCode} icon={Briefcase} name="companyCode" isEditing={isEditing} onChange={handleInputChange} />
+                <InfoField label="PVM Kodas" value={isEditing ? formData.vatCode : (user.vatCode || '')} icon={Percent} name="vatCode" isEditing={isEditing} onChange={handleInputChange} />
                 <InfoField label="Adresas" value={isEditing ? formData.address : user.address} icon={MapPin} name="address" isEditing={isEditing} onChange={handleInputChange} />
                 <InfoField label="Kontaktinis Asmuo" value={isEditing ? formData.contactPerson : user.contactPerson} icon={UserIcon} name="contactPerson" isEditing={isEditing} onChange={handleInputChange} />
                 <InfoField label="El. Paštas" value={isEditing ? formData.email : user.email} icon={Mail} name="email" isEditing={isEditing} onChange={handleInputChange} />
@@ -172,7 +176,7 @@ export default function AccountPage() {
             <CardContent>
               {mockUserReports.length > 0 ? (
                 <ul className="space-y-4">
-                  {mockUserReports.slice(0, 3).map(report => ( 
+                  {mockUserReports.slice(0, 3).map(report => (
                     <li key={report.id} className="p-4 border rounded-md hover:bg-muted/30 transition-colors">
                       <div className="flex justify-between items-start">
                         <h4 className="font-semibold text-foreground">{report.fullName}</h4>
@@ -204,7 +208,7 @@ export default function AccountPage() {
             <CardContent>
               {mockSearchLogs.length > 0 ? (
                 <ul className="space-y-3">
-                  {mockSearchLogs.slice(0, 5).map(log => ( 
+                  {mockSearchLogs.slice(0, 5).map(log => (
                     <li key={log.id} className="flex justify-between items-center p-3 border rounded-md hover:bg-muted/30 transition-colors">
                       <span className="font-medium text-foreground">{log.searchText}</span>
                       <div className="flex items-center gap-x-4">
@@ -278,7 +282,7 @@ export default function AccountPage() {
                             </div>
                         </div>
                     )}
-                    
+
                     <div>
                         <h4 className="font-semibold mb-2 text-foreground">Mokėjimo Istorija</h4>
                         <p className="text-sm text-muted-foreground">Šiuo metu mokėjimų istorijos rodymas nėra įgyvendintas. Ateityje čia matysite savo sąskaitas.</p>

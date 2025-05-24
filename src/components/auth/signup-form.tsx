@@ -1,3 +1,4 @@
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -17,7 +18,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { SignUpSchema, type SignUpFormValues } from "@/lib/schemas";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
-import { Building2, Briefcase, MapPin, User, Mail, Phone, Lock, Loader2, ShieldCheck } from "lucide-react";
+import { Building2, Briefcase, MapPin, User, Mail, Phone, Lock, Loader2, ShieldCheck, Percent } from "lucide-react";
 
 export function SignupForm() {
   const { signup, loading } = useAuth();
@@ -28,6 +29,7 @@ export function SignupForm() {
     defaultValues: {
       companyName: "",
       companyCode: "",
+      vatCode: "",
       address: "",
       contactPerson: "",
       email: "",
@@ -78,6 +80,19 @@ export function SignupForm() {
               <FormLabel className="flex items-center"><Briefcase className="mr-2 h-4 w-4 text-muted-foreground" />Įmonės kodas</FormLabel>
               <FormControl>
                 <Input placeholder="123456789" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="vatCode"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="flex items-center"><Percent className="mr-2 h-4 w-4 text-muted-foreground" />PVM mokėtojo kodas (nebūtinas)</FormLabel>
+              <FormControl>
+                <Input placeholder="LT12345678901" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

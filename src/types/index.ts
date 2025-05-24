@@ -3,6 +3,7 @@ export interface UserProfile {
   id: string;
   companyName: string;
   companyCode: string;
+  vatCode?: string;
   address: string;
   contactPerson: string;
   email: string;
@@ -10,7 +11,7 @@ export interface UserProfile {
   paymentStatus: 'active' | 'inactive' | 'pending_verification' | 'pending_payment';
   isAdmin?: boolean;
   accountActivatedAt?: string; // Date ISO string when the account was last set to 'active'
-  password?: string; 
+  password?: string;
   agreeToTerms?: boolean;
 }
 
@@ -26,14 +27,14 @@ export interface Report {
   comment: string;
   imageUrl?: string;
   dataAiHint?: string;
-  createdAt: Date; 
+  createdAt: Date;
 }
 
 export interface SearchLog {
   id: string;
   userId: string;
   searchText: string;
-  timestamp: Date; 
+  timestamp: Date;
   resultsCount: number;
 }
 
@@ -318,7 +319,7 @@ export const reportCategories: { value: ReportCategoryValue, label: string }[] =
   { value: 'technikos_pazeidimai', label: 'Technikos pažeidimai' },
   { value: 'netinkamas_elgesys_darbe', label: 'Netinkamas elgesys darbe (kolegų atžvilgiu, agresija, necenzūrinė kalba ir pan.)' },
   { value: 'neaiskinamas_neatvykimas', label: 'Nepaaiškinamas neatvykimas į darbą' },
-  { value: 'kreipimasis_institucijos', label: "Kreipimasis į institucijas (pvz., darbo inspekciją dėl netikslumų ar keršto)" },
+  { value: 'kreipimasis_institucijos', label: 'Kreipimasis į institucijas (pvz., darbo inspekciją dėl netikslumų ar keršto)' },
   { value: 'kita', label: 'Kita' },
 ];
 
@@ -347,32 +348,35 @@ export const MOCK_USER: UserProfile = {
   id: 'dev-user-123',
   companyName: 'UAB "DriverShield Demo"',
   companyCode: '123456789',
+  vatCode: 'LT10000000012',
   address: 'Vilniaus g. 1, Vilnius',
   contactPerson: 'Vardenis Pavardenis',
   email: 'sarunas.zekonis@gmail.com',
   phone: '+37060012345',
   paymentStatus: 'active',
   isAdmin: true,
-  accountActivatedAt: new Date(new Date().setMonth(new Date().getMonth() - 11)).toISOString(), 
+  accountActivatedAt: new Date(new Date().setMonth(new Date().getMonth() - 11)).toISOString(),
 };
 
 export const MOCK_ADDITIONAL_USER_1: UserProfile = {
   id: 'dev-user-456',
   companyName: 'UAB "Greiti Ratai"',
   companyCode: '987654321',
+  vatCode: 'LT98765432111',
   address: 'Kauno g. 2, Kaunas',
   contactPerson: 'Petras Petrauskas',
   email: 'petras@greitiratai.lt',
   phone: '+37060054321',
   paymentStatus: 'active',
   isAdmin: false,
-  accountActivatedAt: new Date(new Date().setDate(new Date().getDate() - 10)).toISOString(), 
+  accountActivatedAt: new Date(new Date().setDate(new Date().getDate() - 10)).toISOString(),
 };
 
 export const MOCK_ADDITIONAL_USER_2: UserProfile = {
   id: 'dev-user-789',
   companyName: 'UAB "Saugus Kelias"',
   companyCode: '112233445',
+  // vatCode: undefined, // Implicitly undefined
   address: 'Klaipėdos g. 3, Klaipėda',
   contactPerson: 'Ona Onaitienė',
   email: 'ona@sauguskelias.lt',
@@ -386,13 +390,14 @@ export const MOCK_ADDITIONAL_USER_3: UserProfile = {
   id: 'dev-user-101',
   companyName: 'MB "Logist"',
   companyCode: '555444333',
+  // vatCode: undefined, // Implicitly undefined
   address: 'Panevėžio g. 10, Panevėžys',
   contactPerson: 'Laura Laurinavičė',
   email: 'laura@logist.lt',
   phone: '+37060011122',
   paymentStatus: 'pending_verification',
   isAdmin: false,
-  accountActivatedAt: undefined, 
+  accountActivatedAt: undefined,
 };
 
 
@@ -401,16 +406,16 @@ export const MOCK_ALL_USERS: UserProfile[] = [MOCK_USER, MOCK_ADDITIONAL_USER_1,
 const LOCAL_STORAGE_USERS_KEY = 'driverShieldAllUsers';
 
 export function getAllUsers(): UserProfile[] {
-  let combinedUsers: UserProfile[] = [...MOCK_ALL_USERS.map(u => ({...u}))]; 
+  let combinedUsers: UserProfile[] = [...MOCK_ALL_USERS.map(u => ({...u}))];
   if (typeof window !== 'undefined') {
     const storedUsersJSON = localStorage.getItem(LOCAL_STORAGE_USERS_KEY);
     if (storedUsersJSON) {
       try {
         const localUsers: UserProfile[] = JSON.parse(storedUsersJSON);
         const usersMap = new Map<string, UserProfile>();
-        
+
         MOCK_ALL_USERS.forEach(user => usersMap.set(user.id, {...user}));
-        localUsers.forEach(user => usersMap.set(user.id, user)); 
+        localUsers.forEach(user => usersMap.set(user.id, user));
         combinedUsers = Array.from(usersMap.values());
       } catch (e) {
         console.error("Failed to parse users from localStorage", e);
@@ -439,7 +444,7 @@ export const MOCK_USER_REPORTS: Report[] = [
     nationality: "LT",
     birthYear: 1992,
     category: "netinkamas_elgesys_darbe",
-    tags: ["konfliktiskas", "konfliktas_su_klientu"], 
+    tags: ["konfliktiskas", "konfliktas_su_klientu"],
     comment: "Vairuotojas buvo nemandagus su klientu, atsisakė padėti iškrauti prekes. Klientas pateikė skundą.",
     createdAt: new Date("2024-02-20T09:15:00Z"),
   },
@@ -449,7 +454,7 @@ export const MOCK_USER_REPORTS: Report[] = [
     reporterCompanyName: 'UAB "DriverShield Demo"',
     fullName: "Zita Zitaite",
     nationality: "LT",
-    category: "avaringumas", 
+    category: "avaringumas",
     tags: ["pasikartojantis", "pavojingas_vairavimas"],
     comment: "GPS duomenys rodo pakartotinį greičio viršijimą gyvenvietėse. Buvo įspėta, tačiau situacija kartojasi.",
     imageUrl: "https://placehold.co/600x400.png",
@@ -467,7 +472,7 @@ export const MOCK_GENERAL_REPORTS: Report[] = [
     nationality: "PL",
     birthYear: 1985,
     category: "kuro_vagyste",
-    tags: ["pasikartojantis", "neatsakingas_poziuris"], 
+    tags: ["pasikartojantis", "neatsakingas_poziuris"],
     comment: "Vairuotojas buvo pastebėtas neteisėtai nupylinėjantis kurą iš įmonės sunkvežimio. Tai jau antras kartas per pastaruosius 6 mėnesius. Taip pat gauta informacija apie pavojingą vairavimą mieste.",
     imageUrl: "https://placehold.co/600x400.png",
     createdAt: new Date("2023-10-15T10:30:00Z"),
@@ -479,14 +484,14 @@ export const MOCK_GENERAL_REPORTS: Report[] = [
     reporterCompanyName: "UAB Greiti Pervežimai",
     fullName: "Petras Petraitis",
     nationality: "UA",
-    category: "technikos_pazeidimai", 
+    category: "technikos_pazeidimai",
     tags: ["rekomenduojama_patikrinti", "neatsakingas_poziuris"],
     comment: "Grįžus iš reiso, pastebėta didelė žala priekabos šonui. Vairuotojas teigia nieko nepastebejęs. Rekomenduojama atlikti nuodugnesnį tyrimą.",
     createdAt: new Date("2023-11-01T14:00:00Z"),
   },
   {
     id: "report-general-3-from-456",
-    reporterId: "dev-user-456", 
+    reporterId: "dev-user-456",
     reporterCompanyName: 'UAB "Greiti Ratai"',
     fullName: "Kazys Kazlauskas",
     nationality: "BY",
@@ -559,5 +564,3 @@ export function saveSearchLogsToLocalStoragePublic(logs: SearchLog[]): void {
   }
 }
 
-
-    

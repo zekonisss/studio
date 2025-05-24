@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Loader2, ShieldAlert, Users, FileText, AlertTriangle, Trash2, Eye, MoreHorizontal, BarChart3, UserCheck, UserX, UserCog, CalendarDays, Building2, Tag, MessageSquare, Image as ImageIcon, CheckCircle2, CreditCard, Send, Briefcase, MapPin, Phone, Mail, ShieldCheck as ShieldCheckIcon, User as UserIcon, Globe, Edit3, Save, XCircle } from "lucide-react";
+import { Loader2, ShieldAlert, Users, FileText, AlertTriangle, Trash2, Eye, MoreHorizontal, BarChart3, UserCheck, UserX, UserCog, CalendarDays, Building2, Tag, MessageSquare, Image as ImageIcon, CheckCircle2, CreditCard, Send, Briefcase, MapPin, Phone, Mail, ShieldCheck as ShieldCheckIcon, User as UserIcon, Globe, Edit3, Save, XCircle, Percent } from "lucide-react";
 import type { UserProfile, Report, ReportCategoryValue } from "@/types";
 import { getAllUsers, saveAllUsers, MOCK_GENERAL_REPORTS, combineAndDeduplicateReports, countries } from "@/types";
 import { format as formatDateFn, addYears } from 'date-fns';
@@ -74,7 +74,7 @@ export default function AdminPage() {
     if (adminUser && adminUser.isAdmin) {
       const fetchedUsers = getAllUsers();
       setAllUsersState(fetchedUsers.sort((a,b) => (a.companyName || "").localeCompare(b.companyName || "")));
-      
+
       const localReports = getReportsFromLocalStorage();
       const combined = combineAndDeduplicateReports(localReports, MOCK_GENERAL_REPORTS);
       setAllReports(combined.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
@@ -93,11 +93,11 @@ export default function AdminPage() {
         newAccountActivatedAt = new Date().toISOString();
     }
 
-    const updatedUsers = allUsersState.map(u => 
+    const updatedUsers = allUsersState.map(u =>
       u.id === userId ? { ...u, paymentStatus: newStatus, accountActivatedAt: newAccountActivatedAt } : u
     );
     setAllUsersState(updatedUsers);
-    saveAllUsers(updatedUsers); 
+    saveAllUsers(updatedUsers);
 
     let toastTitle = "Vartotojo būsena pakeista";
     let toastDescription = `Vartotojo ${targetUser.companyName} (${targetUser.email}) būsena nustatyta į "${getStatusText(newStatus)}".`;
@@ -109,8 +109,9 @@ export default function AdminPage() {
         toastTitle = "Paskyra Aktyvuota";
         toastDescription = `Vartotojo ${targetUser.companyName} mokėjimas 'gautas'. Paskyra sėkmingai aktyvuota.`;
     } else if (newStatus === 'active' && oldStatus === 'pending_verification') {
+        // This case might be less common now with the two-step approval, but good to have
         toastTitle = "Paskyra Patvirtinta ir Aktyvuota";
-        toastDescription = `Vartotojo ${targetUser.companyName} paskyra patvirtinta ir aktyvuota. Vartotojui 'išsiųstos' instrukcijos.`;
+        toastDescription = `Vartotojo ${targetUser.companyName} paskyra patvirtinta ir aktyvuota (mokėjimas 'gautas' arba nereikalingas). Vartotojui 'išsiųstos' instrukcijos.`;
     }
 
 
@@ -134,6 +135,7 @@ export default function AdminPage() {
     setEditingUserDetailsFormData({ // Initialize form data when modal opens
       companyName: user.companyName,
       companyCode: user.companyCode,
+      vatCode: user.vatCode,
       address: user.address,
       contactPerson: user.contactPerson,
       email: user.email,
@@ -147,12 +149,13 @@ export default function AdminPage() {
     setIsEditingUserDetails(false);
     setEditingUserDetailsFormData({});
   };
-  
+
   const handleEditUserDetails = () => {
     if (selectedUserForDetails) {
         setEditingUserDetailsFormData({
             companyName: selectedUserForDetails.companyName,
             companyCode: selectedUserForDetails.companyCode,
+            vatCode: selectedUserForDetails.vatCode,
             address: selectedUserForDetails.address,
             contactPerson: selectedUserForDetails.contactPerson,
             email: selectedUserForDetails.email,
@@ -174,6 +177,7 @@ export default function AdminPage() {
         ...selectedUserForDetails,
         companyName: editingUserDetailsFormData.companyName || selectedUserForDetails.companyName,
         companyCode: editingUserDetailsFormData.companyCode || selectedUserForDetails.companyCode,
+        vatCode: editingUserDetailsFormData.vatCode || undefined,
         address: editingUserDetailsFormData.address || selectedUserForDetails.address,
         contactPerson: editingUserDetailsFormData.contactPerson || selectedUserForDetails.contactPerson,
         email: editingUserDetailsFormData.email || selectedUserForDetails.email,
@@ -197,6 +201,7 @@ export default function AdminPage() {
       setEditingUserDetailsFormData({ // Reset form data to original selected user
         companyName: selectedUserForDetails.companyName,
         companyCode: selectedUserForDetails.companyCode,
+        vatCode: selectedUserForDetails.vatCode,
         address: selectedUserForDetails.address,
         contactPerson: selectedUserForDetails.contactPerson,
         email: selectedUserForDetails.email,
@@ -207,7 +212,7 @@ export default function AdminPage() {
 
 
   const handleDeleteReport = async (reportId: string) => {
-    setDeletingReportId(reportId); 
+    setDeletingReportId(reportId);
     await new Promise(resolve => setTimeout(resolve, 700));
     const updatedReports = allReports.filter(report => report.id !== reportId);
     setAllReports(updatedReports);
@@ -231,12 +236,12 @@ export default function AdminPage() {
       </div>
     );
   }
-  
+
   const getStatusBadgeVariant = (status: UserProfile['paymentStatus']) => {
     switch (status) {
       case 'active': return 'default';
       case 'pending_verification': return 'secondary';
-      case 'pending_payment': return 'outline'; 
+      case 'pending_payment': return 'outline';
       case 'inactive': return 'destructive';
       default: return 'outline';
     }
@@ -346,12 +351,12 @@ export default function AdminPage() {
                                   <CreditCard className="mr-2 h-4 w-4 text-green-600" /> Aktyvuoti (Mokėjimas Gautas)
                                 </DropdownMenuItem>
                               )}
-                              {u.paymentStatus !== 'active' && u.paymentStatus !== 'pending_payment' && u.paymentStatus !== 'pending_verification' && ( 
+                              {u.paymentStatus !== 'active' && u.paymentStatus !== 'pending_payment' && (
                                 <DropdownMenuItem onClick={() => handleUserStatusChange(u.id, 'active')}>
                                   <UserCheck className="mr-2 h-4 w-4" /> Aktyvuoti
                                 </DropdownMenuItem>
                               )}
-                              {u.paymentStatus === 'active' && ( 
+                              {u.paymentStatus === 'active' && (
                                 <DropdownMenuItem onClick={() => handleUserStatusChange(u.id, 'inactive')}>
                                   <UserX className="mr-2 h-4 w-4" /> Deaktyvuoti
                                 </DropdownMenuItem>
@@ -522,7 +527,7 @@ export default function AdminPage() {
                 <div className="space-y-1">
                   <h4 className="text-sm font-medium text-muted-foreground flex items-center"><ImageIcon className="mr-2 h-4 w-4" />Pridėtas Failas/Nuotrauka</h4>
                   <div className="w-full overflow-hidden rounded-md border">
-                    <NextImage 
+                    <NextImage
                         src={selectedReportForDetails.imageUrl}
                         alt={`Pranešimo nuotrauka ${selectedReportForDetails.fullName}`}
                         width={600}
@@ -570,20 +575,21 @@ export default function AdminPage() {
             <div className="py-4 grid grid-cols-1 md:grid-cols-2 gap-6 max-h-[60vh] overflow-y-auto pr-2">
               <UserInfoField label="Įmonės Pavadinimas" value={isEditingUserDetails ? editingUserDetailsFormData.companyName || "" : selectedUserForDetails.companyName} icon={Building2} name="companyName" isEditing={isEditingUserDetails} onChange={handleUserDetailsInputChange} />
               <UserInfoField label="Įmonės Kodas" value={isEditingUserDetails ? editingUserDetailsFormData.companyCode || "" : selectedUserForDetails.companyCode} icon={Briefcase} name="companyCode" isEditing={isEditingUserDetails} onChange={handleUserDetailsInputChange} />
+              <UserInfoField label="PVM Kodas" value={isEditingUserDetails ? editingUserDetailsFormData.vatCode || "" : selectedUserForDetails.vatCode} icon={Percent} name="vatCode" isEditing={isEditingUserDetails} onChange={handleUserDetailsInputChange} />
               <UserInfoField label="Adresas" value={isEditingUserDetails ? editingUserDetailsFormData.address || "" : selectedUserForDetails.address} icon={MapPin} name="address" isEditing={isEditingUserDetails} onChange={handleUserDetailsInputChange} />
               <UserInfoField label="Kontaktinis Asmuo" value={isEditingUserDetails ? editingUserDetailsFormData.contactPerson || "" : selectedUserForDetails.contactPerson} icon={UserIcon} name="contactPerson" isEditing={isEditingUserDetails} onChange={handleUserDetailsInputChange} />
               <UserInfoField label="El. Paštas" value={isEditingUserDetails ? editingUserDetailsFormData.email || "" : selectedUserForDetails.email} icon={Mail} name="email" isEditing={isEditingUserDetails} onChange={handleUserDetailsInputChange} />
               <UserInfoField label="Telefonas" value={isEditingUserDetails ? editingUserDetailsFormData.phone || "" : selectedUserForDetails.phone} icon={Phone} name="phone" isEditing={isEditingUserDetails} onChange={handleUserDetailsInputChange} />
-              
+
               <div className="md:col-span-2">
                 <UserInfoField label="Būsena" value={getStatusText(selectedUserForDetails.paymentStatus)} icon={CheckCircle2} />
               </div>
                {selectedUserForDetails.accountActivatedAt && selectedUserForDetails.paymentStatus === 'active' && (
                 <div className="md:col-span-2">
-                    <UserInfoField 
-                        label="Paskyra Aktyvi Iki" 
-                        value={formatDateFn(addYears(new Date(selectedUserForDetails.accountActivatedAt), 1), "yyyy-MM-dd")} 
-                        icon={CalendarDays} 
+                    <UserInfoField
+                        label="Paskyra Aktyvi Iki"
+                        value={formatDateFn(addYears(new Date(selectedUserForDetails.accountActivatedAt), 1), "yyyy-MM-dd")}
+                        icon={CalendarDays}
                     />
                 </div>
                 )}
