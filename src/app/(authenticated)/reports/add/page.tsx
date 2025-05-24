@@ -78,7 +78,8 @@ export default function AddReportPage() {
       category: values.category,
       tags: values.tags || [],
       comment: values.comment,
-      // imageUrl: not storing image in localStorage for this demo
+      imageUrl: values.image ? "https://placehold.co/600x400.png" : undefined,
+      dataAiHint: values.image ? "document attachment" : undefined,
       createdAt: new Date(),
     };
 
@@ -243,7 +244,7 @@ export default function AddReportPage() {
                       />
                     </FormControl>
                     <FormDescription>
-                      Galite pridėti nuotrauką ar dokumentą (iki 5MB). Leidžiami formatai: JPG, PNG, PDF. Šioje demo versijoje failai nebus išsaugomi.
+                      Galite pridėti nuotrauką ar dokumentą (iki 5MB). Leidžiami formatai: JPG, PNG, PDF. Šioje demo versijoje failai nebus išsaugomi, bet bus rodomas placeholder.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
