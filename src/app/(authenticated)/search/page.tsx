@@ -16,45 +16,11 @@ import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { format } from 'date-fns';
 import { lt } from 'date-fns/locale';
-import { MOCK_GENERAL_REPORTS, combineAndDeduplicateReports, countries } from "@/types";
+import { MOCK_GENERAL_REPORTS, combineAndDeduplicateReports, countries, getReportsFromLocalStoragePublic, getSearchLogsFromLocalStoragePublic, saveSearchLogsToLocalStoragePublic } from "@/types";
 
 
-const LOCAL_STORAGE_REPORTS_KEY = 'driverShieldReports';
-const LOCAL_STORAGE_SEARCH_LOGS_KEY = 'driverShieldSearchLogs';
 const DESTRUCTIVE_REPORT_CATEGORIES: ReportCategoryValue[] = ['kuro_vagyste', 'neblaivumas_darbe', 'zala_technikai', 'avaringumas'];
 
-
-function getReportsFromLocalStorage(): Report[] {
-  if (typeof window !== 'undefined') {
-    const reportsJSON = localStorage.getItem(LOCAL_STORAGE_REPORTS_KEY);
-    if (reportsJSON) {
-      return JSON.parse(reportsJSON).map((report: any) => ({
-        ...report,
-        createdAt: new Date(report.createdAt),
-      }));
-    }
-  }
-  return [];
-}
-
-function getSearchLogsFromLocalStorage(): SearchLog[] {
-  if (typeof window !== 'undefined') {
-    const logsJSON = localStorage.getItem(LOCAL_STORAGE_SEARCH_LOGS_KEY);
-    if (logsJSON) {
-      return JSON.parse(logsJSON).map((log: any) => ({
-        ...log,
-        timestamp: new Date(log.timestamp),
-      }));
-    }
-  }
-  return [];
-}
-
-function saveSearchLogsToLocalStorage(logs: SearchLog[]): void {
-  if (typeof window !== 'undefined') {
-    localStorage.setItem(LOCAL_STORAGE_SEARCH_LOGS_KEY, JSON.stringify(logs));
-  }
-}
 
 const getNationalityLabel = (nationalityCode?: string) => {
     if (!nationalityCode) return "";
@@ -82,7 +48,7 @@ export default function SearchPage() {
     setSearchPerformed(true);
     await new Promise(resolve => setTimeout(resolve, 1000));
 
-    const allLocalReports = getReportsFromLocalStorage();
+    const allLocalReports = getReportsFromLocalStoragePublic();
     const combinedDataSource = combineAndDeduplicateReports(allLocalReports, MOCK_GENERAL_REPORTS);
 
     const query = values.query.toLowerCase().trim();
@@ -117,8 +83,8 @@ export default function SearchPage() {
         timestamp: new Date(),
         resultsCount: results.length,
       };
-      const existingLogs = getSearchLogsFromLocalStorage();
-      saveSearchLogsToLocalStorage([newSearchLog, ...existingLogs]);
+      const existingLogs = getSearchLogsFromLocalStoragePublic();
+      saveSearchLogsToLocalStoragePublic([newSearchLog, ...existingLogs]);
     }
   };
 
@@ -284,7 +250,7 @@ export default function SearchPage() {
                 </CardContent>
                 <CardFooter className="bg-muted/30 p-3 text-xs text-muted-foreground border-t">
                   <div className="flex justify-between w-full items-center">
-                    <span>Pateikė: {report.reporterCompanyName || 'Privatus asmuo'} (ID: {report.reporterId.substring(0,12)}...)</span>
+                    <span>Pateikė: {report.reporterCompanyName ? report.reporterCompanyName : 'Nenurodyta'} (ID: {report.reporterId.substring(0,12)}...)</span>
                     <span>Data: {format(new Date(report.createdAt), "yyyy-MM-dd HH:mm", { locale: lt })}</span>
                   </div>
                 </CardFooter>
