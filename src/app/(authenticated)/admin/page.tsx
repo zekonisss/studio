@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Loader2, ShieldAlert, Users, FileText, AlertTriangle, Trash2, Eye, MoreHorizontal, BarChart3, UserCheck, UserX, UserCog, CalendarDays, Building2, Tag, MessageSquare, Image as ImageIcon, CheckCircle2, CreditCard, Send, Briefcase, MapPin, Phone, Mail, ShieldCheck as ShieldCheckIcon, User as UserIcon, Globe } from "lucide-react";
+import { Loader2, ShieldAlert, Users, FileText, AlertTriangle, Trash2, Eye, MoreHorizontal, BarChart3, UserCheck, UserX, UserCog, CalendarDays, Building2, Tag, MessageSquare, Image as ImageIcon, CheckCircle2, CreditCard, Send, Briefcase, MapPin, Phone, Mail, ShieldCheck as ShieldCheckIcon, User as UserIcon, Globe, Edit3, Save, XCircle } from "lucide-react";
 import type { UserProfile, Report, ReportCategoryValue } from "@/types";
 import { getAllUsers, saveAllUsers, MOCK_GENERAL_REPORTS, combineAndDeduplicateReports, countries } from "@/types";
 import { format as formatDateFn, addYears } from 'date-fns';
@@ -20,6 +20,7 @@ import { lt } from 'date-fns/locale';
 import { useToast } from "@/hooks/use-toast";
 import NextImage from "next/image";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 
 const LOCAL_STORAGE_REPORTS_KEY = 'driverShieldReports';
 
@@ -61,6 +62,10 @@ export default function AdminPage() {
   const [selectedReportForDetails, setSelectedReportForDetails] = useState<Report | null>(null);
   const [selectedUserForDetails, setSelectedUserForDetails] = useState<UserProfile | null>(null);
   const [deletingReportId, setDeletingReportId] = useState<string | null>(null);
+
+  const [isEditingUserDetails, setIsEditingUserDetails] = useState(false);
+  const [editingUserDetailsFormData, setEditingUserDetailsFormData] = useState<Partial<UserProfile>>({});
+
 
   useEffect(() => {
     if (!authLoading && (!adminUser || !adminUser.isAdmin)) {
@@ -126,11 +131,80 @@ export default function AdminPage() {
 
   const handleViewUserDetails = (user: UserProfile) => {
     setSelectedUserForDetails(user);
+    setEditingUserDetailsFormData({ // Initialize form data when modal opens
+      companyName: user.companyName,
+      companyCode: user.companyCode,
+      address: user.address,
+      contactPerson: user.contactPerson,
+      email: user.email,
+      phone: user.phone,
+    });
+    setIsEditingUserDetails(false); // Ensure it starts in view mode
   };
 
   const closeUserDetailsModal = () => {
     setSelectedUserForDetails(null);
+    setIsEditingUserDetails(false);
+    setEditingUserDetailsFormData({});
   };
+  
+  const handleEditUserDetails = () => {
+    if (selectedUserForDetails) {
+        setEditingUserDetailsFormData({
+            companyName: selectedUserForDetails.companyName,
+            companyCode: selectedUserForDetails.companyCode,
+            address: selectedUserForDetails.address,
+            contactPerson: selectedUserForDetails.contactPerson,
+            email: selectedUserForDetails.email,
+            phone: selectedUserForDetails.phone,
+        });
+        setIsEditingUserDetails(true);
+    }
+  };
+
+  const handleUserDetailsInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setEditingUserDetailsFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSaveUserDetails = () => {
+    if (!selectedUserForDetails) return;
+
+    const updatedUser: UserProfile = {
+        ...selectedUserForDetails,
+        companyName: editingUserDetailsFormData.companyName || selectedUserForDetails.companyName,
+        companyCode: editingUserDetailsFormData.companyCode || selectedUserForDetails.companyCode,
+        address: editingUserDetailsFormData.address || selectedUserForDetails.address,
+        contactPerson: editingUserDetailsFormData.contactPerson || selectedUserForDetails.contactPerson,
+        email: editingUserDetailsFormData.email || selectedUserForDetails.email,
+        phone: editingUserDetailsFormData.phone || selectedUserForDetails.phone,
+    };
+
+    const updatedUsersList = allUsersState.map(u => u.id === updatedUser.id ? updatedUser : u);
+    setAllUsersState(updatedUsersList);
+    saveAllUsers(updatedUsersList);
+    setSelectedUserForDetails(updatedUser); // Update the view in the modal
+    setIsEditingUserDetails(false);
+    toast({
+        title: "Duomenys Atnaujinti",
+        description: `Vartotojo ${updatedUser.companyName} duomenys sėkmingai išsaugoti.`,
+    });
+  };
+
+  const handleCancelEditUserDetails = () => {
+    setIsEditingUserDetails(false);
+    if (selectedUserForDetails) {
+      setEditingUserDetailsFormData({ // Reset form data to original selected user
+        companyName: selectedUserForDetails.companyName,
+        companyCode: selectedUserForDetails.companyCode,
+        address: selectedUserForDetails.address,
+        contactPerson: selectedUserForDetails.contactPerson,
+        email: selectedUserForDetails.email,
+        phone: selectedUserForDetails.phone,
+      });
+    }
+  };
+
 
   const handleDeleteReport = async (reportId: string) => {
     setDeletingReportId(reportId); 
@@ -178,14 +252,18 @@ export default function AdminPage() {
     }
   }
 
-  const UserInfoField = ({ label, value, icon: Icon }: { label: string, value: string | boolean | undefined, icon: React.ElementType }) => (
+  const UserInfoField = ({ label, value, icon: Icon, name, isEditing, onChange }: { label: string, value: string | boolean | undefined, icon: React.ElementType, name?: string, isEditing?: boolean, onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void }) => (
     <div className="space-y-1">
-      <Label className="text-sm font-medium text-muted-foreground flex items-center">
+      <Label htmlFor={name} className="text-sm font-medium text-muted-foreground flex items-center">
         <Icon className="mr-2 h-4 w-4" /> {label}
       </Label>
-      <p className="text-base text-foreground bg-secondary/30 p-2.5 rounded-md min-h-[40px] flex items-center">
-        {typeof value === 'boolean' ? (value ? 'Taip' : 'Ne') : (value || "-")}
-      </p>
+      {isEditing && name && typeof value === 'string' && onChange ? (
+        <Input id={name} name={name} value={value} onChange={onChange} className="text-base" />
+      ) : (
+        <p className="text-base text-foreground bg-secondary/30 p-2.5 rounded-md min-h-[40px] flex items-center">
+          {typeof value === 'boolean' ? (value ? 'Taip' : 'Ne') : (value || "-")}
+        </p>
+      )}
     </div>
   );
 
@@ -405,7 +483,7 @@ export default function AdminPage() {
             </DialogHeader>
             <div className="py-4 space-y-4 max-h-[60vh] overflow-y-auto pr-2">
               <div className="space-y-1">
-                <h4 className="text-sm font-medium text-muted-foreground flex items-center"><User className="mr-2 h-4 w-4" />Vairuotojas</h4>
+                <h4 className="text-sm font-medium text-muted-foreground flex items-center"><UserIcon className="mr-2 h-4 w-4" />Vairuotojas</h4>
                 <p className="text-base text-foreground">{selectedReportForDetails.fullName}</p>
               </div>
                {selectedReportForDetails.nationality && (
@@ -486,16 +564,17 @@ export default function AdminPage() {
                 <UserIcon className="mr-2 h-5 w-5 text-primary" /> Vartotojo Anketos Detalės
               </DialogTitle>
               <DialogDescription>
-                Išsami informacija apie vartotoją <span className="font-semibold">{selectedUserForDetails.companyName}</span>.
+                Išsami informacija apie vartotoją <span className="font-semibold">{isEditingUserDetails ? editingUserDetailsFormData.companyName : selectedUserForDetails.companyName}</span>.
               </DialogDescription>
             </DialogHeader>
             <div className="py-4 grid grid-cols-1 md:grid-cols-2 gap-6 max-h-[60vh] overflow-y-auto pr-2">
-              <UserInfoField label="Įmonės Pavadinimas" value={selectedUserForDetails.companyName} icon={Building2} />
-              <UserInfoField label="Įmonės Kodas" value={selectedUserForDetails.companyCode} icon={Briefcase} />
-              <UserInfoField label="Adresas" value={selectedUserForDetails.address} icon={MapPin} />
-              <UserInfoField label="Kontaktinis Asmuo" value={selectedUserForDetails.contactPerson} icon={UserIcon} />
-              <UserInfoField label="El. Paštas" value={selectedUserForDetails.email} icon={Mail} />
-              <UserInfoField label="Telefonas" value={selectedUserForDetails.phone} icon={Phone} />
+              <UserInfoField label="Įmonės Pavadinimas" value={isEditingUserDetails ? editingUserDetailsFormData.companyName || "" : selectedUserForDetails.companyName} icon={Building2} name="companyName" isEditing={isEditingUserDetails} onChange={handleUserDetailsInputChange} />
+              <UserInfoField label="Įmonės Kodas" value={isEditingUserDetails ? editingUserDetailsFormData.companyCode || "" : selectedUserForDetails.companyCode} icon={Briefcase} name="companyCode" isEditing={isEditingUserDetails} onChange={handleUserDetailsInputChange} />
+              <UserInfoField label="Adresas" value={isEditingUserDetails ? editingUserDetailsFormData.address || "" : selectedUserForDetails.address} icon={MapPin} name="address" isEditing={isEditingUserDetails} onChange={handleUserDetailsInputChange} />
+              <UserInfoField label="Kontaktinis Asmuo" value={isEditingUserDetails ? editingUserDetailsFormData.contactPerson || "" : selectedUserForDetails.contactPerson} icon={UserIcon} name="contactPerson" isEditing={isEditingUserDetails} onChange={handleUserDetailsInputChange} />
+              <UserInfoField label="El. Paštas" value={isEditingUserDetails ? editingUserDetailsFormData.email || "" : selectedUserForDetails.email} icon={Mail} name="email" isEditing={isEditingUserDetails} onChange={handleUserDetailsInputChange} />
+              <UserInfoField label="Telefonas" value={isEditingUserDetails ? editingUserDetailsFormData.phone || "" : selectedUserForDetails.phone} icon={Phone} name="phone" isEditing={isEditingUserDetails} onChange={handleUserDetailsInputChange} />
+              
               <div className="md:col-span-2">
                 <UserInfoField label="Būsena" value={getStatusText(selectedUserForDetails.paymentStatus)} icon={CheckCircle2} />
               </div>
@@ -514,9 +593,23 @@ export default function AdminPage() {
                 <UserInfoField label="Vartotojo ID" value={selectedUserForDetails.id} icon={UserCog} />
               </div>
             </div>
-            <DialogFooter>
+            <DialogFooter className="gap-2 sm:gap-0">
+                {isEditingUserDetails ? (
+                    <>
+                        <Button type="button" variant="outline" onClick={handleCancelEditUserDetails}>
+                           <XCircle className="mr-2 h-4 w-4" /> Atšaukti
+                        </Button>
+                        <Button type="button" onClick={handleSaveUserDetails}>
+                           <Save className="mr-2 h-4 w-4" /> Išsaugoti Pakeitimus
+                        </Button>
+                    </>
+                ) : (
+                    <Button type="button" variant="outline" onClick={handleEditUserDetails}>
+                       <Edit3 className="mr-2 h-4 w-4" /> Redaguoti Duomenis
+                    </Button>
+                )}
               <DialogClose asChild>
-                <Button type="button" variant="outline">Uždaryti</Button>
+                <Button type="button" variant="secondary" onClick={closeUserDetailsModal}>Uždaryti</Button>
               </DialogClose>
             </DialogFooter>
           </DialogContent>
