@@ -249,7 +249,7 @@ export default function AccountPage() {
                             <p className="mt-3 text-sm text-green-600">
                                 Galioja iki: <span className="font-medium">{formatDateFn(addYears(new Date(user.accountActivatedAt), 1), "yyyy 'm.' MMMM dd 'd.'", { locale: lt })}</span>
                             </p>
-                            <p className="text-sm text-green-600">Metinė kaina: <span className="font-medium">1188 €</span></p>
+                            <p className="text-sm text-green-600">Kaina: <span className="font-medium">29.99 €/mėn (Metinė kaina: 346.00 € be PVM)</span></p>
                         </div>
                     ) : user.paymentStatus === 'pending_payment' ? (
                          <div className="p-6 border rounded-lg bg-yellow-50 border-yellow-200">
