@@ -12,13 +12,14 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Loader2, ShieldAlert, Users, FileText, AlertTriangle, Trash2, Eye, MoreHorizontal, BarChart3, UserCheck, UserX, UserCog, CalendarDays, Building2, Tag, MessageSquare, Image as ImageIcon, CheckCircle2, CreditCard, Send } from "lucide-react";
+import { Loader2, ShieldAlert, Users, FileText, AlertTriangle, Trash2, Eye, MoreHorizontal, BarChart3, UserCheck, UserX, UserCog, CalendarDays, Building2, Tag, MessageSquare, Image as ImageIcon, CheckCircle2, CreditCard, Send, Briefcase, MapPin, Phone, Mail, ShieldCheck as ShieldCheckIcon, User as UserIcon } from "lucide-react";
 import type { UserProfile, Report } from "@/types";
 import { getAllUsers, saveAllUsers, MOCK_GENERAL_REPORTS, combineAndDeduplicateReports } from "@/types";
 import { format } from 'date-fns';
 import { lt } from 'date-fns/locale';
 import { useToast } from "@/hooks/use-toast";
-import NextImage from "next/image"; 
+import NextImage from "next/image";
+import { Label } from "@/components/ui/label";
 
 const LOCAL_STORAGE_REPORTS_KEY = 'driverShieldReports';
 
@@ -50,6 +51,7 @@ export default function AdminPage() {
   const [allUsersState, setAllUsersState] = useState<UserProfile[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [selectedReportForDetails, setSelectedReportForDetails] = useState<Report | null>(null);
+  const [selectedUserForDetails, setSelectedUserForDetails] = useState<UserProfile | null>(null);
   const [deletingReportId, setDeletingReportId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -89,7 +91,6 @@ export default function AdminPage() {
         toastTitle = "Paskyra Aktyvuota";
         toastDescription = `Vartotojo ${targetUser.companyName} mokėjimas 'gautas'. Paskyra sėkmingai aktyvuota.`;
     } else if (newStatus === 'active' && oldStatus === 'pending_verification') {
-        // This case might be less common now, but kept for fallback
         toastTitle = "Paskyra Patvirtinta ir Aktyvuota";
         toastDescription = `Vartotojo ${targetUser.companyName} paskyra patvirtinta ir aktyvuota. Vartotojui 'išsiųstos' instrukcijos.`;
     }
@@ -108,6 +109,14 @@ export default function AdminPage() {
 
   const closeReportDetailsModal = () => {
     setSelectedReportForDetails(null);
+  };
+
+  const handleViewUserDetails = (user: UserProfile) => {
+    setSelectedUserForDetails(user);
+  };
+
+  const closeUserDetailsModal = () => {
+    setSelectedUserForDetails(null);
   };
 
   const handleDeleteReport = async (reportId: string) => {
@@ -155,6 +164,17 @@ export default function AdminPage() {
       default: return status;
     }
   }
+
+  const UserInfoField = ({ label, value, icon: Icon }: { label: string, value: string | boolean | undefined, icon: React.ElementType }) => (
+    <div className="space-y-1">
+      <Label className="text-sm font-medium text-muted-foreground flex items-center">
+        <Icon className="mr-2 h-4 w-4" /> {label}
+      </Label>
+      <p className="text-base text-foreground bg-secondary/30 p-2.5 rounded-md min-h-[40px] flex items-center">
+        {typeof value === 'boolean' ? (value ? 'Taip' : 'Ne') : (value || "-")}
+      </p>
+    </div>
+  );
 
 
   return (
@@ -219,6 +239,10 @@ export default function AdminPage() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => handleViewUserDetails(u)}>
+                                <Eye className="mr-2 h-4 w-4" /> Peržiūrėti Anketą
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
                               <DropdownMenuLabel>Keisti Būseną</DropdownMenuLabel>
                               <DropdownMenuSeparator />
                               {u.paymentStatus === 'pending_verification' && (
@@ -231,12 +255,12 @@ export default function AdminPage() {
                                   <CreditCard className="mr-2 h-4 w-4 text-green-600" /> Aktyvuoti (Mokėjimas Gautas)
                                 </DropdownMenuItem>
                               )}
-                              {u.paymentStatus !== 'active' && u.paymentStatus !== 'pending_payment' && u.paymentStatus !== 'pending_verification' && ( // General activate if not in pending flow
+                              {u.paymentStatus !== 'active' && u.paymentStatus !== 'pending_payment' && u.paymentStatus !== 'pending_verification' && ( 
                                 <DropdownMenuItem onClick={() => handleUserStatusChange(u.id, 'active')}>
                                   <UserCheck className="mr-2 h-4 w-4" /> Aktyvuoti
                                 </DropdownMenuItem>
                               )}
-                              {u.paymentStatus === 'active' && ( // Only allow deactivation for active users from main flow
+                              {u.paymentStatus === 'active' && ( 
                                 <DropdownMenuItem onClick={() => handleUserStatusChange(u.id, 'inactive')}>
                                   <UserX className="mr-2 h-4 w-4" /> Deaktyvuoti
                                 </DropdownMenuItem>
@@ -244,11 +268,6 @@ export default function AdminPage() {
                                <DropdownMenuItem onClick={() => handleUserStatusChange(u.id, 'pending_verification')} disabled={u.paymentStatus === 'pending_verification'}>
                                 <UserCog className="mr-2 h-4 w-4" /> Nustatyti "Laukia Tapatybės Patvirtinimo"
                               </DropdownMenuItem>
-                              {/* Remove direct "Set to Pending Payment" as it's part of a flow now
-                               <DropdownMenuItem onClick={() => handleUserStatusChange(u.id, 'pending_payment')} disabled={u.paymentStatus === 'pending_payment'}>
-                                <UserCog className="mr-2 h-4 w-4" /> Nustatyti "Laukia Apmokėjimo"
-                              </DropdownMenuItem>
-                              */}
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </TableCell>
@@ -429,6 +448,42 @@ export default function AdminPage() {
                <div className="space-y-1">
                 <h4 className="text-sm font-medium text-muted-foreground flex items-center"><CalendarDays className="mr-2 h-4 w-4" />Pranešimo Data</h4>
                 <p className="text-base text-foreground">{format(new Date(selectedReportForDetails.createdAt), "yyyy-MM-dd HH:mm:ss", { locale: lt })}</p>
+              </div>
+            </div>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button type="button" variant="outline">Uždaryti</Button>
+              </DialogClose>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {selectedUserForDetails && (
+        <Dialog open={!!selectedUserForDetails} onOpenChange={(isOpen) => { if (!isOpen) closeUserDetailsModal(); }}>
+          <DialogContent className="sm:max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center text-xl">
+                <UserIcon className="mr-2 h-5 w-5 text-primary" /> Vartotojo Anketos Detalės
+              </DialogTitle>
+              <DialogDescription>
+                Išsami informacija apie vartotoją <span className="font-semibold">{selectedUserForDetails.companyName}</span>.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4 grid grid-cols-1 md:grid-cols-2 gap-6 max-h-[60vh] overflow-y-auto pr-2">
+              <UserInfoField label="Įmonės Pavadinimas" value={selectedUserForDetails.companyName} icon={Building2} />
+              <UserInfoField label="Įmonės Kodas" value={selectedUserForDetails.companyCode} icon={Briefcase} />
+              <UserInfoField label="Adresas" value={selectedUserForDetails.address} icon={MapPin} />
+              <UserInfoField label="Kontaktinis Asmuo" value={selectedUserForDetails.contactPerson} icon={UserIcon} />
+              <UserInfoField label="El. Paštas" value={selectedUserForDetails.email} icon={Mail} />
+              <UserInfoField label="Telefonas" value={selectedUserForDetails.phone} icon={Phone} />
+              <div className="md:col-span-2">
+                <UserInfoField label="Būsena" value={getStatusText(selectedUserForDetails.paymentStatus)} icon={CheckCircle2} />
+              </div>
+              <UserInfoField label="Administratorius" value={selectedUserForDetails.isAdmin} icon={ShieldAlert} />
+              <UserInfoField label="Sutiko su taisyklėmis" value={selectedUserForDetails.agreeToTerms} icon={ShieldCheckIcon} />
+              <div className="md:col-span-2">
+                <UserInfoField label="Vartotojo ID" value={selectedUserForDetails.id} icon={UserCog} />
               </div>
             </div>
             <DialogFooter>
