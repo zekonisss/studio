@@ -12,14 +12,8 @@ import { format } from 'date-fns';
 import { lt } from 'date-fns/locale';
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { MOCK_USER } from "@/types";
+import { MOCK_USER, MOCK_USER_SEARCH_LOGS } from "@/types";
 
-// Base mock data for search logs, used to seed localStorage for MOCK_USER if empty
-const mockSearchLogsBase: SearchLog[] = [
-  { id: "mocklog1", userId: "dev-user-123", searchText: "Jonas Jonaitis (Demo)", timestamp: new Date("2024-03-10T10:00:00Z"), resultsCount: 2 },
-  { id: "mocklog2", userId: "dev-user-123", searchText: "AB123XYZ (Demo)", timestamp: new Date("2024-03-09T15:30:00Z"), resultsCount: 0 },
-  { id: "mocklog3", userId: "dev-user-123", searchText: "Petras Petraitis (Demo)", timestamp: new Date("2024-03-09T11:20:00Z"), resultsCount: 1 },
-];
 
 const LOCAL_STORAGE_SEARCH_LOGS_KEY = 'driverShieldSearchLogs';
 
@@ -56,27 +50,25 @@ export default function SearchHistoryPage() {
       }
 
       setIsLoading(true);
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500)); 
-      
+      await new Promise(resolve => setTimeout(resolve, 500));
+
       let userLogs = getSearchLogsFromLocalStorage().filter(log => log.userId === user.id);
 
-      if (user.id === MOCK_USER.id && userLogs.length === 0) {
-        // If mock user and no logs in localStorage for them, seed with base mock data
-        const mockUserLogs = mockSearchLogsBase.filter(log => log.userId === MOCK_USER.id);
-        if (mockUserLogs.length > 0) {
-           const allLogs = getSearchLogsFromLocalStorage(); // get all logs to not overwrite others
-           const otherUserLogs = allLogs.filter(log => log.userId !== MOCK_USER.id);
-           saveSearchLogsToLocalStorage([...otherUserLogs, ...mockUserLogs]);
-           userLogs = mockUserLogs; // Use these newly seeded logs
-        }
+      // If current user is MOCK_USER and their localStorage logs are empty, seed with MOCK_USER_SEARCH_LOGS
+      if (user.id === MOCK_USER.id && userLogs.length === 0 && MOCK_USER_SEARCH_LOGS.length > 0) {
+         const allLogsCurrentlyInStorage = getSearchLogsFromLocalStorage();
+         const otherUserLogs = allLogsCurrentlyInStorage.filter(log => log.userId !== MOCK_USER.id);
+         const logsToSaveForMockUser = MOCK_USER_SEARCH_LOGS.filter(log => log.userId === MOCK_USER.id);
+         
+         saveSearchLogsToLocalStorage([...otherUserLogs, ...logsToSaveForMockUser]);
+         userLogs = logsToSaveForMockUser;
       }
-      
+
       setSearchLogs(userLogs.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()));
       setIsLoading(false);
     };
 
-    if (!authLoading) { // Only fetch if auth state is resolved
+    if (!authLoading) {
         fetchSearchLogs();
     }
   }, [user, authLoading]);
@@ -160,5 +152,3 @@ export default function SearchHistoryPage() {
     </div>
   );
 }
-
-    

@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
@@ -16,47 +16,8 @@ import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { format } from 'date-fns';
 import { lt } from 'date-fns/locale';
-import Link from "next/link";
+import { MOCK_GENERAL_REPORTS, combineAndDeduplicateReports } from "@/types";
 
-
-// Mock data for search results (base data)
-const mockReportsBase: Report[] = [
-  {
-    id: "report1",
-    reporterId: "user1", // Different reporter
-    reporterCompanyName: "UAB Logistika LT",
-    fullName: "Jonas Jonaitis",
-    birthYear: 1985,
-    category: "kuro_vagyste",
-    tags: ["pasikartojantis", "pavojingas_vairavimas"],
-    comment: "Vairuotojas buvo pastebėtas neteisėtai nupylinėjantis kurą iš įmonės sunkvežimio. Tai jau antras kartas per pastaruosius 6 mėnesius. Taip pat gauta informacija apie pavojingą vairavimą mieste.",
-    imageUrl: "https://placehold.co/600x400.png",
-    createdAt: new Date("2023-10-15T10:30:00Z"),
-    dataAiHint: "truck fuel"
-  },
-  {
-    id: "report2",
-    reporterId: "user2", // Different reporter
-    reporterCompanyName: "UAB Greiti Pervežimai",
-    fullName: "Petras Petraitis",
-    category: "zala_technikai", // Updated category
-    tags: ["rekomenduojama_patikrinti"],
-    comment: "Grįžus iš reiso, pastebėta didelė žala priekabos šonui. Vairuotojas teigia nieko nepastebejęs. Rekomenduojama atlikti nuodugnesnį tyrimą.",
-    createdAt: new Date("2023-11-01T14:00:00Z"),
-  },
-  { // Add one of the mockUserReportsBase here to ensure it's searchable if not in local
-    id: "report-user-2", // from mockUserReportsBase in history page
-    reporterId: "dev-user-123",
-    reporterCompanyName: 'UAB "Bandomoji Įmonė"',
-    fullName: "Zita Zitaite",
-    category: "greicio_virijimas",
-    tags: ["pasikartojantis", "pavojingas_vairavimas"],
-    comment: "GPS duomenys rodo pakartotinį greičio viršijimą gyvenvietėse. Buvo įspėta, tačiau situacija kartojasi.",
-    imageUrl: "https://placehold.co/300x200.png",
-    createdAt: new Date("2024-01-10T16:45:00Z"),
-    dataAiHint: "speeding ticket"
-  },
-];
 
 const LOCAL_STORAGE_REPORTS_KEY = 'driverShieldReports';
 const LOCAL_STORAGE_SEARCH_LOGS_KEY = 'driverShieldSearchLogs';
@@ -114,13 +75,8 @@ export default function SearchPage() {
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     const allLocalReports = getReportsFromLocalStorage();
-    let combinedDataSource = [...allLocalReports];
-
-    mockReportsBase.forEach(mockReport => {
-        if (!combinedDataSource.some(lr => lr.id === mockReport.id)) {
-            combinedDataSource.push(mockReport);
-        }
-    });
+    // Combine reports from localStorage and general mock reports, then deduplicate
+    const combinedDataSource = combineAndDeduplicateReports(allLocalReports, MOCK_GENERAL_REPORTS);
 
     const query = values.query.toLowerCase().trim();
     let results: Report[] = [];
@@ -129,10 +85,10 @@ export default function SearchPage() {
       results = combinedDataSource.filter(
         report =>
           report.fullName.toLowerCase().includes(query) ||
-          report.id.toLowerCase().includes(query) || 
+          report.id.toLowerCase().includes(query) ||
           (report.birthYear && report.birthYear.toString().includes(query)) ||
-          report.category.toLowerCase().includes(query.replace(/ /g, '_')) || 
-          report.tags.some(tag => tag.toLowerCase().includes(query.replace(/ /g, '_'))) || 
+          report.category.toLowerCase().includes(query.replace(/ /g, '_')) ||
+          report.tags.some(tag => tag.toLowerCase().includes(query.replace(/ /g, '_'))) ||
           report.comment.toLowerCase().includes(query) ||
           (report.reporterCompanyName && report.reporterCompanyName.toLowerCase().includes(query))
       ).sort((a,b) => b.createdAt.getTime() - a.createdAt.getTime());
@@ -144,7 +100,7 @@ export default function SearchPage() {
       setNoResults(true);
     }
     setIsLoading(false);
-    
+
     if (user && query) {
       const newSearchLog: SearchLog = {
         id: `searchlog-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,

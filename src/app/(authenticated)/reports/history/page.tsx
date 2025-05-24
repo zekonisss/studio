@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import type { Report } from "@/types";
 import { useAuth } from "@/hooks/use-auth";
-import { Loader2, History as HistoryIcon, User, CalendarDays, Tag, MessageSquare, AlertTriangle, Trash2, Eye, PlusCircle, Building2, Image as ImageIcon } from "lucide-react";
+import { Loader2, History as HistoryIcon, User, CalendarDays, Tag, MessageSquare, AlertTriangle, Trash2, Eye, PlusCircle, Building2, Image as ImageIcon, FileText } from "lucide-react";
 import { format } from 'date-fns';
 import { lt } from 'date-fns/locale';
 import {
@@ -33,34 +33,7 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { MOCK_USER } from "@/types"; // Import MOCK_USER to compare IDs
-
-// Mock data for reports (base data)
-const mockUserReportsBase: Report[] = [
-  {
-    id: "report-user-1",
-    reporterId: "dev-user-123",
-    reporterCompanyName: 'UAB "Bandomoji Įmonė"',
-    fullName: "Antanas Antanaitis",
-    birthYear: 1992,
-    category: "netinkamas_elgesys",
-    tags: ["konfliktiskas"],
-    comment: "Vairuotojas buvo nemandagus su klientu, atsisakė padėti iškrauti prekes. Klientas pateikė skundą.",
-    createdAt: new Date("2024-02-20T09:15:00Z"),
-  },
-  {
-    id: "report-user-2",
-    reporterId: "dev-user-123",
-    reporterCompanyName: 'UAB "Bandomoji Įmonė"',
-    fullName: "Zita Zitaite",
-    category: "greicio_virijimas",
-    tags: ["pasikartojantis", "pavojingas_vairavimas"],
-    comment: "GPS duomenys rodo pakartotinį greičio viršijimą gyvenvietėse. Buvo įspėta, tačiau situacija kartojasi.",
-    imageUrl: "https://placehold.co/300x200.png",
-    dataAiHint: "speeding ticket",
-    createdAt: new Date("2024-01-10T16:45:00Z"),
-  },
-];
+import { MOCK_USER, MOCK_USER_REPORTS, combineAndDeduplicateReports } from "@/types";
 
 const LOCAL_STORAGE_REPORTS_KEY = 'driverShieldReports';
 
@@ -95,40 +68,42 @@ export default function ReportHistoryPage() {
     const fetchReports = async () => {
       setIsLoading(true);
       if (user) {
-        await new Promise(resolve => setTimeout(resolve, 500)); 
-        
-        const localUserReports = getReportsFromLocalStorage().filter(r => r.reporterId === user.id);
-        let combinedReports = [...localUserReports];
+        await new Promise(resolve => setTimeout(resolve, 500));
 
-        if (user.id === MOCK_USER.id) { 
-          mockUserReportsBase.forEach(mockReport => {
-            if (!combinedReports.some(lr => lr.id === mockReport.id)) {
-              combinedReports.push(mockReport);
+        const localUserReports = getReportsFromLocalStorage().filter(r => r.reporterId === user.id);
+        let combinedReportsForUser = [...localUserReports];
+
+        if (user.id === MOCK_USER.id) {
+          const userSpecificMocks = MOCK_USER_REPORTS.filter(mr => mr.reporterId === user.id);
+          // Ensure mock reports for the current user are added if not already in localStorage
+          userSpecificMocks.forEach(mockReport => {
+            if (!combinedReportsForUser.some(lr => lr.id === mockReport.id)) {
+              combinedReportsForUser.push(mockReport);
             }
           });
         }
-        setReports(combinedReports.sort((a,b) => b.createdAt.getTime() - a.createdAt.getTime()));
+        setReports(combinedReportsForUser.sort((a,b) => b.createdAt.getTime() - a.createdAt.getTime()));
       }
       setIsLoading(false);
     };
-    if (user) { 
+    if (user) {
       fetchReports();
     } else {
-      setIsLoading(false); 
+      setIsLoading(false);
       setReports([]);
     }
   }, [user]);
 
   const handleDeleteReport = async (reportId: string) => {
     setDeletingId(reportId);
-    await new Promise(resolve => setTimeout(resolve, 1000)); 
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
     const allLocalReports = getReportsFromLocalStorage();
     const updatedLocalReports = allLocalReports.filter(report => report.id !== reportId);
     saveReportsToLocalStorage(updatedLocalReports);
-    
+
     setReports(prevReports => prevReports.filter(report => report.id !== reportId));
-    
+
     toast({
       title: "Pranešimas pašalintas",
       description: "Pasirinktas pranešimas buvo sėkmingai pašalintas iš naršyklės atminties.",
@@ -144,15 +119,15 @@ export default function ReportHistoryPage() {
     setSelectedReportForDetails(null);
   };
 
-  if (isLoading && !user) { 
+  if (isLoading && !user) {
     return (
       <div className="flex justify-center items-center h-[calc(100vh-10rem)]">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
       </div>
     );
   }
-  
-  if (!user) { 
+
+  if (!user) {
      return (
         <div className="container mx-auto py-8 text-center">
             <AlertTriangle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -164,8 +139,8 @@ export default function ReportHistoryPage() {
         </div>
     );
   }
-  
-   if (isLoading) { 
+
+   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-[calc(100vh-10rem)]">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -224,7 +199,7 @@ export default function ReportHistoryPage() {
                       Pranešta: {format(new Date(report.createdAt), "yyyy-MM-dd HH:mm", { locale: lt })}
                     </CardDescription>
                   </div>
-                  <Badge variant={report.category === 'kuro_vagyste' || report.category === 'zala_irangai' ? 'destructive' : 'secondary'}>
+                  <Badge variant={report.category === 'kuro_vagyste' || report.category === 'zala_technikai' ? 'destructive' : 'secondary'}>
                     {report.category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                   </Badge>
                 </div>
@@ -248,7 +223,7 @@ export default function ReportHistoryPage() {
                   )}
               </CardContent>
               <CardFooter className="flex justify-end gap-2 pt-4">
-                 <Button variant="ghost" size="sm" onClick={() => handleViewDetails(report)}> 
+                 <Button variant="ghost" size="sm" onClick={() => handleViewDetails(report)}>
                     <Eye className="mr-2 h-4 w-4" />
                     Peržiūrėti (Detalės)
                   </Button>
@@ -304,7 +279,7 @@ export default function ReportHistoryPage() {
               )}
               <div className="space-y-1">
                 <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Tag className="mr-2 h-4 w-4" />Kategorija</h4>
-                <Badge variant={selectedReportForDetails.category === 'kuro_vagyste' || selectedReportForDetails.category === 'zala_irangai' ? 'destructive' : 'secondary'} className="text-sm">
+                <Badge variant={selectedReportForDetails.category === 'kuro_vagyste' || selectedReportForDetails.category === 'zala_technikai' ? 'destructive' : 'secondary'} className="text-sm">
                   {selectedReportForDetails.category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                 </Badge>
               </div>
@@ -326,11 +301,11 @@ export default function ReportHistoryPage() {
                 <div className="space-y-1">
                   <h4 className="text-sm font-medium text-muted-foreground flex items-center"><ImageIcon className="mr-2 h-4 w-4" />Pridėtas Failas/Nuotrauka</h4>
                   <div className="relative aspect-video w-full overflow-hidden rounded-md border">
-                    <Image 
-                        src={selectedReportForDetails.imageUrl} 
-                        alt={`Pranešimo nuotrauka ${selectedReportForDetails.fullName}`} 
-                        layout="fill" 
-                        objectFit="contain" 
+                    <Image
+                        src={selectedReportForDetails.imageUrl}
+                        alt={`Pranešimo nuotrauka ${selectedReportForDetails.fullName}`}
+                        layout="fill"
+                        objectFit="contain"
                         data-ai-hint={selectedReportForDetails.dataAiHint || "report image"}
                     />
                   </div>
@@ -356,5 +331,3 @@ export default function ReportHistoryPage() {
     </div>
   );
 }
-
-    
