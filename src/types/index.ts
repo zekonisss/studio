@@ -312,12 +312,12 @@ export const detailedReportCategories: DetailedCategory[] = [
   {
     id: "fuel_theft",
     name: "Kuro / turto vagystės",
-    tags: ["Kuro vagystė", "Krovinio vagystė", "Įmonės turto vagystė"],
+    tags: ["Kuro vagystė", "Krovinio vagystė", "Įmonės turto vagystė", "Kita"],
   },
   {
     id: "driving_safety",
     name: "Neatsakingas vairavimas",
-    tags: ["Avaringumas", "Pavojingas vairavimas", "Dažni KET pažeidimai"],
+    tags: ["Avaringumas", "Pavojingas vairavimas", "Dažni KET pažeidimai", "Kita"],
   },
   {
     id: "behavior",
@@ -327,6 +327,7 @@ export const detailedReportCategories: DetailedCategory[] = [
       "Netinkamas elgesys kolegų atžvilgiu",
       "Psichotropinių medžiagų vartojimas",
       "Konfliktiškas asmuo",
+      "Kita"
     ],
   },
   {
@@ -336,6 +337,7 @@ export const detailedReportCategories: DetailedCategory[] = [
       "Neblaivus darbo metu",
       "Neatvykimas į darbą be pateisinamos priežasties",
       "Neatsakingas požiūris į darbą",
+      "Kita"
     ],
   },
   {
@@ -344,7 +346,8 @@ export const detailedReportCategories: DetailedCategory[] = [
     tags: [
       "Techninis neatsakingumas",
       "Rizika saugumui ar kroviniui",
-      "Dažni transporto priemonės pažeidimai"
+      "Dažni transporto priemonės pažeidimai",
+      "Kita"
     ],
   },
   {
@@ -354,6 +357,7 @@ export const detailedReportCategories: DetailedCategory[] = [
       "Buvo teisinis procesas / darbo ginčas",
       "Pakenkta įmonės reputacijai",
       "Neteisėta veikla įtariama",
+      "Kita"
     ],
   },
 ];
@@ -462,7 +466,7 @@ export const MOCK_USER_REPORTS: Report[] = [
     fullName: "Antanas Antanaitis",
     nationality: "LT",
     birthYear: 1992,
-    category: "behavior",
+    category: "behavior", // "Toksiškas elgesys"
     tags: ["Konfliktiškas asmuo"],
     comment: "Vairuotojas buvo nemandagus su klientu, atsisakė padėti iškrauti prekes. Klientas pateikė skundą.",
     createdAt: new Date("2024-02-20T09:15:00Z"),
@@ -473,7 +477,7 @@ export const MOCK_USER_REPORTS: Report[] = [
     reporterCompanyName: 'UAB "DriverCheck Demo"',
     fullName: "Zita Zitaite",
     nationality: "LT",
-    category: "driving_safety",
+    category: "driving_safety", // "Neatsakingas vairavimas"
     tags: ["Avaringumas", "Pavojingas vairavimas"],
     comment: "GPS duomenys rodo pakartotinį greičio viršijimą gyvenvietėse. Buvo įspėta, tačiau situacija kartojasi.",
     imageUrl: "https://placehold.co/600x400.png",
@@ -515,7 +519,7 @@ export const MOCK_GENERAL_REPORTS: Report[] = [
     fullName: "Kazys Kazlauskas",
     nationality: "BY",
     birthYear: 1978,
-    category: "discipline",
+    category: "discipline", // "Darbo drausmės nesilaikymas"
     tags: ["Neatsakingas požiūris į darbą"],
     comment: "Vėlavo pristatyti krovinį 2 valandas be pateisinamos priežasties, grubiai bendravo su sandėlio darbuotojais.",
     imageUrl: "https://placehold.co/600x400.png",
@@ -525,7 +529,6 @@ export const MOCK_GENERAL_REPORTS: Report[] = [
 ];
 
 
-// Helper for destructive categories, might need adjustment based on new IDs
 export const DESTRUCTIVE_REPORT_MAIN_CATEGORIES: string[] = ['fuel_theft', 'discipline', 'technical_damage', 'driving_safety'];
 
 
@@ -584,25 +587,23 @@ export function saveSearchLogsToLocalStoragePublic(logs: SearchLog[]): void {
 
 
 export const MOCK_USER_SEARCH_LOGS: SearchLog[] = [
-  { id: "log1-mock-user", userId: MOCK_USER.id, searchText: "Jonas Jonaitis paieška", timestamp: new Date("2024-04-10T10:00:00Z"), resultsCount: 1 },
-  { id: "log2-mock-user", userId: MOCK_USER.id, searchText: "Neatsakingas vairavimas", timestamp: new Date("2024-04-09T11:20:00Z"), resultsCount: 2 },
+  { id: "log1-mock-user", userId: MOCK_USER.id, searchText: "Jonas Jonaitis", timestamp: new Date("2024-04-10T10:00:00Z"), resultsCount: 1 },
+  { id: "log2-mock-user", userId: MOCK_USER.id, searchText: "Neatsakingas vairavimas", timestamp: new Date("2024-04-09T11:20:00Z"), resultsCount: 1 }, // Adjusted count for "Neatsakingas vairavimas"
   { id: "log3-mock-user", userId: MOCK_USER.id, searchText: "Antanas Antanaitis", timestamp: new Date("2024-04-08T15:30:00Z"), resultsCount: 1 },
 ];
 
-// New mock report to test the discipline category change
 export const MOCK_DISCIPLINE_REPORT: Report = {
     id: "report-discipline-1",
     reporterId: "dev-user-123",
     reporterCompanyName: 'UAB "DriverCheck Demo"',
     fullName: "Testas Testuolis",
     nationality: "LT",
-    category: "discipline",
+    category: "discipline", // "Darbo drausmės nesilaikymas"
     tags: ["Neblaivus darbo metu", "Neatsakingas požiūris į darbą"],
     comment: "Vairuotojas buvo rastas neblaivus darbo vietoje.",
     createdAt: new Date("2024-03-15T10:00:00Z"),
 };
 
-// Ensure this new report is part of the general mock data if needed
 if (!MOCK_GENERAL_REPORTS.find(r => r.id === MOCK_DISCIPLINE_REPORT.id)) {
     MOCK_GENERAL_REPORTS.push(MOCK_DISCIPLINE_REPORT);
 }
@@ -614,3 +615,4 @@ if (!MOCK_USER_REPORTS.find(r => r.id === MOCK_DISCIPLINE_REPORT.id) && MOCK_DIS
     
 
     
+
