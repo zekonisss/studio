@@ -12,7 +12,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ReportSchema, type ReportFormValues } from "@/lib/schemas";
-import { detailedReportCategories, Report, countries, DetailedCategory } from "@/types";
+import type { Report, DetailedCategory } from "@/types"; // Updated import
+import { detailedReportCategories, countries } from "@/types"; // Updated import
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, FilePlus2, User, CalendarDays, Tag, MessageSquare, Paperclip, Globe, Layers, CheckSquare } from "lucide-react";
@@ -51,7 +52,7 @@ export default function AddReportPage() {
     defaultValues: {
       fullName: "",
       nationality: "",
-      birthYear: '',
+      birthYear: '', // Keep as empty string for controlled input
       category: "", // Main category ID
       subcategory: "",
       tags: [],
@@ -153,7 +154,7 @@ export default function AddReportPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center text-base"><Globe className="mr-2 h-4 w-4 text-muted-foreground" />Pilietybė (nebūtina)</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value || ""}>
                       <FormControl>
                         <SelectTrigger className="text-base py-2.5 h-auto">
                           <SelectValue placeholder="Pasirinkite pilietybę..." />
@@ -192,7 +193,7 @@ export default function AddReportPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center text-base"><Layers className="mr-2 h-4 w-4 text-muted-foreground" />Pagrindinė Kategorija</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value || ""}>
                       <FormControl>
                         <SelectTrigger className="text-base py-2.5 h-auto">
                           <SelectValue placeholder="Pasirinkite pagrindinę kategoriją..." />
@@ -218,14 +219,13 @@ export default function AddReportPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="flex items-center text-base"><Layers className="mr-2 h-4 w-4 text-muted-foreground opacity-70" />Subkategorija (neprivaloma)</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value} defaultValue="">
+                      <Select onValueChange={field.onChange} value={field.value || ""} >
                         <FormControl>
                           <SelectTrigger className="text-base py-2.5 h-auto">
                             <SelectValue placeholder="Pasirinkite subkategoriją..." />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="" className="text-base">-- Nepasirinkta --</SelectItem>
                           {selectedMainCategory.subcategories.map(subCat => (
                             <SelectItem key={subCat} value={subCat} className="text-base">
                               {subCat}
