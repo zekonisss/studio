@@ -328,7 +328,7 @@ export const detailedReportCategories: DetailedCategory[] = [
   },
   {
     id: "driving_safety",
-    name: "Vairavimo saugumas",
+    name: "Neatsakingas vairavimas",
     subcategories: [
       "Avaringumas",
       "Pavojingas vairavimas",
@@ -336,9 +336,9 @@ export const detailedReportCategories: DetailedCategory[] = [
       "Kita",
     ],
     tags: [
-      "Pasikartojantis pažeidimas",
+      "Avaringumas",
       "Pavojingas vairavimas",
-      "Rizika saugumui ar kroviniui",
+      "Dažni KET pažeidimai",
     ],
   },
   {
@@ -523,7 +523,7 @@ export const MOCK_USER_REPORTS: Report[] = [
     nationality: "LT",
     category: "driving_safety", 
     subcategory: "Pavojingas vairavimas", 
-    tags: ["Pasikartojantis pažeidimas", "Pavojingas vairavimas"], 
+    tags: ["Avaringumas", "Pavojingas vairavimas"], 
     comment: "GPS duomenys rodo pakartotinį greičio viršijimą gyvenvietėse. Buvo įspėta, tačiau situacija kartojasi.",
     imageUrl: "https://placehold.co/600x400.png",
     dataAiHint: "speeding ticket document",
@@ -637,9 +637,11 @@ export function saveSearchLogsToLocalStoragePublic(logs: SearchLog[]): void {
 
 export const MOCK_USER_SEARCH_LOGS: SearchLog[] = [
   { id: "log1-mock-user", userId: MOCK_USER.id, searchText: "Jonas Jonaitis paieška", timestamp: new Date("2024-04-10T10:00:00Z"), resultsCount: 1 },
-  { id: "log2-mock-user", userId: MOCK_USER.id, searchText: "Pavojingas vairavimas", timestamp: new Date("2024-04-09T11:20:00Z"), resultsCount: 1 },
+  { id: "log2-mock-user", userId: MOCK_USER.id, searchText: "Neatsakingas vairavimas", timestamp: new Date("2024-04-09T11:20:00Z"), resultsCount: 1 },
   { id: "log3-mock-user", userId: MOCK_USER.id, searchText: "Antanas Antanaitis", timestamp: new Date("2024-04-08T15:30:00Z"), resultsCount: 1 },
 ];
     
 
   
+
+    
