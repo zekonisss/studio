@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'DriverShield',
-  description: 'Driver Risk Management Platform',
+  title: 'DriverCheck',
+  description: 'Driver Information & Risk Check Platform',
 };
 
 export default function RootLayout({

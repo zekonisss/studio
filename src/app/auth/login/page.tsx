@@ -2,8 +2,8 @@ import { LoginForm } from "@/components/auth/login-form";
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Prisijungimas - DriverShield',
-  description: 'Prisijunkite prie DriverShield platformos.',
+  title: 'Prisijungimas - DriverCheck',
+  description: 'Prisijunkite prie DriverCheck platformos.',
 };
 
 export default function LoginPage() {

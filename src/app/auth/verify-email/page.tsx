@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -9,7 +10,7 @@ import type { Metadata } from 'next';
 
 // Cannot define metadata in client component directly, needs to be exported from server component or layout
 // export const metadata: Metadata = {
-// title: 'Patvirtinkite El. Paštą - DriverShield',
+// title: 'Patvirtinkite El. Paštą - DriverCheck',
 // description: 'Patikrinkite savo el. pašto dėžutę ir patvirtinkite registraciją.',
 // };
 
@@ -29,8 +30,8 @@ export default function VerifyEmailPage() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-4">
        <div className="mb-8 flex items-center space-x-3">
-         <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="hsl(var(--primary))" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-shield-check"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>
-        <h1 className="text-4xl font-bold text-primary">DriverShield</h1>
+         <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="hsl(var(--primary))" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-user-search"><circle cx="10" cy="7" r="4"/><path d="M10.3 15H7a4 4 0 0 0-4 4v2"/><circle cx="17" cy="17" r="3"/><path d="m21 21-1.9-1.9"/></svg>
+        <h1 className="text-4xl font-bold text-primary">DriverCheck</h1>
       </div>
       <Card className="w-full max-w-md shadow-xl">
         <CardHeader className="items-center text-center">

@@ -2,8 +2,8 @@ import { SignupForm } from "@/components/auth/signup-form";
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Registracija - DriverShield',
-  description: 'Sukurkite naują DriverShield paskyrą.',
+  title: 'Registracija - DriverCheck',
+  description: 'Sukurkite naują DriverCheck paskyrą.',
 };
 
 export default function SignupPage() {

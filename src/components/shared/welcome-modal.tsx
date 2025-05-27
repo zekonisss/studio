@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -9,7 +10,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ShieldAlert } from "lucide-react";
+import { UserSearch } from "lucide-react"; // Changed from ShieldAlert
 
 interface WelcomeModalProps {
   isOpen: boolean;
@@ -22,12 +23,12 @@ export function WelcomeModal({ isOpen, onClose }: WelcomeModalProps) {
       <AlertDialogContent className="max-w-lg">
         <AlertDialogHeader>
           <div className="flex justify-center mb-4">
-            <ShieldAlert className="h-16 w-16 text-primary" />
+            <UserSearch className="h-16 w-16 text-primary" />
           </div>
-          <AlertDialogTitle className="text-center text-2xl">Sveiki atvykę į DriverShield!</AlertDialogTitle>
+          <AlertDialogTitle className="text-center text-2xl">Sveiki atvykę į DriverCheck!</AlertDialogTitle>
           <AlertDialogDescription className="text-center text-md text-muted-foreground space-y-3 pt-2">
             <div>
-              DriverShield yra platforma, skirta padėti įmonėms sumažinti rizikas, susijusias su vairuotojų veikla.
+              DriverCheck yra platforma, skirta padėti įmonėms sumažinti rizikas, susijusias su vairuotojų veikla, ir tikrinti jų informaciją.
             </div>
             <div>
               <strong>Svarbu:</strong> Prašome naudoti šią sistemą atsakingai ir laikantis visų taikomų duomenų apsaugos bei privatumo įstatymų. Įkelkite tik tikslią ir patikrintą informaciją.

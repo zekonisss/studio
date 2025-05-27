@@ -7,7 +7,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { SidebarNav } from '@/components/navigation/sidebar-nav';
 import { UserNav } from '@/components/navigation/user-nav';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { Menu, Loader2 } from 'lucide-react';
 import { WelcomeModal } from '@/components/shared/welcome-modal';
 
@@ -25,7 +25,7 @@ export default function AuthenticatedLayout({
       router.replace('/auth/login');
     }
     if (!loading && user) {
-      const hasSeenWelcomeModal = localStorage.getItem('hasSeenWelcomeModal_drivershield');
+      const hasSeenWelcomeModal = localStorage.getItem('hasSeenWelcomeModal_drivercheck');
       if (!hasSeenWelcomeModal) {
         setShowWelcomeModal(true);
       }
@@ -34,7 +34,7 @@ export default function AuthenticatedLayout({
 
   const handleCloseWelcomeModal = () => {
     setShowWelcomeModal(false);
-    localStorage.setItem('hasSeenWelcomeModal_drivershield', 'true');
+    localStorage.setItem('hasSeenWelcomeModal_drivercheck', 'true');
   };
 
 
