@@ -321,9 +321,9 @@ export const detailedReportCategories: DetailedCategory[] = [
       "Kita",
     ],
     tags: [
-      "Pasikartojantis pažeidimas",
-      "Tikslingas žalos darymas įmonei",
-      "Pakenkta įmonės reputacijai",
+      "Kuro vagystė",
+      "Krovinio vagystė",
+      "Įmonės turto vagystė",
     ],
   },
   {
@@ -390,7 +390,7 @@ export const detailedReportCategories: DetailedCategory[] = [
   },
   {
     id: "legal_reputation",
-    name: "Teisiniai / reputaciniai klausimai",
+    name: "Teisiniai / reputaciniai klausimai (pvz., darbo inspekciją dėl netikslumų ar keršto)",
     subcategories: [
       "Kreipimasis į institucijas",
       "Darbo ginčai / teismai",
@@ -541,7 +541,7 @@ export const MOCK_GENERAL_REPORTS: Report[] = [
     birthYear: 1985,
     category: "fuel_theft", 
     subcategory: "Kuro vagystė", 
-    tags: ["Pasikartojantis pažeidimas", "Tikslingas žalos darymas įmonei"], 
+    tags: ["Kuro vagystė"], 
     comment: "Vairuotojas buvo pastebėtas neteisėtai nupylinėjantis kurą iš įmonės sunkvežimio. Tai jau antras kartas per pastaruosius 6 mėnesius. Taip pat gauta informacija apie pavojingą vairavimą mieste.",
     imageUrl: "https://placehold.co/600x400.png",
     createdAt: new Date("2023-10-15T10:30:00Z"),
@@ -634,9 +634,12 @@ export function saveSearchLogsToLocalStoragePublic(logs: SearchLog[]): void {
   }
 }
 
+
 export const MOCK_USER_SEARCH_LOGS: SearchLog[] = [
-  { id: "log1-mock-user", userId: MOCK_USER.id, searchText: "Jonas Jonaitis paieška", timestamp: new Date("2024-04-10T10:00:00Z"), resultsCount: 2 },
+  { id: "log1-mock-user", userId: MOCK_USER.id, searchText: "Jonas Jonaitis paieška", timestamp: new Date("2024-04-10T10:00:00Z"), resultsCount: 1 },
   { id: "log2-mock-user", userId: MOCK_USER.id, searchText: "Pavojingas vairavimas", timestamp: new Date("2024-04-09T11:20:00Z"), resultsCount: 1 },
-  { id: "log3-mock-user", userId: MOCK_USER.id, searchText: "Antanas Antanaitis", timestamp: new Date("2024-04-08T15:30:00Z"), resultsCount: 0 },
+  { id: "log3-mock-user", userId: MOCK_USER.id, searchText: "Antanas Antanaitis", timestamp: new Date("2024-04-08T15:30:00Z"), resultsCount: 1 },
 ];
     
+
+  
