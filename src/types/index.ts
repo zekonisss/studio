@@ -352,7 +352,7 @@ export const detailedReportCategories: DetailedCategory[] = [
   },
   {
     id: "discipline",
-    name: "Darbo drausmės pažeidimai",
+    name: "Darbo drausmės nesilaikymas",
     subcategories: [
       "Neblaivus darbo metu",
       "Neatvykimas į darbą be pateisinamos priežasties",
@@ -362,9 +362,9 @@ export const detailedReportCategories: DetailedCategory[] = [
       "Kita",
     ],
     tags: [
+      "Neblaivus darbo metu",
+      "Neatvykimas į darbą be pateisinamos priežasties",
       "Neatsakingas požiūris į darbą",
-      "Pasikartojantis pažeidimas",
-      "Savavališkai paliko darbo vietą",
     ],
   },
   {
@@ -630,7 +630,31 @@ export function saveSearchLogsToLocalStoragePublic(logs: SearchLog[]): void {
 
 export const MOCK_USER_SEARCH_LOGS: SearchLog[] = [
   { id: "log1-mock-user", userId: MOCK_USER.id, searchText: "Jonas Jonaitis paieška", timestamp: new Date("2024-04-10T10:00:00Z"), resultsCount: 1 },
-  { id: "log2-mock-user", userId: MOCK_USER.id, searchText: "Neatsakingas vairavimas", timestamp: new Date("2024-04-09T11:20:00Z"), resultsCount: 2 }, // Updated to match current "Neatsakingas vairavimas" entries if they use this category name
+  { id: "log2-mock-user", userId: MOCK_USER.id, searchText: "Neatsakingas vairavimas", timestamp: new Date("2024-04-09T11:20:00Z"), resultsCount: 2 },
   { id: "log3-mock-user", userId: MOCK_USER.id, searchText: "Antanas Antanaitis", timestamp: new Date("2024-04-08T15:30:00Z"), resultsCount: 1 },
 ];
 
+// New mock report to test the discipline category change
+export const MOCK_DISCIPLINE_REPORT: Report = {
+    id: "report-discipline-1",
+    reporterId: "dev-user-123",
+    reporterCompanyName: 'UAB "DriverCheck Demo"',
+    fullName: "Testas Testuolis",
+    nationality: "LT",
+    category: "discipline",
+    subcategory: "Neblaivus darbo metu",
+    tags: ["Neblaivus darbo metu", "Neatsakingas požiūris į darbą"],
+    comment: "Vairuotojas buvo rastas neblaivus darbo vietoje.",
+    createdAt: new Date("2024-03-15T10:00:00Z"),
+};
+
+// Ensure this new report is part of the general mock data if needed
+if (!MOCK_GENERAL_REPORTS.find(r => r.id === MOCK_DISCIPLINE_REPORT.id)) {
+    MOCK_GENERAL_REPORTS.push(MOCK_DISCIPLINE_REPORT);
+}
+
+if (!MOCK_USER_REPORTS.find(r => r.id === MOCK_DISCIPLINE_REPORT.id) && MOCK_DISCIPLINE_REPORT.reporterId === MOCK_USER.id) {
+    MOCK_USER_REPORTS.push(MOCK_DISCIPLINE_REPORT);
+}
+
+    
