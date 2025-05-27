@@ -28,47 +28,18 @@ export default function DashboardPage() {
   }, []);
 
 
-  const quickActions = [
-    { label: "Atlikti Paiešką", href: "/search", icon: Search, description: "Greitai raskite vairuotojo informaciją." },
-    { label: "Pridėti Įrašą", href: "/reports/add", icon: FilePlus2, description: "Registruokite naują įvykį ar pažeidimą." },
-  ];
-
   const subscriptionEndDate = user?.accountActivatedAt ? addYears(new Date(user.accountActivatedAt), 1) : null;
   const showExpirationWarning = user?.paymentStatus === 'active' && subscriptionEndDate && isBefore(subscriptionEndDate, addMonths(new Date(), 1));
 
   return (
     <div className="container mx-auto py-8 px-4 md:px-0">
-      <div className="mb-8 p-6 rounded-lg shadow-md bg-gradient-to-r from-primary to-accent text-primary-foreground">
+      <div className="mb-12 p-6 rounded-lg shadow-md bg-gradient-to-r from-primary to-accent text-primary-foreground">
         <h1 className="text-3xl font-bold">Sveiki, {user?.contactPerson || 'Vartotojau'}!</h1>
         <p className="text-lg mt-1">Jūsų įmonė: {user?.companyName}</p>
         <p className="mt-2 text-sm opacity-90">
           DriverShield padeda jums valdyti rizikas ir užtikrinti saugesnę veiklą.
         </p>
       </div>
-
-      <section className="mb-12">
-        <h2 className="text-2xl font-semibold mb-6 text-foreground">Greitieji Veiksmai</h2>
-        <div className="flex justify-center">
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-            {quickActions.map((action) => (
-              <Card key={action.href} className="hover:shadow-xl transition-shadow duration-300 flex flex-col">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-lg font-medium">{action.label}</CardTitle>
-                  <action.icon className="h-6 w-6 text-muted-foreground" />
-                </CardHeader>
-                <CardContent className="flex flex-col flex-grow">
-                  <p className="text-sm text-muted-foreground mb-4 line-clamp-3 min-h-[calc(1.25rem*3)]">{action.description}</p> {}
-                  <div className="mt-auto">
-                    <Button asChild className="w-full" variant="default">
-                      <Link href={action.href}>Eiti</Link>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
         <Card className="lg:col-span-2 shadow-lg">
@@ -175,4 +146,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
