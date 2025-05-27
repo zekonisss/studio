@@ -1,18 +1,32 @@
 
 "use client";
 
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import Link from "next/link";
-import { Search, FilePlus2, History, UserCircle, BarChart3, AlertTriangle, CheckCircle2, UserCog, Loader2 } from "lucide-react";
+import { Search, FilePlus2, History, UserCircle, BarChart3, AlertTriangle, CheckCircle2, UserCog, Loader2, Layers } from "lucide-react";
 import Image from "next/image";
 import { format as formatDateFn, addYears, addMonths, isBefore } from 'date-fns';
 import { lt } from 'date-fns/locale';
+import type { Report } from '@/types';
+import { getReportsFromLocalStoragePublic, MOCK_GENERAL_REPORTS, combineAndDeduplicateReports } from '@/types';
 
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  const [totalReportsCount, setTotalReportsCount] = useState(0);
+
+  useEffect(() => {
+    const fetchTotalReports = () => {
+      const localReports = getReportsFromLocalStoragePublic();
+      const combined = combineAndDeduplicateReports(localReports, MOCK_GENERAL_REPORTS);
+      setTotalReportsCount(combined.length);
+    };
+    fetchTotalReports();
+  }, []);
+
 
   const quickActions = [
     { label: "Atlikti Paiešką", href: "/search", icon: Search, description: "Greitai raskite vairuotojo informaciją." },
@@ -69,7 +83,7 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between p-4 bg-secondary/50 rounded-md">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Jūsų Pridėti Įrašai</p>
-                <p className="text-2xl font-bold">12</p> {/* Placeholder */}
+                <p className="text-2xl font-bold">N/A</p> {/* Placeholder, needs user-specific count */}
               </div>
               <Button variant="outline" size="sm" asChild>
                 <Link href="/reports/history">Žiūrėti Visus</Link>
@@ -78,11 +92,20 @@ export default function DashboardPage() {
              <div className="flex items-center justify-between p-4 bg-secondary/50 rounded-md">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Atliktos Paieškos (šį mėn.)</p>
-                <p className="text-2xl font-bold">47</p> {/* Placeholder */}
+                <p className="text-2xl font-bold">N/A</p> {/* Placeholder, needs user-specific count */}
               </div>
               <Button variant="outline" size="sm" asChild>
                 <Link href="/search/history">Žiūrėti Istoriją</Link>
               </Button>
+            </div>
+             <div className="flex items-center justify-between p-4 bg-secondary/50 rounded-md">
+              <div className="flex items-center">
+                 <Layers className="mr-3 h-7 w-7 text-primary/80" />
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Bendras Įrašų Kiekis Platformoje</p>
+                  <p className="text-2xl font-bold">{totalReportsCount}</p>
+                </div>
+              </div>
             </div>
             {showExpirationWarning && subscriptionEndDate && (
                 <div className="p-4 border border-dashed border-yellow-500 bg-yellow-50 rounded-md text-yellow-700">
@@ -152,3 +175,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+
