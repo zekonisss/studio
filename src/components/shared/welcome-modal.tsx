@@ -10,7 +10,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { UserSearch } from "lucide-react"; // Changed from ShieldAlert
+import { UserSearch } from "lucide-react";
 
 interface WelcomeModalProps {
   isOpen: boolean;
@@ -26,17 +26,15 @@ export function WelcomeModal({ isOpen, onClose }: WelcomeModalProps) {
             <UserSearch className="h-16 w-16 text-primary" />
           </div>
           <AlertDialogTitle className="text-center text-2xl">Sveiki atvykę į DriverCheck!</AlertDialogTitle>
-          <AlertDialogDescription className="text-center text-md text-muted-foreground space-y-3 pt-2">
-            <div>
-              DriverCheck yra platforma, skirta padėti įmonėms sumažinti rizikas, susijusias su vairuotojų veikla, ir tikrinti jų informaciją.
-            </div>
-            <div>
-              <strong>Svarbu:</strong> Prašome naudoti šią sistemą atsakingai ir laikantis visų taikomų duomenų apsaugos bei privatumo įstatymų. Įkelkite tik tikslią ir patikrintą informaciją.
-            </div>
-            <div>
-              Jūs esate atsakingi už įkeliamų duomenų teisingumą ir teisėtumą.
-            </div>
+          <AlertDialogDescription className="text-center text-md text-muted-foreground pt-2">
+            DriverCheck yra platforma, skirta padėti įmonėms sumažinti rizikas, susijusias su vairuotojų veikla, ir tikrinti jų informaciją.
           </AlertDialogDescription>
+          <p className="text-center text-md text-muted-foreground pt-3">
+            <strong>Svarbu:</strong> Prašome naudoti šią sistemą atsakingai ir laikantis visų taikomų duomenų apsaugos bei privatumo įstatymų. Įkelkite tik tikslią ir patikrintą informaciją.
+          </p>
+          <p className="text-center text-md text-muted-foreground pt-3">
+            Jūs esate atsakingi už įkeliamų duomenų teisingumą ir teisėtumą.
+          </p>
         </AlertDialogHeader>
         <AlertDialogFooter className="sm:justify-center">
           <AlertDialogAction onClick={onClose} className="w-full sm:w-auto">
