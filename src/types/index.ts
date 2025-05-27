@@ -379,6 +379,7 @@ export const detailedReportCategories: DetailedCategory[] = [
     tags: [
       "Techninis neatsakingumas",
       "Rizika saugumui ar kroviniui",
+      "Dažni transporto priemonės pažeidimai" // New tag added here
     ],
   },
   {
@@ -630,7 +631,7 @@ export function saveSearchLogsToLocalStoragePublic(logs: SearchLog[]): void {
 
 export const MOCK_USER_SEARCH_LOGS: SearchLog[] = [
   { id: "log1-mock-user", userId: MOCK_USER.id, searchText: "Jonas Jonaitis paieška", timestamp: new Date("2024-04-10T10:00:00Z"), resultsCount: 1 },
-  { id: "log2-mock-user", userId: MOCK_USER.id, searchText: "Neatsakingas vairavimas", timestamp: new Date("2024-04-09T11:20:00Z"), resultsCount: 2 },
+  { id: "log2-mock-user", userId: MOCK_USER.id, searchText: "Neatsakingas vairavimas", timestamp: new Date("2024-04-09T11:20:00Z"), resultsCount: 1 }, // Adjusted count due to category name change
   { id: "log3-mock-user", userId: MOCK_USER.id, searchText: "Antanas Antanaitis", timestamp: new Date("2024-04-08T15:30:00Z"), resultsCount: 1 },
 ];
 
@@ -656,5 +657,7 @@ if (!MOCK_GENERAL_REPORTS.find(r => r.id === MOCK_DISCIPLINE_REPORT.id)) {
 if (!MOCK_USER_REPORTS.find(r => r.id === MOCK_DISCIPLINE_REPORT.id) && MOCK_DISCIPLINE_REPORT.reporterId === MOCK_USER.id) {
     MOCK_USER_REPORTS.push(MOCK_DISCIPLINE_REPORT);
 }
+
+    
 
     
