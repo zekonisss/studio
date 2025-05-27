@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { SheetClose } from "@/components/ui/sheet"; // Added import
+import { SheetClose } from "@/components/ui/sheet";
 import {
   LayoutDashboard,
   Search,
@@ -22,6 +22,7 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import type { ReactNode } from "react";
 
 const mainNavItems = [
   { href: "/dashboard", label: "Valdymo Skydas", icon: LayoutDashboard },
@@ -44,8 +45,11 @@ const adminNavItems = [
   { href: "/admin", label: "Admin Skydas", icon: ShieldAlert },
 ];
 
+interface SidebarNavProps {
+  isInSheet?: boolean;
+}
 
-export function SidebarNav() {
+export function SidebarNav({ isInSheet = false }: SidebarNavProps) {
   const pathname = usePathname();
   const { user, logout, loading } = useAuth();
   const { toast } = useToast();
@@ -67,15 +71,22 @@ export function SidebarNav() {
     .join("")
     .toUpperCase() || user.email[0].toUpperCase();
 
+  const NavLinkWrapper = ({ children }: { children: ReactNode }) => {
+    if (isInSheet) {
+      return <SheetClose asChild>{children}</SheetClose>;
+    }
+    return <>{children}</>;
+  };
+
   return (
     <div className="flex h-full flex-col border-r bg-sidebar text-sidebar-foreground shadow-lg">
       <div className="p-4 border-b border-sidebar-border">
-        <SheetClose asChild>
+        <NavLinkWrapper>
           <Link href="/dashboard" className="flex items-center space-x-3">
               <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="hsl(var(--sidebar-primary))" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-shield-check"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>
             <h1 className="text-2xl font-bold text-sidebar-primary">DriverShield</h1>
           </Link>
-        </SheetClose>
+        </NavLinkWrapper>
       </div>
 
       <ScrollArea className="flex-1">
@@ -83,7 +94,7 @@ export function SidebarNav() {
           <div>
             <h3 className="mb-2 px-2 text-xs font-semibold uppercase text-muted-foreground tracking-wider">Pagrindinis</h3>
             {mainNavItems.map((item) => (
-              <SheetClose asChild key={item.href}>
+              <NavLinkWrapper key={item.href}>
                 <Link
                   href={item.href}
                   className={cn(
@@ -97,14 +108,14 @@ export function SidebarNav() {
                   <item.icon className="mr-3 h-5 w-5 flex-shrink-0" />
                   {item.label}
                 </Link>
-              </SheetClose>
+              </NavLinkWrapper>
             ))}
           </div>
 
           <div>
             <h3 className="mb-2 mt-4 px-2 text-xs font-semibold uppercase text-muted-foreground tracking-wider">Istorija ir Ataskaitos</h3>
             {historyNavItems.map((item) => (
-              <SheetClose asChild key={item.href}>
+              <NavLinkWrapper key={item.href}>
                 <Link
                   href={item.href}
                   className={cn(
@@ -118,14 +129,14 @@ export function SidebarNav() {
                   <item.icon className="mr-3 h-5 w-5 flex-shrink-0" />
                   {item.label}
                 </Link>
-              </SheetClose>
+              </NavLinkWrapper>
             ))}
           </div>
           
           <div>
             <h3 className="mb-2 mt-4 px-2 text-xs font-semibold uppercase text-muted-foreground tracking-wider">Paskyra ir Pagalba</h3>
             {accountNavItems.map((item) => (
-              <SheetClose asChild key={item.href}>
+               <NavLinkWrapper key={item.href}>
                 <Link
                   href={item.href}
                   className={cn(
@@ -139,7 +150,7 @@ export function SidebarNav() {
                   <item.icon className="mr-3 h-5 w-5 flex-shrink-0" />
                   {item.label}
                 </Link>
-              </SheetClose>
+              </NavLinkWrapper>
             ))}
           </div>
 
@@ -147,7 +158,7 @@ export function SidebarNav() {
             <div>
               <h3 className="mb-2 mt-4 px-2 text-xs font-semibold uppercase text-muted-foreground tracking-wider">Administratorius</h3>
               {adminNavItems.map((item) => (
-                <SheetClose asChild key={item.href}>
+                <NavLinkWrapper key={item.href}>
                   <Link
                     href={item.href}
                     className={cn(
@@ -161,7 +172,7 @@ export function SidebarNav() {
                     <item.icon className="mr-3 h-5 w-5 flex-shrink-0" />
                     {item.label}
                   </Link>
-                </SheetClose>
+                </NavLinkWrapper>
               ))}
             </div>
           )}
@@ -187,4 +198,3 @@ export function SidebarNav() {
     </div>
   );
 }
-

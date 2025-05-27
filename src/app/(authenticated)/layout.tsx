@@ -7,7 +7,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { SidebarNav } from '@/components/navigation/sidebar-nav';
 import { UserNav } from '@/components/navigation/user-nav';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet'; // Added SheetTitle
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
 import { Menu, Loader2 } from 'lucide-react';
 import { WelcomeModal } from '@/components/shared/welcome-modal';
 
@@ -54,7 +54,7 @@ export default function AuthenticatedLayout({
   return (
     <div className="flex min-h-screen w-full bg-background">
       <div className="hidden md:block md:w-72"> {/* Fixed width for sidebar */}
-        <SidebarNav />
+        <SidebarNav isInSheet={false} />
       </div>
       <div className="flex flex-1 flex-col">
         <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-card px-4 shadow-sm md:justify-end">
@@ -68,7 +68,7 @@ export default function AuthenticatedLayout({
               </SheetTrigger>
               <SheetContent side="left" className="p-0 w-72">
                 <SheetTitle className="sr-only">Navigacijos Meniu</SheetTitle>
-                <SidebarNav />
+                <SidebarNav isInSheet={true} />
               </SheetContent>
             </Sheet>
           </div>
