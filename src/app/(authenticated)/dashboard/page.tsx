@@ -31,8 +31,6 @@ export default function DashboardPage() {
   const quickActions = [
     { label: "Atlikti Paiešką", href: "/search", icon: Search, description: "Greitai raskite vairuotojo informaciją." },
     { label: "Pridėti Įrašą", href: "/reports/add", icon: FilePlus2, description: "Registruokite naują įvykį ar pažeidimą." },
-    // { label: "Mano Paskyra", href: "/account", icon: UserCircle, description: "Peržiūrėkite ir tvarkykite paskyros duomenis." },
-    // { label: "Įrašų Istorija", href: "/reports/history", icon: History, description: "Matykite visus savo pridėtus įrašus." },
   ];
 
   const subscriptionEndDate = user?.accountActivatedAt ? addYears(new Date(user.accountActivatedAt), 1) : null;
@@ -50,23 +48,25 @@ export default function DashboardPage() {
 
       <section className="mb-12">
         <h2 className="text-2xl font-semibold mb-6 text-foreground">Greitieji Veiksmai</h2>
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {quickActions.map((action) => (
-            <Card key={action.href} className="hover:shadow-xl transition-shadow duration-300 flex flex-col">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-lg font-medium">{action.label}</CardTitle>
-                <action.icon className="h-6 w-6 text-muted-foreground" />
-              </CardHeader>
-              <CardContent className="flex flex-col flex-grow">
-                <p className="text-sm text-muted-foreground mb-4 line-clamp-3 min-h-[calc(1.25rem*3)]">{action.description}</p> {/* approx 3 lines */}
-                <div className="mt-auto">
-                  <Button asChild className="w-full" variant="default">
-                    <Link href={action.href}>Eiti</Link>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+        <div className="flex justify-center">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            {quickActions.map((action) => (
+              <Card key={action.href} className="hover:shadow-xl transition-shadow duration-300 flex flex-col">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-lg font-medium">{action.label}</CardTitle>
+                  <action.icon className="h-6 w-6 text-muted-foreground" />
+                </CardHeader>
+                <CardContent className="flex flex-col flex-grow">
+                  <p className="text-sm text-muted-foreground mb-4 line-clamp-3 min-h-[calc(1.25rem*3)]">{action.description}</p> {}
+                  <div className="mt-auto">
+                    <Button asChild className="w-full" variant="default">
+                      <Link href={action.href}>Eiti</Link>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -83,7 +83,7 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between p-4 bg-secondary/50 rounded-md">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Jūsų Pridėti Įrašai</p>
-                <p className="text-2xl font-bold">N/A</p> {/* Placeholder, needs user-specific count */}
+                <p className="text-2xl font-bold">N/A</p> {}
               </div>
               <Button variant="outline" size="sm" asChild>
                 <Link href="/reports/history">Žiūrėti Visus</Link>
@@ -92,7 +92,7 @@ export default function DashboardPage() {
              <div className="flex items-center justify-between p-4 bg-secondary/50 rounded-md">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Atliktos Paieškos (šį mėn.)</p>
-                <p className="text-2xl font-bold">N/A</p> {/* Placeholder, needs user-specific count */}
+                <p className="text-2xl font-bold">N/A</p> {}
               </div>
               <Button variant="outline" size="sm" asChild>
                 <Link href="/search/history">Žiūrėti Istoriją</Link>
