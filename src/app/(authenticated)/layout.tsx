@@ -7,7 +7,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { SidebarNav } from '@/components/navigation/sidebar-nav';
 import { UserNav } from '@/components/navigation/user-nav';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTitle, SheetTrigger, SheetClose } from '@/components/ui/sheet'; // Added SheetTrigger and SheetClose
 import { Menu, Loader2 } from 'lucide-react';
 import { WelcomeModal } from '@/components/shared/welcome-modal';
 
@@ -67,7 +67,7 @@ export default function AuthenticatedLayout({
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="p-0 w-72">
-                <SheetTitle className="sr-only">Navigacijos Meniu</SheetTitle>
+                <SheetTitle className="sr-only">Navigacijos Meniu</SheetTitle> {/* Added for accessibility */}
                 <SidebarNav isInSheet={true} />
               </SheetContent>
             </Sheet>
@@ -82,3 +82,4 @@ export default function AuthenticatedLayout({
     </div>
   );
 }
+
