@@ -12,8 +12,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ReportSchema, type ReportFormValues } from "@/lib/schemas";
-import type { Report, DetailedCategory } from "@/types"; // Updated import
-import { detailedReportCategories, countries } from "@/types"; // Updated import
+import type { Report, DetailedCategory } from "@/types";
+import { detailedReportCategories, countries } from "@/types";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, FilePlus2, User, CalendarDays, Tag, MessageSquare, Paperclip, Globe, Layers, CheckSquare } from "lucide-react";
@@ -52,9 +52,8 @@ export default function AddReportPage() {
     defaultValues: {
       fullName: "",
       nationality: "",
-      birthYear: '', // Keep as empty string for controlled input
-      category: "", // Main category ID
-      subcategory: "",
+      birthYear: '',
+      category: "", 
       tags: [],
       comment: "",
       image: null,
@@ -70,8 +69,7 @@ export default function AddReportPage() {
     if (watchedCategory) {
       const categoryDetails = detailedReportCategories.find(cat => cat.id === watchedCategory);
       setSelectedMainCategory(categoryDetails || null);
-      form.setValue('subcategory', ''); // Reset subcategory when main category changes
-      form.setValue('tags', []); // Reset tags when main category changes
+      form.setValue('tags', []); 
     } else {
       setSelectedMainCategory(null);
     }
@@ -86,7 +84,6 @@ export default function AddReportPage() {
       return;
     }
 
-    // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000)); 
     
     const allReports = getReportsFromLocalStorage();
@@ -97,8 +94,7 @@ export default function AddReportPage() {
       fullName: values.fullName,
       nationality: values.nationality,
       birthYear: values.birthYear && values.birthYear !== '' ? Number(values.birthYear) : undefined,
-      category: values.category, // Main category ID
-      subcategory: values.subcategory || undefined,
+      category: values.category,
       tags: values.tags || [],
       comment: values.comment,
       imageUrl: values.image ? "https://placehold.co/600x400.png" : undefined,
@@ -211,33 +207,6 @@ export default function AddReportPage() {
                   </FormItem>
                 )}
               />
-
-              {selectedMainCategory && selectedMainCategory.subcategories.length > 0 && (
-                 <FormField
-                  control={form.control}
-                  name="subcategory"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center text-base"><Layers className="mr-2 h-4 w-4 text-muted-foreground opacity-70" />Subkategorija (neprivaloma)</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value || ""} >
-                        <FormControl>
-                          <SelectTrigger className="text-base py-2.5 h-auto">
-                            <SelectValue placeholder="Pasirinkite subkategoriją..." />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {selectedMainCategory.subcategories.map(subCat => (
-                            <SelectItem key={subCat} value={subCat} className="text-base">
-                              {subCat}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
               
               {selectedMainCategory && selectedMainCategory.tags.length > 0 && (
                 <FormField
@@ -346,3 +315,4 @@ export default function AddReportPage() {
 }
 
     
+

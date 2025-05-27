@@ -18,7 +18,6 @@ export interface UserProfile {
 export interface DetailedCategory {
   id: string;
   name: string;
-  subcategories: string[];
   tags: string[];
 }
 
@@ -30,7 +29,6 @@ export interface Report {
   nationality?: string;
   birthYear?: number;
   category: string; // Main category ID e.g., "fuel_theft"
-  subcategory?: string; // Selected subcategory
   tags: string[]; // Selected tags relevant to the main category
   comment: string;
   imageUrl?: string;
@@ -314,35 +312,16 @@ export const detailedReportCategories: DetailedCategory[] = [
   {
     id: "fuel_theft",
     name: "Kuro / turto vagystės",
-    subcategories: [
-      "Kuro vagystė",
-      "Įrangos ar krovinio vagystė",
-      "Netinkamas įmonės turto naudojimas",
-      "Kita",
-    ],
     tags: ["Kuro vagystė", "Krovinio vagystė", "Įmonės turto vagystė"],
   },
   {
     id: "driving_safety",
     name: "Neatsakingas vairavimas",
-    subcategories: [
-      "Avaringumas",
-      "Pavojingas vairavimas",
-      "Eismo taisyklių pažeidimai",
-      "Kita",
-    ],
     tags: ["Avaringumas", "Pavojingas vairavimas", "Dažni KET pažeidimai"],
   },
   {
     id: "behavior",
     name: "Toksiškas elgesys",
-    subcategories: [
-      "Netinkamas elgesys kolegų atžvilgiu",
-      "Konfliktiškas elgesys su klientais",
-      "Grasinimai / agresija",
-      "Psichotropinių medžiagų vartojimas",
-      "Kita",
-    ],
     tags: [
       "Grasinimai / agresija",
       "Netinkamas elgesys kolegų atžvilgiu",
@@ -353,14 +332,6 @@ export const detailedReportCategories: DetailedCategory[] = [
   {
     id: "discipline",
     name: "Darbo drausmės nesilaikymas",
-    subcategories: [
-      "Neblaivus darbo metu",
-      "Neatvykimas į darbą be pateisinamos priežasties",
-      "Dažnas neatvykimas į darbą",
-      "Vėlavimai / darbo laiko nesilaikymas",
-      "Savavališkas maršruto keitimas",
-      "Kita",
-    ],
     tags: [
       "Neblaivus darbo metu",
       "Neatvykimas į darbą be pateisinamos priežasties",
@@ -370,27 +341,15 @@ export const detailedReportCategories: DetailedCategory[] = [
   {
     id: "technical_damage",
     name: "Techniniai pažeidimai",
-    subcategories: [
-      "Transporto priemonės ar įrangos tyčinis sugadinimas",
-      "Techninės priežiūros ignoravimas",
-      "Nepranešimas apie gedimus / defektus",
-      "Kita",
-    ],
     tags: [
       "Techninis neatsakingumas",
       "Rizika saugumui ar kroviniui",
-      "Dažni transporto priemonės pažeidimai" // New tag added here
+      "Dažni transporto priemonės pažeidimai"
     ],
   },
   {
     id: "legal_reputation",
     name: "Teisiniai / reputaciniai klausimai (pvz., darbo inspekciją dėl netikslumų ar keršto)",
-    subcategories: [
-      "Kreipimasis į institucijas",
-      "Darbo ginčai / teismai",
-      "Pakenkta įmonės reputacijai",
-      "Kita",
-    ],
     tags: [
       "Buvo teisinis procesas / darbo ginčas",
       "Pakenkta įmonės reputacijai",
@@ -504,7 +463,6 @@ export const MOCK_USER_REPORTS: Report[] = [
     nationality: "LT",
     birthYear: 1992,
     category: "behavior",
-    subcategory: "Konfliktiškas elgesys su klientais",
     tags: ["Konfliktiškas asmuo"],
     comment: "Vairuotojas buvo nemandagus su klientu, atsisakė padėti iškrauti prekes. Klientas pateikė skundą.",
     createdAt: new Date("2024-02-20T09:15:00Z"),
@@ -516,7 +474,6 @@ export const MOCK_USER_REPORTS: Report[] = [
     fullName: "Zita Zitaite",
     nationality: "LT",
     category: "driving_safety",
-    subcategory: "Pavojingas vairavimas",
     tags: ["Avaringumas", "Pavojingas vairavimas"],
     comment: "GPS duomenys rodo pakartotinį greičio viršijimą gyvenvietėse. Buvo įspėta, tačiau situacija kartojasi.",
     imageUrl: "https://placehold.co/600x400.png",
@@ -534,7 +491,6 @@ export const MOCK_GENERAL_REPORTS: Report[] = [
     nationality: "PL",
     birthYear: 1985,
     category: "fuel_theft",
-    subcategory: "Kuro vagystė",
     tags: ["Kuro vagystė"],
     comment: "Vairuotojas buvo pastebėtas neteisėtai nupylinėjantis kurą iš įmonės sunkvežimio. Tai jau antras kartas per pastaruosius 6 mėnesius. Taip pat gauta informacija apie pavojingą vairavimą mieste.",
     imageUrl: "https://placehold.co/600x400.png",
@@ -548,7 +504,6 @@ export const MOCK_GENERAL_REPORTS: Report[] = [
     fullName: "Petras Petraitis",
     nationality: "UA",
     category: "technical_damage",
-    subcategory: "Transporto priemonės ar įrangos tyčinis sugadinimas",
     tags: ["Techninis neatsakingumas"],
     comment: "Grįžus iš reiso, pastebėta didelė žala priekabos šonui. Vairuotojas teigia nieko nepastebejęs. Rekomenduojama atlikti nuodugnesnį tyrimą.",
     createdAt: new Date("2023-11-01T14:00:00Z"),
@@ -561,7 +516,6 @@ export const MOCK_GENERAL_REPORTS: Report[] = [
     nationality: "BY",
     birthYear: 1978,
     category: "discipline",
-    subcategory: "Vėlavimai / darbo laiko nesilaikymas",
     tags: ["Neatsakingas požiūris į darbą"],
     comment: "Vėlavo pristatyti krovinį 2 valandas be pateisinamos priežasties, grubiai bendravo su sandėlio darbuotojais.",
     imageUrl: "https://placehold.co/600x400.png",
@@ -631,7 +585,7 @@ export function saveSearchLogsToLocalStoragePublic(logs: SearchLog[]): void {
 
 export const MOCK_USER_SEARCH_LOGS: SearchLog[] = [
   { id: "log1-mock-user", userId: MOCK_USER.id, searchText: "Jonas Jonaitis paieška", timestamp: new Date("2024-04-10T10:00:00Z"), resultsCount: 1 },
-  { id: "log2-mock-user", userId: MOCK_USER.id, searchText: "Neatsakingas vairavimas", timestamp: new Date("2024-04-09T11:20:00Z"), resultsCount: 1 }, // Adjusted count due to category name change
+  { id: "log2-mock-user", userId: MOCK_USER.id, searchText: "Neatsakingas vairavimas", timestamp: new Date("2024-04-09T11:20:00Z"), resultsCount: 2 },
   { id: "log3-mock-user", userId: MOCK_USER.id, searchText: "Antanas Antanaitis", timestamp: new Date("2024-04-08T15:30:00Z"), resultsCount: 1 },
 ];
 
@@ -643,7 +597,6 @@ export const MOCK_DISCIPLINE_REPORT: Report = {
     fullName: "Testas Testuolis",
     nationality: "LT",
     category: "discipline",
-    subcategory: "Neblaivus darbo metu",
     tags: ["Neblaivus darbo metu", "Neatsakingas požiūris į darbą"],
     comment: "Vairuotojas buvo rastas neblaivus darbo vietoje.",
     createdAt: new Date("2024-03-15T10:00:00Z"),

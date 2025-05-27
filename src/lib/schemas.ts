@@ -31,7 +31,6 @@ export const ReportSchema = z.object({
   nationality: z.string().optional(),
   birthYear: z.number().int().min(1900).max(new Date().getFullYear()).optional().or(z.literal('')),
   category: z.string().min(1, { message: "Pagrindinė kategorija yra privaloma." }), // Main category ID
-  subcategory: z.string().optional(), // Optional subcategory
   tags: z.array(z.string()).optional(),
   comment: z.string().min(10, { message: "Komentaras turi būti bent 10 simbolių ilgio." }),
   image: z.any().optional(), // For file input

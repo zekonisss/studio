@@ -13,7 +13,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Loader2, ShieldAlert, Users, FileText, AlertTriangle, Trash2, Eye, MoreHorizontal, BarChart3, UserCheck, UserX, UserCog, CalendarDays, Building2, Tag, MessageSquare, Image as ImageIcon, CheckCircle2, CreditCard, Send, Briefcase, MapPin, Phone, Mail, ShieldCheck as ShieldCheckIcon, User as UserIcon, Globe, Edit3, Save, XCircle, Percent, Layers } from "lucide-react";
-import type { UserProfile, Report } from "@/types"; // ReportCategoryValue might be removed or changed
+import type { UserProfile, Report } from "@/types";
 import { getAllUsers, saveAllUsers, MOCK_GENERAL_REPORTS, combineAndDeduplicateReports, countries, detailedReportCategories, DESTRUCTIVE_REPORT_MAIN_CATEGORIES } from "@/types";
 import { format as formatDateFn, addYears } from 'date-fns';
 import { lt } from 'date-fns/locale';
@@ -22,7 +22,7 @@ import NextImage from "next/image";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 
-const LOCAL_STORAGE_REPORTS_KEY = 'driverCheckReports'; // Updated key
+const LOCAL_STORAGE_REPORTS_KEY = 'driverCheckReports'; 
 
 function getReportsFromLocalStorage(): Report[] {
   if (typeof window !== 'undefined') {
@@ -42,8 +42,6 @@ function saveReportsToLocalStorage(reports: Report[]): void {
     localStorage.setItem(LOCAL_STORAGE_REPORTS_KEY, JSON.stringify(reports));
   }
 }
-
-// const DESTRUCTIVE_REPORT_CATEGORIES: ReportCategoryValue[] = ['kuro_vagyste', 'neblaivumas_darbe', 'zala_technikai', 'avaringumas']; // This will be replaced or logic adapted
 
 const getNationalityLabel = (nationalityCode?: string) => {
     if (!nationalityCode) return "Nenurodyta";
@@ -114,7 +112,6 @@ export default function AdminPage() {
         toastTitle = "Paskyra Aktyvuota";
         toastDescription = `Vartotojo ${targetUser.companyName} mokėjimas 'gautas'. Paskyra sėkmingai aktyvuota.`;
     } else if (newStatus === 'active' && oldStatus === 'pending_verification') {
-        // This case might be less common now with the two-step approval, but good to have
         toastTitle = "Paskyra Patvirtinta ir Aktyvuota";
         toastDescription = `Vartotojo ${targetUser.companyName} paskyra patvirtinta ir aktyvuota (mokėjimas 'gautas' arba nereikalingas). Vartotojui 'išsiųstos' instrukcijos.`;
     }
@@ -137,7 +134,7 @@ export default function AdminPage() {
 
   const handleViewUserDetails = (user: UserProfile) => {
     setSelectedUserForDetails(user);
-    setEditingUserDetailsFormData({ // Initialize form data when modal opens
+    setEditingUserDetailsFormData({ 
       companyName: user.companyName,
       companyCode: user.companyCode,
       vatCode: user.vatCode,
@@ -146,7 +143,7 @@ export default function AdminPage() {
       email: user.email,
       phone: user.phone,
     });
-    setIsEditingUserDetails(false); // Ensure it starts in view mode
+    setIsEditingUserDetails(false); 
   };
 
   const closeUserDetailsModal = () => {
@@ -192,7 +189,7 @@ export default function AdminPage() {
     const updatedUsersList = allUsersState.map(u => u.id === updatedUser.id ? updatedUser : u);
     setAllUsersState(updatedUsersList);
     saveAllUsers(updatedUsersList);
-    setSelectedUserForDetails(updatedUser); // Update the view in the modal
+    setSelectedUserForDetails(updatedUser); 
     setIsEditingUserDetails(false);
     toast({
         title: "Duomenys Atnaujinti",
@@ -203,7 +200,7 @@ export default function AdminPage() {
   const handleCancelEditUserDetails = () => {
     setIsEditingUserDetails(false);
     if (selectedUserForDetails) {
-      setEditingUserDetailsFormData({ // Reset form data to original selected user
+      setEditingUserDetailsFormData({ 
         companyName: selectedUserForDetails.companyName,
         companyCode: selectedUserForDetails.companyCode,
         vatCode: selectedUserForDetails.vatCode,
@@ -411,7 +408,6 @@ export default function AdminPage() {
                       <TableRow key={report.id}>
                         <TableCell className="font-medium">{report.fullName}</TableCell>
                         <TableCell className="hidden sm:table-cell">
-                           {/* // TODO: Update badge logic based on new category structure */}
                            <Badge variant={DESTRUCTIVE_REPORT_MAIN_CATEGORIES.includes(report.category) ? 'destructive' : 'secondary'}>
                              {getCategoryNameAdmin(report.category)}
                            </Badge>
@@ -511,19 +507,12 @@ export default function AdminPage() {
               )}
               <div className="space-y-1">
                  <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Layers className="mr-2 h-4 w-4" />Pagrindinė Kategorija</h4>
-                {/* // TODO: Update badge logic based on new category structure */}
                 <Badge 
                     variant={DESTRUCTIVE_REPORT_MAIN_CATEGORIES.includes(selectedReportForDetails.category) ? 'destructive' : 'secondary'} 
                     className="text-sm">
                   {getCategoryNameAdmin(selectedReportForDetails.category)}
                 </Badge>
               </div>
-              {selectedReportForDetails.subcategory && (
-                <div className="space-y-1">
-                  <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Layers className="mr-2 h-4 w-4 opacity-70" />Subkategorija</h4>
-                  <p className="text-base text-foreground">{selectedReportForDetails.subcategory}</p>
-                </div>
-              )}
               {selectedReportForDetails.tags && selectedReportForDetails.tags.length > 0 && (
                 <div className="space-y-1">
                   <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Tag className="mr-2 h-4 w-4" />Žymos</h4>

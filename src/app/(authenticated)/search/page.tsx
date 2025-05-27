@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { SearchSchema, type SearchFormValues } from "@/lib/schemas";
-import type { Report, SearchLog } from "@/types"; // ReportCategoryValue might be removed or changed
+import type { Report, SearchLog } from "@/types";
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2, Search as SearchIcon, User, CalendarDays, Tag, MessageSquare, AlertCircle, FileText, Image as ImageIcon, Globe, Layers } from "lucide-react";
 import Image from "next/image";
@@ -17,9 +17,6 @@ import { Badge } from "@/components/ui/badge";
 import { format } from 'date-fns';
 import { lt } from 'date-fns/locale';
 import { MOCK_GENERAL_REPORTS, combineAndDeduplicateReports, countries, getReportsFromLocalStoragePublic, getSearchLogsFromLocalStoragePublic, saveSearchLogsToLocalStoragePublic, detailedReportCategories, DESTRUCTIVE_REPORT_MAIN_CATEGORIES } from "@/types";
-
-
-// const DESTRUCTIVE_REPORT_CATEGORIES: ReportCategoryValue[] = ['kuro_vagyste', 'neblaivumas_darbe', 'zala_technikai', 'avaringumas']; // This will be replaced or logic adapted
 
 
 const getNationalityLabel = (nationalityCode?: string) => {
@@ -67,9 +64,8 @@ export default function SearchPage() {
             report.id.toLowerCase().includes(query) ||
             (report.nationality && getNationalityLabel(report.nationality).toLowerCase().includes(query)) ||
             (report.birthYear && report.birthYear.toString().includes(query)) ||
-            mainCategoryName.includes(query) || // Search by main category name
-            (report.subcategory && report.subcategory.toLowerCase().includes(query)) || // Search by subcategory
-            report.tags.some(tag => tag.toLowerCase().includes(query)) || // Search by tags
+            mainCategoryName.includes(query) ||
+            report.tags.some(tag => tag.toLowerCase().includes(query)) || 
             report.comment.toLowerCase().includes(query) ||
             (report.reporterCompanyName && report.reporterCompanyName.toLowerCase().includes(query))
           );
@@ -199,7 +195,6 @@ export default function SearchPage() {
                             )}
                         </div>
                     </div>
-                    {/* // TODO: Update badge logic based on new category structure */}
                     <Badge variant={DESTRUCTIVE_REPORT_MAIN_CATEGORIES.includes(report.category) ? 'destructive' : 'secondary'} className="text-base py-1 px-3 ml-auto self-start">
                         {getCategoryNameSearch(report.category)}
                     </Badge>
@@ -211,19 +206,8 @@ export default function SearchPage() {
                       <h4 className="font-semibold text-sm text-muted-foreground mb-1 flex items-center">
                         <Layers className="mr-1.5 h-4 w-4" /> Pagrindinė Kategorija
                       </h4>
-                      {/* // TODO: Update badge logic based on new category structure */}
                       <Badge variant={DESTRUCTIVE_REPORT_MAIN_CATEGORIES.includes(report.category) ? 'destructive' : 'secondary'} className="text-base py-1 px-3">{getCategoryNameSearch(report.category)}</Badge>
                     </div>
-
-                    {report.subcategory && (
-                      <div>
-                        <h4 className="font-semibold text-sm text-muted-foreground mb-1 flex items-center">
-                           <Layers className="mr-1.5 h-4 w-4 opacity-70" /> Subkategorija
-                        </h4>
-                        <p className="text-foreground text-base bg-secondary/30 p-2 rounded-md">{report.subcategory}</p>
-                      </div>
-                    )}
-
 
                     {report.tags && report.tags.length > 0 && (
                       <div>

@@ -7,7 +7,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import type { Report } from "@/types"; // ReportCategoryValue might be removed or changed
+import type { Report } from "@/types";
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2, History as HistoryIcon, User, CalendarDays, Tag, MessageSquare, AlertTriangle, Trash2, Eye, PlusCircle, Building2, Image as ImageIcon, FileText, Globe, Layers } from "lucide-react";
 import { format } from 'date-fns';
@@ -36,7 +36,6 @@ import { useToast } from "@/hooks/use-toast";
 import { MOCK_USER, MOCK_USER_REPORTS, countries, detailedReportCategories, DESTRUCTIVE_REPORT_MAIN_CATEGORIES } from "@/types";
 
 const LOCAL_STORAGE_REPORTS_KEY = 'driverCheckReports';
-// const DESTRUCTIVE_REPORT_CATEGORIES: ReportCategoryValue[] = ['kuro_vagyste', 'neblaivumas_darbe', 'zala_technikai', 'avaringumas']; // This will be replaced or logic adapted
 
 function getReportsFromLocalStorage(): Report[] {
   if (typeof window !== 'undefined') {
@@ -74,8 +73,6 @@ export default function ReportHistoryPage() {
         const localUserReports = getReportsFromLocalStorage().filter(r => r.reporterId === user.id);
         let combinedReportsForUser = [...localUserReports];
 
-        // Ensure mock reports are correctly structured for new category system if used
-        // This part might need adjustment if MOCK_USER_REPORTS schema changes significantly
         if (user.id === MOCK_USER.id) {
           const userSpecificMocks = MOCK_USER_REPORTS.filter(mr => mr.reporterId === user.id);
           userSpecificMocks.forEach(mockReport => {
@@ -213,16 +210,12 @@ export default function ReportHistoryPage() {
                       Pateikta: {format(new Date(report.createdAt), "yyyy-MM-dd HH:mm", { locale: lt })}
                     </CardDescription>
                   </div>
-                  {/* // TODO: Update badge logic based on new category structure */}
                   <Badge variant={DESTRUCTIVE_REPORT_MAIN_CATEGORIES.includes(report.category) ? 'destructive' : 'secondary'}>
                     {getCategoryName(report.category)}
                   </Badge>
                 </div>
               </CardHeader>
               <CardContent className="py-2 space-y-3">
-                 {report.subcategory && (
-                  <p className="text-sm text-muted-foreground"><Layers className="inline h-4 w-4 mr-1.5 relative -top-0.5 opacity-70" /> {report.subcategory}</p>
-                )}
                 <p className="text-muted-foreground line-clamp-3"><MessageSquare className="inline h-4 w-4 mr-1.5 relative -top-0.5" />{report.comment}</p>
                 {report.tags && report.tags.length > 0 && (
                   <div className="flex flex-wrap gap-2">
@@ -310,12 +303,6 @@ export default function ReportHistoryPage() {
                   {getCategoryName(selectedReportForDetails.category)}
                 </Badge>
               </div>
-              {selectedReportForDetails.subcategory && (
-                 <div className="space-y-1">
-                  <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Layers className="mr-2 h-4 w-4 opacity-70" />Subkategorija</h4>
-                  <p className="text-base text-foreground">{selectedReportForDetails.subcategory}</p>
-                </div>
-              )}
               {selectedReportForDetails.tags && selectedReportForDetails.tags.length > 0 && (
                 <div className="space-y-1">
                   <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Tag className="mr-2 h-4 w-4" />Žymos</h4>
