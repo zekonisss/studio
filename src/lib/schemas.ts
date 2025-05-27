@@ -30,7 +30,8 @@ export const ReportSchema = z.object({
   fullName: z.string().min(3, { message: "Vardas ir pavardė turi būti bent 3 simbolių ilgio." }),
   nationality: z.string().optional(),
   birthYear: z.number().int().min(1900).max(new Date().getFullYear()).optional().or(z.literal('')),
-  category: z.string().min(1, { message: "Kategorija yra privaloma." }),
+  category: z.string().min(1, { message: "Pagrindinė kategorija yra privaloma." }), // Main category ID
+  subcategory: z.string().optional(), // Optional subcategory
   tags: z.array(z.string()).optional(),
   comment: z.string().min(10, { message: "Komentaras turi būti bent 10 simbolių ilgio." }),
   image: z.any().optional(), // For file input
@@ -44,3 +45,4 @@ export const SearchSchema = z.object({
 
 export type SearchFormValues = z.infer<typeof SearchSchema>;
 
+    

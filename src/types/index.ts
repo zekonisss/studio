@@ -15,6 +15,13 @@ export interface UserProfile {
   agreeToTerms?: boolean;
 }
 
+export interface DetailedCategory {
+  id: string;
+  name: string;
+  subcategories: string[];
+  tags: string[];
+}
+
 export interface Report {
   id:string;
   reporterId: string;
@@ -22,8 +29,9 @@ export interface Report {
   fullName: string;
   nationality?: string;
   birthYear?: number;
-  category: string; // Should match ReportCategoryValue
-  tags: string[]; // Should match ReportTagValue elements
+  category: string; // Main category ID e.g., "fuel_theft"
+  subcategory?: string; // Selected subcategory
+  tags: string[]; // Selected tags relevant to the main category
   comment: string;
   imageUrl?: string;
   dataAiHint?: string;
@@ -302,51 +310,107 @@ if (otherOption) {
 export const countries: { value: string, label: string }[] = sortedCountries;
 
 
-export type ReportCategoryValue =
-  | 'kuro_vagyste'
-  | 'avaringumas'
-  | 'neblaivumas_darbe'
-  | 'technikos_pazeidimai'
-  | 'netinkamas_elgesys_darbe'
-  | 'neaiskinamas_neatvykimas'
-  | 'kreipimasis_institucijos'
-  | 'kita';
-
-export const reportCategories: { value: ReportCategoryValue, label: string }[] = [
-  { value: 'kuro_vagyste', label: 'Kuro vagystė' },
-  { value: 'avaringumas', label: 'Avaringumas' },
-  { value: 'neblaivumas_darbe', label: 'Neblaivumas darbo metu' },
-  { value: 'technikos_pazeidimai', label: 'Technikos pažeidimai' },
-  { value: 'netinkamas_elgesys_darbe', label: 'Netinkamas elgesys darbe (kolegų atžvilgiu, agresija, necenzūrinė kalba ir pan.)' },
-  { value: 'neaiskinamas_neatvykimas', label: 'Nepaaiškinamas neatvykimas į darbą' },
-  { value: 'kreipimasis_institucijos', label: 'Kreipimasis į institucijas (pvz., darbo inspekciją dėl netikslumų ar keršto)' },
-  { value: 'kita', label: 'Kita' },
+export const detailedReportCategories: DetailedCategory[] = [
+  {
+    id: "fuel_theft",
+    name: "Kuro / turto vagystės",
+    subcategories: [
+      "Kuro vagystė",
+      "Įrangos ar krovinio vagystė",
+      "Netinkamas įmonės turto naudojimas",
+      "Kita",
+    ],
+    tags: [
+      "Pasikartojantis pažeidimas",
+      "Tikslingas žalos darymas įmonei",
+      "Pakenkta įmonės reputacijai",
+    ],
+  },
+  {
+    id: "driving_safety",
+    name: "Vairavimo saugumas",
+    subcategories: [
+      "Avaringumas",
+      "Pavojingas vairavimas",
+      "Eismo taisyklių pažeidimai",
+      "Kita",
+    ],
+    tags: [
+      "Pasikartojantis pažeidimas",
+      "Pavojingas vairavimas",
+      "Rizika saugumui ar kroviniui",
+    ],
+  },
+  {
+    id: "behavior",
+    name: "Psichoemocinis elgesys",
+    subcategories: [
+      "Netinkamas elgesys kolegų atžvilgiu",
+      "Konfliktiškas elgesys su klientais",
+      "Grasinimai / agresija",
+      "Psichotropinių medžiagų vartojimas",
+      "Kita",
+    ],
+    tags: [
+      "Konfliktiškas asmuo",
+      "Sukeltas konfliktas su klientu",
+      "Neetiškas bendravimas / agresija",
+    ],
+  },
+  {
+    id: "discipline",
+    name: "Darbo drausmės pažeidimai",
+    subcategories: [
+      "Neblaivus darbo metu",
+      "Neatvykimas į darbą be pateisinamos priežasties",
+      "Dažnas neatvykimas į darbą",
+      "Vėlavimai / darbo laiko nesilaikymas",
+      "Savavališkas maršruto keitimas",
+      "Kita",
+    ],
+    tags: [
+      "Neatsakingas požiūris į darbą",
+      "Pasikartojantis pažeidimas",
+      "Savavališkai paliko darbo vietą",
+    ],
+  },
+  {
+    id: "technical_damage",
+    name: "Techniniai pažeidimai",
+    subcategories: [
+      "Transporto priemonės ar įrangos tyčinis sugadinimas",
+      "Techninės priežiūros ignoravimas",
+      "Nepranešimas apie gedimus / defektus",
+      "Kita",
+    ],
+    tags: [
+      "Techninis neatsakingumas",
+      "Rizika saugumui ar kroviniui",
+    ],
+  },
+  {
+    id: "legal_reputation",
+    name: "Teisiniai / reputaciniai klausimai",
+    subcategories: [
+      "Kreipimasis į institucijas",
+      "Darbo ginčai / teismai",
+      "Pakenkta įmonės reputacijai",
+      "Kita",
+    ],
+    tags: [
+      "Buvo teisinis procesas / darbo ginčas",
+      "Pakenkta įmonės reputacijai",
+      "Neteisėta veikla įtariama",
+    ],
+  },
 ];
 
-export type ReportTagValue =
-  | 'pasikartojantis'
-  | 'pavojingas_vairavimas'
-  | 'konfliktiskas'
-  | 'rekomenduojama_patikrinti'
-  | 'pakenkta_reputacijai'
-  | 'konfliktas_su_klientu'
-  | 'neatsakingas_poziuris';
-
-export const reportTags: { value: ReportTagValue, label: string }[] = [
-  { value: 'pasikartojantis', label: 'Pasikartojantis pažeidimas' },
-  { value: 'pavojingas_vairavimas', label: 'Pavojingas vairavimas' },
-  { value: 'konfliktiskas', label: 'Konfliktiškas asmuo' },
-  { value: 'rekomenduojama_patikrinti', label: 'Rekomenduojama papildomai patikrinti' },
-  { value: 'pakenkta_reputacijai', label: 'Pakenkta įmonės reputacijai' },
-  { value: 'konfliktas_su_klientu', label: 'Sukeltas konfliktas su klientu' },
-  { value: 'neatsakingas_poziuris', label: 'Neatsakingas požiūris į darbą' },
-];
 
 // --- MOCK DATA ---
 
 export const MOCK_USER: UserProfile = {
   id: 'dev-user-123',
-  companyName: 'UAB "DriverShield Demo"',
+  companyName: 'UAB "DriverCheck Demo"',
   companyCode: '123456789',
   vatCode: 'LT10000000012',
   address: 'Vilniaus g. 1, Vilnius',
@@ -356,6 +420,7 @@ export const MOCK_USER: UserProfile = {
   paymentStatus: 'active',
   isAdmin: true,
   accountActivatedAt: new Date(new Date().setMonth(new Date().getMonth() - 11)).toISOString(),
+  agreeToTerms: true,
 };
 
 export const MOCK_ADDITIONAL_USER_1: UserProfile = {
@@ -370,13 +435,13 @@ export const MOCK_ADDITIONAL_USER_1: UserProfile = {
   paymentStatus: 'active',
   isAdmin: false,
   accountActivatedAt: new Date(new Date().setDate(new Date().getDate() - 10)).toISOString(),
+  agreeToTerms: true,
 };
 
 export const MOCK_ADDITIONAL_USER_2: UserProfile = {
   id: 'dev-user-789',
   companyName: 'UAB "Saugus Kelias"',
   companyCode: '112233445',
-  // vatCode: undefined, // Implicitly undefined
   address: 'Klaipėdos g. 3, Klaipėda',
   contactPerson: 'Ona Onaitienė',
   email: 'ona@sauguskelias.lt',
@@ -384,13 +449,13 @@ export const MOCK_ADDITIONAL_USER_2: UserProfile = {
   paymentStatus: 'inactive',
   isAdmin: false,
   accountActivatedAt: new Date('2023-01-15T00:00:00.000Z').toISOString(),
+  agreeToTerms: true,
 };
 
 export const MOCK_ADDITIONAL_USER_3: UserProfile = {
   id: 'dev-user-101',
   companyName: 'MB "Logist"',
   companyCode: '555444333',
-  // vatCode: undefined, // Implicitly undefined
   address: 'Panevėžio g. 10, Panevėžys',
   contactPerson: 'Laura Laurinavičė',
   email: 'laura@logist.lt',
@@ -398,12 +463,13 @@ export const MOCK_ADDITIONAL_USER_3: UserProfile = {
   paymentStatus: 'pending_verification',
   isAdmin: false,
   accountActivatedAt: undefined,
+  agreeToTerms: true,
 };
 
 
 export const MOCK_ALL_USERS: UserProfile[] = [MOCK_USER, MOCK_ADDITIONAL_USER_1, MOCK_ADDITIONAL_USER_2, MOCK_ADDITIONAL_USER_3];
 
-const LOCAL_STORAGE_USERS_KEY = 'driverShieldAllUsers';
+const LOCAL_STORAGE_USERS_KEY = 'driverCheckAllUsers';
 
 export function getAllUsers(): UserProfile[] {
   let combinedUsers: UserProfile[] = [...MOCK_ALL_USERS.map(u => ({...u}))];
@@ -439,23 +505,25 @@ export const MOCK_USER_REPORTS: Report[] = [
   {
     id: "report-user-1",
     reporterId: "dev-user-123",
-    reporterCompanyName: 'UAB "DriverShield Demo"',
+    reporterCompanyName: 'UAB "DriverCheck Demo"',
     fullName: "Antanas Antanaitis",
     nationality: "LT",
     birthYear: 1992,
-    category: "netinkamas_elgesys_darbe",
-    tags: ["konfliktiskas", "konfliktas_su_klientu"],
+    category: "behavior", 
+    subcategory: "Konfliktiškas elgesys su klientais", 
+    tags: ["Konfliktiškas asmuo", "Sukeltas konfliktas su klientu"], 
     comment: "Vairuotojas buvo nemandagus su klientu, atsisakė padėti iškrauti prekes. Klientas pateikė skundą.",
     createdAt: new Date("2024-02-20T09:15:00Z"),
   },
   {
     id: "report-user-2",
     reporterId: "dev-user-123",
-    reporterCompanyName: 'UAB "DriverShield Demo"',
+    reporterCompanyName: 'UAB "DriverCheck Demo"',
     fullName: "Zita Zitaite",
     nationality: "LT",
-    category: "avaringumas",
-    tags: ["pasikartojantis", "pavojingas_vairavimas"],
+    category: "driving_safety", 
+    subcategory: "Pavojingas vairavimas", 
+    tags: ["Pasikartojantis pažeidimas", "Pavojingas vairavimas"], 
     comment: "GPS duomenys rodo pakartotinį greičio viršijimą gyvenvietėse. Buvo įspėta, tačiau situacija kartojasi.",
     imageUrl: "https://placehold.co/600x400.png",
     dataAiHint: "speeding ticket document",
@@ -471,8 +539,9 @@ export const MOCK_GENERAL_REPORTS: Report[] = [
     fullName: "Jonas Jonaitis",
     nationality: "PL",
     birthYear: 1985,
-    category: "kuro_vagyste",
-    tags: ["pasikartojantis", "neatsakingas_poziuris"],
+    category: "fuel_theft", 
+    subcategory: "Kuro vagystė", 
+    tags: ["Pasikartojantis pažeidimas", "Tikslingas žalos darymas įmonei"], 
     comment: "Vairuotojas buvo pastebėtas neteisėtai nupylinėjantis kurą iš įmonės sunkvežimio. Tai jau antras kartas per pastaruosius 6 mėnesius. Taip pat gauta informacija apie pavojingą vairavimą mieste.",
     imageUrl: "https://placehold.co/600x400.png",
     createdAt: new Date("2023-10-15T10:30:00Z"),
@@ -484,8 +553,9 @@ export const MOCK_GENERAL_REPORTS: Report[] = [
     reporterCompanyName: "UAB Greiti Pervežimai",
     fullName: "Petras Petraitis",
     nationality: "UA",
-    category: "technikos_pazeidimai",
-    tags: ["rekomenduojama_patikrinti", "neatsakingas_poziuris"],
+    category: "technical_damage", 
+    subcategory: "Transporto priemonės ar įrangos tyčinis sugadinimas", 
+    tags: ["Techninis neatsakingumas"], 
     comment: "Grįžus iš reiso, pastebėta didelė žala priekabos šonui. Vairuotojas teigia nieko nepastebejęs. Rekomenduojama atlikti nuodugnesnį tyrimą.",
     createdAt: new Date("2023-11-01T14:00:00Z"),
   },
@@ -496,8 +566,9 @@ export const MOCK_GENERAL_REPORTS: Report[] = [
     fullName: "Kazys Kazlauskas",
     nationality: "BY",
     birthYear: 1978,
-    category: "netinkamas_elgesys_darbe",
-    tags: ["konfliktiskas", "pakenkta_reputacijai"],
+    category: "discipline", 
+    subcategory: "Vėlavimai / darbo laiko nesilaikymas", 
+    tags: ["Neatsakingas požiūris į darbą"], 
     comment: "Vėlavo pristatyti krovinį 2 valandas be pateisinamos priežasties, grubiai bendravo su sandėlio darbuotojais.",
     imageUrl: "https://placehold.co/600x400.png",
     dataAiHint: "angry driver",
@@ -505,11 +576,10 @@ export const MOCK_GENERAL_REPORTS: Report[] = [
   },
 ];
 
-export const MOCK_USER_SEARCH_LOGS: SearchLog[] = [
-  { id: "mocklog1", userId: "dev-user-123", searchText: "Jonas Jonaitis (Demo)", timestamp: new Date("2024-03-10T10:00:00Z"), resultsCount: 2 },
-  { id: "mocklog2", userId: "dev-user-123", searchText: "AB123XYZ (Demo)", timestamp: new Date("2024-03-09T15:30:00Z"), resultsCount: 0 },
-  { id: "mocklog3", userId: "dev-user-123", searchText: "Petras Petraitis (Demo)", timestamp: new Date("2024-03-09T11:20:00Z"), resultsCount: 1 },
-];
+
+// Helper for destructive categories, might need adjustment based on new IDs
+export const DESTRUCTIVE_REPORT_MAIN_CATEGORIES: string[] = ['fuel_theft', 'discipline', 'technical_damage', 'driving_safety'];
+
 
 export const combineAndDeduplicateReports = (...reportArrays: Report[][]): Report[] => {
   const combined = reportArrays.flat();
@@ -522,8 +592,8 @@ export const combineAndDeduplicateReports = (...reportArrays: Report[][]): Repor
   return Array.from(uniqueReportsMap.values()).sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 };
 
-const LOCAL_STORAGE_REPORTS_KEY = 'driverShieldReports';
-const LOCAL_STORAGE_SEARCH_LOGS_KEY = 'driverShieldSearchLogs';
+const LOCAL_STORAGE_REPORTS_KEY = 'driverCheckReports'; 
+const LOCAL_STORAGE_SEARCH_LOGS_KEY = 'driverCheckSearchLogs'; 
 
 
 export function getReportsFromLocalStoragePublic(): Report[] {
@@ -564,3 +634,9 @@ export function saveSearchLogsToLocalStoragePublic(logs: SearchLog[]): void {
   }
 }
 
+export const MOCK_USER_SEARCH_LOGS: SearchLog[] = [
+  { id: "log1-mock-user", userId: MOCK_USER.id, searchText: "Jonas Jonaitis paieška", timestamp: new Date("2024-04-10T10:00:00Z"), resultsCount: 2 },
+  { id: "log2-mock-user", userId: MOCK_USER.id, searchText: "Pavojingas vairavimas", timestamp: new Date("2024-04-09T11:20:00Z"), resultsCount: 1 },
+  { id: "log3-mock-user", userId: MOCK_USER.id, searchText: "Antanas Antanaitis", timestamp: new Date("2024-04-08T15:30:00Z"), resultsCount: 0 },
+];
+    

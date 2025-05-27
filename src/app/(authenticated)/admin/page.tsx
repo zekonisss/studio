@@ -12,9 +12,9 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Loader2, ShieldAlert, Users, FileText, AlertTriangle, Trash2, Eye, MoreHorizontal, BarChart3, UserCheck, UserX, UserCog, CalendarDays, Building2, Tag, MessageSquare, Image as ImageIcon, CheckCircle2, CreditCard, Send, Briefcase, MapPin, Phone, Mail, ShieldCheck as ShieldCheckIcon, User as UserIcon, Globe, Edit3, Save, XCircle, Percent } from "lucide-react";
-import type { UserProfile, Report, ReportCategoryValue } from "@/types";
-import { getAllUsers, saveAllUsers, MOCK_GENERAL_REPORTS, combineAndDeduplicateReports, countries } from "@/types";
+import { Loader2, ShieldAlert, Users, FileText, AlertTriangle, Trash2, Eye, MoreHorizontal, BarChart3, UserCheck, UserX, UserCog, CalendarDays, Building2, Tag, MessageSquare, Image as ImageIcon, CheckCircle2, CreditCard, Send, Briefcase, MapPin, Phone, Mail, ShieldCheck as ShieldCheckIcon, User as UserIcon, Globe, Edit3, Save, XCircle, Percent, Layers } from "lucide-react";
+import type { UserProfile, Report } from "@/types"; // ReportCategoryValue might be removed or changed
+import { getAllUsers, saveAllUsers, MOCK_GENERAL_REPORTS, combineAndDeduplicateReports, countries, detailedReportCategories, DESTRUCTIVE_REPORT_MAIN_CATEGORIES } from "@/types";
 import { format as formatDateFn, addYears } from 'date-fns';
 import { lt } from 'date-fns/locale';
 import { useToast } from "@/hooks/use-toast";
@@ -22,7 +22,7 @@ import NextImage from "next/image";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 
-const LOCAL_STORAGE_REPORTS_KEY = 'driverShieldReports';
+const LOCAL_STORAGE_REPORTS_KEY = 'driverCheckReports'; // Updated key
 
 function getReportsFromLocalStorage(): Report[] {
   if (typeof window !== 'undefined') {
@@ -43,12 +43,17 @@ function saveReportsToLocalStorage(reports: Report[]): void {
   }
 }
 
-const DESTRUCTIVE_REPORT_CATEGORIES: ReportCategoryValue[] = ['kuro_vagyste', 'neblaivumas_darbe', 'zala_technikai', 'avaringumas'];
+// const DESTRUCTIVE_REPORT_CATEGORIES: ReportCategoryValue[] = ['kuro_vagyste', 'neblaivumas_darbe', 'zala_technikai', 'avaringumas']; // This will be replaced or logic adapted
 
 const getNationalityLabel = (nationalityCode?: string) => {
     if (!nationalityCode) return "Nenurodyta";
     const country = countries.find(c => c.value === nationalityCode);
     return country ? country.label : nationalityCode;
+};
+
+const getCategoryNameAdmin = (categoryId: string) => {
+    const category = detailedReportCategories.find(c => c.id === categoryId);
+    return category ? category.name : categoryId;
 };
 
 export default function AdminPage() {
@@ -406,8 +411,9 @@ export default function AdminPage() {
                       <TableRow key={report.id}>
                         <TableCell className="font-medium">{report.fullName}</TableCell>
                         <TableCell className="hidden sm:table-cell">
-                           <Badge variant={DESTRUCTIVE_REPORT_CATEGORIES.includes(report.category as ReportCategoryValue) ? 'destructive' : 'secondary'}>
-                             {report.category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                           {/* // TODO: Update badge logic based on new category structure */}
+                           <Badge variant={DESTRUCTIVE_REPORT_MAIN_CATEGORIES.includes(report.category) ? 'destructive' : 'secondary'}>
+                             {getCategoryNameAdmin(report.category)}
                            </Badge>
                         </TableCell>
                         <TableCell className="hidden md:table-cell">{report.reporterCompanyName || "Nenurodyta"}</TableCell>
@@ -504,17 +510,26 @@ export default function AdminPage() {
                 </div>
               )}
               <div className="space-y-1">
-                <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Tag className="mr-2 h-4 w-4" />Kategorija</h4>
-                <Badge variant={DESTRUCTIVE_REPORT_CATEGORIES.includes(selectedReportForDetails.category as ReportCategoryValue) ? 'destructive' : 'secondary'} className="text-sm">
-                  {selectedReportForDetails.category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                 <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Layers className="mr-2 h-4 w-4" />Pagrindinė Kategorija</h4>
+                {/* // TODO: Update badge logic based on new category structure */}
+                <Badge 
+                    variant={DESTRUCTIVE_REPORT_MAIN_CATEGORIES.includes(selectedReportForDetails.category) ? 'destructive' : 'secondary'} 
+                    className="text-sm">
+                  {getCategoryNameAdmin(selectedReportForDetails.category)}
                 </Badge>
               </div>
+              {selectedReportForDetails.subcategory && (
+                <div className="space-y-1">
+                  <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Layers className="mr-2 h-4 w-4 opacity-70" />Subkategorija</h4>
+                  <p className="text-base text-foreground">{selectedReportForDetails.subcategory}</p>
+                </div>
+              )}
               {selectedReportForDetails.tags && selectedReportForDetails.tags.length > 0 && (
                 <div className="space-y-1">
                   <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Tag className="mr-2 h-4 w-4" />Žymos</h4>
                   <div className="flex flex-wrap gap-2">
                     {selectedReportForDetails.tags.map(tag => (
-                      <Badge key={tag} variant="outline" className="text-sm">{tag.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</Badge>
+                      <Badge key={tag} variant="outline" className="text-sm">{tag}</Badge>
                     ))}
                   </div>
                 </div>
@@ -624,3 +639,5 @@ export default function AdminPage() {
     </div>
   );
 }
+
+    

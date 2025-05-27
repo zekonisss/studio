@@ -9,23 +9,28 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { SearchSchema, type SearchFormValues } from "@/lib/schemas";
-import type { Report, SearchLog, ReportCategoryValue } from "@/types";
+import type { Report, SearchLog } from "@/types"; // ReportCategoryValue might be removed or changed
 import { useAuth } from "@/hooks/use-auth";
-import { Loader2, Search as SearchIcon, User, CalendarDays, Tag, MessageSquare, AlertCircle, FileText, Image as ImageIcon, Globe } from "lucide-react";
+import { Loader2, Search as SearchIcon, User, CalendarDays, Tag, MessageSquare, AlertCircle, FileText, Image as ImageIcon, Globe, Layers } from "lucide-react";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { format } from 'date-fns';
 import { lt } from 'date-fns/locale';
-import { MOCK_GENERAL_REPORTS, combineAndDeduplicateReports, countries, getReportsFromLocalStoragePublic, getSearchLogsFromLocalStoragePublic, saveSearchLogsToLocalStoragePublic } from "@/types";
+import { MOCK_GENERAL_REPORTS, combineAndDeduplicateReports, countries, getReportsFromLocalStoragePublic, getSearchLogsFromLocalStoragePublic, saveSearchLogsToLocalStoragePublic, detailedReportCategories, DESTRUCTIVE_REPORT_MAIN_CATEGORIES } from "@/types";
 
 
-const DESTRUCTIVE_REPORT_CATEGORIES: ReportCategoryValue[] = ['kuro_vagyste', 'neblaivumas_darbe', 'zala_technikai', 'avaringumas'];
+// const DESTRUCTIVE_REPORT_CATEGORIES: ReportCategoryValue[] = ['kuro_vagyste', 'neblaivumas_darbe', 'zala_technikai', 'avaringumas']; // This will be replaced or logic adapted
 
 
 const getNationalityLabel = (nationalityCode?: string) => {
     if (!nationalityCode) return "";
     const country = countries.find(c => c.value === nationalityCode);
     return country ? country.label : nationalityCode;
+};
+
+const getCategoryNameSearch = (categoryId: string) => {
+    const category = detailedReportCategories.find(c => c.id === categoryId);
+    return category ? category.name : categoryId;
 };
 
 
@@ -55,16 +60,20 @@ export default function SearchPage() {
     let results: Report[] = [];
 
     if (query) {
-      results = combinedDataSource.filter(
-        report =>
-          report.fullName.toLowerCase().includes(query) ||
-          report.id.toLowerCase().includes(query) ||
-          (report.nationality && getNationalityLabel(report.nationality).toLowerCase().includes(query)) ||
-          (report.birthYear && report.birthYear.toString().includes(query)) ||
-          report.category.toLowerCase().includes(query.replace(/ /g, '_')) ||
-          report.tags.some(tag => tag.toLowerCase().includes(query.replace(/ /g, '_'))) ||
-          report.comment.toLowerCase().includes(query) ||
-          (report.reporterCompanyName && report.reporterCompanyName.toLowerCase().includes(query))
+      results = combinedDataSource.filter(report => {
+          const mainCategoryName = getCategoryNameSearch(report.category).toLowerCase();
+          return (
+            report.fullName.toLowerCase().includes(query) ||
+            report.id.toLowerCase().includes(query) ||
+            (report.nationality && getNationalityLabel(report.nationality).toLowerCase().includes(query)) ||
+            (report.birthYear && report.birthYear.toString().includes(query)) ||
+            mainCategoryName.includes(query) || // Search by main category name
+            (report.subcategory && report.subcategory.toLowerCase().includes(query)) || // Search by subcategory
+            report.tags.some(tag => tag.toLowerCase().includes(query)) || // Search by tags
+            report.comment.toLowerCase().includes(query) ||
+            (report.reporterCompanyName && report.reporterCompanyName.toLowerCase().includes(query))
+          );
+        }
       ).sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     }
 
@@ -97,7 +106,7 @@ export default function SearchPage() {
             Vairuotojų Paieška
           </CardTitle>
           <CardDescription>
-            Įveskite vairuotojo vardą, pavardę, pilietybę, įmonės kodą, įrašo raktažodį ar kitą informaciją.
+            Įveskite vairuotojo vardą, pavardę, pilietybę, kategoriją, žymą, įmonės kodą, įrašo raktažodį ar kitą informaciją.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -110,7 +119,7 @@ export default function SearchPage() {
                   <FormItem className="flex-grow w-full sm:w-auto">
                     <FormLabel className="sr-only">Paieškos frazė</FormLabel>
                     <FormControl>
-                      <Input placeholder="Vardas Pavardė, pilietybė, kodas, raktažodis..." {...field} className="text-base h-12"/>
+                      <Input placeholder="Vardas Pavardė, pilietybė, kategorija, žyma, raktažodis..." {...field} className="text-base h-12"/>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -190,8 +199,9 @@ export default function SearchPage() {
                             )}
                         </div>
                     </div>
-                    <Badge variant={DESTRUCTIVE_REPORT_CATEGORIES.includes(report.category as ReportCategoryValue) ? 'destructive' : 'secondary'} className="text-base py-1 px-3 ml-auto self-start">
-                        {report.category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                    {/* // TODO: Update badge logic based on new category structure */}
+                    <Badge variant={DESTRUCTIVE_REPORT_MAIN_CATEGORIES.includes(report.category) ? 'destructive' : 'secondary'} className="text-base py-1 px-3 ml-auto self-start">
+                        {getCategoryNameSearch(report.category)}
                     </Badge>
                   </div>
                 </CardHeader>
@@ -199,10 +209,21 @@ export default function SearchPage() {
                   <div className="md:col-span-2 space-y-4">
                      <div>
                       <h4 className="font-semibold text-sm text-muted-foreground mb-1 flex items-center">
-                        <Tag className="mr-1.5 h-4 w-4" /> Kategorija
+                        <Layers className="mr-1.5 h-4 w-4" /> Pagrindinė Kategorija
                       </h4>
-                      <Badge variant={DESTRUCTIVE_REPORT_CATEGORIES.includes(report.category as ReportCategoryValue) ? 'destructive' : 'secondary'} className="text-base py-1 px-3">{report.category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</Badge>
+                      {/* // TODO: Update badge logic based on new category structure */}
+                      <Badge variant={DESTRUCTIVE_REPORT_MAIN_CATEGORIES.includes(report.category) ? 'destructive' : 'secondary'} className="text-base py-1 px-3">{getCategoryNameSearch(report.category)}</Badge>
                     </div>
+
+                    {report.subcategory && (
+                      <div>
+                        <h4 className="font-semibold text-sm text-muted-foreground mb-1 flex items-center">
+                           <Layers className="mr-1.5 h-4 w-4 opacity-70" /> Subkategorija
+                        </h4>
+                        <p className="text-foreground text-base bg-secondary/30 p-2 rounded-md">{report.subcategory}</p>
+                      </div>
+                    )}
+
 
                     {report.tags && report.tags.length > 0 && (
                       <div>
@@ -211,7 +232,7 @@ export default function SearchPage() {
                         </h4>
                         <div className="flex flex-wrap gap-2">
                           {report.tags.map(tag => (
-                            <Badge key={tag} variant="outline" className="text-sm">{tag.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</Badge>
+                            <Badge key={tag} variant="outline" className="text-sm">{tag}</Badge>
                           ))}
                         </div>
                       </div>

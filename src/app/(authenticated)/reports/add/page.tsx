@@ -1,9 +1,9 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -12,13 +12,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ReportSchema, type ReportFormValues } from "@/lib/schemas";
-import { reportCategories, reportTags, Report, countries } from "@/types";
+import { detailedReportCategories, Report, countries, DetailedCategory } from "@/types";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, FilePlus2, User, CalendarDays, Tag, MessageSquare, Paperclip, Globe } from "lucide-react";
+import { Loader2, FilePlus2, User, CalendarDays, Tag, MessageSquare, Paperclip, Globe, Layers, CheckSquare } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-const LOCAL_STORAGE_REPORTS_KEY = 'driverShieldReports';
+const LOCAL_STORAGE_REPORTS_KEY = 'driverCheckReports';
 
 function getReportsFromLocalStorage(): Report[] {
   if (typeof window !== 'undefined') {
@@ -26,7 +26,7 @@ function getReportsFromLocalStorage(): Report[] {
     if (reportsJSON) {
       return JSON.parse(reportsJSON).map((report: any) => ({
         ...report,
-        createdAt: new Date(report.createdAt), // Ensure createdAt is a Date object
+        createdAt: new Date(report.createdAt), 
       }));
     }
   }
@@ -44,19 +44,38 @@ export default function AddReportPage() {
   const { toast } = useToast();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedMainCategory, setSelectedMainCategory] = useState<DetailedCategory | null>(null);
 
   const form = useForm<ReportFormValues>({
     resolver: zodResolver(ReportSchema),
     defaultValues: {
       fullName: "",
       nationality: "",
-      birthYear: '', // Changed from undefined to empty string
-      category: "",
+      birthYear: '',
+      category: "", // Main category ID
+      subcategory: "",
       tags: [],
       comment: "",
       image: null,
     },
   });
+
+  const watchedCategory = useWatch({
+    control: form.control,
+    name: 'category',
+  });
+
+  useEffect(() => {
+    if (watchedCategory) {
+      const categoryDetails = detailedReportCategories.find(cat => cat.id === watchedCategory);
+      setSelectedMainCategory(categoryDetails || null);
+      form.setValue('subcategory', ''); // Reset subcategory when main category changes
+      form.setValue('tags', []); // Reset tags when main category changes
+    } else {
+      setSelectedMainCategory(null);
+    }
+  }, [watchedCategory, form]);
+
 
   async function onSubmit(values: ReportFormValues) {
     setIsSubmitting(true);
@@ -66,6 +85,7 @@ export default function AddReportPage() {
       return;
     }
 
+    // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000)); 
     
     const allReports = getReportsFromLocalStorage();
@@ -76,7 +96,8 @@ export default function AddReportPage() {
       fullName: values.fullName,
       nationality: values.nationality,
       birthYear: values.birthYear && values.birthYear !== '' ? Number(values.birthYear) : undefined,
-      category: values.category,
+      category: values.category, // Main category ID
+      subcategory: values.subcategory || undefined,
       tags: values.tags || [],
       comment: values.comment,
       imageUrl: values.image ? "https://placehold.co/600x400.png" : undefined,
@@ -92,6 +113,7 @@ export default function AddReportPage() {
       description: `Įrašas apie ${values.fullName} buvo įrašytas į naršyklės atmintį.`,
     });
     form.reset();
+    setSelectedMainCategory(null);
     setIsSubmitting(false);
     router.push("/reports/history");
   }
@@ -169,24 +191,17 @@ export default function AddReportPage() {
                 name="category"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="flex items-center text-base"><Tag className="mr-2 h-4 w-4 text-muted-foreground" />Kategorija</FormLabel>
+                    <FormLabel className="flex items-center text-base"><Layers className="mr-2 h-4 w-4 text-muted-foreground" />Pagrindinė Kategorija</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger className="text-base py-2.5 h-auto">
-                          <SelectValue placeholder="Pasirinkite kategoriją..." />
+                          <SelectValue placeholder="Pasirinkite pagrindinę kategoriją..." />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {reportCategories.map(cat => (
-                          <SelectItem key={cat.value} value={cat.value} className="text-base">
-                             {cat.value === 'kreipimasis_institucijos' ? (
-                              <>
-                                {cat.label.split('(')[0]}
-                                <span className="text-xs text-muted-foreground ml-1">({cat.label.split('(')[1]})</span>
-                              </>
-                            ) : (
-                              cat.label
-                            )}
+                        {detailedReportCategories.map(cat => (
+                          <SelectItem key={cat.id} value={cat.id} className="text-base">
+                            {cat.name}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -196,54 +211,84 @@ export default function AddReportPage() {
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="tags"
-                render={() => (
-                  <FormItem>
-                    <div className="mb-2">
-                      <FormLabel className="text-base flex items-center"><Tag className="mr-2 h-4 w-4 text-muted-foreground" />Žymos (pasirinkite tinkamas)</FormLabel>
-                       <FormDescription>Pasirinkite vieną ar kelias žymas, geriausiai apibūdinančias situaciją.</FormDescription>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {reportTags.map((tag) => (
-                      <FormField
-                        key={tag.value}
-                        control={form.control}
-                        name="tags"
-                        render={({ field }) => {
-                          return (
-                            <FormItem
-                              key={tag.value}
-                              className="flex flex-row items-center space-x-3 space-y-0 p-3 border rounded-md bg-secondary/20 hover:bg-secondary/40 transition-colors"
-                            >
-                              <FormControl>
-                                <Checkbox
-                                  checked={field.value?.includes(tag.value)}
-                                  onCheckedChange={(checked) => {
-                                    return checked
-                                      ? field.onChange([...(field.value || []), tag.value])
-                                      : field.onChange(
-                                          field.value?.filter(
-                                            (value) => value !== tag.value
+              {selectedMainCategory && selectedMainCategory.subcategories.length > 0 && (
+                 <FormField
+                  control={form.control}
+                  name="subcategory"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center text-base"><Layers className="mr-2 h-4 w-4 text-muted-foreground opacity-70" />Subkategorija (neprivaloma)</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value} defaultValue="">
+                        <FormControl>
+                          <SelectTrigger className="text-base py-2.5 h-auto">
+                            <SelectValue placeholder="Pasirinkite subkategoriją..." />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="" className="text-base">-- Nepasirinkta --</SelectItem>
+                          {selectedMainCategory.subcategories.map(subCat => (
+                            <SelectItem key={subCat} value={subCat} className="text-base">
+                              {subCat}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+              
+              {selectedMainCategory && selectedMainCategory.tags.length > 0 && (
+                <FormField
+                  control={form.control}
+                  name="tags"
+                  render={() => (
+                    <FormItem>
+                      <div className="mb-2">
+                        <FormLabel className="text-base flex items-center"><CheckSquare className="mr-2 h-4 w-4 text-muted-foreground" />Žymos (pasirinkite tinkamas)</FormLabel>
+                        <FormDescription>Pasirinkite vieną ar kelias žymas, geriausiai apibūdinančias situaciją.</FormDescription>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {selectedMainCategory.tags.map((tag) => (
+                        <FormField
+                          key={tag}
+                          control={form.control}
+                          name="tags"
+                          render={({ field }) => {
+                            return (
+                              <FormItem
+                                key={tag}
+                                className="flex flex-row items-center space-x-3 space-y-0 p-3 border rounded-md bg-secondary/20 hover:bg-secondary/40 transition-colors"
+                              >
+                                <FormControl>
+                                  <Checkbox
+                                    checked={field.value?.includes(tag)}
+                                    onCheckedChange={(checked) => {
+                                      return checked
+                                        ? field.onChange([...(field.value || []), tag])
+                                        : field.onChange(
+                                            field.value?.filter(
+                                              (value) => value !== tag
+                                            )
                                           )
-                                        )
-                                  }}
-                                />
-                              </FormControl>
-                              <FormLabel className="font-normal text-sm cursor-pointer flex-grow">
-                                {tag.label}
-                              </FormLabel>
-                            </FormItem>
-                          )
-                        }}
-                      />
-                    ))}
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                                    }}
+                                  />
+                                </FormControl>
+                                <FormLabel className="font-normal text-sm cursor-pointer flex-grow">
+                                  {tag}
+                                </FormLabel>
+                              </FormItem>
+                            )
+                          }}
+                        />
+                      ))}
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
               
               <FormField
                 control={form.control}
@@ -299,3 +344,5 @@ export default function AddReportPage() {
     </div>
   );
 }
+
+    

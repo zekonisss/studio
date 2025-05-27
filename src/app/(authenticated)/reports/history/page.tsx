@@ -7,9 +7,9 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import type { Report, ReportCategoryValue } from "@/types";
+import type { Report } from "@/types"; // ReportCategoryValue might be removed or changed
 import { useAuth } from "@/hooks/use-auth";
-import { Loader2, History as HistoryIcon, User, CalendarDays, Tag, MessageSquare, AlertTriangle, Trash2, Eye, PlusCircle, Building2, Image as ImageIcon, FileText, Globe } from "lucide-react";
+import { Loader2, History as HistoryIcon, User, CalendarDays, Tag, MessageSquare, AlertTriangle, Trash2, Eye, PlusCircle, Building2, Image as ImageIcon, FileText, Globe, Layers } from "lucide-react";
 import { format } from 'date-fns';
 import { lt } from 'date-fns/locale';
 import {
@@ -33,10 +33,10 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { MOCK_USER, MOCK_USER_REPORTS, countries } from "@/types";
+import { MOCK_USER, MOCK_USER_REPORTS, countries, detailedReportCategories, DESTRUCTIVE_REPORT_MAIN_CATEGORIES } from "@/types";
 
-const LOCAL_STORAGE_REPORTS_KEY = 'driverShieldReports';
-const DESTRUCTIVE_REPORT_CATEGORIES: ReportCategoryValue[] = ['kuro_vagyste', 'neblaivumas_darbe', 'zala_technikai', 'avaringumas'];
+const LOCAL_STORAGE_REPORTS_KEY = 'driverCheckReports';
+// const DESTRUCTIVE_REPORT_CATEGORIES: ReportCategoryValue[] = ['kuro_vagyste', 'neblaivumas_darbe', 'zala_technikai', 'avaringumas']; // This will be replaced or logic adapted
 
 function getReportsFromLocalStorage(): Report[] {
   if (typeof window !== 'undefined') {
@@ -74,6 +74,8 @@ export default function ReportHistoryPage() {
         const localUserReports = getReportsFromLocalStorage().filter(r => r.reporterId === user.id);
         let combinedReportsForUser = [...localUserReports];
 
+        // Ensure mock reports are correctly structured for new category system if used
+        // This part might need adjustment if MOCK_USER_REPORTS schema changes significantly
         if (user.id === MOCK_USER.id) {
           const userSpecificMocks = MOCK_USER_REPORTS.filter(mr => mr.reporterId === user.id);
           userSpecificMocks.forEach(mockReport => {
@@ -123,6 +125,11 @@ export default function ReportHistoryPage() {
     if (!nationalityCode) return "Nenurodyta";
     const country = countries.find(c => c.value === nationalityCode);
     return country ? country.label : nationalityCode;
+  };
+
+  const getCategoryName = (categoryId: string) => {
+    const category = detailedReportCategories.find(c => c.id === categoryId);
+    return category ? category.name : categoryId;
   };
 
 
@@ -206,17 +213,21 @@ export default function ReportHistoryPage() {
                       Pateikta: {format(new Date(report.createdAt), "yyyy-MM-dd HH:mm", { locale: lt })}
                     </CardDescription>
                   </div>
-                  <Badge variant={DESTRUCTIVE_REPORT_CATEGORIES.includes(report.category as ReportCategoryValue) ? 'destructive' : 'secondary'}>
-                    {report.category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                  {/* // TODO: Update badge logic based on new category structure */}
+                  <Badge variant={DESTRUCTIVE_REPORT_MAIN_CATEGORIES.includes(report.category) ? 'destructive' : 'secondary'}>
+                    {getCategoryName(report.category)}
                   </Badge>
                 </div>
               </CardHeader>
               <CardContent className="py-2 space-y-3">
+                 {report.subcategory && (
+                  <p className="text-sm text-muted-foreground"><Layers className="inline h-4 w-4 mr-1.5 relative -top-0.5 opacity-70" /> {report.subcategory}</p>
+                )}
                 <p className="text-muted-foreground line-clamp-3"><MessageSquare className="inline h-4 w-4 mr-1.5 relative -top-0.5" />{report.comment}</p>
                 {report.tags && report.tags.length > 0 && (
                   <div className="flex flex-wrap gap-2">
                     {report.tags.map(tag => (
-                      <Badge key={tag} variant="outline"><Tag className="inline h-3 w-3 mr-1" />{tag.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</Badge>
+                      <Badge key={tag} variant="outline"><Tag className="inline h-3 w-3 mr-1" />{tag}</Badge>
                     ))}
                   </div>
                 )}
@@ -291,17 +302,26 @@ export default function ReportHistoryPage() {
                 </div>
               )}
               <div className="space-y-1">
-                <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Tag className="mr-2 h-4 w-4" />Kategorija</h4>
-                <Badge variant={DESTRUCTIVE_REPORT_CATEGORIES.includes(selectedReportForDetails.category as ReportCategoryValue) ? 'destructive' : 'secondary'} className="text-sm">
-                  {selectedReportForDetails.category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Layers className="mr-2 h-4 w-4" />Pagrindinė Kategorija</h4>
+                <Badge 
+                  variant={DESTRUCTIVE_REPORT_MAIN_CATEGORIES.includes(selectedReportForDetails.category) ? 'destructive' : 'secondary'} 
+                  className="text-sm"
+                >
+                  {getCategoryName(selectedReportForDetails.category)}
                 </Badge>
               </div>
+              {selectedReportForDetails.subcategory && (
+                 <div className="space-y-1">
+                  <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Layers className="mr-2 h-4 w-4 opacity-70" />Subkategorija</h4>
+                  <p className="text-base text-foreground">{selectedReportForDetails.subcategory}</p>
+                </div>
+              )}
               {selectedReportForDetails.tags && selectedReportForDetails.tags.length > 0 && (
                 <div className="space-y-1">
                   <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Tag className="mr-2 h-4 w-4" />Žymos</h4>
                   <div className="flex flex-wrap gap-2">
                     {selectedReportForDetails.tags.map(tag => (
-                      <Badge key={tag} variant="outline" className="text-sm">{tag.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</Badge>
+                      <Badge key={tag} variant="outline" className="text-sm">{tag}</Badge>
                     ))}
                   </div>
                 </div>
@@ -346,3 +366,5 @@ export default function ReportHistoryPage() {
     </div>
   );
 }
+
+    
