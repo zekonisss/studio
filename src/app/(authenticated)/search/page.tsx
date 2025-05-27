@@ -11,12 +11,13 @@ import { Input } from "@/components/ui/input";
 import { SearchSchema, type SearchFormValues } from "@/lib/schemas";
 import type { Report, SearchLog, ReportCategoryValue } from "@/types";
 import { useAuth } from "@/hooks/use-auth";
-import { Loader2, Search as SearchIcon, User, CalendarDays, Tag, MessageSquare, AlertCircle, FileText, Image as ImageIcon, Globe } from "lucide-react";
+import { Loader2, Search as SearchIcon, User, CalendarDays, Tag, MessageSquare, AlertCircle, FileText, Image as ImageIcon, Globe, Filter } from "lucide-react";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { format } from 'date-fns';
 import { lt } from 'date-fns/locale';
 import { MOCK_GENERAL_REPORTS, combineAndDeduplicateReports, countries, getReportsFromLocalStoragePublic, getSearchLogsFromLocalStoragePublic, saveSearchLogsToLocalStoragePublic } from "@/types";
+import DriverFilterForm from "@/components/shared/driver-filter-form"; // Import the new component
 
 
 const DESTRUCTIVE_REPORT_CATEGORIES: ReportCategoryValue[] = ['kuro_vagyste', 'neblaivumas_darbe', 'zala_technikai', 'avaringumas'];
@@ -128,6 +129,23 @@ export default function SearchPage() {
           </Form>
         </CardContent>
       </Card>
+
+      {/* Driver Filter Form Card */}
+      <Card className="mb-8 shadow-lg">
+        <CardHeader>
+            <CardTitle className="text-xl flex items-center">
+                <Filter className="mr-3 h-6 w-6 text-primary" />
+                Filtruoti Pagal Kategoriją
+            </CardTitle>
+            <CardDescription>
+                Pasirinkite kategoriją norėdami matyti susijusias subkategorijas ir žymas.
+            </CardDescription>
+        </CardHeader>
+        <CardContent>
+            <DriverFilterForm />
+        </CardContent>
+      </Card>
+
 
       {isLoading && (
         <div className="flex justify-center items-center py-10">
