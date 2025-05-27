@@ -31,8 +31,8 @@ export default function DashboardPage() {
   const quickActions = [
     { label: "Atlikti Paiešką", href: "/search", icon: Search, description: "Greitai raskite vairuotojo informaciją." },
     { label: "Pridėti Įrašą", href: "/reports/add", icon: FilePlus2, description: "Registruokite naują įvykį ar pažeidimą." },
-    { label: "Mano Paskyra", href: "/account", icon: UserCircle, description: "Peržiūrėkite ir tvarkykite paskyros duomenis." },
-    { label: "Įrašų Istorija", href: "/reports/history", icon: History, description: "Matykite visus savo pridėtus įrašus." },
+    // { label: "Mano Paskyra", href: "/account", icon: UserCircle, description: "Peržiūrėkite ir tvarkykite paskyros duomenis." },
+    // { label: "Įrašų Istorija", href: "/reports/history", icon: History, description: "Matykite visus savo pridėtus įrašus." },
   ];
 
   const subscriptionEndDate = user?.accountActivatedAt ? addYears(new Date(user.accountActivatedAt), 1) : null;
