@@ -16,7 +16,7 @@ import type { Report, DetailedCategory } from "@/types";
 import { detailedReportCategories, countries } from "@/types";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, FilePlus2, User, CalendarDays, Tag, MessageSquare, Paperclip, Globe, Layers, CheckSquare } from "lucide-react";
+import { Loader2, FilePlus2, User, CalendarDays, CheckSquare, MessageSquare, Paperclip, Globe, Layers } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 const LOCAL_STORAGE_REPORTS_KEY = 'driverCheckReports';
@@ -199,6 +199,9 @@ export default function AddReportPage() {
                         {detailedReportCategories.map(cat => (
                           <SelectItem key={cat.id} value={cat.id} className="text-base">
                             {cat.name}
+                             {cat.id === 'legal_reputation' && (
+                                <span className="ml-1 text-xs text-muted-foreground opacity-80">(pvz., darbo inspekciją dėl netikslumų ar keršto)</span>
+                             )}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -208,7 +211,7 @@ export default function AddReportPage() {
                 )}
               />
               
-              {selectedMainCategory && selectedMainCategory.tags.length > 0 && (
+              {selectedMainCategory && selectedMainCategory.id !== 'other_category' && selectedMainCategory.tags.length > 0 && (
                 <FormField
                   control={form.control}
                   name="tags"
@@ -313,6 +316,4 @@ export default function AddReportPage() {
     </div>
   );
 }
-
     
-
