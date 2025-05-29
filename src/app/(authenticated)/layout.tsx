@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTitle, SheetTrigger, SheetClose } from '@/components/ui/sheet';
 import { Menu, Loader2 } from 'lucide-react';
 import { WelcomeModal } from '@/components/shared/welcome-modal';
+import { LanguageSwitcher } from '@/components/navigation/language-switcher'; // Added LanguageSwitcher import
 
 export default function AuthenticatedLayout({
   children,
@@ -56,7 +57,7 @@ export default function AuthenticatedLayout({
         <SidebarNav isInSheet={false} />
       </div>
       <div className="flex flex-1 flex-col">
-        <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-card px-4 shadow-sm md:justify-end">
+        <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-card px-4 shadow-sm">
           <div className="md:hidden">
             <Sheet>
               <SheetTrigger asChild>
@@ -66,12 +67,15 @@ export default function AuthenticatedLayout({
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="p-0 w-72">
-                <SheetTitle className="sr-only">Navigacijos Meniu</SheetTitle>
+                <SheetTitle className="sr-only">Navigacijos Meniu</SheetTitle> {/* Added sr-only title for accessibility */}
                 <SidebarNav isInSheet={true} />
               </SheetContent>
             </Sheet>
           </div>
-          <UserNav />
+          <div className="flex items-center gap-3 ml-auto"> {/* Wrapper for UserNav and LanguageSwitcher */}
+            <LanguageSwitcher />
+            <UserNav />
+          </div>
         </header>
         <main className="flex-1 p-4 md:p-8 overflow-auto">
           {children}
