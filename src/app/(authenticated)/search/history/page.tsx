@@ -9,13 +9,14 @@ import type { SearchLog } from "@/types";
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2, ListChecks, AlertTriangle, SearchCheck } from "lucide-react";
 import { format } from 'date-fns';
-import { lt } from 'date-fns/locale';
+import { lt, enUS } from 'date-fns/locale'; // Added enUS
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { MOCK_USER, MOCK_USER_SEARCH_LOGS } from "@/types";
+import { useLanguage } from "@/contexts/language-context"; // Added
 
 
-const LOCAL_STORAGE_SEARCH_LOGS_KEY = 'driverShieldSearchLogs';
+const LOCAL_STORAGE_SEARCH_LOGS_KEY = 'driverCheckSearchLogs';
 
 function getSearchLogsFromLocalStorage(): SearchLog[] {
   if (typeof window !== 'undefined') {
@@ -38,8 +39,10 @@ function saveSearchLogsToLocalStorage(logs: SearchLog[]): void {
 
 export default function SearchHistoryPage() {
   const { user, loading: authLoading } = useAuth();
+  const { t, locale } = useLanguage(); // Added
   const [searchLogs, setSearchLogs] = useState<SearchLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const dateLocale = locale === 'en' ? enUS : lt;
 
   useEffect(() => {
     const fetchSearchLogs = async () => {
@@ -54,7 +57,6 @@ export default function SearchHistoryPage() {
 
       let userLogs = getSearchLogsFromLocalStorage().filter(log => log.userId === user.id);
 
-      // If current user is MOCK_USER and their localStorage logs are empty, seed with MOCK_USER_SEARCH_LOGS
       if (user.id === MOCK_USER.id && userLogs.length === 0 && MOCK_USER_SEARCH_LOGS.length > 0) {
          const allLogsCurrentlyInStorage = getSearchLogsFromLocalStorage();
          const otherUserLogs = allLogsCurrentlyInStorage.filter(log => log.userId !== MOCK_USER.id);
@@ -87,14 +89,14 @@ export default function SearchHistoryPage() {
         <div>
           <h1 className="text-3xl font-bold text-foreground flex items-center">
             <ListChecks className="mr-3 h-8 w-8 text-primary" />
-            Paieškų Istorija
+            {t('searchHistory.pageTitle')}
           </h1>
-          <p className="text-muted-foreground mt-1">Peržiūrėkite savo ankstesnes paieškas sistemoje.</p>
+          <p className="text-muted-foreground mt-1">{t('searchHistory.pageDescription')}</p>
         </div>
          <Button asChild>
           <Link href="/search">
             <SearchCheck className="mr-2 h-5 w-5" />
-            Nauja Paieška
+            {t('searchHistory.newSearchButton')}
           </Link>
         </Button>
       </div>
@@ -104,32 +106,32 @@ export default function SearchHistoryPage() {
          <Card className="shadow-md text-center">
           <CardHeader>
             <AlertTriangle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <CardTitle className="text-xl">Paieškų Istorijos Nėra</CardTitle>
+            <CardTitle className="text-xl">{t('searchHistory.noHistory.title')}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">
-              Jūs dar neatlikote jokių paieškų sistemoje.
+              {t('searchHistory.noHistory.message')}
             </p>
           </CardContent>
           <CardFooter className="justify-center">
             <Button asChild>
-              <Link href="/search">Atlikti Pirmą Paiešką</Link>
+              <Link href="/search">{t('searchHistory.noHistory.performFirstSearchButton')}</Link>
             </Button>
           </CardFooter>
         </Card>
       ) : (
         <Card className="shadow-xl">
           <CardHeader>
-            <CardTitle>Jūsų paieškos</CardTitle>
-            <CardDescription>Žemiau pateikiamos jūsų atliktos paieškos nuo naujausios iki seniausios.</CardDescription>
+            <CardTitle>{t('searchHistory.table.title')}</CardTitle>
+            <CardDescription>{t('searchHistory.table.description')}</CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[40%]">Paieškos Frazė</TableHead>
-                  <TableHead className="text-center hidden sm:table-cell">Rezultatų Skaičius</TableHead>
-                  <TableHead className="text-right">Data ir Laikas</TableHead>
+                  <TableHead className="w-[40%]">{t('searchHistory.table.header.query')}</TableHead>
+                  <TableHead className="text-center hidden sm:table-cell">{t('searchHistory.table.header.resultsCount')}</TableHead>
+                  <TableHead className="text-right">{t('searchHistory.table.header.dateTime')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -141,7 +143,7 @@ export default function SearchHistoryPage() {
                         {log.resultsCount}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-right text-muted-foreground">{format(log.timestamp, "yyyy-MM-dd HH:mm:ss", { locale: lt })}</TableCell>
+                    <TableCell className="text-right text-muted-foreground">{format(log.timestamp, "yyyy-MM-dd HH:mm:ss", { locale: dateLocale })}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

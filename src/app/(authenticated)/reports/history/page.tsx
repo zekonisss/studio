@@ -7,11 +7,11 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import type { Report } from "@/types";
+import type { Report, DetailedCategory } from "@/types"; // Added DetailedCategory
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2, History as HistoryIcon, User, CalendarDays, Tag, MessageSquare, AlertTriangle, Trash2, Eye, PlusCircle, Building2, Image as ImageIcon, FileText, Globe, Layers } from "lucide-react";
 import { format } from 'date-fns';
-import { lt } from 'date-fns/locale';
+import { lt, enUS } from 'date-fns/locale'; // Added enUS
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { MOCK_USER, MOCK_USER_REPORTS, countries, detailedReportCategories, DESTRUCTIVE_REPORT_MAIN_CATEGORIES } from "@/types";
+import { useLanguage } from "@/contexts/language-context"; // Added
 
 const LOCAL_STORAGE_REPORTS_KEY = 'driverCheckReports';
 
@@ -59,10 +60,13 @@ function saveReportsToLocalStorage(reports: Report[]): void {
 export default function ReportHistoryPage() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { t, locale } = useLanguage(); // Added
   const [reports, setReports] = useState<Report[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [selectedReportForDetails, setSelectedReportForDetails] = useState<Report | null>(null);
+
+  const dateLocale = locale === 'en' ? enUS : lt;
 
   useEffect(() => {
     const fetchReports = async () => {
@@ -104,8 +108,8 @@ export default function ReportHistoryPage() {
     setReports(prevReports => prevReports.filter(report => report.id !== reportId));
 
     toast({
-      title: "Įrašas pašalintas",
-      description: "Pasirinktas įrašas buvo sėkmingai pašalintas iš naršyklės atminties.",
+      title: t('reports.history.toast.deleted.title'),
+      description: t('reports.history.toast.deleted.description'),
     });
     setDeletingId(null);
   };
@@ -119,14 +123,14 @@ export default function ReportHistoryPage() {
   };
   
   const getNationalityLabel = (nationalityCode?: string) => {
-    if (!nationalityCode) return "Nenurodyta";
+    if (!nationalityCode) return t('common.notSpecified');
     const country = countries.find(c => c.value === nationalityCode);
-    return country ? country.label : nationalityCode;
+    return country ? t(`countries.${country.value}`) : nationalityCode;
   };
 
   const getCategoryName = (categoryId: string) => {
     const category = detailedReportCategories.find(c => c.id === categoryId);
-    return category ? category.name : categoryId;
+    return category ? t(category.nameKey) : categoryId;
   };
 
 
@@ -142,10 +146,10 @@ export default function ReportHistoryPage() {
      return (
         <div className="container mx-auto py-8 text-center">
             <AlertTriangle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h1 className="text-xl font-semibold">Neprisijungęs vartotojas</h1>
-            <p className="text-muted-foreground">Prašome prisijungti, kad matytumėte įrašų istoriją.</p>
+            <h1 className="text-xl font-semibold">{t('reports.history.notLoggedIn.title')}</h1>
+            <p className="text-muted-foreground">{t('reports.history.notLoggedIn.message')}</p>
             <Button asChild className="mt-4">
-                <Link href="/auth/login">Prisijungti</Link>
+                <Link href="/auth/login">{t('login.loginButton')}</Link>
             </Button>
         </div>
     );
@@ -166,14 +170,14 @@ export default function ReportHistoryPage() {
         <div>
           <h1 className="text-3xl font-bold text-foreground flex items-center">
             <HistoryIcon className="mr-3 h-8 w-8 text-primary" />
-            Mano Įrašų Istorija
+            {t('reports.history.pageTitle')}
           </h1>
-          <p className="text-muted-foreground mt-1">Peržiūrėkite ir tvarkykite savo pateiktus įrašus.</p>
+          <p className="text-muted-foreground mt-1">{t('reports.history.pageDescription')}</p>
         </div>
         <Button asChild>
           <Link href="/reports/add">
             <PlusCircle className="mr-2 h-5 w-5" />
-            Pridėti Naują Įrašą
+            {t('reports.history.addNewButton')}
           </Link>
         </Button>
       </div>
@@ -182,16 +186,16 @@ export default function ReportHistoryPage() {
         <Card className="shadow-md text-center">
           <CardHeader>
             <AlertTriangle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <CardTitle className="text-xl">Įrašų Nerasta</CardTitle>
+            <CardTitle className="text-xl">{t('reports.history.noEntries.title')}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">
-              Jūs dar nesate pateikę jokių įrašų.
+              {t('reports.history.noEntries.message')}
             </p>
           </CardContent>
           <CardFooter className="justify-center">
             <Button asChild>
-              <Link href="/reports/add">Sukurti Pirmą Įrašą</Link>
+              <Link href="/reports/add">{t('reports.history.noEntries.createFirstButton')}</Link>
             </Button>
           </CardFooter>
         </Card>
@@ -207,7 +211,7 @@ export default function ReportHistoryPage() {
                       {report.fullName}
                     </CardTitle>
                     <CardDescription className="text-sm">
-                      Pateikta: {format(new Date(report.createdAt), "yyyy-MM-dd HH:mm", { locale: lt })}
+                      {t('reports.history.entry.submittedOn')}: {format(new Date(report.createdAt), "yyyy-MM-dd HH:mm", { locale: dateLocale })}
                     </CardDescription>
                   </div>
                   <Badge variant={DESTRUCTIVE_REPORT_MAIN_CATEGORIES.includes(report.category) ? 'destructive' : 'secondary'}>
@@ -220,13 +224,13 @@ export default function ReportHistoryPage() {
                 {report.tags && report.tags.length > 0 && (
                   <div className="flex flex-wrap gap-2">
                     {report.tags.map(tag => (
-                      <Badge key={tag} variant="outline"><Tag className="inline h-3 w-3 mr-1" />{tag}</Badge>
+                       <Badge key={tag} variant="outline"><Tag className="inline h-3 w-3 mr-1" />{t(`tags.${tag.toLowerCase().replace(/\s+/g, '_').replace(/\//g, '_')}`)}</Badge>
                     ))}
                   </div>
                 )}
                  {report.imageUrl && (
                     <div className="mt-2">
-                        <p className="text-xs text-muted-foreground">Pridėtas failas (demonstracinė nuoroda):</p>
+                        <p className="text-xs text-muted-foreground">{t('reports.history.entry.attachedFileDemo')}:</p>
                         <Link href={report.imageUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline truncate block max-w-xs">
                            {report.imageUrl}
                         </Link>
@@ -236,26 +240,26 @@ export default function ReportHistoryPage() {
               <CardFooter className="flex justify-end gap-2 pt-4">
                  <Button variant="ghost" size="sm" onClick={() => handleViewDetails(report)}>
                     <Eye className="mr-2 h-4 w-4" />
-                    Peržiūrėti (Detalės)
+                    {t('reports.history.entry.viewDetailsButton')}
                   </Button>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button variant="destructive" size="sm" disabled={deletingId === report.id || report.reporterId !== user?.id}>
                       {deletingId === report.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
-                      Pašalinti
+                      {t('reports.history.entry.deleteButton')}
                     </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
-                      <AlertDialogTitle>Ar tikrai norite pašalinti šį įrašą?</AlertDialogTitle>
+                      <AlertDialogTitle>{t('reports.history.deleteDialog.title')}</AlertDialogTitle>
                       <AlertDialogDescription>
-                        Šis veiksmas yra negrįžtamas. Įrašas apie <span className="font-semibold">{report.fullName}</span> bus visam laikui pašalintas iš naršyklės atminties.
+                        {t('reports.history.deleteDialog.description', { fullName: report.fullName })}
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogCancel>Atšaukti</AlertDialogCancel>
+                      <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
                       <AlertDialogAction onClick={() => handleDeleteReport(report.id)} className="bg-destructive hover:bg-destructive/90">
-                        Taip, pašalinti
+                        {t('reports.history.deleteDialog.confirmButton')}
                       </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
@@ -271,31 +275,31 @@ export default function ReportHistoryPage() {
           <DialogContent className="sm:max-w-lg">
             <DialogHeader>
               <DialogTitle className="flex items-center text-xl">
-                <FileText className="mr-2 h-5 w-5 text-primary" /> Įrašo Detalės
+                <FileText className="mr-2 h-5 w-5 text-primary" /> {t('reports.history.detailsModal.title')}
               </DialogTitle>
               <DialogDescription>
-                Išsami informacija apie įrašą.
+                {t('reports.history.detailsModal.description')}
               </DialogDescription>
             </DialogHeader>
             <div className="py-4 space-y-4 max-h-[60vh] overflow-y-auto pr-2">
               <div className="space-y-1">
-                <h4 className="text-sm font-medium text-muted-foreground flex items-center"><User className="mr-2 h-4 w-4" />Vairuotojas</h4>
+                <h4 className="text-sm font-medium text-muted-foreground flex items-center"><User className="mr-2 h-4 w-4" />{t('reports.history.detailsModal.driver')}</h4>
                 <p className="text-base text-foreground">{selectedReportForDetails.fullName}</p>
               </div>
               {selectedReportForDetails.nationality && (
                 <div className="space-y-1">
-                  <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Globe className="mr-2 h-4 w-4" />Pilietybė</h4>
+                  <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Globe className="mr-2 h-4 w-4" />{t('reports.history.detailsModal.nationality')}</h4>
                   <p className="text-base text-foreground">{getNationalityLabel(selectedReportForDetails.nationality)}</p>
                 </div>
               )}
               {selectedReportForDetails.birthYear && (
                 <div className="space-y-1">
-                  <h4 className="text-sm font-medium text-muted-foreground flex items-center"><CalendarDays className="mr-2 h-4 w-4" />Gimimo Metai</h4>
+                  <h4 className="text-sm font-medium text-muted-foreground flex items-center"><CalendarDays className="mr-2 h-4 w-4" />{t('reports.history.detailsModal.birthYear')}</h4>
                   <p className="text-base text-foreground">{selectedReportForDetails.birthYear}</p>
                 </div>
               )}
               <div className="space-y-1">
-                <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Layers className="mr-2 h-4 w-4" />Pagrindinė Kategorija</h4>
+                <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Layers className="mr-2 h-4 w-4" />{t('reports.history.detailsModal.mainCategory')}</h4>
                 <Badge 
                   variant={DESTRUCTIVE_REPORT_MAIN_CATEGORIES.includes(selectedReportForDetails.category) ? 'destructive' : 'secondary'} 
                   className="text-sm"
@@ -305,25 +309,25 @@ export default function ReportHistoryPage() {
               </div>
               {selectedReportForDetails.tags && selectedReportForDetails.tags.length > 0 && (
                 <div className="space-y-1">
-                  <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Tag className="mr-2 h-4 w-4" />Žymos</h4>
+                  <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Tag className="mr-2 h-4 w-4" />{t('reports.history.detailsModal.tags')}</h4>
                   <div className="flex flex-wrap gap-2">
                     {selectedReportForDetails.tags.map(tag => (
-                      <Badge key={tag} variant="outline" className="text-sm">{tag}</Badge>
+                      <Badge key={tag} variant="outline" className="text-sm">{t(`tags.${tag.toLowerCase().replace(/\s+/g, '_').replace(/\//g, '_')}`)}</Badge>
                     ))}
                   </div>
                 </div>
               )}
               <div className="space-y-1">
-                <h4 className="text-sm font-medium text-muted-foreground flex items-center"><MessageSquare className="mr-2 h-4 w-4" />Komentaras</h4>
+                <h4 className="text-sm font-medium text-muted-foreground flex items-center"><MessageSquare className="mr-2 h-4 w-4" />{t('reports.history.detailsModal.comment')}</h4>
                 <p className="text-base text-foreground whitespace-pre-wrap bg-secondary/30 p-3 rounded-md">{selectedReportForDetails.comment}</p>
               </div>
               {selectedReportForDetails.imageUrl && (
                 <div className="space-y-1">
-                  <h4 className="text-sm font-medium text-muted-foreground flex items-center"><ImageIcon className="mr-2 h-4 w-4" />Pridėtas Failas/Nuotrauka</h4>
+                  <h4 className="text-sm font-medium text-muted-foreground flex items-center"><ImageIcon className="mr-2 h-4 w-4" />{t('reports.history.detailsModal.attachedFile')}</h4>
                   <div className="w-full overflow-hidden rounded-md border">
                     <Image
                         src={selectedReportForDetails.imageUrl}
-                        alt={`Įrašo nuotrauka ${selectedReportForDetails.fullName}`}
+                        alt={t('reports.history.detailsModal.imageAlt', { fullName: selectedReportForDetails.fullName })}
                         width={600}
                         height={400}
                         layout="responsive"
@@ -334,17 +338,17 @@ export default function ReportHistoryPage() {
                 </div>
               )}
                <div className="space-y-1">
-                <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Building2 className="mr-2 h-4 w-4" />Pateikė Įmonė</h4>
-                <p className="text-base text-foreground">{selectedReportForDetails.reporterCompanyName || 'Nenurodyta'}</p>
+                <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Building2 className="mr-2 h-4 w-4" />{t('reports.history.detailsModal.submittedByCompany')}</h4>
+                <p className="text-base text-foreground">{selectedReportForDetails.reporterCompanyName || t('common.notSpecified')}</p>
               </div>
                <div className="space-y-1">
-                <h4 className="text-sm font-medium text-muted-foreground flex items-center"><CalendarDays className="mr-2 h-4 w-4" />Pateikimo Data</h4>
-                <p className="text-base text-foreground">{format(new Date(selectedReportForDetails.createdAt), "yyyy-MM-dd HH:mm:ss", { locale: lt })}</p>
+                <h4 className="text-sm font-medium text-muted-foreground flex items-center"><CalendarDays className="mr-2 h-4 w-4" />{t('reports.history.detailsModal.submissionDate')}</h4>
+                <p className="text-base text-foreground">{format(new Date(selectedReportForDetails.createdAt), "yyyy-MM-dd HH:mm:ss", { locale: dateLocale })}</p>
               </div>
             </div>
             <DialogFooter>
               <DialogClose asChild>
-                <Button type="button" variant="outline">Uždaryti</Button>
+                <Button type="button" variant="outline">{t('common.close')}</Button>
               </DialogClose>
             </DialogFooter>
           </DialogContent>
@@ -353,5 +357,4 @@ export default function ReportHistoryPage() {
     </div>
   );
 }
-
     

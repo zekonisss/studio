@@ -18,6 +18,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, FilePlus2, User, CalendarDays, CheckSquare, MessageSquare, Paperclip, Globe, Layers } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useLanguage } from "@/contexts/language-context"; // Added
 
 const LOCAL_STORAGE_REPORTS_KEY = 'driverCheckReports';
 
@@ -44,6 +45,7 @@ export default function AddReportPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
+  const { t } = useLanguage(); // Added
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedMainCategory, setSelectedMainCategory] = useState<DetailedCategory | null>(null);
 
@@ -79,7 +81,7 @@ export default function AddReportPage() {
   async function onSubmit(values: ReportFormValues) {
     setIsSubmitting(true);
     if (!user) {
-      toast({ variant: "destructive", title: "Klaida", description: "Turite būti prisijungęs, kad galėtumėte pateikti įrašą." });
+      toast({ variant: "destructive", title: t('reports.add.toast.notLoggedIn.title'), description: t('reports.add.toast.notLoggedIn.description') });
       setIsSubmitting(false);
       return;
     }
@@ -106,8 +108,8 @@ export default function AddReportPage() {
     saveReportsToLocalStorage(allReports);
     
     toast({
-      title: "Įrašas Sėkmingai Pateiktas!",
-      description: `Įrašas apie ${values.fullName} buvo įrašytas į naršyklės atmintį.`,
+      title: t('reports.add.toast.success.title'),
+      description: t('reports.add.toast.success.description', { fullName: values.fullName }),
     });
     form.reset();
     setSelectedMainCategory(null);
@@ -121,10 +123,10 @@ export default function AddReportPage() {
         <CardHeader>
           <CardTitle className="text-2xl flex items-center">
             <FilePlus2 className="mr-3 h-7 w-7 text-primary" />
-            Pridėti Naują Įrašą
+            {t('reports.add.title')}
           </CardTitle>
           <CardDescription>
-            Užpildykite žemiau esančią formą, norėdami pateikti informaciją apie vairuotojo pažeidimą ar įvykį.
+            {t('reports.add.description')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -135,9 +137,9 @@ export default function AddReportPage() {
                 name="fullName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="flex items-center text-base"><User className="mr-2 h-4 w-4 text-muted-foreground" />Vardas ir Pavardė</FormLabel>
+                    <FormLabel className="flex items-center text-base"><User className="mr-2 h-4 w-4 text-muted-foreground" />{t('reports.add.form.fullName.label')}</FormLabel>
                     <FormControl>
-                      <Input placeholder="Vardenis Pavardenis" {...field} className="text-base py-2.5"/>
+                      <Input placeholder={t('reports.add.form.fullName.placeholder')} {...field} className="text-base py-2.5"/>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -149,17 +151,17 @@ export default function AddReportPage() {
                 name="nationality"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="flex items-center text-base"><Globe className="mr-2 h-4 w-4 text-muted-foreground" />Pilietybė (nebūtina)</FormLabel>
+                    <FormLabel className="flex items-center text-base"><Globe className="mr-2 h-4 w-4 text-muted-foreground" />{t('reports.add.form.nationality.label')}</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value || ""}>
                       <FormControl>
                         <SelectTrigger className="text-base py-2.5 h-auto">
-                          <SelectValue placeholder="Pasirinkite pilietybę..." />
+                          <SelectValue placeholder={t('reports.add.form.nationality.placeholder')} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
                         {countries.map(country => (
                           <SelectItem key={country.value} value={country.value} className="text-base">
-                            {country.label}
+                            {t(`countries.${country.value}`)}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -174,9 +176,9 @@ export default function AddReportPage() {
                 name="birthYear"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="flex items-center text-base"><CalendarDays className="mr-2 h-4 w-4 text-muted-foreground" />Gimimo Metai (nebūtina)</FormLabel>
+                    <FormLabel className="flex items-center text-base"><CalendarDays className="mr-2 h-4 w-4 text-muted-foreground" />{t('reports.add.form.birthYear.label')}</FormLabel>
                     <FormControl>
-                      <Input type="number" placeholder="pvz., 1990" {...field} onChange={e => field.onChange(e.target.value === '' ? '' : parseInt(e.target.value))} className="text-base py-2.5"/>
+                      <Input type="number" placeholder={t('reports.add.form.birthYear.placeholder')} {...field} onChange={e => field.onChange(e.target.value === '' ? '' : parseInt(e.target.value))} className="text-base py-2.5"/>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -188,19 +190,19 @@ export default function AddReportPage() {
                 name="category"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="flex items-center text-base"><Layers className="mr-2 h-4 w-4 text-muted-foreground" />Pagrindinė Kategorija</FormLabel>
+                    <FormLabel className="flex items-center text-base"><Layers className="mr-2 h-4 w-4 text-muted-foreground" />{t('reports.add.form.category.label')}</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value || ""}>
                       <FormControl>
                         <SelectTrigger className="text-base py-2.5 h-auto">
-                          <SelectValue placeholder="Pasirinkite pagrindinę kategoriją..." />
+                          <SelectValue placeholder={t('reports.add.form.category.placeholder')} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
                         {detailedReportCategories.map(cat => (
                           <SelectItem key={cat.id} value={cat.id} className="text-base">
-                            {cat.name}
+                            {t(cat.nameKey)}
                              {cat.id === 'legal_reputation' && (
-                                <span className="ml-1 text-xs text-muted-foreground opacity-80">(pvz., darbo inspekciją dėl netikslumų ar keršto)</span>
+                                <span className="ml-1 text-xs text-muted-foreground opacity-80">({t('reports.add.form.category.legalReputationNote')})</span>
                              )}
                           </SelectItem>
                         ))}
@@ -218,8 +220,8 @@ export default function AddReportPage() {
                   render={() => (
                     <FormItem>
                       <div className="mb-2">
-                        <FormLabel className="text-base flex items-center"><CheckSquare className="mr-2 h-4 w-4 text-muted-foreground" />Žymos (pasirinkite tinkamas)</FormLabel>
-                        <FormDescription>Pasirinkite vieną ar kelias žymas, geriausiai apibūdinančias situaciją.</FormDescription>
+                        <FormLabel className="text-base flex items-center"><CheckSquare className="mr-2 h-4 w-4 text-muted-foreground" />{t('reports.add.form.tags.label')}</FormLabel>
+                        <FormDescription>{t('reports.add.form.tags.description')}</FormDescription>
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {selectedMainCategory.tags.map((tag) => (
@@ -248,7 +250,7 @@ export default function AddReportPage() {
                                   />
                                 </FormControl>
                                 <FormLabel className="font-normal text-sm cursor-pointer flex-grow">
-                                  {tag}
+                                  {t(`tags.${tag.toLowerCase().replace(/\s+/g, '_').replace(/\//g, '_')}`)}
                                 </FormLabel>
                               </FormItem>
                             )
@@ -267,10 +269,10 @@ export default function AddReportPage() {
                 name="comment"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="flex items-center text-base"><MessageSquare className="mr-2 h-4 w-4 text-muted-foreground" />Komentaras</FormLabel>
+                    <FormLabel className="flex items-center text-base"><MessageSquare className="mr-2 h-4 w-4 text-muted-foreground" />{t('reports.add.form.comment.label')}</FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="Išsamiai aprašykite situaciją, pažeidimą ar įvykį..."
+                        placeholder={t('reports.add.form.comment.placeholder')}
                         className="resize-y min-h-[120px] text-base"
                         {...field}
                       />
@@ -285,7 +287,7 @@ export default function AddReportPage() {
                 name="image"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="flex items-center text-base"><Paperclip className="mr-2 h-4 w-4 text-muted-foreground" />Pridėti Paveikslėlį ar Failą (nebūtina)</FormLabel>
+                    <FormLabel className="flex items-center text-base"><Paperclip className="mr-2 h-4 w-4 text-muted-foreground" />{t('reports.add.form.image.label')}</FormLabel>
                     <FormControl>
                       <Input 
                         type="file" 
@@ -294,7 +296,7 @@ export default function AddReportPage() {
                       />
                     </FormControl>
                     <FormDescription>
-                      Galite pridėti nuotrauką ar dokumentą (iki 5MB). Leidžiami formatai: JPG, PNG, PDF. Šioje demo versijoje failai nebus išsaugomi, bet bus rodomas placeholder.
+                      {t('reports.add.form.image.description')}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -307,7 +309,7 @@ export default function AddReportPage() {
                 ) : (
                   <FilePlus2 className="mr-2 h-5 w-5" />
                 )}
-                Pateikti Įrašą
+                {t('reports.add.form.submitButton')}
               </Button>
             </form>
           </Form>

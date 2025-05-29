@@ -13,8 +13,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Loader2, ShieldAlert, Users, FileText, AlertTriangle, Trash2, Eye, MoreHorizontal, BarChart3, UserCheck, UserX, UserCog, CalendarDays, Building2, Tag, MessageSquare, Image as ImageIcon, CheckCircle2, CreditCard, Send, Briefcase, MapPin, Phone, Mail, ShieldCheck as ShieldCheckIcon, User as UserIcon, Globe, Edit3, Save, XCircle, Percent, Layers } from "lucide-react";
-import type { UserProfile, Report } from "@/types";
-import { getAllUsers, saveAllUsers, MOCK_GENERAL_REPORTS, combineAndDeduplicateReports, countries, detailedReportCategories, DESTRUCTIVE_REPORT_MAIN_CATEGORIES, getCategoryNameAdmin as getCategoryNameForDisplay } from "@/types";
+import type { UserProfile, Report, DetailedCategory } from "@/types"; // Added DetailedCategory
+import { getAllUsers, saveAllUsers, MOCK_GENERAL_REPORTS, combineAndDeduplicateReports, countries, detailedReportCategories, DESTRUCTIVE_REPORT_MAIN_CATEGORIES, getCategoryNameAdmin as getCategoryNameForDisplayOriginal } from "@/types";
 import { format as formatDateFn, addYears } from 'date-fns';
 import { lt, enUS } from 'date-fns/locale';
 import { useToast } from "@/hooks/use-toast";
@@ -44,14 +44,6 @@ function saveReportsToLocalStorage(reports: Report[]): void {
   }
 }
 
-const getNationalityLabel = (nationalityCode?: string, currentLocale?: string, translateFn?: (key: string) => string) => {
-    if (!nationalityCode) return translateFn ? translateFn('common.notSpecified') : "Nenurodyta";
-    const country = countries.find(c => c.value === nationalityCode);
-    // Here you might want to implement translation for country names if needed
-    return country ? country.label : nationalityCode;
-};
-
-
 export default function AdminPage() {
   const { user: adminUser, loading: authLoading } = useAuth();
   const router = useRouter();
@@ -69,6 +61,17 @@ export default function AdminPage() {
   const [editingUserDetailsFormData, setEditingUserDetailsFormData] = useState<Partial<UserProfile>>({});
 
   const dateLocale = locale === 'en' ? enUS : lt;
+
+  const getCategoryNameAdmin = (categoryId: string) => {
+    const category = detailedReportCategories.find(c => c.id === categoryId);
+    return category ? t(category.nameKey) : categoryId;
+  };
+
+  const getNationalityLabel = (nationalityCode?: string) => {
+    if (!nationalityCode) return t('common.notSpecified');
+    const country = countries.find(c => c.value === nationalityCode);
+    return country ? t(`countries.${country.value}`) : nationalityCode;
+  };
 
 
   useEffect(() => {
@@ -118,7 +121,6 @@ export default function AdminPage() {
         toastTitle = t('admin.users.toast.accountActivated.title');
         toastDescription = t('admin.users.toast.accountActivated.description', { companyName: targetUser.companyName });
     } else if (newStatus === 'active' && oldStatus === 'pending_verification') {
-        // This case means admin directly activates from pending_verification
         toastTitle = t('admin.users.toast.accountVerifiedAndActivated.title');
         toastDescription = t('admin.users.toast.accountVerifiedAndActivated.description', { companyName: targetUser.companyName });
     }
@@ -416,7 +418,7 @@ export default function AdminPage() {
                         <TableCell className="font-medium">{report.fullName}</TableCell>
                         <TableCell className="hidden sm:table-cell">
                            <Badge variant={DESTRUCTIVE_REPORT_MAIN_CATEGORIES.includes(report.category) ? 'destructive' : 'secondary'}>
-                             {getCategoryNameForDisplay(report.category, t)}
+                             {getCategoryNameAdmin(report.category)}
                            </Badge>
                         </TableCell>
                         <TableCell className="hidden md:table-cell">{report.reporterCompanyName || t('common.notSpecified')}</TableCell>
@@ -503,7 +505,7 @@ export default function AdminPage() {
                {selectedReportForDetails.nationality && (
                 <div className="space-y-1">
                   <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Globe className="mr-2 h-4 w-4" />{t('admin.entryDetailsModal.nationality')}</h4>
-                  <p className="text-base text-foreground">{getNationalityLabel(selectedReportForDetails.nationality, locale, t)}</p>
+                  <p className="text-base text-foreground">{getNationalityLabel(selectedReportForDetails.nationality)}</p>
                 </div>
               )}
               {selectedReportForDetails.birthYear && (
@@ -517,7 +519,7 @@ export default function AdminPage() {
                 <Badge 
                     variant={DESTRUCTIVE_REPORT_MAIN_CATEGORIES.includes(selectedReportForDetails.category) ? 'destructive' : 'secondary'} 
                     className="text-sm">
-                  {getCategoryNameForDisplay(selectedReportForDetails.category, t)}
+                  {getCategoryNameAdmin(selectedReportForDetails.category)}
                 </Badge>
               </div>
               {selectedReportForDetails.tags && selectedReportForDetails.tags.length > 0 && (
@@ -525,7 +527,7 @@ export default function AdminPage() {
                   <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Tag className="mr-2 h-4 w-4" />{t('admin.entryDetailsModal.tags')}</h4>
                   <div className="flex flex-wrap gap-2">
                     {selectedReportForDetails.tags.map(tag => (
-                      <Badge key={tag} variant="outline" className="text-sm">{tag}</Badge>
+                       <Badge key={tag} variant="outline" className="text-sm">{t(`tags.${tag.toLowerCase().replace(/\s+/g, '_').replace(/\//g, '_')}`)}</Badge>
                     ))}
                   </div>
                 </div>

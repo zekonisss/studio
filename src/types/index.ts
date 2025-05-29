@@ -17,8 +17,7 @@ export interface UserProfile {
 
 export interface DetailedCategory {
   id: string;
-  name: string;
-  // subcategories: string[]; // Removed as per previous request
+  nameKey: string; // Changed from name to nameKey for translation
   tags: string[];
 }
 
@@ -30,7 +29,6 @@ export interface Report {
   nationality?: string;
   birthYear?: number;
   category: string; // Main category ID e.g., "fuel_theft"
-  // subcategory?: string; // Removed based on recent request
   tags: string[]; // Selected tags relevant to the main category
   comment: string;
   imageUrl?: string;
@@ -313,17 +311,17 @@ export const countries: { value: string, label: string }[] = sortedCountries;
 export const detailedReportCategories: DetailedCategory[] = [
   {
     id: "fuel_theft",
-    name: "Kuro / turto vagystės",
+    nameKey: "categories.fuel_theft",
     tags: ["Kuro vagystė", "Krovinio vagystė", "Įmonės turto vagystė", "Kita"],
   },
   {
     id: "driving_safety",
-    name: "Neatsakingas vairavimas",
+    nameKey: "categories.driving_safety",
     tags: ["Avaringumas", "Pavojingas vairavimas", "Dažni KET pažeidimai", "Kita"],
   },
   {
     id: "behavior",
-    name: "Toksiškas elgesys",
+    nameKey: "categories.behavior",
     tags: [
       "Grasinimai / agresija",
       "Netinkamas elgesys kolegų atžvilgiu",
@@ -334,7 +332,7 @@ export const detailedReportCategories: DetailedCategory[] = [
   },
   {
     id: "discipline",
-    name: "Darbo drausmės nesilaikymas",
+    nameKey: "categories.discipline",
     tags: [
       "Neblaivus darbo metu",
       "Neatvykimas į darbą be pateisinamos priežasties",
@@ -344,7 +342,7 @@ export const detailedReportCategories: DetailedCategory[] = [
   },
   {
     id: "technical_damage",
-    name: "Techniniai pažeidimai",
+    nameKey: "categories.technical_damage",
     tags: [
       "Techninis neatsakingumas",
       "Rizika saugumui ar kroviniui",
@@ -354,7 +352,7 @@ export const detailedReportCategories: DetailedCategory[] = [
   },
   {
     id: "legal_reputation",
-    name: "Teisiniai / reputaciniai klausimai (pvz., darbo inspekciją dėl netikslumų ar keršto)",
+    nameKey: "categories.legal_reputation",
     tags: [
       "Buvo teisinis procesas / darbo ginčas",
       "Pakenkta įmonės reputacijai",
@@ -364,8 +362,8 @@ export const detailedReportCategories: DetailedCategory[] = [
   },
   {
     id: "other_category",
-    name: "Kita",
-    tags: [],
+    nameKey: "categories.other_category",
+    tags: [], // No predefined tags for "Other"
   },
 ];
 
@@ -474,7 +472,7 @@ export const MOCK_USER_REPORTS: Report[] = [
     fullName: "Antanas Antanaitis",
     nationality: "LT",
     birthYear: 1992,
-    category: "behavior", // Toksiškas elgesys
+    category: "behavior",
     tags: ["Konfliktiškas asmuo", "Kita"],
     comment: "Vairuotojas buvo nemandagus su klientu, atsisakė padėti iškrauti prekes. Klientas pateikė skundą.",
     createdAt: new Date("2024-02-20T09:15:00Z"),
@@ -485,7 +483,7 @@ export const MOCK_USER_REPORTS: Report[] = [
     reporterCompanyName: 'UAB "DriverCheck Demo"',
     fullName: "Zita Zitaite",
     nationality: "LT",
-    category: "driving_safety", // Neatsakingas vairavimas
+    category: "driving_safety",
     tags: ["Avaringumas", "Pavojingas vairavimas", "Kita"],
     comment: "GPS duomenys rodo pakartotinį greičio viršijimą gyvenvietėse. Buvo įspėta, tačiau situacija kartojasi.",
     imageUrl: "https://placehold.co/600x400.png",
@@ -527,7 +525,7 @@ export const MOCK_GENERAL_REPORTS: Report[] = [
     fullName: "Kazys Kazlauskas",
     nationality: "BY",
     birthYear: 1978,
-    category: "discipline", // Darbo drausmės nesilaikymas
+    category: "discipline",
     tags: ["Neatsakingas požiūris į darbą", "Kita"],
     comment: "Vėlavo pristatyti krovinį 2 valandas be pateisinamos priežasties, grubiai bendravo su sandėlio darbuotojais.",
     imageUrl: "https://placehold.co/600x400.png",
@@ -541,7 +539,7 @@ export const MOCK_GENERAL_REPORTS: Report[] = [
     fullName: "Simas Simaitis (Importuotas)",
     nationality: "DE",
     birthYear: 1988,
-    category: "driving_safety", // Neatsakingas vairavimas
+    category: "driving_safety",
     tags: ["Pavojingas vairavimas", "Kita"],
     comment: "Importuotas komentaras: dažnai viršija greitį greitkeliuose.",
     createdAt: new Date("2024-02-15T00:00:00Z")
@@ -551,7 +549,7 @@ export const MOCK_GENERAL_REPORTS: Report[] = [
     reporterId: "admin-import",
     reporterCompanyName: "Duomenų Importas (Excel)",
     fullName: "Lina Linaitė (Importuota)",
-    category: "other_category", // "Dokumentų tvarkymo pažeidimai" neturi atitikmens, naudojam "other_category"
+    category: "other_category",
     tags: [],
     comment: "Importuotas komentaras: kelis kartus pateikė netvarkingus kelionės dokumentus.",
     createdAt: new Date("2024-02-10T00:00:00Z")
@@ -561,6 +559,9 @@ export const MOCK_GENERAL_REPORTS: Report[] = [
 
 export const DESTRUCTIVE_REPORT_MAIN_CATEGORIES: string[] = ['fuel_theft', 'discipline', 'technical_damage', 'driving_safety'];
 
+export const getCategoryNameFromKey = (categoryKey: string, t: (key: string) => string): string => {
+  return t(categoryKey);
+};
 
 export const combineAndDeduplicateReports = (...reportArrays: Report[][]): Report[] => {
   const combined = reportArrays.flat();
@@ -615,10 +616,9 @@ export function saveSearchLogsToLocalStoragePublic(logs: SearchLog[]): void {
   }
 }
 
-
 export const MOCK_USER_SEARCH_LOGS: SearchLog[] = [
   { id: "log1-mock-user", userId: MOCK_USER.id, searchText: "Jonas Jonaitis", timestamp: new Date("2024-04-10T10:00:00Z"), resultsCount: 1 },
-  { id: "log2-mock-user", userId: MOCK_USER.id, searchText: "Neatsakingas vairavimas", timestamp: new Date("2024-04-09T11:20:00Z"), resultsCount: 2 }, // Updated count due to new mock data
+  { id: "log2-mock-user", userId: MOCK_USER.id, searchText: "Neatsakingas vairavimas", timestamp: new Date("2024-04-09T11:20:00Z"), resultsCount: 2 }, 
   { id: "log3-mock-user", userId: MOCK_USER.id, searchText: "Antanas Antanaitis", timestamp: new Date("2024-04-08T15:30:00Z"), resultsCount: 1 },
 ];
 
@@ -628,17 +628,25 @@ export const MOCK_DISCIPLINE_REPORT: Report = {
     reporterCompanyName: 'UAB "DriverCheck Demo"',
     fullName: "Testas Testuolis",
     nationality: "LT",
-    category: "discipline", // Darbo drausmės nesilaikymas
+    category: "discipline", 
     tags: ["Neblaivus darbo metu", "Neatsakingas požiūris į darbą", "Kita"],
     comment: "Vairuotojas buvo rastas neblaivus darbo vietoje.",
     createdAt: new Date("2024-03-15T10:00:00Z"),
 };
 
-// Ensure MOCK_DISCIPLINE_REPORT is included if not already present
 if (!MOCK_GENERAL_REPORTS.find(r => r.id === MOCK_DISCIPLINE_REPORT.id)) {
     MOCK_GENERAL_REPORTS.push(MOCK_DISCIPLINE_REPORT);
 }
 
 if (!MOCK_USER_REPORTS.find(r => r.id === MOCK_DISCIPLINE_REPORT.id) && MOCK_DISCIPLINE_REPORT.reporterId === MOCK_USER.id) {
     MOCK_USER_REPORTS.push(MOCK_DISCIPLINE_REPORT);
+}
+
+// Helper function to get category name for display in admin, considering translation
+export function getCategoryNameAdmin(categoryId: string, t?: (key: string) => string): string {
+  const category = detailedReportCategories.find(c => c.id === categoryId);
+  if (category && t) {
+    return t(category.nameKey);
+  }
+  return category ? category.nameKey : categoryId; // Fallback to key if t is not provided
 }
