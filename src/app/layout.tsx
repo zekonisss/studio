@@ -28,7 +28,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="lt" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}>
+{/* Ensure no leading whitespace before body */}
+<body className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}>
         <LanguageProvider>
           <AuthProvider>
             {children}
