@@ -12,16 +12,17 @@ import { useAuth } from "@/hooks/use-auth";
 import { Loader2, UserCircle, Building2, Briefcase, MapPin, User as UserIcon, Mail, Phone, History, ListChecks, Edit3, Save, CreditCard, ShieldCheck, CalendarDays, Percent, AlertTriangle, UserCog } from "lucide-react";
 import type { Report, SearchLog, UserProfile } from "@/types";
 import { format as formatDateFn, addYears } from "date-fns";
-import { lt } from "date-fns/locale";
+import { lt, enUS } from "date-fns/locale"; // Added enUS for date formatting
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { getAllUsers, saveAllUsers } from "@/types";
+import { useLanguage } from '@/contexts/language-context';
 
 
 // Mock data (same as used in respective history pages, filtered for this user)
 const mockUserReports: Report[] = [
-  { id: "report-user-1", reporterId: "dev-user-123", reporterCompanyName: 'UAB "DriverShield Demo"', fullName: "Antanas Antanaitis", birthYear: 1992, category: "netinkamas_elgesys_darbe", tags: ["konfliktiskas"], comment: "Vairuotojas buvo nemandagus su klientu.", createdAt: new Date("2024-02-20T09:15:00Z") },
-  { id: "report-user-2", reporterId: "dev-user-123", reporterCompanyName: 'UAB "DriverShield Demo"', fullName: "Zita Zitaite", category: "avaringumas", tags: ["pasikartojantis"], comment: "GPS rodo greičio viršijimą.", createdAt: new Date("2024-01-10T16:45:00Z") },
+  { id: "report-user-1", reporterId: "dev-user-123", reporterCompanyName: 'UAB "DriverCheck Demo"', fullName: "Antanas Antanaitis", birthYear: 1992, category: "toksiskas_elgesys", tags: ["Konfliktiškas asmuo", "Kita"], comment: "Vairuotojas buvo nemandagus su klientu.", createdAt: new Date("2024-02-20T09:15:00Z") },
+  { id: "report-user-2", reporterId: "dev-user-123", reporterCompanyName: 'UAB "DriverCheck Demo"', fullName: "Zita Zitaite", category: "neatsakingas_vairavimas", tags: ["Avaringumas", "Kita"], comment: "GPS rodo greičio viršijimą.", createdAt: new Date("2024-01-10T16:45:00Z") },
 ];
 const mockSearchLogs: SearchLog[] = [
   { id: "log1", userId: "dev-user-123", searchText: "Jonas Jonaitis", timestamp: new Date("2024-03-10T10:00:00Z"), resultsCount: 2 },
@@ -32,6 +33,7 @@ export default function AccountPage() {
   const { user, loading: authLoading, updateUserInContext } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { t, locale } = useLanguage();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     companyName: "",
@@ -43,6 +45,8 @@ export default function AccountPage() {
     phone: "",
   });
   const [activeTab, setActiveTab] = useState("details");
+  
+  const dateLocale = locale === 'en' ? enUS : lt;
 
   useEffect(() => {
     if (user) {
@@ -123,45 +127,45 @@ export default function AccountPage() {
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-bold text-foreground flex items-center">
           <UserCircle className="mr-3 h-8 w-8 text-primary" />
-          Mano Paskyra
+          {t('account.pageTitle')}
         </h1>
         {activeTab === "details" && (
           <Button onClick={() => isEditing ? handleSave() : setIsEditing(true)} variant={isEditing ? "default" : "outline"}>
             {isEditing ? <Save className="mr-2 h-4 w-4" /> : <Edit3 className="mr-2 h-4 w-4" />}
-            {isEditing ? "Išsaugoti Pakeitimus" : "Redaguoti Duomenis"}
+            {isEditing ? t('account.saveChangesButton') : t('account.editDataButton')}
           </Button>
         )}
       </div>
 
       <Tabs value={activeTab} onValueChange={onTabChange} className="w-full">
         <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 mb-6">
-          <TabsTrigger value="details" className="text-base py-2.5">Įmonės Duomenys</TabsTrigger>
-          <TabsTrigger value="reports" className="text-base py-2.5">Mano Įrašai</TabsTrigger>
-          <TabsTrigger value="searches" className="text-base py-2.5">Paieškų Istorija</TabsTrigger>
-          <TabsTrigger value="payment" className="text-base py-2.5">Mokėjimai</TabsTrigger>
+          <TabsTrigger value="details" className="text-base py-2.5">{t('account.tabs.details')}</TabsTrigger>
+          <TabsTrigger value="reports" className="text-base py-2.5">{t('account.tabs.myEntries')}</TabsTrigger>
+          <TabsTrigger value="searches" className="text-base py-2.5">{t('account.tabs.searchHistory')}</TabsTrigger>
+          <TabsTrigger value="payment" className="text-base py-2.5">{t('account.tabs.payments')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="details">
           <Card className="shadow-xl">
             <CardHeader>
-              <CardTitle className="text-xl">Registracijos Informacija</CardTitle>
-              <CardDescription>Čia galite peržiūrėti ir redaguoti savo įmonės registracijos duomenis.</CardDescription>
+              <CardTitle className="text-xl">{t('account.details.title')}</CardTitle>
+              <CardDescription>{t('account.details.description')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <InfoField label="Įmonės Pavadinimas" value={isEditing ? formData.companyName : user.companyName} icon={Building2} name="companyName" isEditing={isEditing} onChange={handleInputChange} />
-                <InfoField label="Įmonės Kodas" value={isEditing ? formData.companyCode : user.companyCode} icon={Briefcase} name="companyCode" isEditing={isEditing} onChange={handleInputChange} />
-                <InfoField label="PVM Kodas" value={isEditing ? formData.vatCode : (user.vatCode || '')} icon={Percent} name="vatCode" isEditing={isEditing} onChange={handleInputChange} />
-                <InfoField label="Adresas" value={isEditing ? formData.address : user.address} icon={MapPin} name="address" isEditing={isEditing} onChange={handleInputChange} />
-                <InfoField label="Kontaktinis Asmuo" value={isEditing ? formData.contactPerson : user.contactPerson} icon={UserIcon} name="contactPerson" isEditing={isEditing} onChange={handleInputChange} />
-                <InfoField label="El. Paštas" value={isEditing ? formData.email : user.email} icon={Mail} name="email" isEditing={isEditing} onChange={handleInputChange} />
-                <InfoField label="Telefonas" value={isEditing ? formData.phone : user.phone} icon={Phone} name="phone" isEditing={isEditing} onChange={handleInputChange} />
+                <InfoField label={t('account.details.companyName')} value={isEditing ? formData.companyName : user.companyName} icon={Building2} name="companyName" isEditing={isEditing} onChange={handleInputChange} />
+                <InfoField label={t('account.details.companyCode')} value={isEditing ? formData.companyCode : user.companyCode} icon={Briefcase} name="companyCode" isEditing={isEditing} onChange={handleInputChange} />
+                <InfoField label={t('account.details.vatCode')} value={isEditing ? formData.vatCode : (user.vatCode || '')} icon={Percent} name="vatCode" isEditing={isEditing} onChange={handleInputChange} />
+                <InfoField label={t('account.details.address')} value={isEditing ? formData.address : user.address} icon={MapPin} name="address" isEditing={isEditing} onChange={handleInputChange} />
+                <InfoField label={t('account.details.contactPerson')} value={isEditing ? formData.contactPerson : user.contactPerson} icon={UserIcon} name="contactPerson" isEditing={isEditing} onChange={handleInputChange} />
+                <InfoField label={t('account.details.email')} value={isEditing ? formData.email : user.email} icon={Mail} name="email" isEditing={isEditing} onChange={handleInputChange} />
+                <InfoField label={t('account.details.phone')} value={isEditing ? formData.phone : user.phone} icon={Phone} name="phone" isEditing={isEditing} onChange={handleInputChange} />
               </div>
             </CardContent>
              <CardFooter className="border-t pt-6">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <ShieldCheck className="h-5 w-5 text-green-600"/>
-                    <span>Jūsų duomenys yra saugomi ir naudojami pagal privatumo politiką.</span>
+                    <span>{t('account.details.footerNote')}</span>
                 </div>
             </CardFooter>
           </Card>
@@ -170,8 +174,8 @@ export default function AccountPage() {
         <TabsContent value="reports">
           <Card className="shadow-xl">
             <CardHeader>
-              <CardTitle className="text-xl flex items-center"><History className="mr-2 h-5 w-5 text-primary"/>Jūsų Pateikti Įrašai</CardTitle>
-              <CardDescription>Trumpas jūsų pateiktų įrašų sąrašas. Išsamią istoriją rasite <Link href="/reports/history" className="text-primary hover:underline">čia</Link>.</CardDescription>
+              <CardTitle className="text-xl flex items-center"><History className="mr-2 h-5 w-5 text-primary"/>{t('account.entries.title')}</CardTitle>
+              <CardDescription>{t('account.entries.description.part1')} <Link href="/reports/history" className="text-primary hover:underline">{t('account.entries.description.link')}</Link>{t('account.entries.description.part2')}</CardDescription>
             </CardHeader>
             <CardContent>
               {mockUserReports.length > 0 ? (
@@ -183,15 +187,15 @@ export default function AccountPage() {
                         <Badge variant="secondary">{report.category.replace(/_/g, ' ')}</Badge>
                       </div>
                       <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{report.comment}</p>
-                      <p className="text-xs text-muted-foreground mt-2">Pateikta: {formatDateFn(report.createdAt, "yyyy-MM-dd HH:mm", { locale: lt })}</p>
+                      <p className="text-xs text-muted-foreground mt-2">{t('account.entries.submittedOn')}: {formatDateFn(report.createdAt, "yyyy-MM-dd HH:mm", { locale: dateLocale })}</p>
                     </li>
                   ))}
                 </ul>
-              ) : <p className="text-muted-foreground">Įrašų nerasta.</p>}
+              ) : <p className="text-muted-foreground">{t('account.entries.noEntries')}</p>}
                {mockUserReports.length > 3 && (
                  <div className="mt-6 text-center">
                     <Button variant="outline" asChild>
-                        <Link href="/reports/history">Žiūrėti Visus Įrašus</Link>
+                        <Link href="/reports/history">{t('account.entries.viewAllButton')}</Link>
                     </Button>
                  </div>
                 )}
@@ -202,8 +206,8 @@ export default function AccountPage() {
         <TabsContent value="searches">
           <Card className="shadow-xl">
             <CardHeader>
-              <CardTitle className="text-xl flex items-center"><ListChecks className="mr-2 h-5 w-5 text-primary"/>Jūsų Paieškų Istorija</CardTitle>
-              <CardDescription>Keletas jūsų naujausių paieškų. Išsamią istoriją rasite <Link href="/search/history" className="text-primary hover:underline">čia</Link>.</CardDescription>
+              <CardTitle className="text-xl flex items-center"><ListChecks className="mr-2 h-5 w-5 text-primary"/>{t('account.searchHistory.title')}</CardTitle>
+              <CardDescription>{t('account.searchHistory.description.part1')} <Link href="/search/history" className="text-primary hover:underline">{t('account.searchHistory.description.link')}</Link>{t('account.searchHistory.description.part2')}</CardDescription>
             </CardHeader>
             <CardContent>
               {mockSearchLogs.length > 0 ? (
@@ -212,17 +216,17 @@ export default function AccountPage() {
                     <li key={log.id} className="flex justify-between items-center p-3 border rounded-md hover:bg-muted/30 transition-colors">
                       <span className="font-medium text-foreground">{log.searchText}</span>
                       <div className="flex items-center gap-x-4">
-                        <Badge variant={log.resultsCount > 0 ? "default" : "outline"}>{log.resultsCount} {log.resultsCount === 1 ? "rez." : "rez."}</Badge>
-                        <span className="text-sm text-muted-foreground">{formatDateFn(log.timestamp, "yyyy-MM-dd HH:mm", { locale: lt })}</span>
+                        <Badge variant={log.resultsCount > 0 ? "default" : "outline"}>{log.resultsCount} {t('account.searchHistory.resultsSuffix')}</Badge>
+                        <span className="text-sm text-muted-foreground">{formatDateFn(log.timestamp, "yyyy-MM-dd HH:mm", { locale: dateLocale })}</span>
                       </div>
                     </li>
                   ))}
                 </ul>
-              ) : <p className="text-muted-foreground">Paieškų istorijos nėra.</p>}
+              ) : <p className="text-muted-foreground">{t('account.searchHistory.noHistory')}</p>}
                {mockSearchLogs.length > 5 && (
                  <div className="mt-6 text-center">
                     <Button variant="outline" asChild>
-                        <Link href="/search/history">Žiūrėti Visą Paieškų Istoriją</Link>
+                        <Link href="/search/history">{t('account.searchHistory.viewAllButton')}</Link>
                     </Button>
                  </div>
                 )}
@@ -233,8 +237,8 @@ export default function AccountPage() {
         <TabsContent value="payment">
             <Card className="shadow-xl">
                 <CardHeader>
-                    <CardTitle className="text-xl flex items-center"><CreditCard className="mr-2 h-5 w-5 text-primary"/>Mokėjimai ir Prenumerata</CardTitle>
-                    <CardDescription>Tvarkykite savo prenumeratą ir peržiūrėkite mokėjimų istoriją.</CardDescription>
+                    <CardTitle className="text-xl flex items-center"><CreditCard className="mr-2 h-5 w-5 text-primary"/>{t('account.payments.title')}</CardTitle>
+                    <CardDescription>{t('account.payments.description')}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                     {user.paymentStatus === 'active' && user.accountActivatedAt ? (
@@ -242,22 +246,22 @@ export default function AccountPage() {
                             <div className="flex items-center">
                                 <ShieldCheck className="h-8 w-8 text-green-600 mr-4"/>
                                 <div>
-                                    <h4 className="text-lg font-semibold text-green-800">Aktyvi Prenumerata</h4>
-                                    <p className="text-sm text-green-700">Jūsų DriverShield metinė prenumerata yra aktyvi.</p>
+                                    <h4 className="text-lg font-semibold text-green-800">{t('account.payments.status.active.title')}</h4>
+                                    <p className="text-sm text-green-700">{t('account.payments.status.active.description')}</p>
                                 </div>
                             </div>
                             <p className="mt-3 text-sm text-green-600">
-                                Galioja iki: <span className="font-medium">{formatDateFn(addYears(new Date(user.accountActivatedAt), 1), "yyyy 'm.' MMMM dd 'd.'", { locale: lt })}</span>
+                                {t('account.payments.status.active.validUntil')}: <span className="font-medium">{formatDateFn(addYears(new Date(user.accountActivatedAt), 1), "yyyy 'm.' MMMM dd 'd.'", { locale: dateLocale })}</span>
                             </p>
-                            <p className="text-sm text-green-600">Mėnesinė kaina: <span className="font-medium">29.99 € (Metinė kaina: 346.00 € be PVM)</span></p>
+                             <p className="text-sm text-green-600">{t('account.payments.status.active.price')}: <span className="font-medium">29.99 € ({t('account.payments.status.active.annualPrice')} 346.00 € {t('account.payments.status.active.vatExcluded')})</span></p>
                         </div>
                     ) : user.paymentStatus === 'pending_payment' ? (
                          <div className="p-6 border rounded-lg bg-yellow-50 border-yellow-200">
                             <div className="flex items-center">
                                 <Loader2 className="h-8 w-8 text-yellow-600 mr-4 animate-spin"/>
                                 <div>
-                                    <h4 className="text-lg font-semibold text-yellow-800">Laukiama Apmokėjimo</h4>
-                                    <p className="text-sm text-yellow-700">Jūsų paskyros aktyvavimas laukia mokėjimo patvirtinimo.</p>
+                                    <h4 className="text-lg font-semibold text-yellow-800">{t('account.payments.status.pending_payment.title')}</h4>
+                                    <p className="text-sm text-yellow-700">{t('account.payments.status.pending_payment.description')}</p>
                                 </div>
                             </div>
                         </div>
@@ -266,8 +270,8 @@ export default function AccountPage() {
                             <div className="flex items-center">
                                 <UserCog className="h-8 w-8 text-orange-600 mr-4"/>
                                 <div>
-                                    <h4 className="text-lg font-semibold text-orange-800">Laukiama Patvirtinimo</h4>
-                                    <p className="text-sm text-orange-700">Jūsų paskyros registracija laukia administratoriaus patvirtinimo.</p>
+                                    <h4 className="text-lg font-semibold text-orange-800">{t('account.payments.status.pending_verification.title')}</h4>
+                                    <p className="text-sm text-orange-700">{t('account.payments.status.pending_verification.description')}</p>
                                 </div>
                             </div>
                         </div>
@@ -276,25 +280,25 @@ export default function AccountPage() {
                             <div className="flex items-center">
                                 <AlertTriangle className="h-8 w-8 text-red-600 mr-4"/>
                                 <div>
-                                    <h4 className="text-lg font-semibold text-red-800">Paskyra Neaktyvi</h4>
-                                    <p className="text-sm text-red-700">Jūsų DriverShield prenumerata nėra aktyvi.</p>
+                                    <h4 className="text-lg font-semibold text-red-800">{t('account.payments.status.inactive.title')}</h4>
+                                    <p className="text-sm text-red-700">{t('account.payments.status.inactive.description')}</p>
                                 </div>
                             </div>
                         </div>
                     )}
 
                     <div>
-                        <h4 className="font-semibold mb-2 text-foreground">Mokėjimo Istorija</h4>
-                        <p className="text-sm text-muted-foreground">Šiuo metu mokėjimų istorijos rodymas nėra įgyvendintas. Ateityje čia matysite savo sąskaitas.</p>
+                        <h4 className="font-semibold mb-2 text-foreground">{t('account.payments.paymentHistoryTitle')}</h4>
+                        <p className="text-sm text-muted-foreground">{t('account.payments.paymentHistoryDescription')}</p>
                     </div>
 
                     <Button disabled>
-                       Tvarkyti Prenumeratą (Stripe)
+                       {t('account.payments.manageSubscriptionButton')}
                     </Button>
-                    <p className="text-xs text-muted-foreground">Prenumeratos tvarkymas bus atliekamas per Stripe platformą (integracija bus pridėta vėliau).</p>
+                    <p className="text-xs text-muted-foreground">{t('account.payments.manageSubscriptionNote')}</p>
                 </CardContent>
                  <CardFooter className="border-t pt-6">
-                    <p className="text-sm text-muted-foreground">Jei turite klausimų dėl mokėjimų, susisiekite su mumis.</p>
+                    <p className="text-sm text-muted-foreground">{t('account.payments.footerNote')}</p>
                 </CardFooter>
             </Card>
         </TabsContent>

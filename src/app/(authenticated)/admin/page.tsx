@@ -16,11 +16,12 @@ import { Loader2, ShieldAlert, Users, FileText, AlertTriangle, Trash2, Eye, More
 import type { UserProfile, Report } from "@/types";
 import { getAllUsers, saveAllUsers, MOCK_GENERAL_REPORTS, combineAndDeduplicateReports, countries, detailedReportCategories, DESTRUCTIVE_REPORT_MAIN_CATEGORIES } from "@/types";
 import { format as formatDateFn, addYears } from 'date-fns';
-import { lt } from 'date-fns/locale';
+import { lt, enUS } from 'date-fns/locale'; // Added enUS for date formatting
 import { useToast } from "@/hooks/use-toast";
 import NextImage from "next/image";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { useLanguage } from '@/contexts/language-context';
 
 const LOCAL_STORAGE_REPORTS_KEY = 'driverCheckReports'; 
 
@@ -58,6 +59,7 @@ export default function AdminPage() {
   const { user: adminUser, loading: authLoading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
+  const { t, locale } = useLanguage();
 
   const [allReports, setAllReports] = useState<Report[]>([]);
   const [allUsersState, setAllUsersState] = useState<UserProfile[]>([]);
@@ -68,6 +70,8 @@ export default function AdminPage() {
 
   const [isEditingUserDetails, setIsEditingUserDetails] = useState(false);
   const [editingUserDetailsFormData, setEditingUserDetailsFormData] = useState<Partial<UserProfile>>({});
+
+  const dateLocale = locale === 'en' ? enUS : lt;
 
 
   useEffect(() => {
@@ -102,18 +106,23 @@ export default function AdminPage() {
     setAllUsersState(updatedUsers);
     saveAllUsers(updatedUsers);
 
-    let toastTitle = "Vartotojo būsena pakeista";
-    let toastDescription = `Vartotojo ${targetUser.companyName} (${targetUser.email}) būsena nustatyta į "${getStatusText(newStatus)}".`;
+    let toastTitle = t('admin.users.toast.statusChanged.title');
+    let toastDescription = t('admin.users.toast.statusChanged.description', {
+        companyName: targetUser.companyName,
+        email: targetUser.email,
+        status: getStatusText(newStatus)
+    });
+
 
     if (newStatus === 'pending_payment' && oldStatus === 'pending_verification') {
-        toastTitle = "Tapatybė patvirtinta";
-        toastDescription = `Vartotojo ${targetUser.companyName} tapatybė patvirtinta. Būsena: Laukia apmokėjimo. Vartotojui 'išsiųstos' mokėjimo instrukcijos.`;
+        toastTitle = t('admin.users.toast.identityVerified.title');
+        toastDescription = t('admin.users.toast.identityVerified.description', { companyName: targetUser.companyName });
     } else if (newStatus === 'active' && oldStatus === 'pending_payment') {
-        toastTitle = "Paskyra Aktyvuota";
-        toastDescription = `Vartotojo ${targetUser.companyName} mokėjimas 'gautas'. Paskyra sėkmingai aktyvuota.`;
+        toastTitle = t('admin.users.toast.accountActivated.title');
+        toastDescription = t('admin.users.toast.accountActivated.description', { companyName: targetUser.companyName });
     } else if (newStatus === 'active' && oldStatus === 'pending_verification') {
-        toastTitle = "Paskyra Patvirtinta ir Aktyvuota";
-        toastDescription = `Vartotojo ${targetUser.companyName} paskyra patvirtinta ir aktyvuota (mokėjimas 'gautas' arba nereikalingas). Vartotojui 'išsiųstos' instrukcijos.`;
+        toastTitle = t('admin.users.toast.accountVerifiedAndActivated.title');
+        toastDescription = t('admin.users.toast.accountVerifiedAndActivated.description', { companyName: targetUser.companyName });
     }
 
 
@@ -192,8 +201,8 @@ export default function AdminPage() {
     setSelectedUserForDetails(updatedUser); 
     setIsEditingUserDetails(false);
     toast({
-        title: "Duomenys Atnaujinti",
-        description: `Vartotojo ${updatedUser.companyName} duomenys sėkmingai išsaugoti.`,
+        title: t('admin.users.toast.dataUpdated.title'),
+        description: t('admin.users.toast.dataUpdated.description', { companyName: updatedUser.companyName }),
     });
   };
 
@@ -224,8 +233,8 @@ export default function AdminPage() {
       saveReportsToLocalStorage(updatedLocalReports);
     }
     toast({
-      title: "Įrašas pašalintas",
-      description: "Pasirinktas įrašas buvo sėkmingai pašalintas.",
+      title: t('admin.entries.toast.entryDeleted.title'),
+      description: t('admin.entries.toast.entryDeleted.description'),
     });
     setDeletingReportId(null);
   };
@@ -251,10 +260,10 @@ export default function AdminPage() {
 
   const getStatusText = (status: UserProfile['paymentStatus']) => {
      switch (status) {
-      case 'active': return 'Aktyvi';
-      case 'pending_verification': return 'Laukia Tapatybės Patvirtinimo';
-      case 'pending_payment': return 'Laukia Apmokėjimo';
-      case 'inactive': return 'Neaktyvi';
+      case 'active': return t('admin.users.status.active');
+      case 'pending_verification': return t('admin.users.status.pending_verification');
+      case 'pending_payment': return t('admin.users.status.pending_payment');
+      case 'inactive': return t('admin.users.status.inactive');
       default: return status;
     }
   }
@@ -268,7 +277,7 @@ export default function AdminPage() {
         <Input id={name} name={name} value={value} onChange={onChange} className="text-base" />
       ) : (
         <p className="text-base text-foreground bg-secondary/30 p-2.5 rounded-md min-h-[40px] flex items-center">
-          {typeof value === 'boolean' ? (value ? 'Taip' : 'Ne') : (value || "-")}
+          {typeof value === 'boolean' ? (value ? t('common.yes') : t('common.no')) : (value || "-")}
         </p>
       )}
     </div>
@@ -280,29 +289,29 @@ export default function AdminPage() {
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-bold text-foreground flex items-center">
           <ShieldAlert className="mr-3 h-8 w-8 text-primary" />
-          Administratoriaus Skydas
+          {t('admin.pageTitle')}
         </h1>
       </div>
 
       <Tabs defaultValue="users" className="w-full">
         <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 mb-6">
           <TabsTrigger value="users" className="text-base py-2.5">
-            <Users className="mr-2 h-5 w-5" /> Vartotojų Valdymas
+            <Users className="mr-2 h-5 w-5" /> {t('admin.tabs.userManagement')}
           </TabsTrigger>
           <TabsTrigger value="reports" className="text-base py-2.5">
-            <FileText className="mr-2 h-5 w-5" /> Įrašų Valdymas
+            <FileText className="mr-2 h-5 w-5" /> {t('admin.tabs.entryManagement')}
           </TabsTrigger>
           <TabsTrigger value="stats" className="text-base py-2.5">
-            <BarChart3 className="mr-2 h-5 w-5" /> Statistika
+            <BarChart3 className="mr-2 h-5 w-5" /> {t('admin.tabs.statistics')}
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="users">
           <Card className="shadow-xl">
             <CardHeader>
-              <CardTitle>Registruoti Vartotojai ({allUsersState.length})</CardTitle>
+              <CardTitle>{t('admin.users.title')} ({allUsersState.length})</CardTitle>
               <CardDescription>
-                Platformoje registruotų įmonių (vartotojų) sąrašas.
+                {t('admin.users.description')}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -310,11 +319,11 @@ export default function AdminPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Įmonės Pavadinimas</TableHead>
-                      <TableHead className="hidden md:table-cell">Kontaktinis Asmuo</TableHead>
-                      <TableHead className="hidden lg:table-cell">El. Paštas</TableHead>
-                      <TableHead className="text-center">Būsena</TableHead>
-                      <TableHead className="text-right">Veiksmai</TableHead>
+                      <TableHead>{t('admin.users.table.companyName')}</TableHead>
+                      <TableHead className="hidden md:table-cell">{t('admin.users.table.contactPerson')}</TableHead>
+                      <TableHead className="hidden lg:table-cell">{t('admin.users.table.email')}</TableHead>
+                      <TableHead className="text-center">{t('admin.users.table.status')}</TableHead>
+                      <TableHead className="text-right">{t('admin.users.table.actions')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -333,38 +342,38 @@ export default function AdminPage() {
                             <DropdownMenuTrigger asChild>
                               <Button variant="ghost" size="icon">
                                 <MoreHorizontal className="h-4 w-4" />
-                                <span className="sr-only">Vartotojo veiksmai</span>
+                                <span className="sr-only">{t('admin.users.actions.userActions')}</span>
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem onClick={() => handleViewUserDetails(u)}>
-                                <Eye className="mr-2 h-4 w-4" /> Peržiūrėti Anketą
+                                <Eye className="mr-2 h-4 w-4" /> {t('admin.users.actions.viewProfile')}
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
-                              <DropdownMenuLabel>Keisti Būseną</DropdownMenuLabel>
+                              <DropdownMenuLabel>{t('admin.users.actions.changeStatus')}</DropdownMenuLabel>
                               <DropdownMenuSeparator />
                               {u.paymentStatus === 'pending_verification' && (
                                 <DropdownMenuItem onClick={() => handleUserStatusChange(u.id, 'pending_payment')}>
-                                  <Send className="mr-2 h-4 w-4 text-blue-600" /> Patvirtinti tapatybę, Siųsti mok. instrukcijas
+                                  <Send className="mr-2 h-4 w-4 text-blue-600" /> {t('admin.users.actions.verifyAndSendPayment')}
                                 </DropdownMenuItem>
                               )}
                                {u.paymentStatus === 'pending_payment' && (
                                 <DropdownMenuItem onClick={() => handleUserStatusChange(u.id, 'active')}>
-                                  <CreditCard className="mr-2 h-4 w-4 text-green-600" /> Aktyvuoti (Mokėjimas Gautas)
+                                  <CreditCard className="mr-2 h-4 w-4 text-green-600" /> {t('admin.users.actions.activatePaymentReceived')}
                                 </DropdownMenuItem>
                               )}
                               {u.paymentStatus !== 'active' && u.paymentStatus !== 'pending_payment' && (
                                 <DropdownMenuItem onClick={() => handleUserStatusChange(u.id, 'active')}>
-                                  <UserCheck className="mr-2 h-4 w-4" /> Aktyvuoti
+                                  <UserCheck className="mr-2 h-4 w-4" /> {t('admin.users.actions.activate')}
                                 </DropdownMenuItem>
                               )}
                               {u.paymentStatus === 'active' && (
                                 <DropdownMenuItem onClick={() => handleUserStatusChange(u.id, 'inactive')}>
-                                  <UserX className="mr-2 h-4 w-4" /> Deaktyvuoti
+                                  <UserX className="mr-2 h-4 w-4" /> {t('admin.users.actions.deactivate')}
                                 </DropdownMenuItem>
                               )}
                                <DropdownMenuItem onClick={() => handleUserStatusChange(u.id, 'pending_verification')} disabled={u.paymentStatus === 'pending_verification'}>
-                                <UserCog className="mr-2 h-4 w-4" /> Nustatyti "Laukia Tapatybės Patvirtinimo"
+                                <UserCog className="mr-2 h-4 w-4" /> {t('admin.users.actions.setPendingVerification')}
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -376,7 +385,7 @@ export default function AdminPage() {
               ) : (
                  <div className="flex flex-col items-center justify-center py-10 text-center">
                     <AlertTriangle className="h-12 w-12 text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground">Vartotojų nerasta.</p>
+                    <p className="text-muted-foreground">{t('admin.users.noUsersFound')}</p>
                  </div>
               )}
             </CardContent>
@@ -386,9 +395,9 @@ export default function AdminPage() {
         <TabsContent value="reports">
           <Card className="shadow-xl">
             <CardHeader>
-              <CardTitle>Visi Įrašai ({allReports.length})</CardTitle>
+              <CardTitle>{t('admin.entries.title')} ({allReports.length})</CardTitle>
               <CardDescription>
-                Visų vartotojų pateikti įrašai sistemoje.
+                {t('admin.entries.description')}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -396,11 +405,11 @@ export default function AdminPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Asmuo Įraše</TableHead>
-                      <TableHead className="hidden sm:table-cell">Kategorija</TableHead>
-                      <TableHead className="hidden md:table-cell">Pateikė Įmonė</TableHead>
-                      <TableHead className="text-center hidden lg:table-cell">Pateikimo Data</TableHead>
-                      <TableHead className="text-right">Veiksmai</TableHead>
+                      <TableHead>{t('admin.entries.table.personInEntry')}</TableHead>
+                      <TableHead className="hidden sm:table-cell">{t('admin.entries.table.category')}</TableHead>
+                      <TableHead className="hidden md:table-cell">{t('admin.entries.table.submittedByCompany')}</TableHead>
+                      <TableHead className="text-center hidden lg:table-cell">{t('admin.entries.table.submissionDate')}</TableHead>
+                      <TableHead className="text-right">{t('admin.entries.table.actions')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -412,32 +421,32 @@ export default function AdminPage() {
                              {getCategoryNameAdmin(report.category)}
                            </Badge>
                         </TableCell>
-                        <TableCell className="hidden md:table-cell">{report.reporterCompanyName || "Nenurodyta"}</TableCell>
+                        <TableCell className="hidden md:table-cell">{report.reporterCompanyName || t('common.notSpecified')}</TableCell>
                         <TableCell className="text-center hidden lg:table-cell text-muted-foreground">
-                          {formatDateFn(new Date(report.createdAt), "yyyy-MM-dd HH:mm", { locale: lt })}
+                          {formatDateFn(new Date(report.createdAt), "yyyy-MM-dd HH:mm", { locale: dateLocale })}
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex gap-1 justify-end">
-                            <Button variant="ghost" size="icon" onClick={() => handleViewReportDetails(report)} title="Peržiūrėti detales">
+                            <Button variant="ghost" size="icon" onClick={() => handleViewReportDetails(report)} title={t('admin.entries.actions.viewDetails')}>
                                 <Eye className="h-4 w-4" />
                             </Button>
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
-                                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive hover:bg-destructive/10" title="Šalinti įrašą" disabled={deletingReportId === report.id}>
+                                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive hover:bg-destructive/10" title={t('admin.entries.actions.deleteEntry')} disabled={deletingReportId === report.id}>
                                   {deletingReportId === report.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                                 </Button>
                               </AlertDialogTrigger>
                               <AlertDialogContent>
                                 <AlertDialogHeader>
-                                  <AlertDialogTitle>Ar tikrai norite pašalinti šį įrašą?</AlertDialogTitle>
+                                  <AlertDialogTitle>{t('admin.entries.deleteDialog.title')}</AlertDialogTitle>
                                   <AlertDialogDescription>
-                                    Šis veiksmas yra negrįžtamas. Įrašas apie <span className="font-semibold">{report.fullName}</span> bus visam laikui pašalintas.
+                                   {t('admin.entries.deleteDialog.description.part1')} <span className="font-semibold">{report.fullName}</span> {t('admin.entries.deleteDialog.description.part2')}
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
-                                  <AlertDialogCancel>Atšaukti</AlertDialogCancel>
+                                  <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
                                   <AlertDialogAction onClick={() => handleDeleteReport(report.id)} className="bg-destructive hover:bg-destructive/90">
-                                    Taip, pašalinti
+                                    {t('admin.entries.deleteDialog.confirmDelete')}
                                   </AlertDialogAction>
                                 </AlertDialogFooter>
                               </AlertDialogContent>
@@ -451,7 +460,7 @@ export default function AdminPage() {
               ) : (
                  <div className="flex flex-col items-center justify-center py-10 text-center">
                     <AlertTriangle className="h-12 w-12 text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground">Įrašų nerasta.</p>
+                    <p className="text-muted-foreground">{t('admin.entries.noEntriesFound')}</p>
                  </div>
               )}
             </CardContent>
@@ -461,16 +470,16 @@ export default function AdminPage() {
          <TabsContent value="stats">
           <Card className="shadow-xl">
             <CardHeader>
-              <CardTitle>Statistika</CardTitle>
+              <CardTitle>{t('admin.statistics.title')}</CardTitle>
               <CardDescription>
-                Sistemos naudojimo statistika (bus įgyvendinta vėliau).
+                {t('admin.statistics.description')}
               </CardDescription>
             </CardHeader>
             <CardContent>
                <div className="flex flex-col items-center justify-center py-10 text-center">
                   <BarChart3 className="h-12 w-12 text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground">Prisijungimų ir kitos veiklos statistikos rodymas šiuo metu nėra įgyvendintas.</p>
-                  <p className="text-sm text-muted-foreground mt-2">Ateityje čia galėsite matyti detalią informaciją apie vartotojų aktyvumą.</p>
+                  <p className="text-muted-foreground">{t('admin.statistics.notImplemented')}</p>
+                  <p className="text-sm text-muted-foreground mt-2">{t('admin.statistics.futureImplementation')}</p>
                </div>
             </CardContent>
           </Card>
@@ -482,31 +491,31 @@ export default function AdminPage() {
           <DialogContent className="sm:max-w-lg">
             <DialogHeader>
               <DialogTitle className="flex items-center text-xl">
-                <FileText className="mr-2 h-5 w-5 text-primary" /> Įrašo Detalės
+                <FileText className="mr-2 h-5 w-5 text-primary" /> {t('admin.entryDetailsModal.title')}
               </DialogTitle>
               <DialogDescription>
-                Išsami informacija apie administratoriaus peržiūrimą įrašą.
+                {t('admin.entryDetailsModal.description')}
               </DialogDescription>
             </DialogHeader>
             <div className="py-4 space-y-4 max-h-[60vh] overflow-y-auto pr-2">
               <div className="space-y-1">
-                <h4 className="text-sm font-medium text-muted-foreground flex items-center"><UserIcon className="mr-2 h-4 w-4" />Vairuotojas</h4>
+                <h4 className="text-sm font-medium text-muted-foreground flex items-center"><UserIcon className="mr-2 h-4 w-4" />{t('admin.entryDetailsModal.driver')}</h4>
                 <p className="text-base text-foreground">{selectedReportForDetails.fullName}</p>
               </div>
                {selectedReportForDetails.nationality && (
                 <div className="space-y-1">
-                  <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Globe className="mr-2 h-4 w-4" />Pilietybė</h4>
+                  <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Globe className="mr-2 h-4 w-4" />{t('admin.entryDetailsModal.nationality')}</h4>
                   <p className="text-base text-foreground">{getNationalityLabel(selectedReportForDetails.nationality)}</p>
                 </div>
               )}
               {selectedReportForDetails.birthYear && (
                 <div className="space-y-1">
-                  <h4 className="text-sm font-medium text-muted-foreground flex items-center"><CalendarDays className="mr-2 h-4 w-4" />Gimimo Metai</h4>
+                  <h4 className="text-sm font-medium text-muted-foreground flex items-center"><CalendarDays className="mr-2 h-4 w-4" />{t('admin.entryDetailsModal.birthYear')}</h4>
                   <p className="text-base text-foreground">{selectedReportForDetails.birthYear}</p>
                 </div>
               )}
               <div className="space-y-1">
-                 <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Layers className="mr-2 h-4 w-4" />Pagrindinė Kategorija</h4>
+                 <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Layers className="mr-2 h-4 w-4" />{t('admin.entryDetailsModal.mainCategory')}</h4>
                 <Badge 
                     variant={DESTRUCTIVE_REPORT_MAIN_CATEGORIES.includes(selectedReportForDetails.category) ? 'destructive' : 'secondary'} 
                     className="text-sm">
@@ -515,7 +524,7 @@ export default function AdminPage() {
               </div>
               {selectedReportForDetails.tags && selectedReportForDetails.tags.length > 0 && (
                 <div className="space-y-1">
-                  <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Tag className="mr-2 h-4 w-4" />Žymos</h4>
+                  <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Tag className="mr-2 h-4 w-4" />{t('admin.entryDetailsModal.tags')}</h4>
                   <div className="flex flex-wrap gap-2">
                     {selectedReportForDetails.tags.map(tag => (
                       <Badge key={tag} variant="outline" className="text-sm">{tag}</Badge>
@@ -524,16 +533,16 @@ export default function AdminPage() {
                 </div>
               )}
               <div className="space-y-1">
-                <h4 className="text-sm font-medium text-muted-foreground flex items-center"><MessageSquare className="mr-2 h-4 w-4" />Komentaras</h4>
+                <h4 className="text-sm font-medium text-muted-foreground flex items-center"><MessageSquare className="mr-2 h-4 w-4" />{t('admin.entryDetailsModal.comment')}</h4>
                 <p className="text-base text-foreground whitespace-pre-wrap bg-secondary/30 p-3 rounded-md">{selectedReportForDetails.comment}</p>
               </div>
               {selectedReportForDetails.imageUrl && (
                 <div className="space-y-1">
-                  <h4 className="text-sm font-medium text-muted-foreground flex items-center"><ImageIcon className="mr-2 h-4 w-4" />Pridėtas Failas/Nuotrauka</h4>
+                  <h4 className="text-sm font-medium text-muted-foreground flex items-center"><ImageIcon className="mr-2 h-4 w-4" />{t('admin.entryDetailsModal.attachedFile')}</h4>
                   <div className="w-full overflow-hidden rounded-md border">
                     <NextImage
                         src={selectedReportForDetails.imageUrl}
-                        alt={`Įrašo nuotrauka ${selectedReportForDetails.fullName}`}
+                        alt={`${t('admin.entryDetailsModal.imageAltPrefix')} ${selectedReportForDetails.fullName}`}
                         width={600}
                         height={400}
                         layout="responsive"
@@ -544,21 +553,21 @@ export default function AdminPage() {
                 </div>
               )}
                <div className="space-y-1">
-                <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Building2 className="mr-2 h-4 w-4" />Pateikė Įmonė</h4>
-                <p className="text-base text-foreground">{selectedReportForDetails.reporterCompanyName || 'Nenurodyta'}</p>
+                <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Building2 className="mr-2 h-4 w-4" />{t('admin.entryDetailsModal.submittedByCompany')}</h4>
+                <p className="text-base text-foreground">{selectedReportForDetails.reporterCompanyName || t('common.notSpecified')}</p>
               </div>
               <div className="space-y-1">
-                <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Users className="mr-2 h-4 w-4" />Pateikėjo ID</h4>
+                <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Users className="mr-2 h-4 w-4" />{t('admin.entryDetailsModal.submitterId')}</h4>
                 <p className="text-xs text-foreground bg-secondary/30 p-2 rounded-md">{selectedReportForDetails.reporterId}</p>
               </div>
                <div className="space-y-1">
-                <h4 className="text-sm font-medium text-muted-foreground flex items-center"><CalendarDays className="mr-2 h-4 w-4" />Pateikimo Data</h4>
-                <p className="text-base text-foreground">{formatDateFn(new Date(selectedReportForDetails.createdAt), "yyyy-MM-dd HH:mm:ss", { locale: lt })}</p>
+                <h4 className="text-sm font-medium text-muted-foreground flex items-center"><CalendarDays className="mr-2 h-4 w-4" />{t('admin.entryDetailsModal.submissionDate')}</h4>
+                <p className="text-base text-foreground">{formatDateFn(new Date(selectedReportForDetails.createdAt), "yyyy-MM-dd HH:mm:ss", { locale: dateLocale })}</p>
               </div>
             </div>
             <DialogFooter>
               <DialogClose asChild>
-                <Button type="button" variant="outline">Uždaryti</Button>
+                <Button type="button" variant="outline">{t('common.close')}</Button>
               </DialogClose>
             </DialogFooter>
           </DialogContent>
@@ -570,56 +579,56 @@ export default function AdminPage() {
           <DialogContent className="sm:max-w-2xl">
             <DialogHeader>
               <DialogTitle className="flex items-center text-xl">
-                <UserIcon className="mr-2 h-5 w-5 text-primary" /> Vartotojo Anketos Detalės
+                <UserIcon className="mr-2 h-5 w-5 text-primary" /> {t('admin.userDetailsModal.title')}
               </DialogTitle>
               <DialogDescription>
-                Išsami informacija apie vartotoją <span className="font-semibold">{isEditingUserDetails ? editingUserDetailsFormData.companyName : selectedUserForDetails.companyName}</span>.
+                {t('admin.userDetailsModal.description.part1')} <span className="font-semibold">{isEditingUserDetails ? editingUserDetailsFormData.companyName : selectedUserForDetails.companyName}</span>.
               </DialogDescription>
             </DialogHeader>
             <div className="py-4 grid grid-cols-1 md:grid-cols-2 gap-6 max-h-[60vh] overflow-y-auto pr-2">
-              <UserInfoField label="Įmonės Pavadinimas" value={isEditingUserDetails ? editingUserDetailsFormData.companyName || "" : selectedUserForDetails.companyName} icon={Building2} name="companyName" isEditing={isEditingUserDetails} onChange={handleUserDetailsInputChange} />
-              <UserInfoField label="Įmonės Kodas" value={isEditingUserDetails ? editingUserDetailsFormData.companyCode || "" : selectedUserForDetails.companyCode} icon={Briefcase} name="companyCode" isEditing={isEditingUserDetails} onChange={handleUserDetailsInputChange} />
-              <UserInfoField label="PVM Kodas" value={isEditingUserDetails ? editingUserDetailsFormData.vatCode || "" : selectedUserForDetails.vatCode} icon={Percent} name="vatCode" isEditing={isEditingUserDetails} onChange={handleUserDetailsInputChange} />
-              <UserInfoField label="Adresas" value={isEditingUserDetails ? editingUserDetailsFormData.address || "" : selectedUserForDetails.address} icon={MapPin} name="address" isEditing={isEditingUserDetails} onChange={handleUserDetailsInputChange} />
-              <UserInfoField label="Kontaktinis Asmuo" value={isEditingUserDetails ? editingUserDetailsFormData.contactPerson || "" : selectedUserForDetails.contactPerson} icon={UserIcon} name="contactPerson" isEditing={isEditingUserDetails} onChange={handleUserDetailsInputChange} />
-              <UserInfoField label="El. Paštas" value={isEditingUserDetails ? editingUserDetailsFormData.email || "" : selectedUserForDetails.email} icon={Mail} name="email" isEditing={isEditingUserDetails} onChange={handleUserDetailsInputChange} />
-              <UserInfoField label="Telefonas" value={isEditingUserDetails ? editingUserDetailsFormData.phone || "" : selectedUserForDetails.phone} icon={Phone} name="phone" isEditing={isEditingUserDetails} onChange={handleUserDetailsInputChange} />
+              <UserInfoField label={t('admin.userDetailsModal.companyName')} value={isEditingUserDetails ? editingUserDetailsFormData.companyName || "" : selectedUserForDetails.companyName} icon={Building2} name="companyName" isEditing={isEditingUserDetails} onChange={handleUserDetailsInputChange} />
+              <UserInfoField label={t('admin.userDetailsModal.companyCode')} value={isEditingUserDetails ? editingUserDetailsFormData.companyCode || "" : selectedUserForDetails.companyCode} icon={Briefcase} name="companyCode" isEditing={isEditingUserDetails} onChange={handleUserDetailsInputChange} />
+              <UserInfoField label={t('admin.userDetailsModal.vatCode')} value={isEditingUserDetails ? editingUserDetailsFormData.vatCode || "" : selectedUserForDetails.vatCode} icon={Percent} name="vatCode" isEditing={isEditingUserDetails} onChange={handleUserDetailsInputChange} />
+              <UserInfoField label={t('admin.userDetailsModal.address')} value={isEditingUserDetails ? editingUserDetailsFormData.address || "" : selectedUserForDetails.address} icon={MapPin} name="address" isEditing={isEditingUserDetails} onChange={handleUserDetailsInputChange} />
+              <UserInfoField label={t('admin.userDetailsModal.contactPerson')} value={isEditingUserDetails ? editingUserDetailsFormData.contactPerson || "" : selectedUserForDetails.contactPerson} icon={UserIcon} name="contactPerson" isEditing={isEditingUserDetails} onChange={handleUserDetailsInputChange} />
+              <UserInfoField label={t('admin.userDetailsModal.email')} value={isEditingUserDetails ? editingUserDetailsFormData.email || "" : selectedUserForDetails.email} icon={Mail} name="email" isEditing={isEditingUserDetails} onChange={handleUserDetailsInputChange} />
+              <UserInfoField label={t('admin.userDetailsModal.phone')} value={isEditingUserDetails ? editingUserDetailsFormData.phone || "" : selectedUserForDetails.phone} icon={Phone} name="phone" isEditing={isEditingUserDetails} onChange={handleUserDetailsInputChange} />
 
               <div className="md:col-span-2">
-                <UserInfoField label="Būsena" value={getStatusText(selectedUserForDetails.paymentStatus)} icon={CheckCircle2} />
+                <UserInfoField label={t('admin.userDetailsModal.status')} value={getStatusText(selectedUserForDetails.paymentStatus)} icon={CheckCircle2} />
               </div>
                {selectedUserForDetails.accountActivatedAt && selectedUserForDetails.paymentStatus === 'active' && (
                 <div className="md:col-span-2">
                     <UserInfoField
-                        label="Paskyra Aktyvi Iki"
-                        value={formatDateFn(addYears(new Date(selectedUserForDetails.accountActivatedAt), 1), "yyyy-MM-dd")}
+                        label={t('admin.userDetailsModal.accountActiveUntil')}
+                        value={formatDateFn(addYears(new Date(selectedUserForDetails.accountActivatedAt), 1), "yyyy-MM-dd", { locale: dateLocale })}
                         icon={CalendarDays}
                     />
                 </div>
                 )}
-              <UserInfoField label="Administratorius" value={selectedUserForDetails.isAdmin} icon={ShieldAlert} />
-              <UserInfoField label="Sutiko su taisyklėmis" value={selectedUserForDetails.agreeToTerms} icon={ShieldCheckIcon} />
+              <UserInfoField label={t('admin.userDetailsModal.administrator')} value={selectedUserForDetails.isAdmin} icon={ShieldAlert} />
+              <UserInfoField label={t('admin.userDetailsModal.agreedToTerms')} value={selectedUserForDetails.agreeToTerms} icon={ShieldCheckIcon} />
               <div className="md:col-span-2">
-                <UserInfoField label="Vartotojo ID" value={selectedUserForDetails.id} icon={UserCog} />
+                <UserInfoField label={t('admin.userDetailsModal.userId')} value={selectedUserForDetails.id} icon={UserCog} />
               </div>
             </div>
             <DialogFooter className="gap-2 sm:gap-0">
                 {isEditingUserDetails ? (
                     <>
                         <Button type="button" variant="outline" onClick={handleCancelEditUserDetails}>
-                           <XCircle className="mr-2 h-4 w-4" /> Atšaukti
+                           <XCircle className="mr-2 h-4 w-4" /> {t('common.cancel')}
                         </Button>
                         <Button type="button" onClick={handleSaveUserDetails}>
-                           <Save className="mr-2 h-4 w-4" /> Išsaugoti Pakeitimus
+                           <Save className="mr-2 h-4 w-4" /> {t('common.saveChanges')}
                         </Button>
                     </>
                 ) : (
                     <Button type="button" variant="outline" onClick={handleEditUserDetails}>
-                       <Edit3 className="mr-2 h-4 w-4" /> Redaguoti Duomenis
+                       <Edit3 className="mr-2 h-4 w-4" /> {t('common.editData')}
                     </Button>
                 )}
               <DialogClose asChild>
-                <Button type="button" variant="secondary" onClick={closeUserDetailsModal}>Uždaryti</Button>
+                <Button type="button" variant="secondary" onClick={closeUserDetailsModal}>{t('common.close')}</Button>
               </DialogClose>
             </DialogFooter>
           </DialogContent>
@@ -628,5 +637,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
-    
