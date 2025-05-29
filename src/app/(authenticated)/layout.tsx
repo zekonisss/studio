@@ -7,7 +7,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { SidebarNav } from '@/components/navigation/sidebar-nav';
 import { UserNav } from '@/components/navigation/user-nav';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTitle, SheetTrigger, SheetClose } from '@/components/ui/sheet'; // Added SheetTrigger and SheetClose
+import { Sheet, SheetContent, SheetTitle, SheetTrigger, SheetClose } from '@/components/ui/sheet';
 import { Menu, Loader2 } from 'lucide-react';
 import { WelcomeModal } from '@/components/shared/welcome-modal';
 
@@ -47,13 +47,12 @@ export default function AuthenticatedLayout({
   }
 
   if (!user) {
-    // This case should ideally be handled by the redirect, but as a fallback:
     return null; 
   }
 
   return (
     <div className="flex min-h-screen w-full bg-background">
-      <div className="hidden md:block md:w-72"> {/* Fixed width for sidebar */}
+      <div className="hidden md:block md:w-72">
         <SidebarNav isInSheet={false} />
       </div>
       <div className="flex flex-1 flex-col">
@@ -67,7 +66,7 @@ export default function AuthenticatedLayout({
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="p-0 w-72">
-                <SheetTitle className="sr-only">Navigacijos Meniu</SheetTitle> {/* Added for accessibility */}
+                <SheetTitle className="sr-only">Navigacijos Meniu</SheetTitle>
                 <SidebarNav isInSheet={true} />
               </SheetContent>
             </Sheet>
@@ -82,4 +81,3 @@ export default function AuthenticatedLayout({
     </div>
   );
 }
-

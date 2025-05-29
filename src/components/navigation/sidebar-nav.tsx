@@ -17,32 +17,35 @@ import {
   LogOut,
   Settings,
   ShieldQuestion,
-  ShieldAlert
+  ShieldAlert,
+  UserSearch, // Corrected Logo
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { ReactNode } from "react";
+import { useLanguage } from "@/contexts/language-context"; // Added
+import { LanguageSwitcher } from "./language-switcher"; // Added
 
-const mainNavItems = [
-  { href: "/dashboard", label: "Valdymo Skydas", icon: LayoutDashboard },
-  { href: "/search", label: "Paieška", icon: Search },
-  { href: "/reports/add", label: "Pridėti Įrašą", icon: FilePlus2 },
+const mainNavItemsBase = [
+  { href: "/dashboard", labelKey: "sidebar.dashboard", icon: LayoutDashboard },
+  { href: "/search", labelKey: "sidebar.search", icon: Search },
+  { href: "/reports/add", labelKey: "sidebar.addReport", icon: FilePlus2 },
 ];
 
-const historyNavItems = [
- { href: "/reports/history", label: "Įrašų Istorija", icon: History },
- { href: "/search/history", label: "Paieškų Istorija", icon: ListChecks },
+const historyNavItemsBase = [
+ { href: "/reports/history", labelKey: "sidebar.reportsHistory", icon: History },
+ { href: "/search/history", labelKey: "sidebar.searchHistory", icon: ListChecks },
 ];
 
-const accountNavItems = [
-  { href: "/account", label: "Mano Paskyra", icon: UserCircle },
-  { href: "/account/settings", label: "Nustatymai", icon: Settings }, // Placeholder
-  { href: "/support", label: "Pagalba & DUK", icon: ShieldQuestion },
+const accountNavItemsBase = [
+  { href: "/account", labelKey: "sidebar.account", icon: UserCircle },
+  { href: "/account/settings", labelKey: "sidebar.settings", icon: Settings },
+  { href: "/support", labelKey: "sidebar.support", icon: ShieldQuestion },
 ];
 
-const adminNavItems = [
-  { href: "/admin", label: "Admin Skydas", icon: ShieldAlert },
+const adminNavItemsBase = [
+  { href: "/admin", labelKey: "sidebar.adminPanel", icon: ShieldAlert },
 ];
 
 interface SidebarNavProps {
@@ -53,13 +56,20 @@ export function SidebarNav({ isInSheet = false }: SidebarNavProps) {
   const pathname = usePathname();
   const { user, logout, loading } = useAuth();
   const { toast } = useToast();
+  const { t } = useLanguage(); // Added
+
+  const mainNavItems = mainNavItemsBase.map(item => ({ ...item, label: t(item.labelKey) }));
+  const historyNavItems = historyNavItemsBase.map(item => ({ ...item, label: t(item.labelKey) }));
+  const accountNavItems = accountNavItemsBase.map(item => ({ ...item, label: t(item.labelKey) }));
+  const adminNavItems = adminNavItemsBase.map(item => ({ ...item, label: t(item.labelKey) }));
+
 
   const handleLogout = async () => {
     try {
       await logout();
-      toast({ title: "Sėkmingai atsijungėte" });
+      toast({ title: "Sėkmingai atsijungėte" }); // This should also be translated in a real app
     } catch (error) {
-      toast({ variant: "destructive", title: "Atsijungimo klaida" });
+      toast({ variant: "destructive", title: "Atsijungimo klaida" }); // And this
     }
   };
 
@@ -80,19 +90,26 @@ export function SidebarNav({ isInSheet = false }: SidebarNavProps) {
 
   return (
     <div className="flex h-full flex-col border-r bg-sidebar text-sidebar-foreground shadow-lg">
-      <div className="p-4 border-b border-sidebar-border">
+      <div className="p-4 border-b border-sidebar-border flex justify-between items-center">
         <NavLinkWrapper>
           <Link href="/dashboard" className="flex items-center space-x-3">
-              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="hsl(var(--sidebar-primary))" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-user-search"><circle cx="10" cy="7" r="4"/><path d="M10.3 15H7a4 4 0 0 0-4 4v2"/><circle cx="17" cy="17" r="3"/><path d="m21 21-1.9-1.9"/></svg>
-            <h1 className="text-2xl font-bold text-sidebar-primary">DriverCheck</h1>
+              <UserSearch className="h-8 w-8 text-sidebar-primary" />
+            <h1 className="text-2xl font-bold text-sidebar-primary">{t('app.name')}</h1>
           </Link>
         </NavLinkWrapper>
+        {!isInSheet && <LanguageSwitcher />} {/* Added LanguageSwitcher for desktop */}
       </div>
+      {isInSheet && (
+        <div className="p-4 border-b border-sidebar-border">
+            <LanguageSwitcher /> {/* LanguageSwitcher for mobile sheet */}
+        </div>
+      )}
+
 
       <ScrollArea className="flex-1">
         <nav className="flex flex-col gap-4 p-4">
           <div>
-            <h3 className="mb-2 px-2 text-xs font-semibold uppercase text-muted-foreground tracking-wider">Pagrindinis</h3>
+            <h3 className="mb-2 px-2 text-xs font-semibold uppercase text-muted-foreground tracking-wider">{t('sidebar.section.main')}</h3>
             {mainNavItems.map((item) => (
               <NavLinkWrapper key={item.href}>
                 <Link
@@ -113,7 +130,7 @@ export function SidebarNav({ isInSheet = false }: SidebarNavProps) {
           </div>
 
           <div>
-            <h3 className="mb-2 mt-4 px-2 text-xs font-semibold uppercase text-muted-foreground tracking-wider">Istorija ir Ataskaitos</h3>
+            <h3 className="mb-2 mt-4 px-2 text-xs font-semibold uppercase text-muted-foreground tracking-wider">{t('sidebar.section.history')}</h3>
             {historyNavItems.map((item) => (
               <NavLinkWrapper key={item.href}>
                 <Link
@@ -134,7 +151,7 @@ export function SidebarNav({ isInSheet = false }: SidebarNavProps) {
           </div>
           
           <div>
-            <h3 className="mb-2 mt-4 px-2 text-xs font-semibold uppercase text-muted-foreground tracking-wider">Paskyra ir Pagalba</h3>
+            <h3 className="mb-2 mt-4 px-2 text-xs font-semibold uppercase text-muted-foreground tracking-wider">{t('sidebar.section.account')}</h3>
             {accountNavItems.map((item) => (
                <NavLinkWrapper key={item.href}>
                 <Link
@@ -142,7 +159,7 @@ export function SidebarNav({ isInSheet = false }: SidebarNavProps) {
                   className={cn(
                     buttonVariants({ variant: pathname.startsWith(item.href) && item.href !== '/support' ? "secondary" : "ghost", size: "default" }),
                     "w-full justify-start rounded-md text-sm font-medium",
-                    pathname.startsWith(item.href) && item.href !== '/support' // Special handling for /account/settings etc.
+                    pathname.startsWith(item.href) && item.href !== '/support'
                       ? "bg-sidebar-accent text-sidebar-accent-foreground"
                       : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                   )}
@@ -156,7 +173,7 @@ export function SidebarNav({ isInSheet = false }: SidebarNavProps) {
 
           {user?.isAdmin && (
             <div>
-              <h3 className="mb-2 mt-4 px-2 text-xs font-semibold uppercase text-muted-foreground tracking-wider">Administratorius</h3>
+              <h3 className="mb-2 mt-4 px-2 text-xs font-semibold uppercase text-muted-foreground tracking-wider">{t('sidebar.section.admin')}</h3>
               {adminNavItems.map((item) => (
                 <NavLinkWrapper key={item.href}>
                   <Link
@@ -192,7 +209,7 @@ export function SidebarNav({ isInSheet = false }: SidebarNavProps) {
         </div>
         <Button variant="outline" className="w-full" onClick={handleLogout} disabled={loading}>
           <LogOut className="mr-2 h-4 w-4" />
-          Atsijungti
+          {t('sidebar.logout')}
         </Button>
       </div>
     </div>

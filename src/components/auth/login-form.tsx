@@ -1,3 +1,4 @@
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -17,10 +18,12 @@ import { LoginSchema, type LoginFormValues } from "@/lib/schemas";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { Mail, Lock, Loader2 } from "lucide-react";
+import { useLanguage } from "@/contexts/language-context"; // Added
 
 export function LoginForm() {
   const { login, loading } = useAuth();
   const { toast } = useToast();
+  const { t } = useLanguage(); // Added
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(LoginSchema),
@@ -34,14 +37,14 @@ export function LoginForm() {
     try {
       await login(values);
       toast({
-        title: "Sėkmingai prisijungėte!",
-        description: "Sveiki sugrįžę į DriverShield.",
+        title: "Sėkmingai prisijungėte!", // This should also be translated in a real app
+        description: "Sveiki sugrįžę į DriverCheck.", // And this
       });
     } catch (error: any) {
       toast({
         variant: "destructive",
-        title: "Prisijungimo klaida",
-        description: error.message || "Įvyko klaida bandant prisijungti.",
+        title: "Prisijungimo klaida", // And this
+        description: error.message || "Įvyko klaida bandant prisijungti.", // And this
       });
     }
   }
@@ -54,7 +57,7 @@ export function LoginForm() {
           name="email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="flex items-center"><Mail className="mr-2 h-4 w-4 text-muted-foreground" />El. paštas</FormLabel>
+              <FormLabel className="flex items-center"><Mail className="mr-2 h-4 w-4 text-muted-foreground" />{t('login.emailLabel')}</FormLabel>
               <FormControl>
                 <Input placeholder="jusu@imone.lt" {...field} />
               </FormControl>
@@ -67,7 +70,7 @@ export function LoginForm() {
           name="password"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="flex items-center"><Lock className="mr-2 h-4 w-4 text-muted-foreground" />Slaptažodis</FormLabel>
+              <FormLabel className="flex items-center"><Lock className="mr-2 h-4 w-4 text-muted-foreground" />{t('login.passwordLabel')}</FormLabel>
               <FormControl>
                 <Input type="password" placeholder="••••••••" {...field} />
               </FormControl>
@@ -77,12 +80,12 @@ export function LoginForm() {
         />
         <Button type="submit" className="w-full" disabled={loading}>
           {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Prisijungti
+          {t('login.loginButton')}
         </Button>
         <p className="text-center text-sm text-muted-foreground">
-          Neturite paskyros?{" "}
+          {t('login.noAccount')}{" "}
           <Link href="/auth/signup" className="font-medium text-primary hover:underline">
-            Registruokitės
+            {t('login.signupLink')}
           </Link>
         </p>
       </form>
