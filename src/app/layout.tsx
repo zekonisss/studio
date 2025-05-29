@@ -3,8 +3,8 @@ import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
-import { AuthProvider } from '@/hooks/use-auth';
 import { LanguageProvider } from '@/contexts/language-context';
+import { AuthProvider } from '@/hooks/use-auth';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -27,7 +27,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="lt" suppressHydrationWarning><body className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}>
+    <html lang="lt" suppressHydrationWarning>
+      <body className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}>
         <LanguageProvider>
           <AuthProvider>
             {children}
