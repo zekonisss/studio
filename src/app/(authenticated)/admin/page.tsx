@@ -14,9 +14,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Loader2, ShieldAlert, Users, FileText, AlertTriangle, Trash2, Eye, MoreHorizontal, BarChart3, UserCheck, UserX, UserCog, CalendarDays, Building2, Tag, MessageSquare, Image as ImageIcon, CheckCircle2, CreditCard, Send, Briefcase, MapPin, Phone, Mail, ShieldCheck as ShieldCheckIcon, User as UserIcon, Globe, Edit3, Save, XCircle, Percent, Layers } from "lucide-react";
 import type { UserProfile, Report } from "@/types";
-import { getAllUsers, saveAllUsers, MOCK_GENERAL_REPORTS, combineAndDeduplicateReports, countries, detailedReportCategories, DESTRUCTIVE_REPORT_MAIN_CATEGORIES } from "@/types";
+import { getAllUsers, saveAllUsers, MOCK_GENERAL_REPORTS, combineAndDeduplicateReports, countries, detailedReportCategories, DESTRUCTIVE_REPORT_MAIN_CATEGORIES, getCategoryNameAdmin as getCategoryNameForDisplay } from "@/types";
 import { format as formatDateFn, addYears } from 'date-fns';
-import { lt, enUS } from 'date-fns/locale'; // Added enUS for date formatting
+import { lt, enUS } from 'date-fns/locale';
 import { useToast } from "@/hooks/use-toast";
 import NextImage from "next/image";
 import { Label } from "@/components/ui/label";
@@ -44,16 +44,13 @@ function saveReportsToLocalStorage(reports: Report[]): void {
   }
 }
 
-const getNationalityLabel = (nationalityCode?: string) => {
-    if (!nationalityCode) return "Nenurodyta";
+const getNationalityLabel = (nationalityCode?: string, currentLocale?: string, translateFn?: (key: string) => string) => {
+    if (!nationalityCode) return translateFn ? translateFn('common.notSpecified') : "Nenurodyta";
     const country = countries.find(c => c.value === nationalityCode);
+    // Here you might want to implement translation for country names if needed
     return country ? country.label : nationalityCode;
 };
 
-const getCategoryNameAdmin = (categoryId: string) => {
-    const category = detailedReportCategories.find(c => c.id === categoryId);
-    return category ? category.name : categoryId;
-};
 
 export default function AdminPage() {
   const { user: adminUser, loading: authLoading } = useAuth();
@@ -121,6 +118,7 @@ export default function AdminPage() {
         toastTitle = t('admin.users.toast.accountActivated.title');
         toastDescription = t('admin.users.toast.accountActivated.description', { companyName: targetUser.companyName });
     } else if (newStatus === 'active' && oldStatus === 'pending_verification') {
+        // This case means admin directly activates from pending_verification
         toastTitle = t('admin.users.toast.accountVerifiedAndActivated.title');
         toastDescription = t('admin.users.toast.accountVerifiedAndActivated.description', { companyName: targetUser.companyName });
     }
@@ -277,7 +275,7 @@ export default function AdminPage() {
         <Input id={name} name={name} value={value} onChange={onChange} className="text-base" />
       ) : (
         <p className="text-base text-foreground bg-secondary/30 p-2.5 rounded-md min-h-[40px] flex items-center">
-          {typeof value === 'boolean' ? (value ? t('common.yes') : t('common.no')) : (value || "-")}
+          {typeof value === 'boolean' ? (value ? t('common.yes') : t('common.no')) : (value || t('common.notSpecified'))}
         </p>
       )}
     </div>
@@ -418,7 +416,7 @@ export default function AdminPage() {
                         <TableCell className="font-medium">{report.fullName}</TableCell>
                         <TableCell className="hidden sm:table-cell">
                            <Badge variant={DESTRUCTIVE_REPORT_MAIN_CATEGORIES.includes(report.category) ? 'destructive' : 'secondary'}>
-                             {getCategoryNameAdmin(report.category)}
+                             {getCategoryNameForDisplay(report.category, t)}
                            </Badge>
                         </TableCell>
                         <TableCell className="hidden md:table-cell">{report.reporterCompanyName || t('common.notSpecified')}</TableCell>
@@ -505,7 +503,7 @@ export default function AdminPage() {
                {selectedReportForDetails.nationality && (
                 <div className="space-y-1">
                   <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Globe className="mr-2 h-4 w-4" />{t('admin.entryDetailsModal.nationality')}</h4>
-                  <p className="text-base text-foreground">{getNationalityLabel(selectedReportForDetails.nationality)}</p>
+                  <p className="text-base text-foreground">{getNationalityLabel(selectedReportForDetails.nationality, locale, t)}</p>
                 </div>
               )}
               {selectedReportForDetails.birthYear && (
@@ -519,7 +517,7 @@ export default function AdminPage() {
                 <Badge 
                     variant={DESTRUCTIVE_REPORT_MAIN_CATEGORIES.includes(selectedReportForDetails.category) ? 'destructive' : 'secondary'} 
                     className="text-sm">
-                  {getCategoryNameAdmin(selectedReportForDetails.category)}
+                  {getCategoryNameForDisplay(selectedReportForDetails.category, t)}
                 </Badge>
               </div>
               {selectedReportForDetails.tags && selectedReportForDetails.tags.length > 0 && (
@@ -542,7 +540,7 @@ export default function AdminPage() {
                   <div className="w-full overflow-hidden rounded-md border">
                     <NextImage
                         src={selectedReportForDetails.imageUrl}
-                        alt={`${t('admin.entryDetailsModal.imageAltPrefix')} ${selectedReportForDetails.fullName}`}
+                        alt={t('admin.entryDetailsModal.imageAltPrefix', { fullName: selectedReportForDetails.fullName })}
                         width={600}
                         height={400}
                         layout="responsive"

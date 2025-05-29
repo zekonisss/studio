@@ -18,12 +18,12 @@ import { LoginSchema, type LoginFormValues } from "@/lib/schemas";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { Mail, Lock, Loader2 } from "lucide-react";
-import { useLanguage } from "@/contexts/language-context"; // Added
+import { useLanguage } from "@/contexts/language-context";
 
 export function LoginForm() {
   const { login, loading } = useAuth();
   const { toast } = useToast();
-  const { t } = useLanguage(); // Added
+  const { t } = useLanguage();
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(LoginSchema),
@@ -35,17 +35,19 @@ export function LoginForm() {
 
   async function onSubmit(values: LoginFormValues) {
     try {
-      await login(values);
-      toast({
-        title: "Sėkmingai prisijungėte!", // This should also be translated in a real app
-        description: "Sveiki sugrįžę į DriverCheck.", // And this
-      });
+      await login(values); // login function now handles toasts internally
     } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Prisijungimo klaida", // And this
-        description: error.message || "Įvyko klaida bandant prisijungti.", // And this
-      });
+      // Error handling is now more centralized in useAuth, but specific UI feedback can remain
+      // This catch block might be redundant if useAuth always throws for UI-displayable errors
+      // or if it directly updates UI state for errors.
+      // For now, let's assume some errors might still need to be caught here for generic fallback.
+      if (!error.isAuthManagedError) { // Add a flag to errors managed by useAuth
+         toast({
+            variant: "destructive",
+            title: t('toast.login.error.title'),
+            description: error.message || t('toast.login.error.descriptionGeneric'),
+        });
+      }
     }
   }
 

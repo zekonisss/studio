@@ -12,10 +12,10 @@ import { useAuth } from "@/hooks/use-auth";
 import { Loader2, UserCircle, Building2, Briefcase, MapPin, User as UserIcon, Mail, Phone, History, ListChecks, Edit3, Save, CreditCard, ShieldCheck, CalendarDays, Percent, AlertTriangle, UserCog } from "lucide-react";
 import type { Report, SearchLog, UserProfile } from "@/types";
 import { format as formatDateFn, addYears } from "date-fns";
-import { lt, enUS } from "date-fns/locale"; // Added enUS for date formatting
+import { lt, enUS } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
-import { getAllUsers, saveAllUsers } from "@/types";
+import { getAllUsers, saveAllUsers, detailedReportCategories, getCategoryNameAdmin as getCategoryNameForDisplay } from "@/types"; // Renamed import for clarity
 import { useLanguage } from '@/contexts/language-context';
 
 
@@ -61,7 +61,7 @@ export default function AccountPage() {
       });
     }
     const tab = searchParams.get('tab');
-    if (tab) {
+    if (tab && ["details", "reports", "searches", "payment"].includes(tab)) {
         setActiveTab(tab);
     }
   }, [user, searchParams]);
@@ -75,8 +75,8 @@ export default function AccountPage() {
     if (!user) return;
 
     setIsEditing(false);
-    console.log("Saving data:", formData);
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // console.log("Saving data:", formData); // For debugging
+    // await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate save
 
     const allUsers = getAllUsers();
     const updatedUser = {
@@ -93,7 +93,7 @@ export default function AccountPage() {
     const updatedUsersList = allUsers.map(u => u.id === user.id ? updatedUser : u);
     saveAllUsers(updatedUsersList);
     updateUserInContext(updatedUser as UserProfile);
-
+    // Add toast for success if needed
   };
 
   const onTabChange = (value: string) => {
@@ -109,13 +109,13 @@ export default function AccountPage() {
     );
   }
 
-  const InfoField = ({ label, value, icon: Icon, name, isEditing, onChange }: { label: string, value: string, icon: React.ElementType, name?: string, isEditing?: boolean, onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void }) => (
+  const InfoField = ({ label, value, icon: Icon, name, isEditing, onChange }: { label: string, value: string | undefined, icon: React.ElementType, name?: string, isEditing?: boolean, onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void }) => (
     <div className="space-y-1">
       <Label htmlFor={name} className="text-sm font-medium text-muted-foreground flex items-center">
         <Icon className="mr-2 h-4 w-4" /> {label}
       </Label>
       {isEditing && name ? (
-        <Input id={name} name={name} value={value} onChange={onChange} className="text-base" />
+        <Input id={name} name={name} value={value || ""} onChange={onChange} className="text-base" />
       ) : (
         <p className="text-base text-foreground bg-secondary/30 p-2.5 rounded-md min-h-[40px] flex items-center">{value || "-"}</p>
       )}
@@ -184,7 +184,7 @@ export default function AccountPage() {
                     <li key={report.id} className="p-4 border rounded-md hover:bg-muted/30 transition-colors">
                       <div className="flex justify-between items-start">
                         <h4 className="font-semibold text-foreground">{report.fullName}</h4>
-                        <Badge variant="secondary">{report.category.replace(/_/g, ' ')}</Badge>
+                        <Badge variant="secondary">{getCategoryNameForDisplay(report.category)}</Badge>
                       </div>
                       <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{report.comment}</p>
                       <p className="text-xs text-muted-foreground mt-2">{t('account.entries.submittedOn')}: {formatDateFn(report.createdAt, "yyyy-MM-dd HH:mm", { locale: dateLocale })}</p>

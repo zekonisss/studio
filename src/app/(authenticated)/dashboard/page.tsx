@@ -9,14 +9,14 @@ import Link from "next/link";
 import { Search, FilePlus2, History, UserCircle, BarChart3, AlertTriangle, CheckCircle2, UserCog, Loader2, Layers } from "lucide-react";
 import Image from "next/image";
 import { format as formatDateFn, addYears, addMonths, isBefore } from 'date-fns';
-import { lt, enUS } from 'date-fns/locale'; // Added enUS for date formatting
+import { lt, enUS } from 'date-fns/locale';
 import type { Report } from '@/types';
 import { getReportsFromLocalStoragePublic, MOCK_GENERAL_REPORTS, combineAndDeduplicateReports } from '@/types';
-import { useLanguage } from '@/contexts/language-context'; // Added
+import { useLanguage } from '@/contexts/language-context';
 
 export default function DashboardPage() {
   const { user } = useAuth();
-  const { t, locale } = useLanguage(); // Added
+  const { t, locale } = useLanguage();
   const [totalReportsCount, setTotalReportsCount] = useState(0);
 
   const dateLocale = locale === 'en' ? enUS : lt;
@@ -37,7 +37,7 @@ export default function DashboardPage() {
   return (
     <div className="container mx-auto py-8 px-4 md:px-0">
       <div className="mb-12 p-6 rounded-lg shadow-md bg-gradient-to-r from-primary to-accent text-primary-foreground">
-        <h1 className="text-3xl font-bold">{t('dashboard.greeting', { contactPerson: user?.contactPerson || 'Vartotojau' })}</h1>
+        <h1 className="text-3xl font-bold">{t('dashboard.greeting', { contactPerson: user?.contactPerson || t('dashboard.defaultUser') })}</h1>
         <p className="text-lg mt-1">{t('dashboard.company', { companyName: user?.companyName || ''})}</p>
         <p className="mt-2 text-sm opacity-90">
           {t('dashboard.platformDescription')}
@@ -57,7 +57,7 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between p-4 bg-secondary/50 rounded-md">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">{t('dashboard.overview.yourReports')}</p>
-                <p className="text-2xl font-bold">N/A</p> {}
+                <p className="text-2xl font-bold">N/A</p>
               </div>
               <Button variant="outline" size="sm" asChild>
                 <Link href="/reports/history">{t('dashboard.overview.viewAll')}</Link>
@@ -66,7 +66,7 @@ export default function DashboardPage() {
              <div className="flex items-center justify-between p-4 bg-secondary/50 rounded-md">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">{t('dashboard.overview.yourSearches')}</p>
-                <p className="text-2xl font-bold">N/A</p> {}
+                <p className="text-2xl font-bold">N/A</p>
               </div>
               <Button variant="outline" size="sm" asChild>
                 <Link href="/search/history">{t('dashboard.overview.viewHistory')}</Link>
@@ -103,7 +103,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent className="space-y-3">
              <div className="relative aspect-video w-full overflow-hidden rounded-lg mb-4">
-                <Image src="https://placehold.co/600x338.png" alt="Driver Safety" layout="fill" objectFit="cover" data-ai-hint="driving safety" />
+                <Image src="https://placehold.co/600x338.png" alt={t('dashboard.usefulLinks.imageAlt')} layout="fill" objectFit="cover" data-ai-hint="driving safety" />
               </div>
             <Button variant="link" asChild className="p-0 h-auto justify-start">
               <Link href="/terms">{t('dashboard.usefulLinks.terms')}</Link>

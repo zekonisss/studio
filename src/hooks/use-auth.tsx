@@ -5,7 +5,9 @@ import type { UserProfile } from '@/types';
 import type { LoginFormValues, SignUpFormValues } from '@/lib/schemas';
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { MOCK_USER, getAllUsers, saveAllUsers } from '@/types'; // Import MOCK_USER and user management functions
+import { MOCK_USER, getAllUsers, saveAllUsers } from '@/types';
+import { useToast } from '@/hooks/use-toast';
+import { useLanguage } from '@/contexts/language-context'; // Import useLanguage
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -23,11 +25,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const { toast } = useToast();
+  const { t } = useLanguage(); // Get translation function
 
   useEffect(() => {
     const checkAuthState = async () => {
       setLoading(true);
-      const storedUserJson = localStorage.getItem('driverShieldUser');
+      const storedUserJson = localStorage.getItem('driverCheckUser'); // Updated key
       if (storedUserJson) {
         try {
           const storedUser = JSON.parse(storedUserJson);
@@ -37,13 +41,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           if (currentUserData) {
              setUser(currentUserData);
           } else {
-            localStorage.removeItem('driverShieldUser');
+            localStorage.removeItem('driverCheckUser');
              setUser(null);
           }
 
         } catch (e) {
           console.error("Failed to parse user from session storage", e);
-          localStorage.removeItem('driverShieldUser');
+          localStorage.removeItem('driverCheckUser');
           setUser(null);
         }
       }
@@ -54,107 +58,148 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const updateUserInContext = (updatedUser: UserProfile) => {
     setUser(updatedUser);
-    localStorage.setItem('driverShieldUser', JSON.stringify(updatedUser));
+    localStorage.setItem('driverCheckUser', JSON.stringify(updatedUser));
   };
 
   const login = async (values: LoginFormValues) => {
     setLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    try {
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
-    const allSystemUsers = getAllUsers();
-    const foundUser = allSystemUsers.find(u => u.email === values.email);
+      const allSystemUsers = getAllUsers();
+      const foundUser = allSystemUsers.find(u => u.email === values.email);
 
-    if (foundUser) {
-      if (foundUser.paymentStatus === 'pending_verification') {
-        setLoading(false);
-        router.push('/auth/pending-approval');
-        throw new Error("Jūsų paskyra laukia administratoriaus tapatybės patvirtinimo.");
+      let loginError: { messageKey: string, isAuthManagedError?: boolean } | null = null;
+
+      if (foundUser) {
+        if (foundUser.paymentStatus === 'pending_verification') {
+          loginError = { messageKey: 'toast.login.error.pendingVerification', isAuthManagedError: true };
+          router.push('/auth/pending-approval');
+        } else if (foundUser.paymentStatus === 'pending_payment') {
+          loginError = { messageKey: 'toast.login.error.pendingPayment', isAuthManagedError: true };
+          router.push('/auth/pending-approval');
+        } else if (foundUser.paymentStatus === 'inactive') {
+          loginError = { messageKey: 'toast.login.error.inactive', isAuthManagedError: true };
+        } else if (foundUser.paymentStatus === 'active' || (foundUser.id === MOCK_USER.id && MOCK_USER.isAdmin)) {
+          setUser(foundUser);
+          localStorage.setItem('driverCheckUser', JSON.stringify(foundUser));
+          toast({
+            title: t('toast.login.success.title'),
+            description: t('toast.login.success.description'),
+          });
+          router.push('/dashboard');
+        } else {
+          loginError = { messageKey: 'toast.login.error.accessDenied', isAuthManagedError: true };
+        }
+      } else if (values.email === MOCK_USER.email) { // Fallback for the main mock user if not in localStorage yet
+         if (MOCK_USER.paymentStatus === 'pending_verification') {
+            loginError = { messageKey: 'toast.login.error.pendingVerification', isAuthManagedError: true };
+            router.push('/auth/pending-approval');
+         } else if (MOCK_USER.paymentStatus === 'pending_payment') {
+            loginError = { messageKey: 'toast.login.error.pendingPayment', isAuthManagedError: true };
+            router.push('/auth/pending-approval');
+         } else {
+            setUser(MOCK_USER);
+            localStorage.setItem('driverCheckUser', JSON.stringify(MOCK_USER));
+            toast({
+                title: t('toast.login.success.title'),
+                description: t('toast.login.success.description'),
+            });
+            router.push('/dashboard');
+         }
       }
-      if (foundUser.paymentStatus === 'pending_payment') {
-        setLoading(false);
-        router.push('/auth/pending-approval'); // Redirect to pending, message indicates payment needed
-        throw new Error("Jūsų paskyra laukia apmokėjimo patvirtinimo. Instrukcijos jums buvo 'išsiųstos'.");
+      else {
+        loginError = { messageKey: 'toast.login.error.invalidCredentials', isAuthManagedError: true };
       }
-      if (foundUser.paymentStatus === 'inactive') {
-        setLoading(false);
-        throw new Error("Jūsų paskyra yra neaktyvi. Susisiekite su administratoriumi.");
+
+      if (loginError) {
+        toast({
+          variant: "destructive",
+          title: t('toast.login.error.title'),
+          description: t(loginError.messageKey),
+        });
+        // Throw an error so onSubmit in LoginForm knows it failed if needed
+        const error = new Error(t(loginError.messageKey)) as any;
+        error.isAuthManagedError = loginError.isAuthManagedError;
+        throw error;
       }
-      // Only allow login if status is 'active' (or if it's an admin for MOCK_USER)
-      if (foundUser.paymentStatus === 'active' || (foundUser.id === MOCK_USER.id && MOCK_USER.isAdmin)) {
-        setUser(foundUser);
-        localStorage.setItem('driverShieldUser', JSON.stringify(foundUser));
-        router.push('/dashboard');
-      } else {
-        setLoading(false);
-        throw new Error("Paskyra nėra aktyvi arba neturite prieigos.");
-      }
-    } else if (values.email === MOCK_USER.email) { // Fallback for the main mock user if not in localStorage yet
-       if (MOCK_USER.paymentStatus === 'pending_verification') {
-        setLoading(false);
-        router.push('/auth/pending-approval');
-        throw new Error("Jūsų paskyra laukia administratoriaus tapatybės patvirtinimo.");
-      }
-      if (MOCK_USER.paymentStatus === 'pending_payment') {
-        setLoading(false);
-        router.push('/auth/pending-approval');
-        throw new Error("Jūsų paskyra laukia apmokėjimo patvirtinimo. Instrukcijos jums buvo 'išsiųstos'.");
-      }
-      setUser(MOCK_USER);
-      localStorage.setItem('driverShieldUser', JSON.stringify(MOCK_USER));
-      router.push('/dashboard');
-    }
-    else {
+    } finally {
       setLoading(false);
-      throw new Error("Neteisingas el. paštas arba slaptažodis.");
     }
-    setLoading(false);
   };
 
   const signup = async (values: SignUpFormValues) => {
     setLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    try {
+        await new Promise(resolve => setTimeout(resolve, 1000));
 
-    const allUsers = getAllUsers();
-    if (allUsers.some(u => u.email === values.email)) {
-      setLoading(false);
-      throw new Error("Vartotojas su tokiu el. paštu jau egzistuoja.");
+        const allUsers = getAllUsers();
+        if (allUsers.some(u => u.email === values.email)) {
+          toast({
+            variant: "destructive",
+            title: t('toast.signup.error.title'),
+            description: t('toast.signup.error.emailExists'),
+          });
+          throw new Error(t('toast.signup.error.emailExists'));
+        }
+
+        const newUserId = `user-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+        const newUserProfile: UserProfile = {
+          id: newUserId,
+          companyName: values.companyName,
+          companyCode: values.companyCode,
+          vatCode: values.vatCode || undefined,
+          address: values.address,
+          contactPerson: values.contactPerson,
+          email: values.email,
+          phone: values.phone,
+          paymentStatus: 'pending_verification', // Initial status
+          isAdmin: false,
+          agreeToTerms: values.agreeToTerms,
+          accountActivatedAt: undefined, // Ensure this is undefined initially
+        };
+
+        const updatedUsers = [...allUsers, newUserProfile];
+        saveAllUsers(updatedUsers);
+
+        toast({
+          title: t('toast.signup.success.title'),
+          description: t('toast.signup.success.description'),
+        });
+        router.push('/auth/pending-approval');
+    } catch (error: any) {
+        // If not already a toast from email exists, show generic one
+        if (!error.message.includes(t('toast.signup.error.emailExists'))) {
+             toast({
+                variant: "destructive",
+                title: t('toast.signup.error.title'),
+                description: error.message || t('toast.signup.error.descriptionGeneric'),
+            });
+        }
+    } finally {
+        setLoading(false);
     }
-
-    const newUserId = `user-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
-    const newUserProfile: UserProfile = {
-      id: newUserId,
-      companyName: values.companyName,
-      companyCode: values.companyCode,
-      vatCode: values.vatCode || undefined,
-      address: values.address,
-      contactPerson: values.contactPerson,
-      email: values.email,
-      phone: values.phone,
-      paymentStatus: 'pending_verification', // Initial status
-      isAdmin: false,
-      agreeToTerms: values.agreeToTerms,
-    };
-
-    const updatedUsers = [...allUsers, newUserProfile];
-    saveAllUsers(updatedUsers);
-
-    console.log("New user registered (pending verification):", newUserProfile);
-    router.push('/auth/pending-approval');
-    setLoading(false);
   };
 
   const logout = async () => {
     setLoading(true);
     setUser(null);
-    localStorage.removeItem('driverShieldUser');
-    await new Promise(resolve => setTimeout(resolve, 500));
-    router.push('/auth/login');
-    setLoading(false);
+    localStorage.removeItem('driverCheckUser');
+    try {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      toast({ title: t('toast.logout.success.title') });
+      router.push('/auth/login');
+    } catch (error) {
+       toast({ variant: "destructive", title: t('toast.logout.error.title') });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const sendVerificationEmail = async () => {
-    console.log("Simulating admin notification / user pending state...");
+    // console.log("Simulating admin notification / user pending state...");
     await new Promise(resolve => setTimeout(resolve, 1000));
+    // Potentially add a toast here for "Verification email resent"
   };
 
   return (
