@@ -5,8 +5,12 @@ import type { Dispatch, ReactNode, SetStateAction } from 'react';
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import ltTranslations from '@/locales/lt.json';
 import enTranslations from '@/locales/en.json';
+import ruTranslations from '@/locales/ru.json';
+import lvTranslations from '@/locales/lv.json';
+import etTranslations from '@/locales/et.json';
+import plTranslations from '@/locales/pl.json';
 
-type Locale = 'lt' | 'en';
+type Locale = 'lt' | 'en' | 'ru' | 'lv' | 'et' | 'pl';
 
 interface LanguageContextType {
   locale: Locale;
@@ -17,6 +21,10 @@ interface LanguageContextType {
 const translations: Record<Locale, Record<string, string>> = {
   lt: ltTranslations,
   en: enTranslations,
+  ru: ruTranslations,
+  lv: lvTranslations,
+  et: etTranslations,
+  pl: plTranslations,
 };
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -26,13 +34,16 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const storedLocale = localStorage.getItem('drivercheck-locale') as Locale | null;
-    if (storedLocale && (storedLocale === 'lt' || storedLocale === 'en')) {
+    if (storedLocale && translations.hasOwnProperty(storedLocale)) {
       setLocale(storedLocale);
     }
   }, []);
 
   useEffect(() => {
     localStorage.setItem('drivercheck-locale', locale);
+    if (typeof document !== 'undefined') {
+        document.documentElement.lang = locale;
+    }
   }, [locale]);
 
   const t = useCallback((key: string, params?: Record<string, string | number>): string => {

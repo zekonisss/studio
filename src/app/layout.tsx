@@ -4,7 +4,7 @@ import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from '@/hooks/use-auth';
-import { LanguageProvider } from '@/contexts/language-context'; // Added
+import { LanguageProvider } from '@/contexts/language-context';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -27,10 +27,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="lt" suppressHydrationWarning> {/* Default lang to lt, will be updated by context */}
       <body className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}>
         <AuthProvider>
-          <LanguageProvider> {/* Added LanguageProvider */}
+          <LanguageProvider>
             {children}
             <Toaster />
           </LanguageProvider>

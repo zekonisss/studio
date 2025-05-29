@@ -35,6 +35,30 @@ export function LanguageSwitcher() {
         >
           {t('language.english')}
         </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => setLocale('ru')}
+          disabled={locale === 'ru'}
+        >
+          {t('language.russian')}
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => setLocale('lv')}
+          disabled={locale === 'lv'}
+        >
+          {t('language.latvian')}
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => setLocale('et')}
+          disabled={locale === 'et'}
+        >
+          {t('language.estonian')}
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => setLocale('pl')}
+          disabled={locale === 'pl'}
+        >
+          {t('language.polish')}
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
