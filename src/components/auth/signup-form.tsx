@@ -18,11 +18,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { SignUpSchema, type SignUpFormValues } from "@/lib/schemas";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
-import { Building2, Briefcase, MapPin, User, Mail, Phone, Lock, Loader2, ShieldCheck, Percent } from "lucide-react";
+import { Building2, Briefcase, MapPin, User, Mail, Phone, Lock, Loader2, Percent } from "lucide-react";
+import { useLanguage } from "@/contexts/language-context";
 
 export function SignupForm() {
   const { signup, loading } = useAuth();
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   const form = useForm<SignUpFormValues>({
     resolver: zodResolver(SignUpSchema),
@@ -43,16 +45,18 @@ export function SignupForm() {
   async function onSubmit(values: SignUpFormValues) {
     try {
       await signup(values);
-      toast({
-        title: "Registracija inicijuota",
-        description: "Netrukus gausite el. laišką paskyros patvirtinimui.",
-      });
+      // Toast messages are now handled within useAuth using translated strings
     } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Registracijos klaida",
-        description: error.message || "Įvyko klaida bandant registruotis.",
-      });
+      // Error handling is now more centralized in useAuth
+      // This catch block might be redundant if useAuth always throws for UI-displayable errors
+      // or if it directly updates UI state for errors.
+      if (!error.isAuthManagedError) {
+         toast({
+            variant: "destructive",
+            title: t('toast.signup.error.title'),
+            description: error.message || t('toast.signup.error.descriptionGeneric'),
+        });
+      }
     }
   }
 
@@ -64,9 +68,9 @@ export function SignupForm() {
           name="companyName"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="flex items-center"><Building2 className="mr-2 h-4 w-4 text-muted-foreground" />Įmonės pavadinimas</FormLabel>
+              <FormLabel className="flex items-center"><Building2 className="mr-2 h-4 w-4 text-muted-foreground" />{t('signup.form.companyName.label')}</FormLabel>
               <FormControl>
-                <Input placeholder="UAB Pvz. Įmonė" {...field} />
+                <Input placeholder={t('signup.form.companyName.placeholder')} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -77,9 +81,9 @@ export function SignupForm() {
           name="companyCode"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="flex items-center"><Briefcase className="mr-2 h-4 w-4 text-muted-foreground" />Įmonės kodas</FormLabel>
+              <FormLabel className="flex items-center"><Briefcase className="mr-2 h-4 w-4 text-muted-foreground" />{t('signup.form.companyCode.label')}</FormLabel>
               <FormControl>
-                <Input placeholder="123456789" {...field} />
+                <Input placeholder={t('signup.form.companyCode.placeholder')} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -90,9 +94,9 @@ export function SignupForm() {
           name="vatCode"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="flex items-center"><Percent className="mr-2 h-4 w-4 text-muted-foreground" />PVM mokėtojo kodas (nebūtinas)</FormLabel>
+              <FormLabel className="flex items-center"><Percent className="mr-2 h-4 w-4 text-muted-foreground" />{t('signup.form.vatCode.label')}</FormLabel>
               <FormControl>
-                <Input placeholder="LT12345678901" {...field} />
+                <Input placeholder={t('signup.form.vatCode.placeholder')} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -103,9 +107,9 @@ export function SignupForm() {
           name="address"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="flex items-center"><MapPin className="mr-2 h-4 w-4 text-muted-foreground" />Adresas</FormLabel>
+              <FormLabel className="flex items-center"><MapPin className="mr-2 h-4 w-4 text-muted-foreground" />{t('signup.form.address.label')}</FormLabel>
               <FormControl>
-                <Input placeholder="Pavyzdžio g. 1, Vilnius" {...field} />
+                <Input placeholder={t('signup.form.address.placeholder')} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -116,9 +120,9 @@ export function SignupForm() {
           name="contactPerson"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="flex items-center"><User className="mr-2 h-4 w-4 text-muted-foreground" />Kontaktinis asmuo</FormLabel>
+              <FormLabel className="flex items-center"><User className="mr-2 h-4 w-4 text-muted-foreground" />{t('signup.form.contactPerson.label')}</FormLabel>
               <FormControl>
-                <Input placeholder="Vardenis Pavardenis" {...field} />
+                <Input placeholder={t('signup.form.contactPerson.placeholder')} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -129,9 +133,9 @@ export function SignupForm() {
           name="email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="flex items-center"><Mail className="mr-2 h-4 w-4 text-muted-foreground" />El. paštas</FormLabel>
+              <FormLabel className="flex items-center"><Mail className="mr-2 h-4 w-4 text-muted-foreground" />{t('signup.form.email.label')}</FormLabel>
               <FormControl>
-                <Input type="email" placeholder="jusu@imone.lt" {...field} />
+                <Input type="email" placeholder={t('signup.form.email.placeholder')} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -142,9 +146,9 @@ export function SignupForm() {
           name="phone"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="flex items-center"><Phone className="mr-2 h-4 w-4 text-muted-foreground" />Telefonas</FormLabel>
+              <FormLabel className="flex items-center"><Phone className="mr-2 h-4 w-4 text-muted-foreground" />{t('signup.form.phone.label')}</FormLabel>
               <FormControl>
-                <Input placeholder="+37060012345" {...field} />
+                <Input placeholder={t('signup.form.phone.placeholder')} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -155,9 +159,9 @@ export function SignupForm() {
           name="password"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="flex items-center"><Lock className="mr-2 h-4 w-4 text-muted-foreground" />Slaptažodis</FormLabel>
+              <FormLabel className="flex items-center"><Lock className="mr-2 h-4 w-4 text-muted-foreground" />{t('signup.form.password.label')}</FormLabel>
               <FormControl>
-                <Input type="password" placeholder="••••••••" {...field} />
+                <Input type="password" placeholder={t('signup.form.password.placeholder')} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -168,9 +172,9 @@ export function SignupForm() {
           name="confirmPassword"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="flex items-center"><Lock className="mr-2 h-4 w-4 text-muted-foreground" />Pakartokite slaptažodį</FormLabel>
+              <FormLabel className="flex items-center"><Lock className="mr-2 h-4 w-4 text-muted-foreground" />{t('signup.form.confirmPassword.label')}</FormLabel>
               <FormControl>
-                <Input type="password" placeholder="••••••••" {...field} />
+                <Input type="password" placeholder={t('signup.form.confirmPassword.placeholder')} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -189,7 +193,10 @@ export function SignupForm() {
               </FormControl>
               <div className="space-y-1 leading-none">
                 <FormLabel>
-                  Sutinku su <Link href="/terms" className="text-primary hover:underline">naudojimosi taisyklėmis</Link>
+                  {t('signup.form.agreeToTerms.labelPart1')}
+                  <Link href="/terms" className="text-primary hover:underline">
+                    {t('signup.form.agreeToTerms.linkText')}
+                  </Link>
                 </FormLabel>
                 <FormMessage />
               </div>
@@ -198,12 +205,12 @@ export function SignupForm() {
         />
         <Button type="submit" className="w-full" disabled={loading}>
           {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Registruotis
+          {t('signup.form.submitButton')}
         </Button>
         <p className="text-center text-sm text-muted-foreground">
-          Jau turite paskyrą?{" "}
+          {t('signup.form.alreadyHaveAccount')}
           <Link href="/auth/login" className="font-medium text-primary hover:underline">
-            Prisijunkite
+            {t('signup.form.loginLink')}
           </Link>
         </p>
       </form>
