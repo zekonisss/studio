@@ -336,9 +336,12 @@
   "reports.import.status.completed": "Completed",
   "reports.import.status.error": "AI Error",
   "reports.import.status.aiError": "AI Error",
+  "reports.import.status.skippedQuota": "Skipped (Quota)",
+  "reports.import.status.skippedQuotaTooltip": "AI processing skipped due to daily limit reached.",
   "reports.import.error.fileReadError": "Error reading file.",
-  "reports.import.error.aiGenericError": "AI processing error.",
-  "reports.import.error.aiServiceOverloaded": "AI service is currently overloaded. Please try again later.",
+  "reports.import.error.aiGenericError": "AI processing error",
+  "reports.import.error.aiServiceOverloaded": "AI service is currently overloaded. Please try again later",
+  "reports.import.error.aiDailyQuotaExceededFull": "Daily AI Quota Exceeded. Details: {message}",
   "reports.import.associatedCompanyPrefix": "Associated company",
   "reports.import.unknownDriver": "Unknown Driver",
   "reports.import.toast.invalidFileType.title": "Invalid File Type",
@@ -357,6 +360,8 @@
   "reports.import.toast.importSuccess.description": "Successfully imported {count} entries.",
   "reports.import.toast.importError.title": "Import Error",
   "reports.import.toast.importError.description": "An error occurred while saving data.",
+  "reports.import.toast.dailyQuotaReached.title": "Daily AI Limit Reached",
+  "reports.import.toast.dailyQuotaReached.description": "The daily AI processing quota has been exceeded. Further rows in this batch will not be analyzed by AI. Please try again tomorrow or upgrade your plan.",
   "countries.AF": "Afghanistan",
   "countries.AX": "Åland Islands",
   "countries.AL": "Albania",
@@ -628,3 +633,5 @@
   "tags.pakenkta_imones_reputacijai": "Company reputation damaged",
   "tags.neteiseta_veikla_itariama": "Illegal activity suspected"
 }
+
+    

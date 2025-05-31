@@ -336,9 +336,12 @@
   "reports.import.status.completed": "Pabeigts",
   "reports.import.status.error": "Kļūda",
   "reports.import.status.aiError": "AI Kļūda",
+  "reports.import.status.skippedQuota": "Izlaists (kvota)",
+  "reports.import.status.skippedQuotaTooltip": "AI apstrāde izlaista, jo sasniegts dienas limits.",
   "reports.import.error.fileReadError": "Kļūda lasot failu.",
-  "reports.import.error.aiGenericError": "AI apstrādes kļūda.",
-  "reports.import.error.aiServiceOverloaded": "AI pakalpojums pašlaik ir pārāk noslogots. Lūdzu, mēģiniet importēt vēlāk.",
+  "reports.import.error.aiGenericError": "AI apstrādes kļūda",
+  "reports.import.error.aiServiceOverloaded": "AI pakalpojums pašlaik ir pārāk noslogots. Lūdzu, mēģiniet vēlāk",
+  "reports.import.error.aiDailyQuotaExceededFull": "Pārsniegta dienas AI apstrādes kvota. Detaļas: {message}",
   "reports.import.associatedCompanyPrefix": "Saistītais uzņēmums",
   "reports.import.unknownDriver": "Nezināms vadītājs",
   "reports.import.toast.invalidFileType.title": "Nederīgs faila tips",
@@ -357,6 +360,8 @@
   "reports.import.toast.importSuccess.description": "Veiksmīgi importēti {count} ieraksti.",
   "reports.import.toast.importError.title": "Importēšanas kļūda",
   "reports.import.toast.importError.description": "Saglabājot datus, radās kļūda.",
+  "reports.import.toast.dailyQuotaReached.title": "Sasniegts Dienas AI Limits",
+  "reports.import.toast.dailyQuotaReached.description": "Pārsniegta dienas AI apstrādes kvota. Turpmākās rindas šajā failā netiks analizētas ar AI. Lūdzu, mēģiniet rīt vai atjauniniet savu plānu.",
   "countries.AF": "Afganistāna",
   "countries.AX": "Olandes salas",
   "countries.AL": "Albānija",
@@ -626,3 +631,5 @@
   "tags.pakenkta_imones_reputacijai": "Kaitēta uzņēmuma reputācijai",
   "tags.neteiseta_veikla_itariama": "Aizdomas par nelikumīgu darbību"
 }
+
+    

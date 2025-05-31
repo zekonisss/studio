@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, Upload, FileSpreadsheet, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Loader2, Upload, FileSpreadsheet, AlertTriangle, CheckCircle2, Ban } from "lucide-react"; // Added Ban for skipped
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/language-context";
@@ -19,14 +19,14 @@ import { Badge } from '@/components/ui/badge';
 interface ParsedRow {
   originalRow: Record<string, any>;
   reportPreview: Partial<Report>;
-  aiStatus: 'pending' | 'processing' | 'completed' | 'error';
+  aiStatus: 'pending' | 'processing' | 'completed' | 'error' | 'skipped_quota';
   aiResult?: { categoryId: string; suggestedTags: string[] };
   error?: string;
 }
 
-const AI_CALL_DELAY_MS = 4500; // Delay between processing different rows
-const MAX_AI_ATTEMPTS_PER_ROW = 2; // Initial attempt + 1 retry = 2 attempts
-const AI_RETRY_DELAY_MS = 7000; // 7 seconds delay for a retry on the same row
+const AI_CALL_DELAY_MS = 4500; 
+const MAX_AI_ATTEMPTS_PER_ROW = 2; 
+const AI_RETRY_DELAY_MS = 7000; 
 
 export default function ImportReportsPage() {
   const { user } = useAuth();
@@ -45,7 +45,7 @@ export default function ImportReportsPage() {
       if (selectedFile.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || selectedFile.name.endsWith('.xlsx')) {
         setFile(selectedFile);
         setFileName(selectedFile.name);
-        setParsedData([]); // Clear previous data
+        setParsedData([]); 
       } else {
         toast({
           variant: "destructive",
@@ -54,7 +54,7 @@ export default function ImportReportsPage() {
         });
         setFile(null);
         setFileName(null);
-        event.target.value = ""; // Reset file input
+        event.target.value = ""; 
       }
     }
   };
@@ -62,7 +62,7 @@ export default function ImportReportsPage() {
   const parseDate = (dateValue: any): Date | undefined => {
     if (!dateValue) return undefined;
     if (dateValue instanceof Date) return dateValue;
-    if (typeof dateValue === 'number') { // Excel date serial number
+    if (typeof dateValue === 'number') { 
       try {
         return XLSX.SSF.parse_date_code(dateValue) ? new Date(XLSX.SSF.format('yyyy-mm-dd', dateValue)) : undefined;
       } catch {
@@ -70,8 +70,7 @@ export default function ImportReportsPage() {
       }
     }
     if (typeof dateValue === 'string') {
-      // Try common date formats
-      const dateStr = dateValue.replace(/\./g, '-'); // Replace dots with dashes for consistency
+      const dateStr = dateValue.replace(/\./g, '-'); 
       const parsed = new Date(dateStr);
       if (!isNaN(parsed.getTime())) return parsed;
     }
@@ -152,15 +151,30 @@ export default function ImportReportsPage() {
   const processWithAI = async (rowsToProcess: ParsedRow[]) => {
     setIsProcessingAi(true);
     const updatedRows = [...rowsToProcess];
+    let dailyQuotaHitInThisBatch = false;
 
     for (let i = 0; i < updatedRows.length; i++) {
       let row = updatedRows[i];
+
+      if (dailyQuotaHitInThisBatch) {
+        updatedRows[i] = {
+          ...row,
+          aiStatus: 'skipped_quota',
+          reportPreview: {
+            ...row.reportPreview,
+            category: 'other_category',
+            tags: [],
+          },
+        };
+        continue; 
+      }
       
       if (!row.reportPreview.comment || row.reportPreview.comment.trim() === "") {
         row.aiStatus = 'completed';
         row.aiResult = { categoryId: 'other_category', suggestedTags: [] };
         row.reportPreview.category = 'other_category';
         row.reportPreview.tags = [];
+        updatedRows[i] = row;
         setParsedData([...updatedRows]);
         if (i < updatedRows.length - 1) {
           await new Promise(resolve => setTimeout(resolve, AI_CALL_DELAY_MS));
@@ -186,37 +200,58 @@ export default function ImportReportsPage() {
             },
           };
           attemptSuccess = true;
-          break; // Success, exit attempt loop
+          break; 
         } catch (error: any) {
-          const isServiceUnavailable = error.message && String(error.message).includes('[503 Service Unavailable]');
-          
-          if (attempt < MAX_AI_ATTEMPTS_PER_ROW && isServiceUnavailable) {
-            console.warn(`AI service unavailable for row ${i}, attempt ${attempt}/${MAX_AI_ATTEMPTS_PER_ROW}. Retrying in ${AI_RETRY_DELAY_MS / 1000}s... Details:`, error.message);
-            // Keep aiStatus as 'processing' or could introduce 'retrying'
+          const errorMessageString = String(error.message || '');
+          const isServiceUnavailable = errorMessageString.includes('[503 Service Unavailable]');
+          const isDailyQuotaError = errorMessageString.includes('[429 Too Many Requests]') && 
+                                   (errorMessageString.includes('exceeded your current quota') || errorMessageString.includes('PerDay') || errorMessageString.includes('GenerateRequestsPerDayPerProjectPerModel-FreeTier'));
+
+          if (isDailyQuotaError) {
+            console.error(`Daily AI quota limit likely reached at row ${i}, attempt ${attempt}. Error:`, error);
+            if (!dailyQuotaHitInThisBatch) { // Show toast only once per batch
+              toast({
+                variant: "destructive",
+                title: t('reports.import.toast.dailyQuotaReached.title'),
+                description: t('reports.import.toast.dailyQuotaReached.description'),
+                duration: 10000,
+              });
+            }
+            dailyQuotaHitInThisBatch = true;
+            updatedRows[i] = {
+              ...updatedRows[i],
+              aiStatus: 'error',
+              error: t('reports.import.error.aiDailyQuotaExceededFull', { message: errorMessageString }),
+            };
+            // Do not break from retry loop immediately, let it exhaust if it's not the last attempt (though for daily quota, retries are futile)
+            // but if it's the last attempt, it will fall through to the error state.
+            // Actually, for daily quota, we should break the retry loop as it won't help.
+            break; 
+          } else if (attempt < MAX_AI_ATTEMPTS_PER_ROW && isServiceUnavailable) {
+            console.warn(`AI service unavailable for row ${i}, attempt ${attempt}/${MAX_AI_ATTEMPTS_PER_ROW}. Retrying in ${AI_RETRY_DELAY_MS / 1000}s... Details:`, errorMessageString);
             await new Promise(resolve => setTimeout(resolve, AI_RETRY_DELAY_MS));
-            // Continue to next attempt
           } else {
-            // Not a retryable 503, or max attempts reached
-            const errorMessage = error.message || t('reports.import.error.aiGenericError');
-            console.error(`AI processing error for row ${i} (Attempt ${attempt}/${MAX_AI_ATTEMPTS_PER_ROW})`, error); // This is the line user pointed to (183)
+            const specificErrorMsg = isServiceUnavailable ? 
+                                     `${t('reports.import.error.aiServiceOverloaded')} (Attempt ${attempt}/${MAX_AI_ATTEMPTS_PER_ROW})` :
+                                     `${t('reports.import.error.aiGenericError')} (Attempt ${attempt}/${MAX_AI_ATTEMPTS_PER_ROW}): ${errorMessageString}`;
+            console.error(`AI processing error for row ${i} (Attempt ${attempt}/${MAX_AI_ATTEMPTS_PER_ROW})`, error);
             updatedRows[i] = { 
               ...updatedRows[i], 
               aiStatus: 'error', 
-              error: isServiceUnavailable ? 
-                     `${t('reports.import.error.aiServiceOverloaded')} (Attempt ${attempt}/${MAX_AI_ATTEMPTS_PER_ROW})` :
-                     `${t('reports.import.error.aiGenericError')} (Attempt ${attempt}/${MAX_AI_ATTEMPTS_PER_ROW}): ${errorMessage}`
+              error: specificErrorMsg,
             };
-            break; // Critical error or retries exhausted, exit attempt loop
+            break; 
           }
         }
       }
       
       setParsedData([...updatedRows]);
 
-      if (i < updatedRows.length - 1) {
+      if (i < updatedRows.length - 1 && !dailyQuotaHitInThisBatch) {
         await new Promise(resolve => setTimeout(resolve, AI_CALL_DELAY_MS));
       }
     }
+    setParsedData([...updatedRows]); // Ensure final state is set
     setIsProcessingAi(false);
   };
 
@@ -228,7 +263,7 @@ export default function ImportReportsPage() {
 
     setIsImporting(true);
     const reportsToImport: Report[] = parsedData
-      .filter(row => row.aiStatus === 'completed' && row.reportPreview)
+      .filter(row => (row.aiStatus === 'completed' || row.aiStatus === 'skipped_quota') && row.reportPreview)
       .map(row => row.reportPreview as Report);
 
     if (reportsToImport.length === 0) {
@@ -318,12 +353,14 @@ export default function ImportReportsPage() {
                         <TableCell>{row.reportPreview.createdAt ? new Date(row.reportPreview.createdAt).toLocaleDateString(locale) : '-'}</TableCell>
                         <TableCell>
                           {row.aiStatus === 'completed' && row.aiResult?.categoryId ? getCategoryNameDisplay(row.aiResult.categoryId) : 
+                           row.aiStatus === 'skipped_quota' ? getCategoryNameDisplay(row.reportPreview.category!) :
                            row.aiStatus === 'processing' ? <Loader2 className="h-4 w-4 animate-spin" /> : 
                            (row.aiStatus === 'error' ? <span className="text-destructive text-xs">{t('reports.import.status.aiError')}</span> : '-')}
                         </TableCell>
                         <TableCell>
                            {row.aiStatus === 'completed' && row.aiResult?.suggestedTags && row.aiResult.suggestedTags.length > 0 ? 
                             row.aiResult.suggestedTags.map(tag => <Badge key={tag} variant="outline" className="mr-1 mb-1 text-xs">{t(`tags.${tag.toLowerCase().replace(/\s+/g, '_').replace(/\//g, '_')}`)}</Badge>) : 
+                            row.aiStatus === 'skipped_quota' ? <span className="text-xs text-muted-foreground">-</span> :
                             row.aiStatus === 'processing' ? <Loader2 className="h-4 w-4 animate-spin" /> : 
                             (row.aiStatus === 'completed' && row.aiResult?.suggestedTags.length === 0 ? <span className="text-xs text-muted-foreground">-</span> : 
                             (row.aiStatus === 'error' ? <span className="text-destructive text-xs">{t('reports.import.status.aiError')}</span> : '-'))}
@@ -335,6 +372,11 @@ export default function ImportReportsPage() {
                           {row.aiStatus === 'error' && 
                             <div className="flex items-center text-destructive text-xs" title={row.error}>
                                 <AlertTriangle className="h-4 w-4 mr-1" /> {t('reports.import.status.error')}
+                            </div>
+                          }
+                          {row.aiStatus === 'skipped_quota' &&
+                            <div className="flex items-center text-orange-500 text-xs" title={t('reports.import.status.skippedQuotaTooltip')}>
+                                <Ban className="h-4 w-4 mr-1" /> {t('reports.import.status.skippedQuota')}
                             </div>
                           }
                         </TableCell>
@@ -350,7 +392,7 @@ export default function ImportReportsPage() {
           <CardFooter>
             <Button onClick={handleImportData} disabled={isImporting || isProcessingAi || parsedData.some(r => r.aiStatus === 'processing')} className="w-full sm:w-auto ml-auto">
               {isImporting ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <CheckCircle2 className="mr-2 h-5 w-5" />}
-              {isImporting ? t('reports.import.button.importing') : t('reports.import.button.importAll', { count: parsedData.filter(r => r.aiStatus === 'completed').length })}
+              {isImporting ? t('reports.import.button.importing') : t('reports.import.button.importAll', { count: parsedData.filter(r => r.aiStatus === 'completed' || r.aiStatus === 'skipped_quota').length })}
             </Button>
           </CardFooter>
         )}
@@ -358,3 +400,5 @@ export default function ImportReportsPage() {
     </div>
   );
 }
+
+    

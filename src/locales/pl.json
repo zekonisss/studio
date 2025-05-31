@@ -336,9 +336,12 @@
   "reports.import.status.completed": "Ukończono",
   "reports.import.status.error": "Błąd",
   "reports.import.status.aiError": "Błąd AI",
+  "reports.import.status.skippedQuota": "Pominięto (limit)",
+  "reports.import.status.skippedQuotaTooltip": "Przetwarzanie AI pominięte z powodu osiągnięcia dziennego limitu.",
   "reports.import.error.fileReadError": "Błąd odczytu pliku.",
-  "reports.import.error.aiGenericError": "Błąd przetwarzania AI.",
-  "reports.import.error.aiServiceOverloaded": "Usługa AI jest obecnie przeciążona. Spróbuj zaimportować później.",
+  "reports.import.error.aiGenericError": "Błąd przetwarzania AI",
+  "reports.import.error.aiServiceOverloaded": "Usługa AI jest obecnie przeciążona. Spróbuj później",
+  "reports.import.error.aiDailyQuotaExceededFull": "Przekroczono dzienny limit przetwarzania AI. Szczegóły: {message}",
   "reports.import.associatedCompanyPrefix": "Powiązana firma",
   "reports.import.unknownDriver": "Nieznany kierowca",
   "reports.import.toast.invalidFileType.title": "Nieprawidłowy typ pliku",
@@ -357,6 +360,8 @@
   "reports.import.toast.importSuccess.description": "Pomyślnie zaimportowano {count} wpisów.",
   "reports.import.toast.importError.title": "Błąd importu",
   "reports.import.toast.importError.description": "Wystąpił błąd podczas zapisywania danych.",
+  "reports.import.toast.dailyQuotaReached.title": "Osiągnięto Dzienny Limit AI",
+  "reports.import.toast.dailyQuotaReached.description": "Przekroczono dzienny limit przetwarzania AI. Kolejne wiersze w tym pliku nie będą analizowane przez AI. Spróbuj ponownie jutro lub zaktualizuj swój plan.",
   "countries.AF": "Afganistan",
   "countries.AX": "Wyspy Alandzkie",
   "countries.AL": "Albania",
@@ -480,7 +485,6 @@
   "countries.KW": "Kuwejt",
   "countries.KG": "Kirgistan",
   "countries.LA": "Laotańska Republika Ludowo-Demokratyczna",
-  "countries.LV": "Łotwa",
   "countries.LB": "Liban",
   "countries.LS": "Lesotho",
   "countries.LR": "Liberia",
@@ -627,3 +631,5 @@
   "tags.pakenkta_imones_reputacijai": "Naruszenie reputacji firmy",
   "tags.neteiseta_veikla_itariama": "Podejrzenie nielegalnej działalności"
 }
+
+    

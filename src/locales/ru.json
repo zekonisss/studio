@@ -336,9 +336,12 @@
   "reports.import.status.completed": "Завершено",
   "reports.import.status.error": "Ошибка",
   "reports.import.status.aiError": "AI Ошибка",
+  "reports.import.status.skippedQuota": "Пропущено (квота)",
+  "reports.import.status.skippedQuotaTooltip": "Обработка AI пропущена из-за достижения дневного лимита.",
   "reports.import.error.fileReadError": "Ошибка чтения файла.",
-  "reports.import.error.aiGenericError": "Ошибка обработки AI.",
-  "reports.import.error.aiServiceOverloaded": "Сервис AI в настоящее время перегружен. Пожалуйста, попробуйте импортировать позже.",
+  "reports.import.error.aiGenericError": "Ошибка обработки AI",
+  "reports.import.error.aiServiceOverloaded": "Сервис AI в настоящее время перегружен. Пожалуйста, попробуйте позже",
+  "reports.import.error.aiDailyQuotaExceededFull": "Превышен дневной лимит обработки AI. Детали: {message}",
   "reports.import.associatedCompanyPrefix": "Связанная компания",
   "reports.import.unknownDriver": "Неизвестный водитель",
   "reports.import.toast.invalidFileType.title": "Неверный тип файла",
@@ -357,6 +360,8 @@
   "reports.import.toast.importSuccess.description": "Успешно импортировано {count} записей.",
   "reports.import.toast.importError.title": "Ошибка импорта",
   "reports.import.toast.importError.description": "Произошла ошибка при сохранении данных.",
+  "reports.import.toast.dailyQuotaReached.title": "Достигнут Дневной Лимит AI",
+  "reports.import.toast.dailyQuotaReached.description": "Превышен дневной лимит обработки AI. Дальнейшие строки в этом файле не будут проанализированы AI. Пожалуйста, попробуйте завтра или обновите свой план.",
   "countries.AF": "Афганистан",
   "countries.AX": "Аландские острова",
   "countries.AL": "Албания",
@@ -480,7 +485,6 @@
   "countries.KW": "Кувейт",
   "countries.KG": "Кыргызстан",
   "countries.LA": "Лаосская Народно-Демократическая Республика",
-  "countries.LV": "Латвия",
   "countries.LB": "Ливан",
   "countries.LS": "Лесото",
   "countries.LR": "Либерия",
@@ -533,7 +537,6 @@
   "countries.PE": "Перу",
   "countries.PH": "Филиппины",
   "countries.PN": "Питкэрн",
-  "countries.PL": "Польша",
   "countries.PT": "Португалия",
   "countries.PR": "Пуэрто-Рико",
   "countries.QA": "Катар",
@@ -628,3 +631,5 @@
   "tags.pakenkta_imones_reputacijai": "Нанесен ущерб репутации компании",
   "tags.neteiseta_veikla_itariama": "Подозревается незаконная деятельность"
 }
+
+    
