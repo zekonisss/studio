@@ -24,6 +24,8 @@ interface ParsedRow {
   error?: string;
 }
 
+const AI_CALL_DELAY_MS = 4500; // 4.5 seconds delay (allows approx. 13 calls per minute)
+
 export default function ImportReportsPage() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -182,6 +184,11 @@ export default function ImportReportsPage() {
         updatedRows[i] = { ...updatedRows[i], aiStatus: 'error', error: error.message || t('reports.import.error.aiGenericError') };
       }
       setParsedData([...updatedRows]); // Update UI with AI result or error
+
+      // Add delay if there are more rows to process
+      if (i < updatedRows.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, AI_CALL_DELAY_MS));
+      }
     }
     setIsProcessingAi(false);
   };
@@ -318,3 +325,5 @@ export default function ImportReportsPage() {
     </div>
   );
 }
+
+      
