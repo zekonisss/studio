@@ -19,6 +19,7 @@ import {
   ShieldQuestion,
   ShieldAlert,
   UserSearch, 
+  FileSpreadsheet // Added icon for import
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
@@ -31,6 +32,7 @@ const mainNavItemsBase = [
   { href: "/dashboard", labelKey: "sidebar.dashboard", icon: LayoutDashboard },
   { href: "/search", labelKey: "sidebar.search", icon: Search },
   { href: "/reports/add", labelKey: "sidebar.addReport", icon: FilePlus2 },
+  { href: "/reports/import", labelKey: "sidebar.importReports", icon: FileSpreadsheet }, // Added import link
 ];
 
 const historyNavItemsBase = [
@@ -40,7 +42,6 @@ const historyNavItemsBase = [
 
 const accountNavItemsBase = [
   { href: "/account", labelKey: "sidebar.account", icon: UserCircle },
-  // { href: "/account/settings", labelKey: "sidebar.settings", icon: Settings }, // Settings page not implemented
   { href: "/support", labelKey: "sidebar.support", icon: ShieldQuestion },
 ];
 
@@ -67,9 +68,8 @@ export function SidebarNav({ isInSheet = false }: SidebarNavProps) {
   const handleLogout = async () => {
     try {
       await logout();
-      // Toast is handled within useAuth now
     } catch (error) {
-      // Toast is handled within useAuth now
+      // Toast is handled within useAuth
     }
   };
 
@@ -97,17 +97,16 @@ export function SidebarNav({ isInSheet = false }: SidebarNavProps) {
             <h1 className="text-2xl font-bold text-sidebar-primary">{t('app.name')}</h1>
           </Link>
         </NavLinkWrapper>
-        {/* Language switcher removed from desktop sidebar header */}
       </div>
       {isInSheet && (
-        <div className="p-4 border-b border-sidebar-border flex justify-end"> {/* Adjusted for mobile sheet */}
+        <div className="p-4 border-b border-sidebar-border flex justify-end">
             <LanguageSwitcher /> 
         </div>
       )}
 
 
       <ScrollArea className="flex-1">
-        <nav className="flex flex-col gap-1 p-4"> {/* Reduced gap for denser menu */}
+        <nav className="flex flex-col gap-1 p-4">
           <div>
             <h3 className="mb-1 px-2 text-xs font-semibold uppercase text-muted-foreground tracking-wider">{t('sidebar.section.main')}</h3>
             {mainNavItems.map((item) => (
@@ -116,7 +115,7 @@ export function SidebarNav({ isInSheet = false }: SidebarNavProps) {
                   href={item.href}
                   className={cn(
                     buttonVariants({ variant: pathname === item.href ? "secondary" : "ghost" , size: "default"}),
-                    "w-full justify-start rounded-md text-sm font-medium h-9", // Reduced height
+                    "w-full justify-start rounded-md text-sm font-medium h-9", 
                     pathname === item.href
                       ? "bg-sidebar-accent text-sidebar-accent-foreground"
                       : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
@@ -137,7 +136,7 @@ export function SidebarNav({ isInSheet = false }: SidebarNavProps) {
                   href={item.href}
                   className={cn(
                     buttonVariants({ variant: pathname === item.href ? "secondary" : "ghost", size: "default" }),
-                    "w-full justify-start rounded-md text-sm font-medium h-9", // Reduced height
+                    "w-full justify-start rounded-md text-sm font-medium h-9", 
                     pathname === item.href
                       ? "bg-sidebar-accent text-sidebar-accent-foreground"
                       : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
@@ -157,9 +156,9 @@ export function SidebarNav({ isInSheet = false }: SidebarNavProps) {
                 <Link
                   href={item.href}
                   className={cn(
-                    buttonVariants({ variant: pathname.startsWith(item.href) && item.href !== '/support' ? "secondary" : "ghost", size: "default" }),
-                    "w-full justify-start rounded-md text-sm font-medium h-9", // Reduced height
-                    pathname.startsWith(item.href) && item.href !== '/support' && !pathname.startsWith('/account/settings') 
+                    buttonVariants({ variant: pathname.startsWith(item.href) && (item.href !== '/support' || pathname === '/support') ? "secondary" : "ghost", size: "default" }),
+                    "w-full justify-start rounded-md text-sm font-medium h-9",
+                    pathname.startsWith(item.href) && (item.href !== '/support' || pathname === '/support') && !pathname.startsWith('/account/settings') 
                       ? "bg-sidebar-accent text-sidebar-accent-foreground"
                       : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                   )}
@@ -180,7 +179,7 @@ export function SidebarNav({ isInSheet = false }: SidebarNavProps) {
                     href={item.href}
                     className={cn(
                       buttonVariants({ variant: pathname.startsWith(item.href) ? "secondary" : "ghost", size: "default" }),
-                      "w-full justify-start rounded-md text-sm font-medium h-9", // Reduced height
+                      "w-full justify-start rounded-md text-sm font-medium h-9",
                       pathname.startsWith(item.href)
                         ? "bg-sidebar-accent text-sidebar-accent-foreground"
                         : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
@@ -207,7 +206,7 @@ export function SidebarNav({ isInSheet = false }: SidebarNavProps) {
             <p className="text-xs text-muted-foreground">{user.contactPerson}</p>
           </div>
         </div>
-        <Button variant="outline" className="w-full h-9" onClick={handleLogout} disabled={loading}> {/* Reduced height */}
+        <Button variant="outline" className="w-full h-9" onClick={handleLogout} disabled={loading}>
           <LogOut className="mr-2 h-4 w-4" />
           {t('sidebar.logout')}
         </Button>
