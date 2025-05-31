@@ -24,12 +24,12 @@ const categoryDescriptionsForPrompt = allCategoryObjects.map(cat => {
 }).join('; \n');
 
 
-export const CategorizeReportInputSchema = z.object({
+const CategorizeReportInputSchema = z.object({
   comment: z.string().describe('The textual comment describing the incident. This comment may be in various languages.'),
 });
 export type CategorizeReportInput = z.infer<typeof CategorizeReportInputSchema>;
 
-export const CategorizeReportOutputSchema = z.object({
+const CategorizeReportOutputSchema = z.object({
   categoryId: z.string().describe(`The most relevant category ID from the following list: ${allCategoryIds.join(', ')}. Choose only one. If unsure, select 'other_category'.`),
   suggestedTags: z.array(z.string()).describe('A list of relevant tags for the incident, chosen ONLY from the tags available for the selected categoryId. If no tags are relevant or available for the chosen category, or if the category is "other_category", return an empty array.'),
 });
