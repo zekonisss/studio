@@ -24,7 +24,9 @@ interface ParsedRow {
   error?: string;
 }
 
-const AI_CALL_DELAY_MS = 4500; // 4.5 seconds delay (allows approx. 13 calls per minute)
+const AI_CALL_DELAY_MS = 4500; // Delay between processing different rows
+const MAX_AI_ATTEMPTS_PER_ROW = 2; // Initial attempt + 1 retry = 2 attempts
+const AI_RETRY_DELAY_MS = 7000; // 7 seconds delay for a retry on the same row
 
 export default function ImportReportsPage() {
   const { user } = useAuth();
@@ -99,7 +101,6 @@ export default function ImportReportsPage() {
           return;
         }
         
-        // Validate headers
         const expectedHeaders = ['Title', 'Company', 'Comment1', 'Comment2'];
         const actualHeaders = Object.keys(jsonData[0] || {});
         const missingHeaders = expectedHeaders.filter(h => !actualHeaders.includes(h));
@@ -114,7 +115,6 @@ export default function ImportReportsPage() {
             setIsLoadingFile(false);
             return;
         }
-
 
         const previews: ParsedRow[] = jsonData.map((row, index) => {
           const createdAtDate = parseDate(row.Comment2);
@@ -131,9 +131,9 @@ export default function ImportReportsPage() {
               reporterCompanyName: user.companyName,
               fullName: String(row.Title || t('reports.import.unknownDriver')),
               comment: commentText,
-              createdAt: createdAtDate || new Date(), // Fallback to now if date is invalid/missing
-              category: 'other_category', // Default, to be updated by AI
-              tags: [], // Default, to be updated by AI
+              createdAt: createdAtDate || new Date(),
+              category: 'other_category',
+              tags: [],
             },
             aiStatus: 'pending',
           };
@@ -154,38 +154,65 @@ export default function ImportReportsPage() {
     const updatedRows = [...rowsToProcess];
 
     for (let i = 0; i < updatedRows.length; i++) {
-      const row = updatedRows[i];
+      let row = updatedRows[i];
+      
       if (!row.reportPreview.comment || row.reportPreview.comment.trim() === "") {
-        row.aiStatus = 'completed'; // Skip AI for empty comments
+        row.aiStatus = 'completed';
         row.aiResult = { categoryId: 'other_category', suggestedTags: [] };
         row.reportPreview.category = 'other_category';
         row.reportPreview.tags = [];
-        setParsedData([...updatedRows]); // Update UI progressively
+        setParsedData([...updatedRows]);
+        if (i < updatedRows.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, AI_CALL_DELAY_MS));
+        }
         continue;
       }
 
       updatedRows[i] = { ...row, aiStatus: 'processing' };
-      setParsedData([...updatedRows]); // Update UI to show processing status
+      setParsedData([...updatedRows]);
 
-      try {
-        const aiResult = await categorizeReport({ comment: row.reportPreview.comment! });
-        updatedRows[i] = {
-          ...updatedRows[i],
-          aiStatus: 'completed',
-          aiResult: aiResult,
-          reportPreview: {
-            ...updatedRows[i].reportPreview,
-            category: aiResult.categoryId,
-            tags: aiResult.suggestedTags,
-          },
-        };
-      } catch (error: any) {
-        console.error("AI processing error for row", i, error);
-        updatedRows[i] = { ...updatedRows[i], aiStatus: 'error', error: error.message || t('reports.import.error.aiGenericError') };
+      let attemptSuccess = false;
+      for (let attempt = 1; attempt <= MAX_AI_ATTEMPTS_PER_ROW; attempt++) {
+        try {
+          const aiResult = await categorizeReport({ comment: row.reportPreview.comment! });
+          updatedRows[i] = {
+            ...updatedRows[i],
+            aiStatus: 'completed',
+            aiResult: aiResult,
+            reportPreview: {
+              ...updatedRows[i].reportPreview,
+              category: aiResult.categoryId,
+              tags: aiResult.suggestedTags,
+            },
+          };
+          attemptSuccess = true;
+          break; // Success, exit attempt loop
+        } catch (error: any) {
+          const isServiceUnavailable = error.message && String(error.message).includes('[503 Service Unavailable]');
+          
+          if (attempt < MAX_AI_ATTEMPTS_PER_ROW && isServiceUnavailable) {
+            console.warn(`AI service unavailable for row ${i}, attempt ${attempt}/${MAX_AI_ATTEMPTS_PER_ROW}. Retrying in ${AI_RETRY_DELAY_MS / 1000}s... Details:`, error.message);
+            // Keep aiStatus as 'processing' or could introduce 'retrying'
+            await new Promise(resolve => setTimeout(resolve, AI_RETRY_DELAY_MS));
+            // Continue to next attempt
+          } else {
+            // Not a retryable 503, or max attempts reached
+            const errorMessage = error.message || t('reports.import.error.aiGenericError');
+            console.error(`AI processing error for row ${i} (Attempt ${attempt}/${MAX_AI_ATTEMPTS_PER_ROW})`, error); // This is the line user pointed to (183)
+            updatedRows[i] = { 
+              ...updatedRows[i], 
+              aiStatus: 'error', 
+              error: isServiceUnavailable ? 
+                     `${t('reports.import.error.aiServiceOverloaded')} (Attempt ${attempt}/${MAX_AI_ATTEMPTS_PER_ROW})` :
+                     `${t('reports.import.error.aiGenericError')} (Attempt ${attempt}/${MAX_AI_ATTEMPTS_PER_ROW}): ${errorMessage}`
+            };
+            break; // Critical error or retries exhausted, exit attempt loop
+          }
+        }
       }
-      setParsedData([...updatedRows]); // Update UI with AI result or error
+      
+      setParsedData([...updatedRows]);
 
-      // Add delay if there are more rows to process
       if (i < updatedRows.length - 1) {
         await new Promise(resolve => setTimeout(resolve, AI_CALL_DELAY_MS));
       }
@@ -222,7 +249,6 @@ export default function ImportReportsPage() {
       setParsedData([]);
       setFile(null);
       setFileName(null);
-      // Reset file input visually
       const fileInput = document.getElementById('excel-file-input') as HTMLInputElement;
       if (fileInput) fileInput.value = "";
 
@@ -292,18 +318,25 @@ export default function ImportReportsPage() {
                         <TableCell>{row.reportPreview.createdAt ? new Date(row.reportPreview.createdAt).toLocaleDateString(locale) : '-'}</TableCell>
                         <TableCell>
                           {row.aiStatus === 'completed' && row.aiResult?.categoryId ? getCategoryNameDisplay(row.aiResult.categoryId) : 
-                           row.aiStatus === 'processing' ? <Loader2 className="h-4 w-4 animate-spin" /> : '-'}
+                           row.aiStatus === 'processing' ? <Loader2 className="h-4 w-4 animate-spin" /> : 
+                           (row.aiStatus === 'error' ? <span className="text-destructive text-xs">{t('reports.import.status.aiError')}</span> : '-')}
                         </TableCell>
                         <TableCell>
                            {row.aiStatus === 'completed' && row.aiResult?.suggestedTags && row.aiResult.suggestedTags.length > 0 ? 
                             row.aiResult.suggestedTags.map(tag => <Badge key={tag} variant="outline" className="mr-1 mb-1 text-xs">{t(`tags.${tag.toLowerCase().replace(/\s+/g, '_').replace(/\//g, '_')}`)}</Badge>) : 
-                            row.aiStatus === 'processing' ? <Loader2 className="h-4 w-4 animate-spin" /> : '-'}
+                            row.aiStatus === 'processing' ? <Loader2 className="h-4 w-4 animate-spin" /> : 
+                            (row.aiStatus === 'completed' && row.aiResult?.suggestedTags.length === 0 ? <span className="text-xs text-muted-foreground">-</span> : 
+                            (row.aiStatus === 'error' ? <span className="text-destructive text-xs">{t('reports.import.status.aiError')}</span> : '-'))}
                         </TableCell>
                         <TableCell>
                           {row.aiStatus === 'pending' && <span className="text-muted-foreground text-xs">{t('reports.import.status.pending')}</span>}
                           {row.aiStatus === 'processing' && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
                           {row.aiStatus === 'completed' && <CheckCircle2 className="h-5 w-5 text-green-600" />}
-                          {row.aiStatus === 'error' && <div className="flex items-center text-destructive text-xs"><AlertTriangle className="h-4 w-4 mr-1" /> {t('reports.import.status.error')}</div>}
+                          {row.aiStatus === 'error' && 
+                            <div className="flex items-center text-destructive text-xs" title={row.error}>
+                                <AlertTriangle className="h-4 w-4 mr-1" /> {t('reports.import.status.error')}
+                            </div>
+                          }
                         </TableCell>
                       </TableRow>
                     ))}
@@ -325,5 +358,3 @@ export default function ImportReportsPage() {
     </div>
   );
 }
-
-      
