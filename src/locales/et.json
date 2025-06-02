@@ -339,8 +339,10 @@
   "reports.import.status.skippedQuota": "Vahele jäetud (kvoot)",
   "reports.import.status.skippedQuotaTooltip": "AI töötlemine vahele jäetud päevalimiidi saavutamise tõttu.",
   "reports.import.error.fileReadError": "Faili lugemise viga.",
-  "reports.import.error.aiGenericError": "AI töötlemise viga",
-  "reports.import.error.aiServiceOverloaded": "AI teenus on hetkel ülekoormatud. Palun proovi hiljem",
+  "reports.import.error.aiGenericError": "AI töötlemise viga.",
+  "reports.import.error.aiGenericErrorAttempt": "AI töötlemise viga (Katse {attempt}/{maxAttempts}): {message}",
+  "reports.import.error.aiServiceOverloaded": "AI teenus on hetkel ülekoormatud. Palun proovi hiljem.",
+  "reports.import.error.aiServiceOverloadedMaxAttempts": "AI teenus on endiselt ülekoormatud pärast {attempts} katset. Palun proovi hiljem.",
   "reports.import.error.aiDailyQuotaExceededFull": "Päevane AI töötlemise kvoot ületatud. Üksikasjad: {message}",
   "reports.import.associatedCompanyPrefix": "Seotud ettevõte",
   "reports.import.unknownDriver": "Tundmatu juht",
@@ -630,5 +632,3 @@
   "tags.pakenkta_imones_reputacijai": "Ettevõtte maine kahjustatud",
   "tags.neteiseta_veikla_itariama": "Kahtlustatakse ebaseaduslikku tegevust"
 }
-
-    

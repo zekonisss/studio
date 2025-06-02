@@ -339,8 +339,10 @@
   "reports.import.status.skippedQuota": "Пропущено (квота)",
   "reports.import.status.skippedQuotaTooltip": "Обработка AI пропущена из-за достижения дневного лимита.",
   "reports.import.error.fileReadError": "Ошибка чтения файла.",
-  "reports.import.error.aiGenericError": "Ошибка обработки AI",
-  "reports.import.error.aiServiceOverloaded": "Сервис AI в настоящее время перегружен. Пожалуйста, попробуйте позже",
+  "reports.import.error.aiGenericError": "Ошибка обработки AI.",
+  "reports.import.error.aiGenericErrorAttempt": "Ошибка обработки AI (Попытка {attempt}/{maxAttempts}): {message}",
+  "reports.import.error.aiServiceOverloaded": "Сервис AI в настоящее время перегружен. Пожалуйста, попробуйте позже.",
+  "reports.import.error.aiServiceOverloadedMaxAttempts": "Сервис AI все еще перегружен после {attempts} попыток. Пожалуйста, попробуйте позже.",
   "reports.import.error.aiDailyQuotaExceededFull": "Превышен дневной лимит обработки AI. Детали: {message}",
   "reports.import.associatedCompanyPrefix": "Связанная компания",
   "reports.import.unknownDriver": "Неизвестный водитель",
@@ -485,6 +487,7 @@
   "countries.KW": "Кувейт",
   "countries.KG": "Кыргызстан",
   "countries.LA": "Лаосская Народно-Демократическая Республика",
+  "countries.LV": "Латвия",
   "countries.LB": "Ливан",
   "countries.LS": "Лесото",
   "countries.LR": "Либерия",
@@ -537,6 +540,7 @@
   "countries.PE": "Перу",
   "countries.PH": "Филиппины",
   "countries.PN": "Питкэрн",
+  "countries.PL": "Польша",
   "countries.PT": "Португалия",
   "countries.PR": "Пуэрто-Рико",
   "countries.QA": "Катар",
@@ -631,5 +635,3 @@
   "tags.pakenkta_imones_reputacijai": "Нанесен ущерб репутации компании",
   "tags.neteiseta_veikla_itariama": "Подозревается незаконная деятельность"
 }
-
-    

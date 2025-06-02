@@ -339,8 +339,10 @@
   "reports.import.status.skippedQuota": "Pominięto (limit)",
   "reports.import.status.skippedQuotaTooltip": "Przetwarzanie AI pominięte z powodu osiągnięcia dziennego limitu.",
   "reports.import.error.fileReadError": "Błąd odczytu pliku.",
-  "reports.import.error.aiGenericError": "Błąd przetwarzania AI",
-  "reports.import.error.aiServiceOverloaded": "Usługa AI jest obecnie przeciążona. Spróbuj później",
+  "reports.import.error.aiGenericError": "Błąd przetwarzania AI.",
+  "reports.import.error.aiGenericErrorAttempt": "Błąd przetwarzania AI (Próba {attempt}/{maxAttempts}): {message}",
+  "reports.import.error.aiServiceOverloaded": "Usługa AI jest obecnie przeciążona. Spróbuj później.",
+  "reports.import.error.aiServiceOverloadedMaxAttempts": "Usługa AI jest nadal przeciążona po {attempts} próbach. Spróbuj później.",
   "reports.import.error.aiDailyQuotaExceededFull": "Przekroczono dzienny limit przetwarzania AI. Szczegóły: {message}",
   "reports.import.associatedCompanyPrefix": "Powiązana firma",
   "reports.import.unknownDriver": "Nieznany kierowca",
@@ -485,6 +487,7 @@
   "countries.KW": "Kuwejt",
   "countries.KG": "Kirgistan",
   "countries.LA": "Laotańska Republika Ludowo-Demokratyczna",
+  "countries.LV": "Łotwa",
   "countries.LB": "Liban",
   "countries.LS": "Lesotho",
   "countries.LR": "Liberia",
@@ -537,6 +540,7 @@
   "countries.PE": "Peru",
   "countries.PH": "Filipiny",
   "countries.PN": "Pitcairn",
+  "countries.PL": "Polska",
   "countries.PT": "Portugalia",
   "countries.PR": "Portoryko",
   "countries.QA": "Katar",
@@ -631,5 +635,3 @@
   "tags.pakenkta_imones_reputacijai": "Naruszenie reputacji firmy",
   "tags.neteiseta_veikla_itariama": "Podejrzenie nielegalnej działalności"
 }
-
-    

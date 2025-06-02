@@ -339,8 +339,10 @@
   "reports.import.status.skippedQuota": "Izlaists (kvota)",
   "reports.import.status.skippedQuotaTooltip": "AI apstrāde izlaista, jo sasniegts dienas limits.",
   "reports.import.error.fileReadError": "Kļūda lasot failu.",
-  "reports.import.error.aiGenericError": "AI apstrādes kļūda",
-  "reports.import.error.aiServiceOverloaded": "AI pakalpojums pašlaik ir pārāk noslogots. Lūdzu, mēģiniet vēlāk",
+  "reports.import.error.aiGenericError": "AI apstrādes kļūda.",
+  "reports.import.error.aiGenericErrorAttempt": "AI apstrādes kļūda (Mēģinājums {attempt}/{maxAttempts}): {message}",
+  "reports.import.error.aiServiceOverloaded": "AI pakalpojums pašlaik ir pārāk noslogots. Lūdzu, mēģiniet vēlāk.",
+  "reports.import.error.aiServiceOverloadedMaxAttempts": "AI pakalpojums joprojām ir pārāk noslogots pēc {attempts} mēģinājumiem. Lūdzu, mēģiniet vēlāk.",
   "reports.import.error.aiDailyQuotaExceededFull": "Pārsniegta dienas AI apstrādes kvota. Detaļas: {message}",
   "reports.import.associatedCompanyPrefix": "Saistītais uzņēmums",
   "reports.import.unknownDriver": "Nezināms vadītājs",
@@ -485,6 +487,7 @@
   "countries.KW": "Kuveita",
   "countries.KG": "Kirgizstāna",
   "countries.LA": "Laosas Tautas Demokrātiskā Republika",
+  "countries.LV": "Latvija",
   "countries.LB": "Libāna",
   "countries.LS": "Lesoto",
   "countries.LR": "Libērija",
@@ -631,5 +634,3 @@
   "tags.pakenkta_imones_reputacijai": "Kaitēta uzņēmuma reputācijai",
   "tags.neteiseta_veikla_itariama": "Aizdomas par nelikumīgu darbību"
 }
-
-    

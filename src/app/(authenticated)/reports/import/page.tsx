@@ -24,9 +24,9 @@ interface ParsedRow {
   error?: string;
 }
 
-const AI_CALL_DELAY_MS = 4500; 
-const MAX_AI_ATTEMPTS_PER_ROW = 2; 
-const AI_RETRY_DELAY_MS = 7000; 
+const AI_CALL_DELAY_MS = 4500;
+const MAX_AI_ATTEMPTS_PER_ROW = 2;
+const AI_RETRY_DELAY_MS = 7000;
 
 export default function ImportReportsPage() {
   const { user } = useAuth();
@@ -45,7 +45,7 @@ export default function ImportReportsPage() {
       if (selectedFile.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || selectedFile.name.endsWith('.xlsx')) {
         setFile(selectedFile);
         setFileName(selectedFile.name);
-        setParsedData([]); 
+        setParsedData([]);
       } else {
         toast({
           variant: "destructive",
@@ -54,7 +54,7 @@ export default function ImportReportsPage() {
         });
         setFile(null);
         setFileName(null);
-        event.target.value = ""; 
+        event.target.value = "";
       }
     }
   };
@@ -62,7 +62,7 @@ export default function ImportReportsPage() {
   const parseDate = (dateValue: any): Date | undefined => {
     if (!dateValue) return undefined;
     if (dateValue instanceof Date) return dateValue;
-    if (typeof dateValue === 'number') { 
+    if (typeof dateValue === 'number') {
       try {
         return XLSX.SSF.parse_date_code(dateValue) ? new Date(XLSX.SSF.format('yyyy-mm-dd', dateValue)) : undefined;
       } catch {
@@ -70,7 +70,7 @@ export default function ImportReportsPage() {
       }
     }
     if (typeof dateValue === 'string') {
-      const dateStr = dateValue.replace(/\./g, '-'); 
+      const dateStr = dateValue.replace(/\./g, '-');
       const parsed = new Date(dateStr);
       if (!isNaN(parsed.getTime())) return parsed;
     }
@@ -99,7 +99,7 @@ export default function ImportReportsPage() {
           setIsLoadingFile(false);
           return;
         }
-        
+
         const expectedHeaders = ['Title', 'Company', 'Comment1', 'Comment2'];
         const actualHeaders = Object.keys(jsonData[0] || {});
         const missingHeaders = expectedHeaders.filter(h => !actualHeaders.includes(h));
@@ -166,9 +166,10 @@ export default function ImportReportsPage() {
             tags: [],
           },
         };
-        continue; 
+        setParsedData([...updatedRows]); // Update UI for skipped row
+        continue;
       }
-      
+
       if (!row.reportPreview.comment || row.reportPreview.comment.trim() === "") {
         row.aiStatus = 'completed';
         row.aiResult = { categoryId: 'other_category', suggestedTags: [] };
@@ -200,16 +201,16 @@ export default function ImportReportsPage() {
             },
           };
           attemptSuccess = true;
-          break; 
+          break;
         } catch (error: any) {
           const errorMessageString = String(error.message || '');
           const isServiceUnavailable = errorMessageString.includes('[503 Service Unavailable]');
-          const isDailyQuotaError = errorMessageString.includes('[429 Too Many Requests]') && 
+          const isDailyQuotaError = errorMessageString.includes('[429 Too Many Requests]') &&
                                    (errorMessageString.includes('exceeded your current quota') || errorMessageString.includes('PerDay') || errorMessageString.includes('GenerateRequestsPerDayPerProjectPerModel-FreeTier'));
 
           if (isDailyQuotaError) {
-            console.error(`Daily AI quota limit likely reached at row ${i}, attempt ${attempt}. Error:`, error);
-            if (!dailyQuotaHitInThisBatch) { // Show toast only once per batch
+            console.error(`Daily AI quota limit reached at row ${i}, attempt ${attempt}. Error:`, error);
+            if (!dailyQuotaHitInThisBatch) {
               toast({
                 variant: "destructive",
                 title: t('reports.import.toast.dailyQuotaReached.title'),
@@ -223,35 +224,39 @@ export default function ImportReportsPage() {
               aiStatus: 'error',
               error: t('reports.import.error.aiDailyQuotaExceededFull', { message: errorMessageString }),
             };
-            // Do not break from retry loop immediately, let it exhaust if it's not the last attempt (though for daily quota, retries are futile)
-            // but if it's the last attempt, it will fall through to the error state.
-            // Actually, for daily quota, we should break the retry loop as it won't help.
-            break; 
+            break;
           } else if (attempt < MAX_AI_ATTEMPTS_PER_ROW && isServiceUnavailable) {
             console.warn(`AI service unavailable for row ${i}, attempt ${attempt}/${MAX_AI_ATTEMPTS_PER_ROW}. Retrying in ${AI_RETRY_DELAY_MS / 1000}s... Details:`, errorMessageString);
             await new Promise(resolve => setTimeout(resolve, AI_RETRY_DELAY_MS));
           } else {
-            const specificErrorMsg = isServiceUnavailable ? 
-                                     `${t('reports.import.error.aiServiceOverloaded')} (Attempt ${attempt}/${MAX_AI_ATTEMPTS_PER_ROW})` :
-                                     `${t('reports.import.error.aiGenericError')} (Attempt ${attempt}/${MAX_AI_ATTEMPTS_PER_ROW}): ${errorMessageString}`;
-            console.error(`AI processing error for row ${i} (Attempt ${attempt}/${MAX_AI_ATTEMPTS_PER_ROW})`, error);
-            updatedRows[i] = { 
-              ...updatedRows[i], 
-              aiStatus: 'error', 
+            // This block is reached on the last attempt for a 503, or for any other non-daily-quota error.
+            const specificErrorMsg = isServiceUnavailable ?
+                                     `${t('reports.import.error.aiServiceOverloadedMaxAttempts', { attempts: MAX_AI_ATTEMPTS_PER_ROW })}` :
+                                     `${t('reports.import.error.aiGenericErrorAttempt', { attempt, maxAttempts: MAX_AI_ATTEMPTS_PER_ROW, message: errorMessageString })}`;
+
+            if (isServiceUnavailable) {
+                 console.warn(`AI service still unavailable for row ${i} after ${attempt} attempts. Error:`, error);
+            } else {
+                 console.error(`AI processing error for row ${i} (Attempt ${attempt}/${MAX_AI_ATTEMPTS_PER_ROW}). Error:`, error);
+            }
+
+            updatedRows[i] = {
+              ...updatedRows[i],
+              aiStatus: 'error',
               error: specificErrorMsg,
             };
-            break; 
+            break;
           }
         }
       }
-      
+
       setParsedData([...updatedRows]);
 
       if (i < updatedRows.length - 1 && !dailyQuotaHitInThisBatch) {
         await new Promise(resolve => setTimeout(resolve, AI_CALL_DELAY_MS));
       }
     }
-    setParsedData([...updatedRows]); // Ensure final state is set
+    setParsedData([...updatedRows]);
     setIsProcessingAi(false);
   };
 
@@ -293,7 +298,7 @@ export default function ImportReportsPage() {
       setIsImporting(false);
     }
   };
-  
+
   const getCategoryNameDisplay = (categoryId: string) => {
     const category = detailedReportCategories.find(c => c.id === categoryId);
     return category ? t(category.nameKey) : categoryId;
@@ -352,24 +357,24 @@ export default function ImportReportsPage() {
                         <TableCell className="text-xs max-w-xs truncate">{row.reportPreview.comment}</TableCell>
                         <TableCell>{row.reportPreview.createdAt ? new Date(row.reportPreview.createdAt).toLocaleDateString(locale) : '-'}</TableCell>
                         <TableCell>
-                          {row.aiStatus === 'completed' && row.aiResult?.categoryId ? getCategoryNameDisplay(row.aiResult.categoryId) : 
+                          {row.aiStatus === 'completed' && row.aiResult?.categoryId ? getCategoryNameDisplay(row.aiResult.categoryId) :
                            row.aiStatus === 'skipped_quota' ? getCategoryNameDisplay(row.reportPreview.category!) :
-                           row.aiStatus === 'processing' ? <Loader2 className="h-4 w-4 animate-spin" /> : 
+                           row.aiStatus === 'processing' ? <Loader2 className="h-4 w-4 animate-spin" /> :
                            (row.aiStatus === 'error' ? <span className="text-destructive text-xs">{t('reports.import.status.aiError')}</span> : '-')}
                         </TableCell>
                         <TableCell>
-                           {row.aiStatus === 'completed' && row.aiResult?.suggestedTags && row.aiResult.suggestedTags.length > 0 ? 
-                            row.aiResult.suggestedTags.map(tag => <Badge key={tag} variant="outline" className="mr-1 mb-1 text-xs">{t(`tags.${tag.toLowerCase().replace(/\s+/g, '_').replace(/\//g, '_')}`)}</Badge>) : 
+                           {row.aiStatus === 'completed' && row.aiResult?.suggestedTags && row.aiResult.suggestedTags.length > 0 ?
+                            row.aiResult.suggestedTags.map(tag => <Badge key={tag} variant="outline" className="mr-1 mb-1 text-xs">{t(`tags.${tag.toLowerCase().replace(/\s+/g, '_').replace(/\//g, '_')}`)}</Badge>) :
                             row.aiStatus === 'skipped_quota' ? <span className="text-xs text-muted-foreground">-</span> :
-                            row.aiStatus === 'processing' ? <Loader2 className="h-4 w-4 animate-spin" /> : 
-                            (row.aiStatus === 'completed' && row.aiResult?.suggestedTags.length === 0 ? <span className="text-xs text-muted-foreground">-</span> : 
+                            row.aiStatus === 'processing' ? <Loader2 className="h-4 w-4 animate-spin" /> :
+                            (row.aiStatus === 'completed' && row.aiResult?.suggestedTags.length === 0 ? <span className="text-xs text-muted-foreground">-</span> :
                             (row.aiStatus === 'error' ? <span className="text-destructive text-xs">{t('reports.import.status.aiError')}</span> : '-'))}
                         </TableCell>
                         <TableCell>
                           {row.aiStatus === 'pending' && <span className="text-muted-foreground text-xs">{t('reports.import.status.pending')}</span>}
                           {row.aiStatus === 'processing' && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
                           {row.aiStatus === 'completed' && <CheckCircle2 className="h-5 w-5 text-green-600" />}
-                          {row.aiStatus === 'error' && 
+                          {row.aiStatus === 'error' &&
                             <div className="flex items-center text-destructive text-xs" title={row.error}>
                                 <AlertTriangle className="h-4 w-4 mr-1" /> {t('reports.import.status.error')}
                             </div>
@@ -400,5 +405,3 @@ export default function ImportReportsPage() {
     </div>
   );
 }
-
-    

@@ -334,13 +334,15 @@
   "reports.import.status.pending": "Pending AI",
   "reports.import.status.processing": "AI Processing",
   "reports.import.status.completed": "Completed",
-  "reports.import.status.error": "AI Error",
+  "reports.import.status.error": "Error",
   "reports.import.status.aiError": "AI Error",
   "reports.import.status.skippedQuota": "Skipped (Quota)",
   "reports.import.status.skippedQuotaTooltip": "AI processing skipped due to daily limit reached.",
   "reports.import.error.fileReadError": "Error reading file.",
-  "reports.import.error.aiGenericError": "AI processing error",
-  "reports.import.error.aiServiceOverloaded": "AI service is currently overloaded. Please try again later",
+  "reports.import.error.aiGenericError": "AI processing error.",
+  "reports.import.error.aiGenericErrorAttempt": "AI processing error (Attempt {attempt}/{maxAttempts}): {message}",
+  "reports.import.error.aiServiceOverloaded": "AI service is currently overloaded. Please try again later.",
+  "reports.import.error.aiServiceOverloadedMaxAttempts": "AI service still overloaded after {attempts} attempts. Please try again later.",
   "reports.import.error.aiDailyQuotaExceededFull": "Daily AI Quota Exceeded. Details: {message}",
   "reports.import.associatedCompanyPrefix": "Associated company",
   "reports.import.unknownDriver": "Unknown Driver",
@@ -633,5 +635,3 @@
   "tags.pakenkta_imones_reputacijai": "Company reputation damaged",
   "tags.neteiseta_veikla_itariama": "Illegal activity suspected"
 }
-
-    

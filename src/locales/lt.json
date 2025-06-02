@@ -339,8 +339,10 @@
   "reports.import.status.skippedQuota": "Praleista (kvota)",
   "reports.import.status.skippedQuotaTooltip": "AI apdorojimas praleistas dėl pasiekto dienos limito.",
   "reports.import.error.fileReadError": "Klaida skaitant failą.",
-  "reports.import.error.aiGenericError": "AI apdorojimo klaida",
-  "reports.import.error.aiServiceOverloaded": "AI paslauga šiuo metu perkrauta. Bandykite vėliau",
+  "reports.import.error.aiGenericError": "AI apdorojimo klaida.",
+  "reports.import.error.aiGenericErrorAttempt": "AI apdorojimo klaida (bandymas {attempt}/{maxAttempts}): {message}",
+  "reports.import.error.aiServiceOverloaded": "AI paslauga šiuo metu perkrauta. Bandykite vėliau.",
+  "reports.import.error.aiServiceOverloadedMaxAttempts": "AI paslauga vis dar perkrauta po {attempts} bandymų. Bandykite vėliau.",
   "reports.import.error.aiDailyQuotaExceededFull": "Pasiektas dienos AI apdorojimo limitas. Detalės: {message}",
   "reports.import.associatedCompanyPrefix": "Susijusi įmonė",
   "reports.import.unknownDriver": "Nežinomas vairuotojas",
@@ -633,5 +635,3 @@
   "tags.pakenkta_imones_reputacijai": "Pakenkta įmonės reputacijai",
   "tags.neteiseta_veikla_itariama": "Neteisėta veikla įtariama"
 }
-
-    
