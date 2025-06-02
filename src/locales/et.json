@@ -611,15 +611,16 @@
   "countries.ZM": "Sambia",
   "countries.ZW": "Zimbabwe",
   "countries.OTHER": "Muu / Määramata",
+  "countries.EE": "Eesti",
   "tags.kuro_vagyste": "Kütuse vargus",
   "tags.krovinio_vagyste": "Kauba vargus",
   "tags.imones_turto_vagyste": "Ettevõtte vara vargus",
-  "tags.kita": "Muu",
+  "tags.kita_tag": "Muu (silt)",
   "tags.avaringumas": "Avariilisus",
   "tags.pavojingas_vairavimas": "Ohtlik juhtimine",
   "tags.dazni_ket_pazeidimai": "Sagedased liikluseeskirjade rikkumised",
-  "tags.grasinimai_/_agresija": "Ähvardused / agressioon",
-  "tags.netinkamas_elgesys_kolegu_atžvilgiu": "Sobimatu käitumine kolleegide suhtes",
+  "tags.grasinimai_agresija": "Ähvardused / agressioon",
+  "tags.netinkamas_elgesys_kolegu_atzvilgiu": "Sobimatu käitumine kolleegide suhtes",
   "tags.psichotropiniu_medziagu_vartojimas": "Psühhotroopsete ainete tarvitamine",
   "tags.konfliktiskas_asmuo": "Konfliktne isik",
   "tags.neblaivus_darbo_metu": "Joobes tööajal",
@@ -628,7 +629,9 @@
   "tags.techninis_neatsakingumas": "Tehniline vastutustundetus",
   "tags.rizika_saugumui_ar_kroviniui": "Risk ohutusele või kaubale",
   "tags.dazni_transporto_priemones_pazeidimai": "Sagedased sõidukikahjustused",
-  "tags.buvo_teisinis_procesas_/_darbo_gincas": "Toimus õigusprotsess / töövaidlus",
+  "tags.buvo_teisinis_procesas_darbo_gincas": "Toimus õigusprotsess / töövaidlus",
   "tags.pakenkta_imones_reputacijai": "Ettevõtte maine kahjustatud",
   "tags.neteiseta_veikla_itariama": "Kahtlustatakse ebaseaduslikku tegevust"
 }
+
+    

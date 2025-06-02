@@ -18,7 +18,7 @@ export interface UserProfile {
 export interface DetailedCategory {
   id: string;
   nameKey: string; // Changed from name to nameKey for translation
-  tags: string[];
+  tags: string[]; // Now stores tag keys
 }
 
 export interface Report {
@@ -29,7 +29,7 @@ export interface Report {
   nationality?: string;
   birthYear?: number;
   category: string; // Main category ID e.g., "fuel_theft"
-  tags: string[]; // Selected tags relevant to the main category
+  tags: string[]; // Selected tag keys relevant to the main category
   comment: string;
   imageUrl?: string;
   dataAiHint?: string;
@@ -312,58 +312,58 @@ export const detailedReportCategories: DetailedCategory[] = [
   {
     id: "fuel_theft",
     nameKey: "categories.fuel_theft",
-    tags: ["Kuro vagystė", "Krovinio vagystė", "Įmonės turto vagystė", "Kita"],
+    tags: ["kuro_vagyste", "krovinio_vagyste", "imones_turto_vagyste", "kita_tag"],
   },
   {
     id: "driving_safety",
     nameKey: "categories.driving_safety",
-    tags: ["Avaringumas", "Pavojingas vairavimas", "Dažni KET pažeidimai", "Kita"],
+    tags: ["avaringumas", "pavojingas_vairavimas", "dazni_ket_pazeidimai", "kita_tag"],
   },
   {
     id: "behavior",
     nameKey: "categories.behavior",
     tags: [
-      "Grasinimai / agresija",
-      "Netinkamas elgesys kolegų atžvilgiu",
-      "Psichotropinių medžiagų vartojimas",
-      "Konfliktiškas asmuo",
-      "Kita"
+      "grasinimai_agresija",
+      "netinkamas_elgesys_kolegu_atzvilgiu",
+      "psichotropiniu_medziagu_vartojimas",
+      "konfliktiskas_asmuo",
+      "kita_tag"
     ],
   },
   {
     id: "discipline",
     nameKey: "categories.discipline",
     tags: [
-      "Neblaivus darbo metu",
-      "Neatvykimas į darbą be pateisinamos priežasties",
-      "Neatsakingas požiūris į darbą",
-      "Kita"
+      "neblaivus_darbo_metu",
+      "neatvykimas_i_darba_be_pateisinamos_priezasties",
+      "neatsakingas_poziuris_i_darba",
+      "kita_tag"
     ],
   },
   {
     id: "technical_damage",
     nameKey: "categories.technical_damage",
     tags: [
-      "Techninis neatsakingumas",
-      "Rizika saugumui ar kroviniui",
-      "Dažni transporto priemonės pažeidimai",
-      "Kita"
+      "techninis_neatsakingumas",
+      "rizika_saugumui_ar_kroviniui",
+      "dazni_transporto_priemones_pazeidimai",
+      "kita_tag"
     ],
   },
   {
     id: "legal_reputation",
     nameKey: "categories.legal_reputation",
     tags: [
-      "Buvo teisinis procesas / darbo ginčas",
-      "Pakenkta įmonės reputacijai",
-      "Neteisėta veikla įtariama",
-      "Kita"
+      "buvo_teisinis_procesas_darbo_gincas",
+      "pakenkta_imones_reputacijai",
+      "neteiseta_veikla_itariama",
+      "kita_tag"
     ],
   },
   {
     id: "other_category",
     nameKey: "categories.other_category",
-    tags: [], // No predefined tags for "Other"
+    tags: [], 
   },
 ];
 
@@ -473,7 +473,7 @@ export const MOCK_USER_REPORTS: Report[] = [
     nationality: "LT",
     birthYear: 1992,
     category: "behavior",
-    tags: ["Konfliktiškas asmuo", "Kita"],
+    tags: ["konfliktiskas_asmuo", "kita_tag"],
     comment: "Vairuotojas buvo nemandagus su klientu, atsisakė padėti iškrauti prekes. Klientas pateikė skundą.",
     createdAt: new Date("2024-02-20T09:15:00Z"),
   },
@@ -484,7 +484,7 @@ export const MOCK_USER_REPORTS: Report[] = [
     fullName: "Zita Zitaite",
     nationality: "LT",
     category: "driving_safety",
-    tags: ["Avaringumas", "Pavojingas vairavimas", "Kita"],
+    tags: ["avaringumas", "pavojingas_vairavimas", "kita_tag"],
     comment: "GPS duomenys rodo pakartotinį greičio viršijimą gyvenvietėse. Buvo įspėta, tačiau situacija kartojasi.",
     imageUrl: "https://placehold.co/600x400.png",
     dataAiHint: "speeding ticket document",
@@ -501,7 +501,7 @@ export const MOCK_GENERAL_REPORTS: Report[] = [
     nationality: "PL",
     birthYear: 1985,
     category: "fuel_theft",
-    tags: ["Kuro vagystė", "Kita"],
+    tags: ["kuro_vagyste", "kita_tag"],
     comment: "Vairuotojas buvo pastebėtas neteisėtai nupylinėjantis kurą iš įmonės sunkvežimio. Tai jau antras kartas per pastaruosius 6 mėnesius. Taip pat gauta informacija apie pavojingą vairavimą mieste.",
     imageUrl: "https://placehold.co/600x400.png",
     createdAt: new Date("2023-10-15T10:30:00Z"),
@@ -514,7 +514,7 @@ export const MOCK_GENERAL_REPORTS: Report[] = [
     fullName: "Petras Petraitis",
     nationality: "UA",
     category: "technical_damage",
-    tags: ["Techninis neatsakingumas", "Kita"],
+    tags: ["techninis_neatsakingumas", "kita_tag"],
     comment: "Grįžus iš reiso, pastebėta didelė žala priekabos šonui. Vairuotojas teigia nieko nepastebejęs. Rekomenduojama atlikti nuodugnesnį tyrimą.",
     createdAt: new Date("2023-11-01T14:00:00Z"),
   },
@@ -526,7 +526,7 @@ export const MOCK_GENERAL_REPORTS: Report[] = [
     nationality: "BY",
     birthYear: 1978,
     category: "discipline",
-    tags: ["Neatsakingas požiūris į darbą", "Kita"],
+    tags: ["neatsakingas_poziuris_i_darba", "kita_tag"],
     comment: "Vėlavo pristatyti krovinį 2 valandas be pateisinamos priežasties, grubiai bendravo su sandėlio darbuotojais.",
     imageUrl: "https://placehold.co/600x400.png",
     dataAiHint: "angry driver",
@@ -540,7 +540,7 @@ export const MOCK_GENERAL_REPORTS: Report[] = [
     nationality: "DE",
     birthYear: 1988,
     category: "driving_safety",
-    tags: ["Pavojingas vairavimas", "Kita"],
+    tags: ["pavojingas_vairavimas", "kita_tag"],
     comment: "Importuotas komentaras: dažnai viršija greitį greitkeliuose.",
     createdAt: new Date("2024-02-15T00:00:00Z")
   },
@@ -629,7 +629,7 @@ export const MOCK_DISCIPLINE_REPORT: Report = {
     fullName: "Testas Testuolis",
     nationality: "LT",
     category: "discipline", 
-    tags: ["Neblaivus darbo metu", "Neatsakingas požiūris į darbą", "Kita"],
+    tags: ["neblaivus_darbo_metu", "neatsakingas_poziuris_i_darba", "kita_tag"],
     comment: "Vairuotojas buvo rastas neblaivus darbo vietoje.",
     createdAt: new Date("2024-03-15T10:00:00Z"),
 };
@@ -648,5 +648,15 @@ export function getCategoryNameAdmin(categoryId: string, t?: (key: string) => st
   if (category && t) {
     return t(category.nameKey);
   }
-  return category ? category.nameKey : categoryId; // Fallback to key if t is not provided
+  // Fallback for cases where 't' might not be available or category not found.
+  // If category.nameKey exists, use it, otherwise use categoryId.
+  return category ? category.nameKey : categoryId; 
 }
+
+// Helper function to get category name for display in user-facing parts, using translation
+export function getCategoryNameForDisplay(categoryId: string, t: (key: string) => string): string {
+  const category = detailedReportCategories.find(c => c.id === categoryId);
+  return category ? t(category.nameKey) : categoryId;
+}
+
+    

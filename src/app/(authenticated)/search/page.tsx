@@ -9,19 +9,19 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { SearchSchema, type SearchFormValues } from "@/lib/schemas";
-import type { Report, SearchLog, DetailedCategory } from "@/types"; // Added DetailedCategory
+import type { Report, SearchLog } from "@/types"; 
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2, Search as SearchIcon, User, CalendarDays, Tag, MessageSquare, AlertCircle, FileText, Image as ImageIcon, Globe, Layers } from "lucide-react";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { format } from 'date-fns';
-import { lt, enUS } from 'date-fns/locale'; // Added enUS for date locale flexibility
+import { lt, enUS } from 'date-fns/locale'; 
 import { MOCK_GENERAL_REPORTS, combineAndDeduplicateReports, countries, getReportsFromLocalStoragePublic, getSearchLogsFromLocalStoragePublic, saveSearchLogsToLocalStoragePublic, detailedReportCategories, DESTRUCTIVE_REPORT_MAIN_CATEGORIES } from "@/types";
-import { useLanguage } from "@/contexts/language-context"; // Added
+import { useLanguage } from "@/contexts/language-context"; 
 
 export default function SearchPage() {
   const { user } = useAuth();
-  const { t, locale } = useLanguage(); // Added
+  const { t, locale } = useLanguage(); 
   const [searchResults, setSearchResults] = useState<Report[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [noResults, setNoResults] = useState(false);
@@ -32,8 +32,7 @@ export default function SearchPage() {
   const getNationalityLabel = (nationalityCode?: string) => {
     if (!nationalityCode) return "";
     const country = countries.find(c => c.value === nationalityCode);
-    // In a real app, country labels would also be translated
-    return country ? t(`countries.${nationalityCode}`) : nationalityCode; // Assuming country labels are translation keys
+    return country ? t(`countries.${nationalityCode}`) : nationalityCode; 
   };
 
   const getCategoryNameSearch = (categoryId: string) => {
@@ -71,7 +70,7 @@ export default function SearchPage() {
             (nationalityLabel && nationalityLabel.includes(query)) ||
             (report.birthYear && report.birthYear.toString().includes(query)) ||
             mainCategoryName.includes(query) ||
-            report.tags.some(tag => t(`tags.${tag.toLowerCase().replace(/\s+/g, '_')}`).toLowerCase().includes(query)) || // Assuming tags are translation keys like "tags.fuel_theft"
+            report.tags.some(tagKey => t(`tags.${tagKey}`).toLowerCase().includes(query)) || 
             report.comment.toLowerCase().includes(query) ||
             (report.reporterCompanyName && report.reporterCompanyName.toLowerCase().includes(query))
           );
@@ -221,8 +220,8 @@ export default function SearchPage() {
                           <Tag className="mr-1.5 h-4 w-4" /> {t('search.results.tags')}
                         </h4>
                         <div className="flex flex-wrap gap-2">
-                          {report.tags.map(tag => (
-                            <Badge key={tag} variant="outline" className="text-sm">{t(`tags.${tag.toLowerCase().replace(/\s+/g, '_').replace(/\//g, '_')}`)}</Badge> 
+                          {report.tags.map(tagKey => (
+                            <Badge key={tagKey} variant="outline" className="text-sm">{t(`tags.${tagKey}`)}</Badge> 
                           ))}
                         </div>
                       </div>
@@ -273,3 +272,5 @@ export default function SearchPage() {
     </div>
   );
 }
+
+    

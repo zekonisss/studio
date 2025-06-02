@@ -18,7 +18,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, FilePlus2, User, CalendarDays, CheckSquare, MessageSquare, Paperclip, Globe, Layers } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useLanguage } from "@/contexts/language-context"; // Added
+import { useLanguage } from "@/contexts/language-context"; 
 
 const LOCAL_STORAGE_REPORTS_KEY = 'driverCheckReports';
 
@@ -45,7 +45,7 @@ export default function AddReportPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
-  const { t } = useLanguage(); // Added
+  const { t } = useLanguage(); 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedMainCategory, setSelectedMainCategory] = useState<DetailedCategory | null>(null);
 
@@ -97,7 +97,7 @@ export default function AddReportPage() {
       nationality: values.nationality,
       birthYear: values.birthYear && values.birthYear !== '' ? Number(values.birthYear) : undefined,
       category: values.category,
-      tags: values.tags || [],
+      tags: values.tags || [], // tags are now keys
       comment: values.comment,
       imageUrl: values.image ? "https://placehold.co/600x400.png" : undefined,
       dataAiHint: values.image ? "entry attachment" : undefined,
@@ -224,33 +224,33 @@ export default function AddReportPage() {
                         <FormDescription>{t('reports.add.form.tags.description')}</FormDescription>
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {selectedMainCategory.tags.map((tag) => (
+                      {selectedMainCategory.tags.map((tagKey) => (
                         <FormField
-                          key={tag}
+                          key={tagKey}
                           control={form.control}
                           name="tags"
                           render={({ field }) => {
                             return (
                               <FormItem
-                                key={tag}
+                                key={tagKey}
                                 className="flex flex-row items-center space-x-3 space-y-0 p-3 border rounded-md bg-secondary/20 hover:bg-secondary/40 transition-colors"
                               >
                                 <FormControl>
                                   <Checkbox
-                                    checked={field.value?.includes(tag)}
+                                    checked={field.value?.includes(tagKey)}
                                     onCheckedChange={(checked) => {
                                       return checked
-                                        ? field.onChange([...(field.value || []), tag])
+                                        ? field.onChange([...(field.value || []), tagKey])
                                         : field.onChange(
                                             field.value?.filter(
-                                              (value) => value !== tag
+                                              (value) => value !== tagKey
                                             )
                                           )
                                     }}
                                   />
                                 </FormControl>
                                 <FormLabel className="font-normal text-sm cursor-pointer flex-grow">
-                                  {t(`tags.${tag.toLowerCase().replace(/\s+/g, '_').replace(/\//g, '_')}`)}
+                                  {t(`tags.${tagKey}`)}
                                 </FormLabel>
                               </FormItem>
                             )
@@ -318,4 +318,6 @@ export default function AddReportPage() {
     </div>
   );
 }
+    
+
     

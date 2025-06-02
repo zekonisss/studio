@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, Upload, FileSpreadsheet, AlertTriangle, CheckCircle2, Ban } from "lucide-react"; // Added Ban for skipped
+import { Loader2, Upload, FileSpreadsheet, AlertTriangle, CheckCircle2, Ban } from "lucide-react"; 
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/language-context";
@@ -20,7 +20,7 @@ interface ParsedRow {
   originalRow: Record<string, any>;
   reportPreview: Partial<Report>;
   aiStatus: 'pending' | 'processing' | 'completed' | 'error' | 'skipped_quota';
-  aiResult?: { categoryId: string; suggestedTags: string[] };
+  aiResult?: { categoryId: string; suggestedTags: string[] }; // Now stores tag keys
   error?: string;
 }
 
@@ -131,8 +131,8 @@ export default function ImportReportsPage() {
               fullName: String(row.Title || t('reports.import.unknownDriver')),
               comment: commentText,
               createdAt: createdAtDate || new Date(),
-              category: 'other_category',
-              tags: [],
+              category: 'other_category', // Default category key
+              tags: [], // Default empty tag keys
             },
             aiStatus: 'pending',
           };
@@ -166,7 +166,7 @@ export default function ImportReportsPage() {
             tags: [],
           },
         };
-        setParsedData([...updatedRows]); // Update UI for skipped row
+        setParsedData([...updatedRows]); 
         continue;
       }
 
@@ -193,11 +193,11 @@ export default function ImportReportsPage() {
           updatedRows[i] = {
             ...updatedRows[i],
             aiStatus: 'completed',
-            aiResult: aiResult,
+            aiResult: aiResult, // aiResult.suggestedTags now contains keys
             reportPreview: {
               ...updatedRows[i].reportPreview,
               category: aiResult.categoryId,
-              tags: aiResult.suggestedTags,
+              tags: aiResult.suggestedTags, // These are keys
             },
           };
           attemptSuccess = true;
@@ -229,11 +229,9 @@ export default function ImportReportsPage() {
             console.warn(`AI service unavailable for row ${i}, attempt ${attempt}/${MAX_AI_ATTEMPTS_PER_ROW}. Retrying in ${AI_RETRY_DELAY_MS / 1000}s... Details:`, errorMessageString);
             await new Promise(resolve => setTimeout(resolve, AI_RETRY_DELAY_MS));
           } else {
-            // This block is reached on the last attempt for a 503, or for any other non-daily-quota error.
-            const specificErrorMsg = isServiceUnavailable ?
-                                     `${t('reports.import.error.aiServiceOverloadedMaxAttempts', { attempts: MAX_AI_ATTEMPTS_PER_ROW })}` :
-                                     `${t('reports.import.error.aiGenericErrorAttempt', { attempt, maxAttempts: MAX_AI_ATTEMPTS_PER_ROW, message: errorMessageString })}`;
-
+            const specificErrorMsgKey = isServiceUnavailable ? 'reports.import.error.aiServiceOverloadedMaxAttempts' : 'reports.import.error.aiGenericErrorAttempt';
+            const specificErrorMsg = t(specificErrorMsgKey, { attempts: attempt, maxAttempts: MAX_AI_ATTEMPTS_PER_ROW, message: errorMessageString });
+            
             if (isServiceUnavailable) {
                  console.warn(`AI service still unavailable for row ${i} after ${attempt} attempts. Error:`, error);
             } else {
@@ -364,7 +362,7 @@ export default function ImportReportsPage() {
                         </TableCell>
                         <TableCell>
                            {row.aiStatus === 'completed' && row.aiResult?.suggestedTags && row.aiResult.suggestedTags.length > 0 ?
-                            row.aiResult.suggestedTags.map(tag => <Badge key={tag} variant="outline" className="mr-1 mb-1 text-xs">{t(`tags.${tag.toLowerCase().replace(/\s+/g, '_').replace(/\//g, '_')}`)}</Badge>) :
+                            row.aiResult.suggestedTags.map(tagKey => <Badge key={tagKey} variant="outline" className="mr-1 mb-1 text-xs">{t(`tags.${tagKey}`)}</Badge>) :
                             row.aiStatus === 'skipped_quota' ? <span className="text-xs text-muted-foreground">-</span> :
                             row.aiStatus === 'processing' ? <Loader2 className="h-4 w-4 animate-spin" /> :
                             (row.aiStatus === 'completed' && row.aiResult?.suggestedTags.length === 0 ? <span className="text-xs text-muted-foreground">-</span> :
@@ -405,3 +403,5 @@ export default function ImportReportsPage() {
     </div>
   );
 }
+
+    

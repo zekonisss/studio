@@ -546,7 +546,6 @@
   "countries.QA": "Катар",
   "countries.MK": "Северная Македония",
   "countries.RO": "Румыния",
-  "countries.RU": "Российская Федерация",
   "countries.RW": "Руанда",
   "countries.RE": "Реюньон",
   "countries.BL": "Сен-Бартелеми",
@@ -614,15 +613,16 @@
   "countries.ZM": "Замбия",
   "countries.ZW": "Зимбабве",
   "countries.OTHER": "Другое / Не указано",
+  "countries.RU": "Российская Федерация",
   "tags.kuro_vagyste": "Кража топлива",
   "tags.krovinio_vagyste": "Кража груза",
   "tags.imones_turto_vagyste": "Кража имущества компании",
-  "tags.kita": "Другое",
+  "tags.kita_tag": "Другое (тег)",
   "tags.avaringumas": "Аварийность",
   "tags.pavojingas_vairavimas": "Опасное вождение",
   "tags.dazni_ket_pazeidimai": "Частые нарушения ПДД",
-  "tags.grasinimai_/_agresija": "Угрозы / агрессия",
-  "tags.netinkamas_elgesys_kolegu_atžvilgiu": "Неподобающее поведение по отношению к коллегам",
+  "tags.grasinimai_agresija": "Угрозы / агрессия",
+  "tags.netinkamas_elgesys_kolegu_atzvilgiu": "Неподобающее поведение по отношению к коллегам",
   "tags.psichotropiniu_medziagu_vartojimas": "Употребление психотропных веществ",
   "tags.konfliktiskas_asmuo": "Конфликтный человек",
   "tags.neblaivus_darbo_metu": "В нетрезвом виде в рабочее время",
@@ -631,7 +631,9 @@
   "tags.techninis_neatsakingumas": "Техническая безответственность",
   "tags.rizika_saugumui_ar_kroviniui": "Риск для безопасности или груза",
   "tags.dazni_transporto_priemones_pazeidimai": "Частые повреждения транспортных средств",
-  "tags.buvo_teisinis_procesas_/_darbo_gincas": "Был судебный процесс / трудовой спор",
+  "tags.buvo_teisinis_procesas_darbo_gincas": "Был судебный процесс / трудовой спор",
   "tags.pakenkta_imones_reputacijai": "Нанесен ущерб репутации компании",
   "tags.neteiseta_veikla_itariama": "Подозревается незаконная деятельность"
 }
+
+    

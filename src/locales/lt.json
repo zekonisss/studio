@@ -617,12 +617,12 @@
   "tags.kuro_vagyste": "Kuro vagystė",
   "tags.krovinio_vagyste": "Krovinio vagystė",
   "tags.imones_turto_vagyste": "Įmonės turto vagystė",
-  "tags.kita": "Kita",
+  "tags.kita_tag": "Kita (žyma)",
   "tags.avaringumas": "Avaringumas",
   "tags.pavojingas_vairavimas": "Pavojingas vairavimas",
   "tags.dazni_ket_pazeidimai": "Dažni KET pažeidimai",
-  "tags.grasinimai_/_agresija": "Grasinimai / agresija",
-  "tags.netinkamas_elgesys_kolegu_atžvilgiu": "Netinkamas elgesys kolegų atžvilgiu",
+  "tags.grasinimai_agresija": "Grasinimai / agresija",
+  "tags.netinkamas_elgesys_kolegu_atzvilgiu": "Netinkamas elgesys kolegų atžvilgiu",
   "tags.psichotropiniu_medziagu_vartojimas": "Psichotropinių medžiagų vartojimas",
   "tags.konfliktiskas_asmuo": "Konfliktiškas asmuo",
   "tags.neblaivus_darbo_metu": "Neblaivus darbo metu",
@@ -631,7 +631,9 @@
   "tags.techninis_neatsakingumas": "Techninis neatsakingumas",
   "tags.rizika_saugumui_ar_kroviniui": "Rizika saugumui ar kroviniui",
   "tags.dazni_transporto_priemones_pazeidimai": "Dažni transporto priemonės pažeidimai",
-  "tags.buvo_teisinis_procesas_/_darbo_gincas": "Buvo teisinis procesas / darbo ginčas",
+  "tags.buvo_teisinis_procesas_darbo_gincas": "Buvo teisinis procesas / darbo ginčas",
   "tags.pakenkta_imones_reputacijai": "Pakenkta įmonės reputacijai",
   "tags.neteiseta_veikla_itariama": "Neteisėta veikla įtariama"
 }
+
+    

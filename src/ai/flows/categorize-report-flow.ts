@@ -14,13 +14,17 @@ import { detailedReportCategories } from '@/types';
 const allCategoryObjects = detailedReportCategories.map(cat => ({ id: cat.id, nameKey: cat.nameKey, tags: cat.tags }));
 const allCategoryIds = allCategoryObjects.map(cat => cat.id);
 
+// Create a mapping of categoryId to its available tag keys for the prompt
+const categoryTagKeysMap = allCategoryObjects.reduce((acc, cat) => {
+  acc[cat.id] = cat.tags;
+  return acc;
+}, {} as Record<string, string[]>);
+
+// Generate descriptions for the prompt, including available tag *keys* for each category
 const categoryDescriptionsForPrompt = allCategoryObjects.map(cat => {
-    // For the prompt, it's better to use a human-readable name if possible,
-    // rather than just the key. Here we'll simplify and use the key,
-    // assuming the LLM can infer or we refine later if needed.
-    // A more robust solution would load English translations here.
     const englishNameApproximation = cat.nameKey.replace('categories.', '').replace(/_/g, ' ');
-    return `${cat.id} ("${englishNameApproximation}" - ${cat.tags.length > 0 ? `available tags: ${cat.tags.join(', ')}` : 'no specific tags for this category'})`;
+    const availableTagKeys = cat.tags.length > 0 ? `available tag keys: ${cat.tags.join(', ')}` : 'no specific tag keys for this category';
+    return `${cat.id} ("${englishNameApproximation}" - ${availableTagKeys})`;
 }).join('; \n');
 
 
@@ -31,7 +35,7 @@ export type CategorizeReportInput = z.infer<typeof CategorizeReportInputSchema>;
 
 const CategorizeReportOutputSchema = z.object({
   categoryId: z.string().describe(`The most relevant category ID from the following list: ${allCategoryIds.join(', ')}. Choose only one. If unsure, select 'other_category'.`),
-  suggestedTags: z.array(z.string()).describe('A list of relevant tags for the incident, chosen ONLY from the tags available for the selected categoryId. If no tags are relevant or available for the chosen category, or if the category is "other_category", return an empty array.'),
+  suggestedTags: z.array(z.string()).describe('A list of relevant tag KEYS for the incident, chosen ONLY from the tag KEYS available for the selected categoryId. If no tag keys are relevant or available for the chosen category, or if the category is "other_category", return an empty array.'),
 });
 export type CategorizeReportOutput = z.infer<typeof CategorizeReportOutputSchema>;
 
@@ -58,8 +62,8 @@ Based on the comment, your task is to:
     If the comment is vague, unclear, or doesn't fit well into any specific category, you MUST choose 'other_category'.
 
 2.  Based on the selected 'categoryId' AND the content of the comment, suggest a list of 'suggestedTags'.
-    Tags MUST be selected ONLY from the "available tags" associated with the chosen categoryId (as listed above).
-    If the chosen categoryId is 'other_category', or if it has no specific tags, or if none of its tags are relevant to the comment, return an empty array for 'suggestedTags'.
+    Tags MUST be selected ONLY from the "available tag keys" associated with the chosen categoryId (as listed above).
+    If the chosen categoryId is 'other_category', or if it has no specific tag keys, or if none of its tag keys are relevant to the comment, return an empty array for 'suggestedTags'.
 
 Incident Comment:
 "{{{comment}}}"
@@ -69,7 +73,7 @@ For example, if a comment states "Driver was caught stealing fuel and was also v
 
 Return your answer in the specified JSON format.
 Ensure 'categoryId' is exactly one of the allowed IDs.
-Ensure 'suggestedTags' only contains tags valid for the chosen 'categoryId'.
+Ensure 'suggestedTags' only contains tag KEYS valid for the chosen 'categoryId'.
 `,
 });
 
@@ -90,19 +94,21 @@ const categorizeReportFlow = ai.defineFlow(
     let finalTags: string[] = [];
 
     // Validate categoryId
-    const selectedCategory = allCategoryObjects.find(cat => cat.id === finalCategoryId);
-    if (!selectedCategory) {
-      finalCategoryId = 'other_category'; // Default if LLM hallucinates or provides invalid category
+    const selectedCategoryDetails = categoryTagKeysMap[finalCategoryId];
+    if (!selectedCategoryDetails) {
+      finalCategoryId = 'other_category'; 
     }
     
     // If category is 'other_category', tags should be empty
     if (finalCategoryId === 'other_category') {
         finalTags = [];
-    } else if (selectedCategory) {
+    } else if (selectedCategoryDetails) {
       // Validate suggestedTags - ensure they belong to the selected category
-      finalTags = output.suggestedTags.filter(tag => selectedCategory.tags.includes(tag));
+      finalTags = output.suggestedTags.filter(tagKey => selectedCategoryDetails.includes(tagKey));
     }
 
     return { categoryId: finalCategoryId, suggestedTags: finalTags };
   }
 );
+
+    

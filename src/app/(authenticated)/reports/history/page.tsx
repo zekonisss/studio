@@ -7,11 +7,11 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import type { Report, DetailedCategory } from "@/types"; // Added DetailedCategory
+import type { Report } from "@/types"; 
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2, History as HistoryIcon, User, CalendarDays, Tag, MessageSquare, AlertTriangle, Trash2, Eye, PlusCircle, Building2, Image as ImageIcon, FileText, Globe, Layers } from "lucide-react";
 import { format } from 'date-fns';
-import { lt, enUS } from 'date-fns/locale'; // Added enUS
+import { lt, enUS } from 'date-fns/locale'; 
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,7 +34,7 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { MOCK_USER, MOCK_USER_REPORTS, countries, detailedReportCategories, DESTRUCTIVE_REPORT_MAIN_CATEGORIES } from "@/types";
-import { useLanguage } from "@/contexts/language-context"; // Added
+import { useLanguage } from "@/contexts/language-context"; 
 
 const LOCAL_STORAGE_REPORTS_KEY = 'driverCheckReports';
 
@@ -60,7 +60,7 @@ function saveReportsToLocalStorage(reports: Report[]): void {
 export default function ReportHistoryPage() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const { t, locale } = useLanguage(); // Added
+  const { t, locale } = useLanguage(); 
   const [reports, setReports] = useState<Report[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -223,8 +223,8 @@ export default function ReportHistoryPage() {
                 <p className="text-muted-foreground line-clamp-3"><MessageSquare className="inline h-4 w-4 mr-1.5 relative -top-0.5" />{report.comment}</p>
                 {report.tags && report.tags.length > 0 && (
                   <div className="flex flex-wrap gap-2">
-                    {report.tags.map(tag => (
-                       <Badge key={tag} variant="outline"><Tag className="inline h-3 w-3 mr-1" />{t(`tags.${tag.toLowerCase().replace(/\s+/g, '_').replace(/\//g, '_')}`)}</Badge>
+                    {report.tags.map(tagKey => (
+                       <Badge key={tagKey} variant="outline"><Tag className="inline h-3 w-3 mr-1" />{t(`tags.${tagKey}`)}</Badge>
                     ))}
                   </div>
                 )}
@@ -311,8 +311,8 @@ export default function ReportHistoryPage() {
                 <div className="space-y-1">
                   <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Tag className="mr-2 h-4 w-4" />{t('reports.history.detailsModal.tags')}</h4>
                   <div className="flex flex-wrap gap-2">
-                    {selectedReportForDetails.tags.map(tag => (
-                      <Badge key={tag} variant="outline" className="text-sm">{t(`tags.${tag.toLowerCase().replace(/\s+/g, '_').replace(/\//g, '_')}`)}</Badge>
+                    {selectedReportForDetails.tags.map(tagKey => (
+                      <Badge key={tagKey} variant="outline" className="text-sm">{t(`tags.${tagKey}`)}</Badge>
                     ))}
                   </div>
                 </div>
@@ -357,4 +357,6 @@ export default function ReportHistoryPage() {
     </div>
   );
 }
+    
+
     
