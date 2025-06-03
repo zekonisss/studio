@@ -42,10 +42,16 @@ function getReportsFromLocalStorage(): Report[] {
   if (typeof window !== 'undefined') {
     const reportsJSON = localStorage.getItem(LOCAL_STORAGE_REPORTS_KEY);
     if (reportsJSON) {
-      return JSON.parse(reportsJSON).map((report: any) => ({
-        ...report,
-        createdAt: new Date(report.createdAt),
-      }));
+      try {
+        return JSON.parse(reportsJSON).map((report: any) => ({
+          ...report,
+          createdAt: new Date(report.createdAt),
+        }));
+      } catch (e) {
+        console.error("Failed to parse reports from localStorage", e);
+        localStorage.removeItem(LOCAL_STORAGE_REPORTS_KEY); // Clear corrupted data
+        return [];
+      }
     }
   }
   return [];
@@ -125,7 +131,7 @@ export default function ReportHistoryPage() {
   const getNationalityLabel = (nationalityCode?: string) => {
     if (!nationalityCode) return t('common.notSpecified');
     const country = countries.find(c => c.value === nationalityCode);
-    return country ? t(`countries.${country.value}`) : nationalityCode;
+    return country ? t(\`countries.${country.value}\`) : nationalityCode;
   };
 
   const getCategoryName = (categoryId: string) => {
@@ -224,7 +230,7 @@ export default function ReportHistoryPage() {
                 {report.tags && report.tags.length > 0 && (
                   <div className="flex flex-wrap gap-2">
                     {report.tags.map(tagKey => (
-                       <Badge key={tagKey} variant="outline"><Tag className="inline h-3 w-3 mr-1" />{t(`tags.${tagKey}`)}</Badge>
+                       <Badge key={tagKey} variant="outline"><Tag className="inline h-3 w-3 mr-1" />{t(\`tags.${tagKey}\`)}</Badge>
                     ))}
                   </div>
                 )}
@@ -312,7 +318,7 @@ export default function ReportHistoryPage() {
                   <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Tag className="mr-2 h-4 w-4" />{t('reports.history.detailsModal.tags')}</h4>
                   <div className="flex flex-wrap gap-2">
                     {selectedReportForDetails.tags.map(tagKey => (
-                      <Badge key={tagKey} variant="outline" className="text-sm">{t(`tags.${tagKey}`)}</Badge>
+                      <Badge key={tagKey} variant="outline" className="text-sm">{t(\`tags.${tagKey}\`)}</Badge>
                     ))}
                   </div>
                 </div>
@@ -357,12 +363,5 @@ export default function ReportHistoryPage() {
     </div>
   );
 }
-    
-
-    
-
-    
-
-    
 
     
