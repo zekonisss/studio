@@ -7,11 +7,11 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import type { Report } from "@/types"; 
+import type { Report } from "@/types";
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2, History as HistoryIcon, User, CalendarDays, Tag, MessageSquare, AlertTriangle, Trash2, Eye, PlusCircle, Building2, Image as ImageIcon, FileText, Globe, Layers } from "lucide-react";
 import { format } from 'date-fns';
-import { lt, enUS } from 'date-fns/locale'; 
+import { lt, enUS } from 'date-fns/locale';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,7 +34,7 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { MOCK_USER, MOCK_USER_REPORTS, countries, detailedReportCategories, DESTRUCTIVE_REPORT_MAIN_CATEGORIES } from "@/types";
-import { useLanguage } from "@/contexts/language-context"; 
+import { useLanguage } from "@/contexts/language-context";
 
 const LOCAL_STORAGE_REPORTS_KEY = 'driverCheckReports';
 
@@ -49,7 +49,7 @@ function getReportsFromLocalStorage(): Report[] {
         }));
       } catch (e) {
         console.error("Failed to parse reports from localStorage", e);
-        localStorage.removeItem(LOCAL_STORAGE_REPORTS_KEY); // Clear corrupted data
+        localStorage.removeItem(LOCAL_STORAGE_REPORTS_KEY);
         return [];
       }
     }
@@ -64,27 +64,32 @@ function saveReportsToLocalStorage(reports: Report[]): void {
 }
 
 export default function ReportHistoryPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth(); // Renamed loading to authLoading for clarity
   const { toast } = useToast();
-  const { t, locale } = useLanguage(); 
+  const { t, locale } = useLanguage();
   const [reports, setReports] = useState<Report[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true); // Page-specific data loading
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [selectedReportForDetails, setSelectedReportForDetails] = useState<Report | null>(null);
 
   const dateLocale = locale === 'en' ? enUS : lt;
 
   useEffect(() => {
-    const fetchReports = async () => {
-      setIsLoading(true);
-      if (user) {
+    // Only fetch reports if user is authenticated and auth is not loading
+    if (!authLoading && user) {
+      const fetchReports = async () => {
+        setIsLoading(true); // Start page-specific loading
         await new Promise(resolve => setTimeout(resolve, 500));
 
         const localUserReports = getReportsFromLocalStorage().filter(r => r.reporterId === user.id);
         let combinedReportsForUser = [...localUserReports];
 
+        const mockUserReportsWithKeys = MOCK_USER_REPORTS.map(report => ({
+          ...report,
+        }));
+
         if (user.id === MOCK_USER.id) {
-          const userSpecificMocks = MOCK_USER_REPORTS.filter(mr => mr.reporterId === user.id);
+          const userSpecificMocks = mockUserReportsWithKeys.filter(mr => mr.reporterId === user.id);
           userSpecificMocks.forEach(mockReport => {
             if (!combinedReportsForUser.some(lr => lr.id === mockReport.id)) {
               combinedReportsForUser.push(mockReport);
@@ -92,16 +97,16 @@ export default function ReportHistoryPage() {
           });
         }
         setReports(combinedReportsForUser.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
-      }
-      setIsLoading(false);
-    };
-    if (user) {
+        setIsLoading(false); // End page-specific loading
+      };
       fetchReports();
-    } else {
+    } else if (!authLoading && !user) {
+      // If auth is done and no user, stop loading and clear reports
       setIsLoading(false);
       setReports([]);
     }
-  }, [user]);
+    // If authLoading is true, useEffect will re-run when it becomes false.
+  }, [user, authLoading, locale, t]); // Added t to dependencies as it's used in getNationalityLabel/getCategoryName which might be called during initial render logic implicitly
 
   const handleDeleteReport = async (reportId: string) => {
     setDeletingId(reportId);
@@ -127,11 +132,11 @@ export default function ReportHistoryPage() {
   const closeDetailsModal = () => {
     setSelectedReportForDetails(null);
   };
-  
+
   const getNationalityLabel = (nationalityCode?: string) => {
     if (!nationalityCode) return t('common.notSpecified');
     const country = countries.find(c => c.value === nationalityCode);
-    return country ? t(\`countries.${country.value}\`) : nationalityCode;
+    return country ? t('countries.' + country.value) : nationalityCode;
   };
 
   const getCategoryName = (categoryId: string) => {
@@ -139,8 +144,7 @@ export default function ReportHistoryPage() {
     return category ? t(category.nameKey) : categoryId;
   };
 
-
-  if (isLoading && !user) {
+  if (authLoading) {
     return (
       <div className="flex justify-center items-center h-[calc(100vh-10rem)]">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -161,14 +165,13 @@ export default function ReportHistoryPage() {
     );
   }
 
-   if (isLoading) {
+   if (isLoading) { // This isLoading is for page-specific data
     return (
       <div className="flex justify-center items-center h-[calc(100vh-10rem)]">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
       </div>
     );
   }
-
 
   return (
     <div className="container mx-auto py-8">
@@ -230,7 +233,7 @@ export default function ReportHistoryPage() {
                 {report.tags && report.tags.length > 0 && (
                   <div className="flex flex-wrap gap-2">
                     {report.tags.map(tagKey => (
-                       <Badge key={tagKey} variant="outline"><Tag className="inline h-3 w-3 mr-1" />{t(\`tags.${tagKey}\`)}</Badge>
+                       <Badge key={tagKey} variant="outline"><Tag className="inline h-3 w-3 mr-1" />{t(`tags.${tagKey}`)}</Badge>
                     ))}
                   </div>
                 )}
@@ -306,8 +309,8 @@ export default function ReportHistoryPage() {
               )}
               <div className="space-y-1">
                 <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Layers className="mr-2 h-4 w-4" />{t('reports.history.detailsModal.mainCategory')}</h4>
-                <Badge 
-                  variant={DESTRUCTIVE_REPORT_MAIN_CATEGORIES.includes(selectedReportForDetails.category) ? 'destructive' : 'secondary'} 
+                <Badge
+                  variant={DESTRUCTIVE_REPORT_MAIN_CATEGORIES.includes(selectedReportForDetails.category) ? 'destructive' : 'secondary'}
                   className="text-sm"
                 >
                   {getCategoryName(selectedReportForDetails.category)}
@@ -318,7 +321,7 @@ export default function ReportHistoryPage() {
                   <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Tag className="mr-2 h-4 w-4" />{t('reports.history.detailsModal.tags')}</h4>
                   <div className="flex flex-wrap gap-2">
                     {selectedReportForDetails.tags.map(tagKey => (
-                      <Badge key={tagKey} variant="outline" className="text-sm">{t(\`tags.${tagKey}\`)}</Badge>
+                      <Badge key={tagKey} variant="outline" className="text-sm">{t(`tags.${tagKey}`)}</Badge>
                     ))}
                   </div>
                 </div>
