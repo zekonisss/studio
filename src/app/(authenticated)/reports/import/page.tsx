@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, ChangeEvent } from 'react';
+import { useState, ChangeEvent, useEffect } from 'react';
 import * as XLSX from 'xlsx';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -15,12 +15,13 @@ import type { Report } from '@/types';
 import { categorizeReport } from '@/ai/flows/categorize-report-flow';
 import { getReportsFromLocalStoragePublic, saveReportsToLocalStoragePublic, detailedReportCategories } from '@/types';
 import { Badge } from '@/components/ui/badge';
+import { useRouter } from "next/navigation";
 
 interface ParsedRow {
   originalRow: Record<string, any>;
   reportPreview: Partial<Report>;
   aiStatus: 'pending' | 'processing' | 'completed' | 'error' | 'skipped_quota';
-  aiResult?: { categoryId: string; suggestedTags: string[] }; // Now stores tag keys
+  aiResult?: { categoryId: string; suggestedTags: string[] }; 
   error?: string;
 }
 
@@ -29,15 +30,27 @@ const MAX_AI_ATTEMPTS_PER_ROW = 2;
 const AI_RETRY_DELAY_MS = 7000;
 
 export default function ImportReportsPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const { t, locale } = useLanguage();
+  const router = useRouter();
   const [file, setFile] = useState<File | null>(null);
   const [parsedData, setParsedData] = useState<ParsedRow[]>([]);
   const [isLoadingFile, setIsLoadingFile] = useState(false);
   const [isProcessingAi, setIsProcessingAi] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!authLoading && (!user || !user.isAdmin)) {
+      toast({
+        variant: "destructive",
+        title: "Prieiga Negalima",
+        description: "Neturite teisių pasiekti šį puslapį.",
+      });
+      router.replace('/dashboard');
+    }
+  }, [user, authLoading, router, toast]);
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
@@ -131,8 +144,8 @@ export default function ImportReportsPage() {
               fullName: String(row.Title || t('reports.import.unknownDriver')),
               comment: commentText,
               createdAt: createdAtDate || new Date(),
-              category: 'other_category', // Default category key
-              tags: [], // Default empty tag keys
+              category: 'other_category', 
+              tags: [], 
             },
             aiStatus: 'pending',
           };
@@ -193,11 +206,11 @@ export default function ImportReportsPage() {
           updatedRows[i] = {
             ...updatedRows[i],
             aiStatus: 'completed',
-            aiResult: aiResult, // aiResult.suggestedTags now contains keys
+            aiResult: aiResult, 
             reportPreview: {
               ...updatedRows[i].reportPreview,
               category: aiResult.categoryId,
-              tags: aiResult.suggestedTags, // These are keys
+              tags: aiResult.suggestedTags, 
             },
           };
           attemptSuccess = true;
@@ -209,7 +222,7 @@ export default function ImportReportsPage() {
                                    (errorMessageString.includes('exceeded your current quota') || errorMessageString.includes('PerDay') || errorMessageString.includes('GenerateRequestsPerDayPerProjectPerModel-FreeTier'));
 
           if (isDailyQuotaError) {
-            console.error(`Daily AI quota limit reached at row ${i}, attempt ${attempt}. Error:`, error);
+            console.warn(`Daily AI quota limit reached at row ${i}, attempt ${attempt}. Error:`, error);
             if (!dailyQuotaHitInThisBatch) {
               toast({
                 variant: "destructive",
@@ -301,6 +314,14 @@ export default function ImportReportsPage() {
     const category = detailedReportCategories.find(c => c.id === categoryId);
     return category ? t(category.nameKey) : categoryId;
   };
+
+  if (authLoading || (!user || !user.isAdmin)) {
+    return (
+      <div className="flex justify-center items-center h-[calc(100vh-10rem)]">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto py-8">
@@ -403,5 +424,3 @@ export default function ImportReportsPage() {
     </div>
   );
 }
-
-    
