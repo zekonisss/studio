@@ -19,6 +19,49 @@ import { lt, enUS } from 'date-fns/locale';
 import { MOCK_GENERAL_REPORTS, combineAndDeduplicateReports, countries, getReportsFromLocalStoragePublic, getSearchLogsFromLocalStoragePublic, saveSearchLogsToLocalStoragePublic, detailedReportCategories, DESTRUCTIVE_REPORT_MAIN_CATEGORIES } from "@/types";
 import { useLanguage } from "@/contexts/language-context"; 
 
+// Helper function to migrate old Lithuanian tag values to keys
+const migrateTagIfNeeded = (tagValue: string): string => {
+  if (typeof tagValue !== 'string') return tagValue; 
+
+  const lithuanianToKeyMap: Record<string, string> = {
+    "Kuro vagystė": "kuro_vagyste",
+    "Krovinio vagystė": "krovinio_vagyste",
+    "Įmonės turto vagystė": "imones_turto_vagyste",
+    "Avaringumas": "avaringumas",
+    "Pavojingas vairavimas": "pavojingas_vairavimas",
+    "Dažni KET pažeidimai": "dazni_ket_pazeidimai",
+    "Grasinimai / agresija": "grasinimai_agresija",
+    "Netinkamas elgesys kolegų atžvilgiu": "netinkamas_elgesys_kolegu_atzvilgiu",
+    "Psichotropinių medžiagų vartojimas": "psichotropiniu_medziagu_vartojimas",
+    "Konfliktiškas asmuo": "konfliktiskas_asmuo",
+    "Neblaivus darbo metu": "neblaivus_darbo_metu",
+    "Neatvykimas į darbą be pateisinamos priežasties": "neatvykimas_i_darba_be_pateisinamos_priezasties",
+    "Neatsakingas požiūris į darbą": "neatsakingas_poziuris_i_darba",
+    "Techninis neatsakingumas": "techninis_neatsakingumas",
+    "Rizika saugumui ar kroviniui": "rizika_saugumui_ar_kroviniui",
+    "Dažni transporto priemonės pažeidimai": "dazni_transporto_priemones_pazeidimai",
+    "Buvo teisinis procesas / darbo ginčas": "buvo_teisinis_procesas_darbo_gincas",
+    "Pakenkta įmonės reputacijai": "pakenkta_imones_reputacijai",
+    "Neteisėta veikla įtariama": "neteiseta_veikla_itariama",
+    "Kita": "kita_tag" // Important: "Kita" from old system should map to "kita_tag"
+  };
+
+  if (lithuanianToKeyMap[tagValue]) {
+    return lithuanianToKeyMap[tagValue];
+  }
+
+  // Heuristic to catch already prefixed old values if they snuck in
+  if (tagValue.startsWith("tags.")) { 
+    const potentialPhrase = tagValue.substring(5);
+    if (lithuanianToKeyMap[potentialPhrase]) {
+      return lithuanianToKeyMap[potentialPhrase];
+    }
+  }
+  
+  return tagValue; // Return original if no mapping or it's already a key
+};
+
+
 export default function SearchPage() {
   const { user } = useAuth();
   const { t, locale } = useLanguage(); 
@@ -32,7 +75,7 @@ export default function SearchPage() {
   const getNationalityLabel = (nationalityCode?: string) => {
     if (!nationalityCode) return "";
     const country = countries.find(c => c.value === nationalityCode);
-    return country ? t(`countries.${nationalityCode}`) : nationalityCode; 
+    return country ? t('countries.' + country.value) : nationalityCode; 
   };
 
   const getCategoryNameSearch = (categoryId: string) => {
@@ -53,8 +96,15 @@ export default function SearchPage() {
     setSearchPerformed(true);
     await new Promise(resolve => setTimeout(resolve, 1000));
 
-    const allLocalReports = getReportsFromLocalStoragePublic();
-    const combinedDataSource = combineAndDeduplicateReports(allLocalReports, MOCK_GENERAL_REPORTS);
+    const allLocalReportsRaw = getReportsFromLocalStoragePublic();
+    const migratedLocalReports = allLocalReportsRaw.map(report => ({
+      ...report,
+      createdAt: new Date(report.createdAt), // Ensure createdAt is a Date object
+      tags: Array.isArray(report.tags) ? report.tags.map(migrateTagIfNeeded) : [],
+    }));
+
+    const combinedDataSource = combineAndDeduplicateReports(migratedLocalReports, MOCK_GENERAL_REPORTS.map(r => ({...r, createdAt: new Date(r.createdAt)})));
+
 
     const query = values.query.toLowerCase().trim();
     let results: Report[] = [];
@@ -70,7 +120,7 @@ export default function SearchPage() {
             (nationalityLabel && nationalityLabel.includes(query)) ||
             (report.birthYear && report.birthYear.toString().includes(query)) ||
             mainCategoryName.includes(query) ||
-            report.tags.some(tagKey => t(`tags.${tagKey}`).toLowerCase().includes(query)) || 
+            report.tags.some(tagKey => t('tags.' + tagKey).toLowerCase().includes(query)) || 
             report.comment.toLowerCase().includes(query) ||
             (report.reporterCompanyName && report.reporterCompanyName.toLowerCase().includes(query))
           );
@@ -87,7 +137,7 @@ export default function SearchPage() {
 
     if (user && query) {
       const newSearchLog: SearchLog = {
-        id: `searchlog-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+        id: 'searchlog-' + Date.now() + '-' + Math.random().toString(36).substring(2, 9),
         userId: user.id,
         searchText: values.query,
         timestamp: new Date(),
@@ -221,7 +271,7 @@ export default function SearchPage() {
                         </h4>
                         <div className="flex flex-wrap gap-2">
                           {report.tags.map(tagKey => (
-                            <Badge key={tagKey} variant="outline" className="text-sm">{t(`tags.${tagKey}`)}</Badge> 
+                            <Badge key={tagKey} variant="outline" className="text-sm">{t('tags.' + tagKey)}</Badge> 
                           ))}
                         </div>
                       </div>
