@@ -164,9 +164,8 @@
   "admin.entries.deleteDialog.confirmDelete": "Yes, delete",
   "admin.entries.noEntriesFound": "No entries found.",
   "admin.statistics.title": "Statistics",
-  "admin.statistics.description": "System usage statistics (to be implemented later).",
-  "admin.statistics.notImplemented": "Login and other activity statistics display is not currently implemented.",
-  "admin.statistics.futureImplementation": "In the future, you will be able to see detailed information about user activity here.",
+  "admin.statistics.description": "System usage statistics.",
+  "admin.statistics.noDataForChart": "Not enough data to display chart.",
   "admin.entryDetailsModal.title": "Entry Details",
   "admin.entryDetailsModal.description": "Detailed information about the entry being viewed by the administrator.",
   "admin.entryDetailsModal.driver": "Driver",
@@ -213,6 +212,10 @@
   "common.cancel": "Cancel",
   "common.saveChanges": "Save Changes",
   "common.editData": "Edit Data",
+  "common.previous": "Previous",
+  "common.next": "Next",
+  "common.page": "Page",
+  "common.of": "of",
   "toast.login.success.title": "Login Successful!",
   "toast.login.success.description": "Welcome back to DriverCheck.",
   "toast.login.error.title": "Login Error",
@@ -635,5 +638,3 @@
   "tags.pakenkta_imones_reputacijai": "Company reputation damaged",
   "tags.neteiseta_veikla_itariama": "Illegal activity suspected"
 }
-
-    

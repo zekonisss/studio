@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,9 +12,9 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Loader2, ShieldAlert, Users, FileText, AlertTriangle, Trash2, Eye, MoreHorizontal, BarChart3, UserCheck, UserX, UserCog, CalendarDays, Building2, Tag, MessageSquare, Image as ImageIcon, CheckCircle2, CreditCard, Send, Briefcase, MapPin, Phone, Mail, ShieldCheck as ShieldCheckIcon, User as UserIcon, Globe, Edit3, Save, XCircle, Percent, Layers } from "lucide-react";
-import type { UserProfile, Report } from "@/types"; 
-import { getAllUsers, saveAllUsers, MOCK_GENERAL_REPORTS, combineAndDeduplicateReports, countries, detailedReportCategories, DESTRUCTIVE_REPORT_MAIN_CATEGORIES, getCategoryNameAdmin as getCategoryNameForDisplayOriginal } from "@/types";
+import { Loader2, ShieldAlert, Users, FileText, AlertTriangle, Trash2, Eye, MoreHorizontal, BarChart3, UserCheck, UserX, UserCog, CalendarDays, Building2, Tag, MessageSquare, Image as ImageIcon, CheckCircle2, CreditCard, Send, Briefcase, MapPin, Phone, Mail, ShieldCheck as ShieldCheckIcon, User as UserIcon, Globe, Edit3, Save, XCircle, Percent, Layers, ChevronLeft, ChevronRight } from "lucide-react";
+import type { UserProfile, Report } from "@/types";
+import { getAllUsers, saveAllUsers, MOCK_GENERAL_REPORTS, combineAndDeduplicateReports, countries, detailedReportCategories, DESTRUCTIVE_REPORT_MAIN_CATEGORIES } from "@/types";
 import { format as formatDateFn, addYears } from 'date-fns';
 import { lt, enUS } from 'date-fns/locale';
 import { useToast } from "@/hooks/use-toast";
@@ -22,8 +22,11 @@ import NextImage from "next/image";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useLanguage } from '@/contexts/language-context';
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
+import { ChartContainer, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 
-const LOCAL_STORAGE_REPORTS_KEY = 'driverCheckReports'; 
+const LOCAL_STORAGE_REPORTS_KEY = 'driverCheckReports';
+const USERS_PER_PAGE = 10; // For pagination
 
 function getReportsFromLocalStorage(): Report[] {
   if (typeof window !== 'undefined') {
@@ -60,6 +63,8 @@ export default function AdminPage() {
   const [isEditingUserDetails, setIsEditingUserDetails] = useState(false);
   const [editingUserDetailsFormData, setEditingUserDetailsFormData] = useState<Partial<UserProfile>>({});
 
+  const [currentPage, setCurrentPage] = useState(1);
+
   const dateLocale = locale === 'en' ? enUS : lt;
 
   const getCategoryNameAdmin = (categoryId: string) => {
@@ -73,21 +78,63 @@ export default function AdminPage() {
     return country ? t(`countries.${country.value}`) : nationalityCode;
   };
 
-
   useEffect(() => {
     if (!authLoading && (!adminUser || !adminUser.isAdmin)) {
       router.replace('/dashboard');
     }
     if (adminUser && adminUser.isAdmin) {
       const fetchedUsers = getAllUsers();
-      setAllUsersState(fetchedUsers.sort((a,b) => (a.companyName || "").localeCompare(b.companyName || "")));
+      setAllUsersState(fetchedUsers.sort((a, b) => (a.companyName || "").localeCompare(b.companyName || "")));
 
       const localReports = getReportsFromLocalStorage();
       const combined = combineAndDeduplicateReports(localReports, MOCK_GENERAL_REPORTS);
-      setAllReports(combined.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+      setAllReports(combined.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
       setIsLoadingData(false);
     }
   }, [adminUser, authLoading, router]);
+
+  const categoryReportCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    detailedReportCategories.forEach(cat => counts[cat.id] = 0);
+
+    allReports.forEach(report => {
+      if (counts[report.category] !== undefined) {
+        counts[report.category]++;
+      } else {
+        counts['other_category'] = (counts['other_category'] || 0) + 1; // Fallback for unknown categories
+      }
+    });
+    return counts;
+  }, [allReports]);
+
+  const chartData = useMemo(() => {
+    return detailedReportCategories
+      .map((category, index) => ({
+        name: getCategoryNameAdmin(category.id).substring(0, 20) + (getCategoryNameAdmin(category.id).length > 20 ? '...' : ''), // Truncate long names
+        value: categoryReportCounts[category.id] || 0,
+        fill: `hsl(var(--chart-${(index % 5) + 1}))`,
+      }))
+      .filter(item => item.value > 0); // Only show categories with reports
+  }, [categoryReportCounts, getCategoryNameAdmin, t]);
+
+  const chartConfig = useMemo(() => {
+    const config: ChartConfig = {};
+    chartData.forEach(item => {
+      config[item.name] = {
+        label: item.name,
+        color: item.fill,
+      };
+    });
+    return config;
+  }, [chartData]);
+
+  // Pagination for users
+  const totalUserPages = Math.ceil(allUsersState.length / USERS_PER_PAGE);
+  const paginatedUsers = useMemo(() => {
+    const startIndex = (currentPage - 1) * USERS_PER_PAGE;
+    const endIndex = startIndex + USERS_PER_PAGE;
+    return allUsersState.slice(startIndex, endIndex);
+  }, [allUsersState, currentPage]);
 
   const handleUserStatusChange = (userId: string, newStatus: UserProfile['paymentStatus']) => {
     const targetUser = allUsersState.find(u => u.id === userId);
@@ -97,34 +144,32 @@ export default function AdminPage() {
     let newAccountActivatedAt = targetUser.accountActivatedAt;
 
     if (newStatus === 'active' && oldStatus !== 'active') {
-        newAccountActivatedAt = new Date().toISOString();
+      newAccountActivatedAt = new Date().toISOString();
     }
 
     const updatedUsers = allUsersState.map(u =>
       u.id === userId ? { ...u, paymentStatus: newStatus, accountActivatedAt: newAccountActivatedAt } : u
     );
-    setAllUsersState(updatedUsers);
+    setAllUsersState(updatedUsers.sort((a, b) => (a.companyName || "").localeCompare(b.companyName || "")));
     saveAllUsers(updatedUsers);
 
     let toastTitle = t('admin.users.toast.statusChanged.title');
     let toastDescription = t('admin.users.toast.statusChanged.description', {
-        companyName: targetUser.companyName,
-        email: targetUser.email,
-        status: getStatusText(newStatus)
+      companyName: targetUser.companyName,
+      email: targetUser.email,
+      status: getStatusText(newStatus)
     });
 
-
     if (newStatus === 'pending_payment' && oldStatus === 'pending_verification') {
-        toastTitle = t('admin.users.toast.identityVerified.title');
-        toastDescription = t('admin.users.toast.identityVerified.description', { companyName: targetUser.companyName });
+      toastTitle = t('admin.users.toast.identityVerified.title');
+      toastDescription = t('admin.users.toast.identityVerified.description', { companyName: targetUser.companyName });
     } else if (newStatus === 'active' && oldStatus === 'pending_payment') {
-        toastTitle = t('admin.users.toast.accountActivated.title');
-        toastDescription = t('admin.users.toast.accountActivated.description', { companyName: targetUser.companyName });
+      toastTitle = t('admin.users.toast.accountActivated.title');
+      toastDescription = t('admin.users.toast.accountActivated.description', { companyName: targetUser.companyName });
     } else if (newStatus === 'active' && oldStatus === 'pending_verification') {
-        toastTitle = t('admin.users.toast.accountVerifiedAndActivated.title');
-        toastDescription = t('admin.users.toast.accountVerifiedAndActivated.description', { companyName: targetUser.companyName });
+      toastTitle = t('admin.users.toast.accountVerifiedAndActivated.title');
+      toastDescription = t('admin.users.toast.accountVerifiedAndActivated.description', { companyName: targetUser.companyName });
     }
-
 
     toast({
       title: toastTitle,
@@ -143,7 +188,7 @@ export default function AdminPage() {
 
   const handleViewUserDetails = (user: UserProfile) => {
     setSelectedUserForDetails(user);
-    setEditingUserDetailsFormData({ 
+    setEditingUserDetailsFormData({
       companyName: user.companyName,
       companyCode: user.companyCode,
       vatCode: user.vatCode,
@@ -152,7 +197,7 @@ export default function AdminPage() {
       email: user.email,
       phone: user.phone,
     });
-    setIsEditingUserDetails(false); 
+    setIsEditingUserDetails(false);
   };
 
   const closeUserDetailsModal = () => {
@@ -163,16 +208,16 @@ export default function AdminPage() {
 
   const handleEditUserDetails = () => {
     if (selectedUserForDetails) {
-        setEditingUserDetailsFormData({
-            companyName: selectedUserForDetails.companyName,
-            companyCode: selectedUserForDetails.companyCode,
-            vatCode: selectedUserForDetails.vatCode,
-            address: selectedUserForDetails.address,
-            contactPerson: selectedUserForDetails.contactPerson,
-            email: selectedUserForDetails.email,
-            phone: selectedUserForDetails.phone,
-        });
-        setIsEditingUserDetails(true);
+      setEditingUserDetailsFormData({
+        companyName: selectedUserForDetails.companyName,
+        companyCode: selectedUserForDetails.companyCode,
+        vatCode: selectedUserForDetails.vatCode,
+        address: selectedUserForDetails.address,
+        contactPerson: selectedUserForDetails.contactPerson,
+        email: selectedUserForDetails.email,
+        phone: selectedUserForDetails.phone,
+      });
+      setIsEditingUserDetails(true);
     }
   };
 
@@ -185,31 +230,31 @@ export default function AdminPage() {
     if (!selectedUserForDetails) return;
 
     const updatedUser: UserProfile = {
-        ...selectedUserForDetails,
-        companyName: editingUserDetailsFormData.companyName || selectedUserForDetails.companyName,
-        companyCode: editingUserDetailsFormData.companyCode || selectedUserForDetails.companyCode,
-        vatCode: editingUserDetailsFormData.vatCode || undefined,
-        address: editingUserDetailsFormData.address || selectedUserForDetails.address,
-        contactPerson: editingUserDetailsFormData.contactPerson || selectedUserForDetails.contactPerson,
-        email: editingUserDetailsFormData.email || selectedUserForDetails.email,
-        phone: editingUserDetailsFormData.phone || selectedUserForDetails.phone,
+      ...selectedUserForDetails,
+      companyName: editingUserDetailsFormData.companyName || selectedUserForDetails.companyName,
+      companyCode: editingUserDetailsFormData.companyCode || selectedUserForDetails.companyCode,
+      vatCode: editingUserDetailsFormData.vatCode || undefined,
+      address: editingUserDetailsFormData.address || selectedUserForDetails.address,
+      contactPerson: editingUserDetailsFormData.contactPerson || selectedUserForDetails.contactPerson,
+      email: editingUserDetailsFormData.email || selectedUserForDetails.email,
+      phone: editingUserDetailsFormData.phone || selectedUserForDetails.phone,
     };
 
     const updatedUsersList = allUsersState.map(u => u.id === updatedUser.id ? updatedUser : u);
-    setAllUsersState(updatedUsersList);
+    setAllUsersState(updatedUsersList.sort((a, b) => (a.companyName || "").localeCompare(b.companyName || "")));
     saveAllUsers(updatedUsersList);
-    setSelectedUserForDetails(updatedUser); 
+    setSelectedUserForDetails(updatedUser);
     setIsEditingUserDetails(false);
     toast({
-        title: t('admin.users.toast.dataUpdated.title'),
-        description: t('admin.users.toast.dataUpdated.description', { companyName: updatedUser.companyName }),
+      title: t('admin.users.toast.dataUpdated.title'),
+      description: t('admin.users.toast.dataUpdated.description', { companyName: updatedUser.companyName }),
     });
   };
 
   const handleCancelEditUserDetails = () => {
     setIsEditingUserDetails(false);
     if (selectedUserForDetails) {
-      setEditingUserDetailsFormData({ 
+      setEditingUserDetailsFormData({
         companyName: selectedUserForDetails.companyName,
         companyCode: selectedUserForDetails.companyCode,
         vatCode: selectedUserForDetails.vatCode,
@@ -220,7 +265,6 @@ export default function AdminPage() {
       });
     }
   };
-
 
   const handleDeleteReport = async (reportId: string) => {
     setDeletingReportId(reportId);
@@ -238,7 +282,6 @@ export default function AdminPage() {
     });
     setDeletingReportId(null);
   };
-
 
   if (authLoading || !adminUser || !adminUser.isAdmin || isLoadingData) {
     return (
@@ -259,7 +302,7 @@ export default function AdminPage() {
   };
 
   const getStatusText = (status: UserProfile['paymentStatus']) => {
-     switch (status) {
+    switch (status) {
       case 'active': return t('admin.users.status.active');
       case 'pending_verification': return t('admin.users.status.pending_verification');
       case 'pending_payment': return t('admin.users.status.pending_payment');
@@ -282,7 +325,6 @@ export default function AdminPage() {
       )}
     </div>
   );
-
 
   return (
     <div className="container mx-auto py-8">
@@ -315,7 +357,7 @@ export default function AdminPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {allUsersState.length > 0 ? (
+              {paginatedUsers.length > 0 ? (
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -327,7 +369,7 @@ export default function AdminPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {allUsersState.map((u) => (
+                    {paginatedUsers.map((u) => (
                       <TableRow key={u.id}>
                         <TableCell className="font-medium">{u.companyName}</TableCell>
                         <TableCell className="hidden md:table-cell">{u.contactPerson}</TableCell>
@@ -357,7 +399,7 @@ export default function AdminPage() {
                                   <Send className="mr-2 h-4 w-4 text-blue-600" /> {t('admin.users.actions.verifyAndSendPayment')}
                                 </DropdownMenuItem>
                               )}
-                               {u.paymentStatus === 'pending_payment' && (
+                              {u.paymentStatus === 'pending_payment' && (
                                 <DropdownMenuItem onClick={() => handleUserStatusChange(u.id, 'active')}>
                                   <CreditCard className="mr-2 h-4 w-4 text-green-600" /> {t('admin.users.actions.activatePaymentReceived')}
                                 </DropdownMenuItem>
@@ -372,7 +414,7 @@ export default function AdminPage() {
                                   <UserX className="mr-2 h-4 w-4" /> {t('admin.users.actions.deactivate')}
                                 </DropdownMenuItem>
                               )}
-                               <DropdownMenuItem onClick={() => handleUserStatusChange(u.id, 'pending_verification')} disabled={u.paymentStatus === 'pending_verification'}>
+                              <DropdownMenuItem onClick={() => handleUserStatusChange(u.id, 'pending_verification')} disabled={u.paymentStatus === 'pending_verification'}>
                                 <UserCog className="mr-2 h-4 w-4" /> {t('admin.users.actions.setPendingVerification')}
                               </DropdownMenuItem>
                             </DropdownMenuContent>
@@ -383,12 +425,33 @@ export default function AdminPage() {
                   </TableBody>
                 </Table>
               ) : (
-                 <div className="flex flex-col items-center justify-center py-10 text-center">
-                    <AlertTriangle className="h-12 w-12 text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground">{t('admin.users.noUsersFound')}</p>
-                 </div>
+                <div className="flex flex-col items-center justify-center py-10 text-center">
+                  <AlertTriangle className="h-12 w-12 text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">{t('admin.users.noUsersFound')}</p>
+                </div>
               )}
             </CardContent>
+             {totalUserPages > 1 && (
+                <CardFooter className="border-t pt-4 justify-between">
+                    <Button 
+                        variant="outline" 
+                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} 
+                        disabled={currentPage === 1}
+                    >
+                        <ChevronLeft className="mr-2 h-4 w-4" /> {t('common.previous')}
+                    </Button>
+                    <span className="text-sm text-muted-foreground">
+                        {t('common.page')} {currentPage} {t('common.of')} {totalUserPages}
+                    </span>
+                    <Button 
+                        variant="outline" 
+                        onClick={() => setCurrentPage(prev => Math.min(totalUserPages, prev + 1))}
+                        disabled={currentPage === totalUserPages}
+                    >
+                        {t('common.next')} <ChevronRight className="ml-2 h-4 w-4" />
+                    </Button>
+                </CardFooter>
+            )}
           </Card>
         </TabsContent>
 
@@ -417,9 +480,9 @@ export default function AdminPage() {
                       <TableRow key={report.id}>
                         <TableCell className="font-medium">{report.fullName}</TableCell>
                         <TableCell className="hidden sm:table-cell">
-                           <Badge variant={DESTRUCTIVE_REPORT_MAIN_CATEGORIES.includes(report.category) ? 'destructive' : 'secondary'}>
-                             {getCategoryNameAdmin(report.category)}
-                           </Badge>
+                          <Badge variant={DESTRUCTIVE_REPORT_MAIN_CATEGORIES.includes(report.category) ? 'destructive' : 'secondary'}>
+                            {getCategoryNameAdmin(report.category)}
+                          </Badge>
                         </TableCell>
                         <TableCell className="hidden md:table-cell">{report.reporterCompanyName || t('common.notSpecified')}</TableCell>
                         <TableCell className="text-center hidden lg:table-cell text-muted-foreground">
@@ -428,7 +491,7 @@ export default function AdminPage() {
                         <TableCell className="text-right">
                           <div className="flex gap-1 justify-end">
                             <Button variant="ghost" size="icon" onClick={() => handleViewReportDetails(report)} title={t('admin.entries.actions.viewDetails')}>
-                                <Eye className="h-4 w-4" />
+                              <Eye className="h-4 w-4" />
                             </Button>
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
@@ -440,7 +503,7 @@ export default function AdminPage() {
                                 <AlertDialogHeader>
                                   <AlertDialogTitle>{t('admin.entries.deleteDialog.title')}</AlertDialogTitle>
                                   <AlertDialogDescription>
-                                   {t('admin.entries.deleteDialog.description.part1')} <span className="font-semibold">{report.fullName}</span> {t('admin.entries.deleteDialog.description.part2')}
+                                    {t('admin.entries.deleteDialog.description.part1')} <span className="font-semibold">{report.fullName}</span> {t('admin.entries.deleteDialog.description.part2')}
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
@@ -458,16 +521,16 @@ export default function AdminPage() {
                   </TableBody>
                 </Table>
               ) : (
-                 <div className="flex flex-col items-center justify-center py-10 text-center">
-                    <AlertTriangle className="h-12 w-12 text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground">{t('admin.entries.noEntriesFound')}</p>
-                 </div>
+                <div className="flex flex-col items-center justify-center py-10 text-center">
+                  <AlertTriangle className="h-12 w-12 text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">{t('admin.entries.noEntriesFound')}</p>
+                </div>
               )}
             </CardContent>
           </Card>
         </TabsContent>
 
-         <TabsContent value="stats">
+        <TabsContent value="stats">
           <Card className="shadow-xl">
             <CardHeader>
               <CardTitle>{t('admin.statistics.title')}</CardTitle>
@@ -476,11 +539,36 @@ export default function AdminPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-               <div className="flex flex-col items-center justify-center py-10 text-center">
+              {chartData.length > 0 ? (
+                <div className="h-[400px] w-full">
+                  <ChartContainer config={chartConfig} className="h-full w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={chartData} margin={{ top: 20, right: 20, left: -10, bottom: 60 }} accessibilityLayer>
+                        <CartesianGrid vertical={false} />
+                        <XAxis
+                            dataKey="name"
+                            tickLine={false}
+                            tickMargin={10}
+                            axisLine={false}
+                            angle={-45}
+                            textAnchor="end"
+                            height={100}
+                            interval={0}
+                            tickFormatter={(value) => value}
+                        />
+                        <YAxis />
+                        <RechartsTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
+                        <Bar dataKey="value" radius={5} />
+                        </BarChart>
+                    </ResponsiveContainer>
+                   </ChartContainer>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-10 text-center">
                   <BarChart3 className="h-12 w-12 text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground">{t('admin.statistics.notImplemented')}</p>
-                  <p className="text-sm text-muted-foreground mt-2">{t('admin.statistics.futureImplementation')}</p>
-               </div>
+                  <p className="text-muted-foreground">{t('admin.statistics.noDataForChart')}</p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -502,7 +590,7 @@ export default function AdminPage() {
                 <h4 className="text-sm font-medium text-muted-foreground flex items-center"><UserIcon className="mr-2 h-4 w-4" />{t('admin.entryDetailsModal.driver')}</h4>
                 <p className="text-base text-foreground">{selectedReportForDetails.fullName}</p>
               </div>
-               {selectedReportForDetails.nationality && (
+              {selectedReportForDetails.nationality && (
                 <div className="space-y-1">
                   <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Globe className="mr-2 h-4 w-4" />{t('admin.entryDetailsModal.nationality')}</h4>
                   <p className="text-base text-foreground">{getNationalityLabel(selectedReportForDetails.nationality)}</p>
@@ -515,10 +603,10 @@ export default function AdminPage() {
                 </div>
               )}
               <div className="space-y-1">
-                 <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Layers className="mr-2 h-4 w-4" />{t('admin.entryDetailsModal.mainCategory')}</h4>
-                <Badge 
-                    variant={DESTRUCTIVE_REPORT_MAIN_CATEGORIES.includes(selectedReportForDetails.category) ? 'destructive' : 'secondary'} 
-                    className="text-sm">
+                <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Layers className="mr-2 h-4 w-4" />{t('admin.entryDetailsModal.mainCategory')}</h4>
+                <Badge
+                  variant={DESTRUCTIVE_REPORT_MAIN_CATEGORIES.includes(selectedReportForDetails.category) ? 'destructive' : 'secondary'}
+                  className="text-sm">
                   {getCategoryNameAdmin(selectedReportForDetails.category)}
                 </Badge>
               </div>
@@ -527,7 +615,7 @@ export default function AdminPage() {
                   <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Tag className="mr-2 h-4 w-4" />{t('admin.entryDetailsModal.tags')}</h4>
                   <div className="flex flex-wrap gap-2">
                     {selectedReportForDetails.tags.map(tagKey => (
-                       <Badge key={tagKey} variant="outline" className="text-sm">{t(`tags.${tagKey}`)}</Badge>
+                      <Badge key={tagKey} variant="outline" className="text-sm">{t(`tags.${tagKey}`)}</Badge>
                     ))}
                   </div>
                 </div>
@@ -541,18 +629,18 @@ export default function AdminPage() {
                   <h4 className="text-sm font-medium text-muted-foreground flex items-center"><ImageIcon className="mr-2 h-4 w-4" />{t('admin.entryDetailsModal.attachedFile')}</h4>
                   <div className="w-full overflow-hidden rounded-md border">
                     <NextImage
-                        src={selectedReportForDetails.imageUrl}
-                        alt={t('admin.entryDetailsModal.imageAltPrefix', { fullName: selectedReportForDetails.fullName })}
-                        width={600}
-                        height={400}
-                        layout="responsive"
-                        objectFit="contain"
-                        data-ai-hint={selectedReportForDetails.dataAiHint || "entry image"}
+                      src={selectedReportForDetails.imageUrl}
+                      alt={t('admin.entryDetailsModal.imageAltPrefix', { fullName: selectedReportForDetails.fullName })}
+                      width={600}
+                      height={400}
+                      layout="responsive"
+                      objectFit="contain"
+                      data-ai-hint={selectedReportForDetails.dataAiHint || "entry image"}
                     />
                   </div>
                 </div>
               )}
-               <div className="space-y-1">
+              <div className="space-y-1">
                 <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Building2 className="mr-2 h-4 w-4" />{t('admin.entryDetailsModal.submittedByCompany')}</h4>
                 <p className="text-base text-foreground">{selectedReportForDetails.reporterCompanyName || t('common.notSpecified')}</p>
               </div>
@@ -560,7 +648,7 @@ export default function AdminPage() {
                 <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Users className="mr-2 h-4 w-4" />{t('admin.entryDetailsModal.submitterId')}</h4>
                 <p className="text-xs text-foreground bg-secondary/30 p-2 rounded-md">{selectedReportForDetails.reporterId}</p>
               </div>
-               <div className="space-y-1">
+              <div className="space-y-1">
                 <h4 className="text-sm font-medium text-muted-foreground flex items-center"><CalendarDays className="mr-2 h-4 w-4" />{t('admin.entryDetailsModal.submissionDate')}</h4>
                 <p className="text-base text-foreground">{formatDateFn(new Date(selectedReportForDetails.createdAt), "yyyy-MM-dd HH:mm:ss", { locale: dateLocale })}</p>
               </div>
@@ -597,15 +685,15 @@ export default function AdminPage() {
               <div className="md:col-span-2">
                 <UserInfoField label={t('admin.userDetailsModal.status')} value={getStatusText(selectedUserForDetails.paymentStatus)} icon={CheckCircle2} />
               </div>
-               {selectedUserForDetails.accountActivatedAt && selectedUserForDetails.paymentStatus === 'active' && (
+              {selectedUserForDetails.accountActivatedAt && selectedUserForDetails.paymentStatus === 'active' && (
                 <div className="md:col-span-2">
-                    <UserInfoField
-                        label={t('admin.userDetailsModal.accountActiveUntil')}
-                        value={formatDateFn(addYears(new Date(selectedUserForDetails.accountActivatedAt), 1), "yyyy-MM-dd", { locale: dateLocale })}
-                        icon={CalendarDays}
-                    />
+                  <UserInfoField
+                    label={t('admin.userDetailsModal.accountActiveUntil')}
+                    value={formatDateFn(addYears(new Date(selectedUserForDetails.accountActivatedAt), 1), "yyyy-MM-dd", { locale: dateLocale })}
+                    icon={CalendarDays}
+                  />
                 </div>
-                )}
+              )}
               <UserInfoField label={t('admin.userDetailsModal.administrator')} value={selectedUserForDetails.isAdmin} icon={ShieldAlert} />
               <UserInfoField label={t('admin.userDetailsModal.agreedToTerms')} value={selectedUserForDetails.agreeToTerms} icon={ShieldCheckIcon} />
               <div className="md:col-span-2">
@@ -613,20 +701,20 @@ export default function AdminPage() {
               </div>
             </div>
             <DialogFooter className="gap-2 sm:gap-0">
-                {isEditingUserDetails ? (
-                    <>
-                        <Button type="button" variant="outline" onClick={handleCancelEditUserDetails}>
-                           <XCircle className="mr-2 h-4 w-4" /> {t('common.cancel')}
-                        </Button>
-                        <Button type="button" onClick={handleSaveUserDetails}>
-                           <Save className="mr-2 h-4 w-4" /> {t('common.saveChanges')}
-                        </Button>
-                    </>
-                ) : (
-                    <Button type="button" variant="outline" onClick={handleEditUserDetails}>
-                       <Edit3 className="mr-2 h-4 w-4" /> {t('common.editData')}
-                    </Button>
-                )}
+              {isEditingUserDetails ? (
+                <>
+                  <Button type="button" variant="outline" onClick={handleCancelEditUserDetails}>
+                    <XCircle className="mr-2 h-4 w-4" /> {t('common.cancel')}
+                  </Button>
+                  <Button type="button" onClick={handleSaveUserDetails}>
+                    <Save className="mr-2 h-4 w-4" /> {t('common.saveChanges')}
+                  </Button>
+                </>
+              ) : (
+                <Button type="button" variant="outline" onClick={handleEditUserDetails}>
+                  <Edit3 className="mr-2 h-4 w-4" /> {t('common.editData')}
+                </Button>
+              )}
               <DialogClose asChild>
                 <Button type="button" variant="secondary" onClick={closeUserDetailsModal}>{t('common.close')}</Button>
               </DialogClose>
@@ -637,5 +725,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
-    

@@ -164,9 +164,8 @@
   "admin.entries.deleteDialog.confirmDelete": "Taip, pašalinti",
   "admin.entries.noEntriesFound": "Įrašų nerasta.",
   "admin.statistics.title": "Statistika",
-  "admin.statistics.description": "Sistemos naudojimo statistika (bus įgyvendinta vėliau).",
-  "admin.statistics.notImplemented": "Prisijungimų ir kitos veiklos statistikos rodymas šiuo metu nėra įgyvendintas.",
-  "admin.statistics.futureImplementation": "Ateityje čia galėsite matyti detalią informaciją apie vartotojų aktyvumą.",
+  "admin.statistics.description": "Sistemos naudojimo statistika.",
+  "admin.statistics.noDataForChart": "Nėra pakankamai duomenų diagramai rodyti.",
   "admin.entryDetailsModal.title": "Įrašo Detalės",
   "admin.entryDetailsModal.description": "Išsami informacija apie administratoriaus peržiūrimą įrašą.",
   "admin.entryDetailsModal.driver": "Vairuotojas",
@@ -213,6 +212,10 @@
   "common.cancel": "Atšaukti",
   "common.saveChanges": "Išsaugoti Pakeitimus",
   "common.editData": "Redaguoti Duomenis",
+  "common.previous": "Ankstesnis",
+  "common.next": "Kitas",
+  "common.page": "Puslapis",
+  "common.of": "iš",
   "toast.login.success.title": "Sėkmingai prisijungėte!",
   "toast.login.success.description": "Sveiki sugrįžę į DriverCheck.",
   "toast.login.error.title": "Prisijungimo klaida",
@@ -635,5 +638,3 @@
   "tags.pakenkta_imones_reputacijai": "Pakenkta įmonės reputacijai",
   "tags.neteiseta_veikla_itariama": "Neteisėta veikla įtariama"
 }
-
-    
