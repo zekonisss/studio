@@ -44,6 +44,15 @@ export interface SearchLog {
   resultsCount: number;
 }
 
+export interface AuditLogEntry {
+  id: string;
+  timestamp: Date;
+  adminId: string;
+  adminName: string; // Could be contactPerson or email
+  actionKey: string; // Translation key for the action, e.g., "auditLog.action.userStatusChanged"
+  details: Record<string, any>; // Additional details about the action
+}
+
 const unsortedCountries: { value: string, label: string }[] = [
   { value: 'AF', label: 'Afganistanas' },
   { value: 'AX', label: 'Alandų Salos' },
@@ -576,6 +585,7 @@ export const combineAndDeduplicateReports = (...reportArrays: Report[][]): Repor
 
 const LOCAL_STORAGE_REPORTS_KEY = 'driverCheckReports';
 const LOCAL_STORAGE_SEARCH_LOGS_KEY = 'driverCheckSearchLogs';
+const LOCAL_STORAGE_AUDIT_LOGS_KEY = 'driverCheckAuditLogs';
 
 
 export function getReportsFromLocalStoragePublic(): Report[] {
@@ -615,6 +625,31 @@ export function saveSearchLogsToLocalStoragePublic(logs: SearchLog[]): void {
     localStorage.setItem(LOCAL_STORAGE_SEARCH_LOGS_KEY, JSON.stringify(logs));
   }
 }
+
+export function getAuditLogsFromLocalStorage(): AuditLogEntry[] {
+  if (typeof window !== 'undefined') {
+    const logsJSON = localStorage.getItem(LOCAL_STORAGE_AUDIT_LOGS_KEY);
+    if (logsJSON) {
+      return JSON.parse(logsJSON).map((log: any) => ({
+        ...log,
+        timestamp: new Date(log.timestamp),
+      }));
+    }
+  }
+  return [];
+}
+
+export function addAuditLogEntryToLocalStorage(entry: AuditLogEntry): void {
+  if (typeof window !== 'undefined') {
+    const existingLogs = getAuditLogsFromLocalStorage();
+    // Add new entry to the beginning to have newest logs first
+    const updatedLogs = [entry, ...existingLogs]; 
+    // Optional: Limit the number of logs stored, e.g., to 100
+    // const limitedLogs = updatedLogs.slice(0, 100); 
+    localStorage.setItem(LOCAL_STORAGE_AUDIT_LOGS_KEY, JSON.stringify(updatedLogs));
+  }
+}
+
 
 export const MOCK_USER_SEARCH_LOGS: SearchLog[] = [
   { id: "log1-mock-user", userId: MOCK_USER.id, searchText: "Jonas Jonaitis", timestamp: new Date("2024-04-10T10:00:00Z"), resultsCount: 1 },
@@ -658,5 +693,3 @@ export function getCategoryNameForDisplay(categoryId: string, t: (key: string) =
   const category = detailedReportCategories.find(c => c.id === categoryId);
   return category ? t(category.nameKey) : categoryId;
 }
-
-    

@@ -12,9 +12,9 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Loader2, ShieldAlert, Users, FileText, AlertTriangle, Trash2, Eye, MoreHorizontal, BarChart3, UserCheck, UserX, UserCog, CalendarDays, Building2, Tag, MessageSquare, Image as ImageIcon, CheckCircle2, CreditCard, Send, Briefcase, MapPin, Phone, Mail, ShieldCheck as ShieldCheckIcon, User as UserIcon, Globe, Edit3, Save, XCircle, Percent, Layers, ChevronLeft, ChevronRight } from "lucide-react";
-import type { UserProfile, Report } from "@/types";
-import { getAllUsers, saveAllUsers, MOCK_GENERAL_REPORTS, combineAndDeduplicateReports, countries, detailedReportCategories, DESTRUCTIVE_REPORT_MAIN_CATEGORIES } from "@/types";
+import { Loader2, ShieldAlert, Users, FileText, AlertTriangle, Trash2, Eye, MoreHorizontal, BarChart3, UserCheck, UserX, UserCog, CalendarDays, Building2, Tag, MessageSquare, Image as ImageIcon, CheckCircle2, CreditCard, Send, Briefcase, MapPin, Phone, Mail, ShieldCheck as ShieldCheckIcon, User as UserIcon, Globe, Edit3, Save, XCircle, Percent, Layers, ChevronLeft, ChevronRight, Activity } from "lucide-react";
+import type { UserProfile, Report, AuditLogEntry } from "@/types";
+import { getAllUsers, saveAllUsers, MOCK_GENERAL_REPORTS, combineAndDeduplicateReports, countries, detailedReportCategories, DESTRUCTIVE_REPORT_MAIN_CATEGORIES, getAuditLogsFromLocalStorage, addAuditLogEntryToLocalStorage } from "@/types";
 import { format as formatDateFn, addYears } from 'date-fns';
 import { lt, enUS } from 'date-fns/locale';
 import { useToast } from "@/hooks/use-toast";
@@ -55,6 +55,7 @@ export default function AdminPage() {
 
   const [allReports, setAllReports] = useState<Report[]>([]);
   const [allUsersState, setAllUsersState] = useState<UserProfile[]>([]);
+  const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [selectedReportForDetails, setSelectedReportForDetails] = useState<Report | null>(null);
   const [selectedUserForDetails, setSelectedUserForDetails] = useState<UserProfile | null>(null);
@@ -64,6 +65,7 @@ export default function AdminPage() {
   const [editingUserDetailsFormData, setEditingUserDetailsFormData] = useState<Partial<UserProfile>>({});
 
   const [currentPage, setCurrentPage] = useState(1);
+  const [activeTab, setActiveTab] = useState("users");
 
   const dateLocale = locale === 'en' ? enUS : lt;
 
@@ -75,7 +77,21 @@ export default function AdminPage() {
   const getNationalityLabel = (nationalityCode?: string) => {
     if (!nationalityCode) return t('common.notSpecified');
     const country = countries.find(c => c.value === nationalityCode);
-    return country ? t(`countries.${country.value}`) : nationalityCode;
+    return country ? t('countries.' + country.value) : nationalityCode;
+  };
+
+  const logAdminAction = (actionKey: string, details: Record<string, any> = {}) => {
+    if (!adminUser) return;
+    const newLogEntry: AuditLogEntry = {
+      id: `audit-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+      timestamp: new Date(),
+      adminId: adminUser.id,
+      adminName: adminUser.contactPerson || adminUser.email,
+      actionKey,
+      details,
+    };
+    addAuditLogEntryToLocalStorage(newLogEntry);
+    setAuditLogs(prevLogs => [newLogEntry, ...prevLogs]);
   };
 
   useEffect(() => {
@@ -89,6 +105,10 @@ export default function AdminPage() {
       const localReports = getReportsFromLocalStorage();
       const combined = combineAndDeduplicateReports(localReports, MOCK_GENERAL_REPORTS);
       setAllReports(combined.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+      
+      const fetchedAuditLogs = getAuditLogsFromLocalStorage();
+      setAuditLogs(fetchedAuditLogs.sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime() ));
+
       setIsLoadingData(false);
     }
   }, [adminUser, authLoading, router]);
@@ -110,11 +130,11 @@ export default function AdminPage() {
   const chartData = useMemo(() => {
     return detailedReportCategories
       .map((category, index) => ({
-        name: getCategoryNameAdmin(category.id).substring(0, 20) + (getCategoryNameAdmin(category.id).length > 20 ? '...' : ''), // Truncate long names
+        name: getCategoryNameAdmin(category.id).substring(0, 20) + (getCategoryNameAdmin(category.id).length > 20 ? '...' : ''), 
         value: categoryReportCounts[category.id] || 0,
         fill: `hsl(var(--chart-${(index % 5) + 1}))`,
       }))
-      .filter(item => item.value > 0); // Only show categories with reports
+      .filter(item => item.value > 0); 
   }, [categoryReportCounts, getCategoryNameAdmin, t]);
 
   const chartConfig = useMemo(() => {
@@ -128,7 +148,6 @@ export default function AdminPage() {
     return config;
   }, [chartData]);
 
-  // Pagination for users
   const totalUserPages = Math.ceil(allUsersState.length / USERS_PER_PAGE);
   const paginatedUsers = useMemo(() => {
     const startIndex = (currentPage - 1) * USERS_PER_PAGE;
@@ -152,6 +171,14 @@ export default function AdminPage() {
     );
     setAllUsersState(updatedUsers.sort((a, b) => (a.companyName || "").localeCompare(b.companyName || "")));
     saveAllUsers(updatedUsers);
+
+    logAdminAction("auditLog.action.userStatusChanged", { 
+      userId: targetUser.id, 
+      userEmail: targetUser.email,
+      companyName: targetUser.companyName,
+      oldStatus: getStatusText(oldStatus), 
+      newStatus: getStatusText(newStatus) 
+    });
 
     let toastTitle = t('admin.users.toast.statusChanged.title');
     let toastDescription = t('admin.users.toast.statusChanged.description', {
@@ -245,6 +272,14 @@ export default function AdminPage() {
     saveAllUsers(updatedUsersList);
     setSelectedUserForDetails(updatedUser);
     setIsEditingUserDetails(false);
+    
+    logAdminAction("auditLog.action.userDetailsUpdated", {
+      userId: updatedUser.id,
+      userEmail: updatedUser.email,
+      companyName: updatedUser.companyName,
+      updatedFields: Object.keys(editingUserDetailsFormData).filter(key => editingUserDetailsFormData[key as keyof Partial<UserProfile>] !== selectedUserForDetails[key as keyof UserProfile] )
+    });
+    
     toast({
       title: t('admin.users.toast.dataUpdated.title'),
       description: t('admin.users.toast.dataUpdated.description', { companyName: updatedUser.companyName }),
@@ -266,7 +301,7 @@ export default function AdminPage() {
     }
   };
 
-  const handleDeleteReport = async (reportId: string) => {
+  const handleDeleteReport = async (reportId: string, reportFullName: string) => {
     setDeletingReportId(reportId);
     await new Promise(resolve => setTimeout(resolve, 700));
     const updatedReports = allReports.filter(report => report.id !== reportId);
@@ -276,6 +311,12 @@ export default function AdminPage() {
     if (localReports.length !== updatedLocalReports.length) {
       saveReportsToLocalStorage(updatedLocalReports);
     }
+
+    logAdminAction("auditLog.action.reportDeleted", { 
+      reportId: reportId,
+      driverFullName: reportFullName,
+    });
+
     toast({
       title: t('admin.entries.toast.entryDeleted.title'),
       description: t('admin.entries.toast.entryDeleted.description'),
@@ -335,13 +376,16 @@ export default function AdminPage() {
         </h1>
       </div>
 
-      <Tabs defaultValue="users" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 mb-6">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 mb-6">
           <TabsTrigger value="users" className="text-base py-2.5">
             <Users className="mr-2 h-5 w-5" /> {t('admin.tabs.userManagement')}
           </TabsTrigger>
           <TabsTrigger value="reports" className="text-base py-2.5">
             <FileText className="mr-2 h-5 w-5" /> {t('admin.tabs.entryManagement')}
+          </TabsTrigger>
+           <TabsTrigger value="audit" className="text-base py-2.5">
+            <Activity className="mr-2 h-5 w-5" /> {t('admin.tabs.auditLog')}
           </TabsTrigger>
           <TabsTrigger value="stats" className="text-base py-2.5">
             <BarChart3 className="mr-2 h-5 w-5" /> {t('admin.tabs.statistics')}
@@ -508,7 +552,7 @@ export default function AdminPage() {
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
                                   <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
-                                  <AlertDialogAction onClick={() => handleDeleteReport(report.id)} className="bg-destructive hover:bg-destructive/90">
+                                  <AlertDialogAction onClick={() => handleDeleteReport(report.id, report.fullName)} className="bg-destructive hover:bg-destructive/90">
                                     {t('admin.entries.deleteDialog.confirmDelete')}
                                   </AlertDialogAction>
                                 </AlertDialogFooter>
@@ -524,6 +568,50 @@ export default function AdminPage() {
                 <div className="flex flex-col items-center justify-center py-10 text-center">
                   <AlertTriangle className="h-12 w-12 text-muted-foreground mb-4" />
                   <p className="text-muted-foreground">{t('admin.entries.noEntriesFound')}</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="audit">
+          <Card className="shadow-xl">
+            <CardHeader>
+              <CardTitle>{t('admin.auditLog.title')}</CardTitle>
+              <CardDescription>
+                {t('admin.auditLog.description')}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {auditLogs.length > 0 ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[20%]">{t('admin.auditLog.table.timestamp')}</TableHead>
+                      <TableHead className="w-[20%]">{t('admin.auditLog.table.admin')}</TableHead>
+                      <TableHead className="w-[30%]">{t('admin.auditLog.table.action')}</TableHead>
+                      <TableHead className="w-[30%]">{t('admin.auditLog.table.details')}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {auditLogs.map((log) => (
+                      <TableRow key={log.id}>
+                        <TableCell className="text-xs text-muted-foreground">
+                          {formatDateFn(new Date(log.timestamp), "yyyy-MM-dd HH:mm:ss", { locale: dateLocale })}
+                        </TableCell>
+                        <TableCell className="text-sm">{log.adminName}</TableCell>
+                        <TableCell className="text-sm">{t(log.actionKey, log.details)}</TableCell>
+                        <TableCell className="text-xs">
+                          <pre className="whitespace-pre-wrap bg-muted/30 p-2 rounded-md max-h-24 overflow-y-auto">{JSON.stringify(log.details, null, 2)}</pre>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                 <div className="flex flex-col items-center justify-center py-10 text-center">
+                  <Activity className="h-12 w-12 text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">{t('admin.auditLog.noLogsFound')}</p>
                 </div>
               )}
             </CardContent>
@@ -615,7 +703,7 @@ export default function AdminPage() {
                   <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Tag className="mr-2 h-4 w-4" />{t('admin.entryDetailsModal.tags')}</h4>
                   <div className="flex flex-wrap gap-2">
                     {selectedReportForDetails.tags.map(tagKey => (
-                      <Badge key={tagKey} variant="outline" className="text-sm">{t(`tags.${tagKey}`)}</Badge>
+                      <Badge key={tagKey} variant="outline" className="text-sm">{t('tags.' + tagKey)}</Badge>
                     ))}
                   </div>
                 </div>
