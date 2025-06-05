@@ -40,7 +40,7 @@ const LOCAL_STORAGE_REPORTS_KEY = 'driverCheckReports';
 
 // Helper function to migrate old Lithuanian tag values to keys
 const migrateTagIfNeeded = (tagValue: string): string => {
-  if (typeof tagValue !== 'string') return tagValue; // Should not happen if data is array of strings
+  if (typeof tagValue !== 'string') return tagValue; 
 
   const lithuanianToKeyMap: Record<string, string> = {
     "Kuro vagystė": "kuro_vagyste",
@@ -62,16 +62,13 @@ const migrateTagIfNeeded = (tagValue: string): string => {
     "Buvo teisinis procesas / darbo ginčas": "buvo_teisinis_procesas_darbo_gincas",
     "Pakenkta įmonės reputacijai": "pakenkta_imones_reputacijai",
     "Neteisėta veikla įtariama": "neteiseta_veikla_itariama",
-    "Kita": "kita_tag",
-    // Add other potential old Lithuanian literal tags here if known
+    "Kita": "kita_tag"
   };
 
-  // Check if the tagValue itself is a known Lithuanian phrase
   if (lithuanianToKeyMap[tagValue]) {
     return lithuanianToKeyMap[tagValue];
   }
 
-  // Check if tagValue starts with "tags." and the rest is a Lithuanian phrase
   if (tagValue.startsWith("tags.")) {
     const potentialPhrase = tagValue.substring(5);
     if (lithuanianToKeyMap[potentialPhrase]) {
@@ -79,7 +76,6 @@ const migrateTagIfNeeded = (tagValue: string): string => {
     }
   }
   
-  // Otherwise, assume it's already a key or an unknown value
   return tagValue;
 };
 
@@ -93,7 +89,6 @@ function getReportsFromLocalStorage(): Report[] {
         return parsedReports.map((report: any) => ({
           ...report,
           createdAt: new Date(report.createdAt),
-          // Ensure tags is an array before attempting to map
           tags: Array.isArray(report.tags) ? report.tags.map(migrateTagIfNeeded) : [],
         }));
       } catch (e) {
@@ -412,5 +407,3 @@ export default function ReportHistoryPage() {
     </div>
   );
 }
-
-    
