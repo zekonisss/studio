@@ -38,14 +38,63 @@ import { useLanguage } from "@/contexts/language-context";
 
 const LOCAL_STORAGE_REPORTS_KEY = 'driverCheckReports';
 
+// Helper function to migrate old Lithuanian tag values to keys
+const migrateTagIfNeeded = (tagValue: string): string => {
+  if (typeof tagValue !== 'string') return tagValue; // Should not happen if data is array of strings
+
+  const lithuanianToKeyMap: Record<string, string> = {
+    "Kuro vagystė": "kuro_vagyste",
+    "Krovinio vagystė": "krovinio_vagyste",
+    "Įmonės turto vagystė": "imones_turto_vagyste",
+    "Avaringumas": "avaringumas",
+    "Pavojingas vairavimas": "pavojingas_vairavimas",
+    "Dažni KET pažeidimai": "dazni_ket_pazeidimai",
+    "Grasinimai / agresija": "grasinimai_agresija",
+    "Netinkamas elgesys kolegų atžvilgiu": "netinkamas_elgesys_kolegu_atzvilgiu",
+    "Psichotropinių medžiagų vartojimas": "psichotropiniu_medziagu_vartojimas",
+    "Konfliktiškas asmuo": "konfliktiskas_asmuo",
+    "Neblaivus darbo metu": "neblaivus_darbo_metu",
+    "Neatvykimas į darbą be pateisinamos priežasties": "neatvykimas_i_darba_be_pateisinamos_priezasties",
+    "Neatsakingas požiūris į darbą": "neatsakingas_poziuris_i_darba",
+    "Techninis neatsakingumas": "techninis_neatsakingumas",
+    "Rizika saugumui ar kroviniui": "rizika_saugumui_ar_kroviniui",
+    "Dažni transporto priemonės pažeidimai": "dazni_transporto_priemones_pazeidimai",
+    "Buvo teisinis procesas / darbo ginčas": "buvo_teisinis_procesas_darbo_gincas",
+    "Pakenkta įmonės reputacijai": "pakenkta_imones_reputacijai",
+    "Neteisėta veikla įtariama": "neteiseta_veikla_itariama",
+    "Kita": "kita_tag",
+    // Add other potential old Lithuanian literal tags here if known
+  };
+
+  // Check if the tagValue itself is a known Lithuanian phrase
+  if (lithuanianToKeyMap[tagValue]) {
+    return lithuanianToKeyMap[tagValue];
+  }
+
+  // Check if tagValue starts with "tags." and the rest is a Lithuanian phrase
+  if (tagValue.startsWith("tags.")) {
+    const potentialPhrase = tagValue.substring(5);
+    if (lithuanianToKeyMap[potentialPhrase]) {
+      return lithuanianToKeyMap[potentialPhrase];
+    }
+  }
+  
+  // Otherwise, assume it's already a key or an unknown value
+  return tagValue;
+};
+
+
 function getReportsFromLocalStorage(): Report[] {
   if (typeof window !== 'undefined') {
     const reportsJSON = localStorage.getItem(LOCAL_STORAGE_REPORTS_KEY);
     if (reportsJSON) {
       try {
-        return JSON.parse(reportsJSON).map((report: any) => ({
+        const parsedReports: Report[] = JSON.parse(reportsJSON);
+        return parsedReports.map((report: any) => ({
           ...report,
           createdAt: new Date(report.createdAt),
+          // Ensure tags is an array before attempting to map
+          tags: Array.isArray(report.tags) ? report.tags.map(migrateTagIfNeeded) : [],
         }));
       } catch (e) {
         console.error("Failed to parse reports from localStorage", e);
@@ -64,21 +113,20 @@ function saveReportsToLocalStorage(reports: Report[]): void {
 }
 
 export default function ReportHistoryPage() {
-  const { user, loading: authLoading } = useAuth(); // Renamed loading to authLoading for clarity
+  const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const { t, locale } = useLanguage();
   const [reports, setReports] = useState<Report[]>([]);
-  const [isLoading, setIsLoading] = useState(true); // Page-specific data loading
+  const [isLoading, setIsLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [selectedReportForDetails, setSelectedReportForDetails] = useState<Report | null>(null);
 
   const dateLocale = locale === 'en' ? enUS : lt;
 
   useEffect(() => {
-    // Only fetch reports if user is authenticated and auth is not loading
     if (!authLoading && user) {
       const fetchReports = async () => {
-        setIsLoading(true); // Start page-specific loading
+        setIsLoading(true);
         await new Promise(resolve => setTimeout(resolve, 500));
 
         const localUserReports = getReportsFromLocalStorage().filter(r => r.reporterId === user.id);
@@ -97,16 +145,14 @@ export default function ReportHistoryPage() {
           });
         }
         setReports(combinedReportsForUser.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
-        setIsLoading(false); // End page-specific loading
+        setIsLoading(false);
       };
       fetchReports();
     } else if (!authLoading && !user) {
-      // If auth is done and no user, stop loading and clear reports
       setIsLoading(false);
       setReports([]);
     }
-    // If authLoading is true, useEffect will re-run when it becomes false.
-  }, [user, authLoading, locale, t]); // Added t to dependencies as it's used in getNationalityLabel/getCategoryName which might be called during initial render logic implicitly
+  }, [user, authLoading]);
 
   const handleDeleteReport = async (reportId: string) => {
     setDeletingId(reportId);
@@ -133,13 +179,13 @@ export default function ReportHistoryPage() {
     setSelectedReportForDetails(null);
   };
 
-  const getNationalityLabel = (nationalityCode?: string) => {
+  const getNationalityLabel = (nationalityCode?: string): string => {
     if (!nationalityCode) return t('common.notSpecified');
     const country = countries.find(c => c.value === nationalityCode);
     return country ? t('countries.' + country.value) : nationalityCode;
   };
 
-  const getCategoryName = (categoryId: string) => {
+  const getCategoryName = (categoryId: string): string => {
     const category = detailedReportCategories.find(c => c.id === categoryId);
     return category ? t(category.nameKey) : categoryId;
   };
@@ -165,7 +211,7 @@ export default function ReportHistoryPage() {
     );
   }
 
-   if (isLoading) { // This isLoading is for page-specific data
+   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-[calc(100vh-10rem)]">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
