@@ -1,4 +1,14 @@
 
+export interface SubUserProfile {
+  id: string;
+  fullName: string;
+  email: string;
+  // Laikinas slaptažodis, kuris turėtų būti pakeistas pirmo prisijungimo metu
+  // Realiame scenarijuje reikėtų saugesnio slaptažodžių valdymo.
+  tempPassword?: string; 
+  // Galima pridėti roles ar kitus specifinius laukus ateityje
+}
+
 export interface UserProfile {
   id: string;
   companyName: string;
@@ -13,6 +23,7 @@ export interface UserProfile {
   accountActivatedAt?: string; // Date ISO string when the account was last set to 'active'
   password?: string; // Only for mock/initial setup, not stored long-term
   agreeToTerms?: boolean;
+  subUsers?: SubUserProfile[]; // Naujas laukas papildomiems vartotojams
 }
 
 export interface DetailedCategory {
@@ -392,6 +403,7 @@ export const MOCK_USER: UserProfile = {
   isAdmin: true,
   accountActivatedAt: new Date(new Date().setMonth(new Date().getMonth() - 11)).toISOString(),
   agreeToTerms: true,
+  subUsers: [], // Pridėtas tuščias masyvas
 };
 
 export const MOCK_ADDITIONAL_USER_1: UserProfile = {
@@ -407,6 +419,7 @@ export const MOCK_ADDITIONAL_USER_1: UserProfile = {
   isAdmin: false,
   accountActivatedAt: new Date(new Date().setDate(new Date().getDate() - 10)).toISOString(),
   agreeToTerms: true,
+  subUsers: [], // Pridėtas tuščias masyvas
 };
 
 export const MOCK_ADDITIONAL_USER_2: UserProfile = {
@@ -421,6 +434,7 @@ export const MOCK_ADDITIONAL_USER_2: UserProfile = {
   isAdmin: false,
   accountActivatedAt: new Date('2023-01-15T00:00:00.000Z').toISOString(),
   agreeToTerms: true,
+  subUsers: [], // Pridėtas tuščias masyvas
 };
 
 export const MOCK_ADDITIONAL_USER_3: UserProfile = {
@@ -435,15 +449,22 @@ export const MOCK_ADDITIONAL_USER_3: UserProfile = {
   isAdmin: false,
   accountActivatedAt: undefined,
   agreeToTerms: true,
+  subUsers: [], // Pridėtas tuščias masyvas
 };
 
 
-export const MOCK_ALL_USERS: UserProfile[] = [MOCK_USER, MOCK_ADDITIONAL_USER_1, MOCK_ADDITIONAL_USER_2, MOCK_ADDITIONAL_USER_3];
+export const MOCK_ALL_USERS: UserProfile[] = [
+  { ...MOCK_USER, subUsers: MOCK_USER.subUsers || [] },
+  { ...MOCK_ADDITIONAL_USER_1, subUsers: MOCK_ADDITIONAL_USER_1.subUsers || [] },
+  { ...MOCK_ADDITIONAL_USER_2, subUsers: MOCK_ADDITIONAL_USER_2.subUsers || [] },
+  { ...MOCK_ADDITIONAL_USER_3, subUsers: MOCK_ADDITIONAL_USER_3.subUsers || [] },
+];
+
 
 const LOCAL_STORAGE_USERS_KEY = 'driverCheckAllUsers';
 
 export function getAllUsers(): UserProfile[] {
-  let combinedUsers: UserProfile[] = [...MOCK_ALL_USERS.map(u => ({...u}))];
+  let combinedUsers: UserProfile[] = MOCK_ALL_USERS.map(u => ({...u, subUsers: u.subUsers || []}));
   if (typeof window !== 'undefined') {
     const storedUsersJSON = localStorage.getItem(LOCAL_STORAGE_USERS_KEY);
     if (storedUsersJSON) {
@@ -451,8 +472,8 @@ export function getAllUsers(): UserProfile[] {
         const localUsers: UserProfile[] = JSON.parse(storedUsersJSON);
         const usersMap = new Map<string, UserProfile>();
 
-        MOCK_ALL_USERS.forEach(user => usersMap.set(user.id, {...user}));
-        localUsers.forEach(user => usersMap.set(user.id, user)); // Take user from localStorage if it exists to preserve changes
+        MOCK_ALL_USERS.forEach(user => usersMap.set(user.id, {...user, subUsers: user.subUsers || []}));
+        localUsers.forEach(user => usersMap.set(user.id, {...user, subUsers: user.subUsers || []})); // Ensure subUsers is initialized
         combinedUsers = Array.from(usersMap.values());
       } catch (e) {
         console.error("Failed to parse users from localStorage", e);
@@ -460,7 +481,7 @@ export function getAllUsers(): UserProfile[] {
       }
     } else {
       // Initialize localStorage if it's empty
-      localStorage.setItem(LOCAL_STORAGE_USERS_KEY, JSON.stringify(MOCK_ALL_USERS));
+      localStorage.setItem(LOCAL_STORAGE_USERS_KEY, JSON.stringify(MOCK_ALL_USERS.map(u => ({...u, subUsers: u.subUsers || []}))));
     }
   }
   return combinedUsers;
@@ -468,7 +489,7 @@ export function getAllUsers(): UserProfile[] {
 
 export function saveAllUsers(users: UserProfile[]): void {
   if (typeof window !== 'undefined') {
-    localStorage.setItem(LOCAL_STORAGE_USERS_KEY, JSON.stringify(users));
+    localStorage.setItem(LOCAL_STORAGE_USERS_KEY, JSON.stringify(users.map(u => ({...u, subUsers: u.subUsers || []}))));
   }
 }
 
@@ -693,3 +714,5 @@ export function getCategoryNameForDisplay(categoryId: string, t: (key: string) =
   const category = detailedReportCategories.find(c => c.id === categoryId);
   return category ? t(category.nameKey) : categoryId;
 }
+
+    
