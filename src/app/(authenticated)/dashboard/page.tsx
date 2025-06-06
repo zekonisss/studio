@@ -10,25 +10,68 @@ import { Search, FilePlus2, History, UserCircle, BarChart3, AlertTriangle, Check
 import Image from "next/image";
 import { format as formatDateFn, addYears, addMonths, isBefore } from 'date-fns';
 import { lt, enUS } from 'date-fns/locale';
-import type { Report } from '@/types';
-import { getReportsFromLocalStoragePublic, MOCK_GENERAL_REPORTS, combineAndDeduplicateReports } from '@/types';
+import type { Report, SearchLog } from '@/types'; // Added SearchLog
+import { 
+  getReportsFromLocalStoragePublic, 
+  MOCK_GENERAL_REPORTS, 
+  combineAndDeduplicateReports,
+  getSearchLogsFromLocalStoragePublic, // Added
+  MOCK_USER, // Added
+  MOCK_USER_REPORTS, // Added
+  MOCK_USER_SEARCH_LOGS // Added
+} from '@/types';
 import { useLanguage } from '@/contexts/language-context';
 
 export default function DashboardPage() {
   const { user } = useAuth();
   const { t, locale } = useLanguage();
   const [totalReportsCount, setTotalReportsCount] = useState(0);
+  const [userReportsCount, setUserReportsCount] = useState(0); // New state
+  const [userSearchesCount, setUserSearchesCount] = useState(0); // New state
 
   const dateLocale = locale === 'en' ? enUS : lt;
 
   useEffect(() => {
-    const fetchTotalReports = () => {
-      const localReports = getReportsFromLocalStoragePublic();
-      const combined = combineAndDeduplicateReports(localReports, MOCK_GENERAL_REPORTS);
-      setTotalReportsCount(combined.length);
+    const fetchStats = () => {
+      // Total platform reports
+      const localPlatformReports = getReportsFromLocalStoragePublic();
+      const combinedPlatformReports = combineAndDeduplicateReports(localPlatformReports, MOCK_GENERAL_REPORTS);
+      setTotalReportsCount(combinedPlatformReports.length);
+
+      if (user) {
+        // User-specific reports count
+        const allLocalReports = getReportsFromLocalStoragePublic(); // Get all from local storage
+        let userSpecificReports = allLocalReports.filter(r => r.reporterId === user.id);
+        
+        // For MOCK_USER, ensure their mock reports are counted if not in localStorage yet
+        if (user.id === MOCK_USER.id) {
+          const mockUserReportsNotInLocal = MOCK_USER_REPORTS.filter(
+            mr => !userSpecificReports.some(lsr => lsr.id === mr.id)
+          );
+          userSpecificReports = [...userSpecificReports, ...mockUserReportsNotInLocal];
+        }
+        setUserReportsCount(userSpecificReports.length);
+
+        // User-specific searches count
+        const allLocalSearchLogs = getSearchLogsFromLocalStoragePublic();
+        let userSpecificSearchLogs = allLocalSearchLogs.filter(log => log.userId === user.id);
+
+        // For MOCK_USER, ensure their mock search logs are counted if not in localStorage yet
+        if (user.id === MOCK_USER.id) {
+            const mockUserSearchLogsNotInLocal = MOCK_USER_SEARCH_LOGS.filter(
+                msl => !userSpecificSearchLogs.some(lsl => lsl.id === msl.id)
+            );
+            userSpecificSearchLogs = [...userSpecificSearchLogs, ...mockUserSearchLogsNotInLocal];
+        }
+        setUserSearchesCount(userSpecificSearchLogs.length);
+
+      } else {
+        setUserReportsCount(0);
+        setUserSearchesCount(0);
+      }
     };
-    fetchTotalReports();
-  }, []);
+    fetchStats();
+  }, [user]);
 
 
   const subscriptionEndDate = user?.accountActivatedAt ? addYears(new Date(user.accountActivatedAt), 1) : null;
@@ -57,7 +100,7 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between p-4 bg-secondary/50 rounded-md">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">{t('dashboard.overview.yourReports')}</p>
-                <p className="text-2xl font-bold">N/A</p>
+                <p className="text-2xl font-bold">{userReportsCount}</p>
               </div>
               <Button variant="outline" size="sm" asChild>
                 <Link href="/reports/history">{t('dashboard.overview.viewAll')}</Link>
@@ -66,7 +109,7 @@ export default function DashboardPage() {
              <div className="flex items-center justify-between p-4 bg-secondary/50 rounded-md">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">{t('dashboard.overview.yourSearches')}</p>
-                <p className="text-2xl font-bold">N/A</p>
+                <p className="text-2xl font-bold">{userSearchesCount}</p>
               </div>
               <Button variant="outline" size="sm" asChild>
                 <Link href="/search/history">{t('dashboard.overview.viewHistory')}</Link>
@@ -103,7 +146,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent className="space-y-3">
              <div className="relative aspect-video w-full overflow-hidden rounded-lg mb-4">
-                <Image src="https://placehold.co/600x338.png" alt={t('dashboard.usefulLinks.imageAlt')} layout="fill" objectFit="cover" data-ai-hint="driving safety" />
+                <Image src="https://placehold.co/600x338.png" alt={t('dashboard.usefulLinks.imageAlt')} layout="fill" objectFit="cover" data-ai-hint="driving safety truck" />
               </div>
             <Button variant="link" asChild className="p-0 h-auto justify-start">
               <Link href="/terms">{t('dashboard.usefulLinks.terms')}</Link>
