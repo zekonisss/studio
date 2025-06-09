@@ -1,7 +1,7 @@
 
 "use client";
 
-import type { UserProfile } from '@/types';
+import type { UserProfile, SubUserProfile } from '@/types';
 import type { LoginFormValues, SignUpFormValues } from '@/lib/schemas';
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
@@ -140,10 +140,47 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             title: t('toast.signup.error.title'),
             description: t('toast.signup.error.emailExists'),
           });
-          throw new Error(t('toast.signup.error.emailExists'));
+          const error = new Error(t('toast.signup.error.emailExists')) as any;
+          error.isAuthManagedError = true;
+          throw error;
+        }
+        if (values.addOneSubUser && values.subUserEmail && allUsers.some(u => u.email === values.subUserEmail)) {
+           toast({
+            variant: "destructive",
+            title: t('toast.signup.error.title'),
+            description: t('toast.signup.error.subUserEmailExists'),
+          });
+          const error = new Error(t('toast.signup.error.subUserEmailExists')) as any;
+          error.isAuthManagedError = true;
+          throw error;
+        }
+        if (values.addOneSubUser && values.subUserEmail === values.email) {
+           toast({
+            variant: "destructive",
+            title: t('toast.signup.error.title'),
+            description: t('toast.signup.error.subUserEmailSameAsMain'),
+          });
+          const error = new Error(t('toast.signup.error.subUserEmailSameAsMain')) as any;
+          error.isAuthManagedError = true;
+          throw error;
         }
 
+
         const newUserId = `user-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+        const subUsersList: SubUserProfile[] = [];
+
+        if (values.addOneSubUser && values.subUserName && values.subUserEmail && values.subUserPassword) {
+            const subUserId = `subuser-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+            subUsersList.push({
+                id: subUserId,
+                fullName: values.subUserName,
+                email: values.subUserEmail,
+                // For now, using the main user's password for sub-user. In a real app, this should be handled differently.
+                // Or, use values.subUserPassword if it's intended for the sub-user to have a distinct one set at creation.
+                tempPassword: values.subUserPassword, // Using the password provided in the form for the sub-user
+            });
+        }
+
         const newUserProfile: UserProfile = {
           id: newUserId,
           companyName: values.companyName,
@@ -153,10 +190,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           contactPerson: values.contactPerson,
           email: values.email,
           phone: values.phone,
-          paymentStatus: 'pending_verification', // Initial status
+          password: values.password, // Storing main user's password (ideally hashed server-side)
+          paymentStatus: 'pending_verification', 
           isAdmin: false,
           agreeToTerms: values.agreeToTerms,
-          accountActivatedAt: undefined, // Ensure this is undefined initially
+          accountActivatedAt: undefined,
+          subUsers: subUsersList,
         };
 
         const updatedUsers = [...allUsers, newUserProfile];
@@ -169,7 +208,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         router.push('/auth/pending-approval');
     } catch (error: any) {
         // If not already a toast from email exists, show generic one
-        if (!error.message.includes(t('toast.signup.error.emailExists'))) {
+        if (!error.isAuthManagedError) { // Check if the error was already handled and toasted by specific checks
              toast({
                 variant: "destructive",
                 title: t('toast.signup.error.title'),

@@ -2,12 +2,13 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -18,8 +19,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { SignUpSchema, type SignUpFormValues } from "@/lib/schemas";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
-import { Building2, Briefcase, MapPin, User, Mail, Phone, Lock, Loader2, Percent } from "lucide-react";
+import { Building2, Briefcase, MapPin, User, Mail, Phone, Lock, Loader2, Percent, UserPlus } from "lucide-react";
 import { useLanguage } from "@/contexts/language-context";
+import { Separator } from "@/components/ui/separator";
 
 export function SignupForm() {
   const { signup, loading } = useAuth();
@@ -39,7 +41,16 @@ export function SignupForm() {
       password: "",
       confirmPassword: "",
       agreeToTerms: false,
+      addOneSubUser: false,
+      subUserName: "",
+      subUserEmail: "",
+      subUserPassword: "",
     },
+  });
+
+  const addOneSubUser = useWatch({
+    control: form.control,
+    name: 'addOneSubUser',
   });
 
   async function onSubmit(values: SignUpFormValues) {
@@ -48,8 +59,6 @@ export function SignupForm() {
       // Toast messages are now handled within useAuth using translated strings
     } catch (error: any) {
       // Error handling is now more centralized in useAuth
-      // This catch block might be redundant if useAuth always throws for UI-displayable errors
-      // or if it directly updates UI state for errors.
       if (!error.isAuthManagedError) {
          toast({
             variant: "destructive",
@@ -180,6 +189,85 @@ export function SignupForm() {
             </FormItem>
           )}
         />
+
+        <Separator className="my-6" />
+
+        <FormField
+          control={form.control}
+          name="addOneSubUser"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4 shadow-sm bg-secondary/50">
+              <FormControl>
+                <Checkbox
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                  id="addOneSubUser"
+                />
+              </FormControl>
+              <div className="space-y-1 leading-none">
+                <FormLabel htmlFor="addOneSubUser" className="cursor-pointer flex items-center">
+                  <UserPlus className="mr-2 h-4 w-4 text-muted-foreground" />
+                  {t('signup.form.addOneSubUser.label')}
+                </FormLabel>
+                <FormDescription>
+                  {t('signup.form.addOneSubUser.description')}
+                </FormDescription>
+              </div>
+            </FormItem>
+          )}
+        />
+
+        {addOneSubUser && (
+          <div className="space-y-4 p-4 border rounded-md mt-4 bg-card shadow">
+            <h3 className="text-md font-semibold text-primary flex items-center">
+                <UserPlus className="mr-2 h-5 w-5" />
+                {t('signup.form.subUserSection.title')}
+            </h3>
+            <FormField
+              control={form.control}
+              name="subUserName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center"><User className="mr-2 h-4 w-4 text-muted-foreground" />{t('signup.form.subUserName.label')}</FormLabel>
+                  <FormControl>
+                    <Input placeholder={t('signup.form.subUserName.placeholder')} {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="subUserEmail"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center"><Mail className="mr-2 h-4 w-4 text-muted-foreground" />{t('signup.form.subUserEmail.label')}</FormLabel>
+                  <FormControl>
+                    <Input type="email" placeholder={t('signup.form.subUserEmail.placeholder')} {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="subUserPassword"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center"><Lock className="mr-2 h-4 w-4 text-muted-foreground" />{t('signup.form.subUserPassword.label')}</FormLabel>
+                  <FormControl>
+                    <Input type="password" placeholder={t('signup.form.subUserPassword.placeholder')} {...field} />
+                  </FormControl>
+                   <FormDescription>{t('signup.form.subUserPassword.description')}</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        )}
+        
+        <Separator className="my-6" />
+
         <FormField
           control={form.control}
           name="agreeToTerms"

@@ -12,9 +12,37 @@ export const SignUpSchema = z.object({
   password: z.string().min(8, { message: "Slaptažodis turi būti bent 8 simbolių ilgio." }),
   confirmPassword: z.string().min(8, { message: "Slaptažodis turi būti bent 8 simbolių ilgio." }),
   agreeToTerms: z.boolean().refine(val => val === true, { message: "Privalote sutikti su taisyklėmis." }),
+  addOneSubUser: z.boolean().optional(),
+  subUserName: z.string().optional(),
+  subUserEmail: z.string().optional(), // Email validation will be conditional
+  subUserPassword: z.string().optional(), // Min length validation will be conditional
 }).refine(data => data.password === data.confirmPassword, {
   message: "Slaptažodžiai nesutampa.",
   path: ["confirmPassword"],
+}).superRefine((data, ctx) => {
+  if (data.addOneSubUser) {
+    if (!data.subUserName || data.subUserName.length < 3) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Papildomo vartotojo vardas ir pavardė turi būti bent 3 simbolių ilgio.",
+        path: ["subUserName"],
+      });
+    }
+    if (!data.subUserEmail || !z.string().email().safeParse(data.subUserEmail).success) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Neteisingas papildomo vartotojo el. pašto formatas.",
+        path: ["subUserEmail"],
+      });
+    }
+    if (!data.subUserPassword || data.subUserPassword.length < 8) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Papildomo vartotojo slaptažodis turi būti bent 8 simbolių ilgio.",
+        path: ["subUserPassword"],
+      });
+    }
+  }
 });
 
 export type SignUpFormValues = z.infer<typeof SignUpSchema>;
@@ -43,5 +71,4 @@ export const SearchSchema = z.object({
 });
 
 export type SearchFormValues = z.infer<typeof SearchSchema>;
-
     
