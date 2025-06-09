@@ -52,6 +52,16 @@
   "signup.form.submitButton": "Zarejestruj się",
   "signup.form.alreadyHaveAccount": "Masz już konto? ",
   "signup.form.loginLink": "Zaloguj się",
+  "signup.form.addOneSubUser.label": "Dodaj jednego dodatkowego użytkownika",
+  "signup.form.addOneSubUser.description": "Zaznacz, jeśli chcesz od razu dodać jednego użytkownika podrzędnego.",
+  "signup.form.subUserSection.title": "Dane dodatkowego użytkownika",
+  "signup.form.subUserName.label": "Imię i nazwisko dodatkowego użytkownika",
+  "signup.form.subUserName.placeholder": "Jan Kowalski (podrzędny)",
+  "signup.form.subUserEmail.label": "E-mail dodatkowego użytkownika",
+  "signup.form.subUserEmail.placeholder": "subuser@firma.pl",
+  "signup.form.subUserPassword.label": "Hasło dodatkowego użytkownika",
+  "signup.form.subUserPassword.placeholder": "••••••••",
+  "signup.form.subUserPassword.description": "To hasło użytkownik będzie mógł później zmienić.",
   "dashboard.greeting": "Witaj, {contactPerson}!",
   "dashboard.defaultUser": "Użytkowniku",
   "dashboard.company": "Twoja firma: {companyName}",
@@ -241,6 +251,8 @@
   "toast.signup.error.title": "Błąd Rejestracji",
   "toast.signup.error.descriptionGeneric": "Wystąpił błąd podczas próby rejestracji.",
   "toast.signup.error.emailExists": "Użytkownik o tym adresie e-mail już istnieje.",
+  "toast.signup.error.subUserEmailExists": "Dodatkowy użytkownik o tym adresie e-mail już istnieje.",
+  "toast.signup.error.subUserEmailSameAsMain": "Adres e-mail dodatkowego użytkownika nie może być taki sam jak adres e-mail głównego użytkownika.",
   "toast.logout.success.title": "Pomyślnie wylogowano",
   "toast.logout.error.title": "Błąd Wylogowania",
   "search.title": "Szukaj Kierowców",
@@ -649,3 +661,5 @@
   "tags.pakenkta_imones_reputacijai": "Naruszenie reputacji firmy",
   "tags.neteiseta_veikla_itariama": "Podejrzenie nielegalnej działalności"
 }
+
+    

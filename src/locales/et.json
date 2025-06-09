@@ -52,6 +52,16 @@
   "signup.form.submitButton": "Registreeru",
   "signup.form.alreadyHaveAccount": "Konto on juba olemas? ",
   "signup.form.loginLink": "Logi sisse",
+  "signup.form.addOneSubUser.label": "Lisa üks täiendav kasutaja",
+  "signup.form.addOneSubUser.description": "Märgi see ruut, kui soovid kohe lisada ühe alamkasutaja.",
+  "signup.form.subUserSection.title": "Täiendava kasutaja andmed",
+  "signup.form.subUserName.label": "Täiendava kasutaja täisnimi",
+  "signup.form.subUserName.placeholder": "Jaan Tamm (alamkasutaja)",
+  "signup.form.subUserEmail.label": "Täiendava kasutaja e-post",
+  "signup.form.subUserEmail.placeholder": "alamkasutaja@firma.ee",
+  "signup.form.subUserPassword.label": "Täiendava kasutaja parool",
+  "signup.form.subUserPassword.placeholder": "••••••••",
+  "signup.form.subUserPassword.description": "Seda parooli saab kasutaja hiljem muuta.",
   "dashboard.greeting": "Tere tulemast, {contactPerson}!",
   "dashboard.defaultUser": "Kasutaja",
   "dashboard.company": "Sinu ettevõte: {companyName}",
@@ -241,6 +251,8 @@
   "toast.signup.error.title": "Registreerimise viga",
   "toast.signup.error.descriptionGeneric": "Registreerimisel tekkis viga.",
   "toast.signup.error.emailExists": "Selle e-posti aadressiga kasutaja on juba olemas.",
+  "toast.signup.error.subUserEmailExists": "Selle e-postiga täiendav kasutaja on juba olemas.",
+  "toast.signup.error.subUserEmailSameAsMain": "Täiendava kasutaja e-post ei tohi olla sama mis põhikasuaja e-post.",
   "toast.logout.success.title": "Edukalt välja logitud",
   "toast.logout.error.title": "Väljalogimise viga",
   "search.title": "Otsi juhte",
@@ -647,3 +659,5 @@
   "tags.pakenkta_imones_reputacijai": "Ettevõtte maine kahjustatud",
   "tags.neteiseta_veikla_itariama": "Kahtlustatakse ebaseaduslikku tegevust"
 }
+
+    

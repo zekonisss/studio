@@ -52,6 +52,16 @@
   "signup.form.submitButton": "Зарегистрироваться",
   "signup.form.alreadyHaveAccount": "Уже есть аккаунт? ",
   "signup.form.loginLink": "Войти",
+  "signup.form.addOneSubUser.label": "Добавить одного дополнительного пользователя",
+  "signup.form.addOneSubUser.description": "Отметьте, если хотите сразу добавить одного подчиненного пользователя.",
+  "signup.form.subUserSection.title": "Данные дополнительного пользователя",
+  "signup.form.subUserName.label": "Имя и фамилия дополнительного пользователя",
+  "signup.form.subUserName.placeholder": "Иван Иванов (подчиненный)",
+  "signup.form.subUserEmail.label": "Эл. почта дополнительного пользователя",
+  "signup.form.subUserEmail.placeholder": "subuser@company.com",
+  "signup.form.subUserPassword.label": "Пароль дополнительного пользователя",
+  "signup.form.subUserPassword.placeholder": "••••••••",
+  "signup.form.subUserPassword.description": "Этот пароль пользователь сможет изменить позже.",
   "dashboard.greeting": "Добро пожаловать, {contactPerson}!",
   "dashboard.defaultUser": "Пользователь",
   "dashboard.company": "Ваша компания: {companyName}",
@@ -241,6 +251,8 @@
   "toast.signup.error.title": "Ошибка регистрации",
   "toast.signup.error.descriptionGeneric": "Произошла ошибка при попытке регистрации.",
   "toast.signup.error.emailExists": "Пользователь с таким адресом электронной почты уже существует.",
+  "toast.signup.error.subUserEmailExists": "Дополнительный пользователь с таким адресом электронной почты уже существует.",
+  "toast.signup.error.subUserEmailSameAsMain": "Адрес электронной почты дополнительного пользователя не может совпадать с адресом основного пользователя.",
   "toast.logout.success.title": "Успешный выход",
   "toast.logout.error.title": "Ошибка выхода",
   "search.title": "Поиск Водителей",
@@ -649,3 +661,5 @@
   "tags.pakenkta_imones_reputacijai": "Нанесен ущерб репутации компании",
   "tags.neteiseta_veikla_itariama": "Подозревается незаконная деятельность"
 }
+
+    

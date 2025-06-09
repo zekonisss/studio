@@ -52,6 +52,16 @@
   "signup.form.submitButton": "Reģistrēties",
   "signup.form.alreadyHaveAccount": "Jau ir konts? ",
   "signup.form.loginLink": "Pieteikties",
+  "signup.form.addOneSubUser.label": "Pievienot vienu papildu lietotāju",
+  "signup.form.addOneSubUser.description": "Atzīmējiet, ja vēlaties uzreiz pievienot vienu pakārtoto lietotāju.",
+  "signup.form.subUserSection.title": "Papildu lietotāja dati",
+  "signup.form.subUserName.label": "Papildu lietotāja vārds un uzvārds",
+  "signup.form.subUserName.placeholder": "Jānis Bērziņš (pakārtotais)",
+  "signup.form.subUserEmail.label": "Papildu lietotāja e-pasts",
+  "signup.form.subUserEmail.placeholder": "subuser@company.com",
+  "signup.form.subUserPassword.label": "Papildu lietotāja parole",
+  "signup.form.subUserPassword.placeholder": "••••••••",
+  "signup.form.subUserPassword.description": "Šo paroli lietotājs varēs mainīt vēlāk.",
   "dashboard.greeting": "Laipni lūdzam, {contactPerson}!",
   "dashboard.defaultUser": "Lietotājs",
   "dashboard.company": "Jūsu uzņēmums: {companyName}",
@@ -241,6 +251,8 @@
   "toast.signup.error.title": "Reģistrācijas Kļūda",
   "toast.signup.error.descriptionGeneric": "Mēģinot reģistrēties, radās kļūda.",
   "toast.signup.error.emailExists": "Lietotājs ar šo e-pastu jau pastāv.",
+  "toast.signup.error.subUserEmailExists": "Papildu lietotājs ar šo e-pastu jau pastāv.",
+  "toast.signup.error.subUserEmailSameAsMain": "Papildu lietotāja e-pasts nevar būt tāds pats kā galvenā lietotāja e-pasts.",
   "toast.logout.success.title": "Veiksmīgi izrakstījāties",
   "toast.logout.error.title": "Izrakstīšanās Kļūda",
   "search.title": "Meklēt Vadītājus",
@@ -648,3 +660,5 @@
   "tags.pakenkta_imones_reputacijai": "Kaitēta uzņēmuma reputācijai",
   "tags.neteiseta_veikla_itariama": "Aizdomas par nelikumīgu darbību"
 }
+
+    
