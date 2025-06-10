@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, Fragment } from "react"; // Added Fragment for group headers
 import { useAuth } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -102,8 +102,7 @@ export default function AdminPage() {
     }
     if (adminUser && adminUser.isAdmin) {
       const fetchedUsers = getAllUsers();
-      // Default sort by company name, can be overridden by userDisplayOption later
-      setAllUsersState(fetchedUsers.sort((a, b) => (a.companyName || "").localeCompare(b.companyName || "")));
+      setAllUsersState(fetchedUsers); // Initial set, sorting will be handled by processedUsers
 
       const localReports = getReportsFromLocalStorage();
       const combined = combineAndDeduplicateReports(localReports, MOCK_GENERAL_REPORTS);
@@ -154,7 +153,7 @@ export default function AdminPage() {
   const processedUsers = useMemo(() => {
     let users = [...allUsersState];
     if (userDisplayOption === 'byCompanyName') {
-      users.sort((a, b) => (a.companyName || "").localeCompare(b.companyName || ""));
+      users.sort((a, b) => (a.companyName || "").localeCompare(b.companyName || "", locale));
     } else if (userDisplayOption === 'byRegistrationDate') {
       users.sort((a, b) => {
         const dateA = a.registeredAt ? new Date(a.registeredAt).getTime() : 0;
@@ -163,7 +162,7 @@ export default function AdminPage() {
       });
     }
     return users;
-  }, [allUsersState, userDisplayOption]);
+  }, [allUsersState, userDisplayOption, locale]);
 
   const totalUserPages = Math.ceil(processedUsers.length / USERS_PER_PAGE);
   const paginatedUsers = useMemo(() => {
@@ -197,7 +196,7 @@ export default function AdminPage() {
     const updatedUsers = allUsersState.map(u =>
       u.id === userId ? { ...u, paymentStatus: newStatus, accountActivatedAt: newAccountActivatedAt } : u
     );
-    setAllUsersState(updatedUsers); // No sort here, processedUsers will handle it
+    setAllUsersState(updatedUsers);
     saveAllUsers(updatedUsers);
 
     logAdminAction("auditLog.action.userStatusChanged", { 
@@ -460,7 +459,7 @@ export default function AdminPage() {
                       <TableHead>{t('admin.users.table.companyName')}</TableHead>
                       <TableHead className="hidden md:table-cell">{t('admin.users.table.contactPerson')}</TableHead>
                       <TableHead className="hidden lg:table-cell">{t('admin.users.table.email')}</TableHead>
-                       <TableHead className="hidden md:table-cell text-center">{t('admin.users.table.registrationDate')}</TableHead>
+                      <TableHead className="hidden md:table-cell text-center">{t('admin.users.table.registrationDate')}</TableHead>
                       <TableHead className="text-center">{t('admin.users.table.status')}</TableHead>
                       <TableHead className="text-right">{t('admin.users.table.actions')}</TableHead>
                     </TableRow>
@@ -473,7 +472,7 @@ export default function AdminPage() {
                         lastGroupHeader = currentMonthYearGroup;
                       }
                       return (
-                        <React.Fragment key={u.id}>
+                        <Fragment key={u.id}> {/* Changed React.Fragment to Fragment */}
                           {showGroupHeader && (
                             <TableRow className="bg-muted/30 hover:bg-muted/40">
                               <TableCell colSpan={6} className="py-3 px-4 font-semibold text-md text-foreground">
@@ -535,7 +534,7 @@ export default function AdminPage() {
                               </DropdownMenu>
                             </TableCell>
                           </TableRow>
-                        </React.Fragment>
+                        </Fragment> 
                       );
                     })}
                   </TableBody>
@@ -887,3 +886,4 @@ export default function AdminPage() {
     </div>
   );
 }
+
