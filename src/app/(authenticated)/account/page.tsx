@@ -15,7 +15,7 @@ import { format as formatDateFn, addYears } from "date-fns";
 import { lt, enUS } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
-import { getAllUsers, saveAllUsers, detailedReportCategories, getCategoryNameAdmin as getCategoryNameForDisplay, getUserNotifications, markNotificationAsRead, markAllNotificationsAsRead } from "@/types";
+import * as types from "@/types"; // Changed to namespace import
 import { useLanguage } from '@/contexts/language-context';
 
 
@@ -51,7 +51,7 @@ export default function AccountPage() {
 
   const fetchNotifications = useCallback(() => {
     if (user) {
-      setNotifications(getUserNotifications(user.id));
+      setNotifications(types.getUserNotifications(user.id)); // Updated to use types.
     }
   }, [user]);
 
@@ -82,7 +82,7 @@ export default function AccountPage() {
   const handleSave = async () => {
     if (!user) return;
     setIsEditing(false);
-    const allUsers = getAllUsers();
+    const allUsers = types.getAllUsers(); // Updated to use types.
     const updatedUser = {
         ...user,
         companyName: formData.companyName,
@@ -94,20 +94,20 @@ export default function AccountPage() {
         phone: formData.phone,
     };
     const updatedUsersList = allUsers.map(u => u.id === user.id ? updatedUser : u);
-    saveAllUsers(updatedUsersList);
+    types.saveAllUsers(updatedUsersList); // Updated to use types.
     updateUserInContext(updatedUser as UserProfile);
   };
 
   const handleMarkAsRead = (notificationId: string) => {
     if (user) {
-      markNotificationAsRead(user.id, notificationId);
+      types.markNotificationAsRead(user.id, notificationId); // Updated to use types.
       fetchNotifications();
     }
   };
 
   const handleMarkAllAsRead = () => {
     if (user) {
-      markAllNotificationsAsRead(user.id);
+      types.markAllNotificationsAsRead(user.id); // Updated to use types.
       fetchNotifications();
     }
   };
@@ -210,7 +210,7 @@ export default function AccountPage() {
                     <li key={report.id} className="p-4 border rounded-md hover:bg-muted/30 transition-colors">
                       <div className="flex justify-between items-start">
                         <h4 className="font-semibold text-foreground">{report.fullName}</h4>
-                        <Badge variant="secondary">{getCategoryNameForDisplay(report.category, t)}</Badge>
+                        <Badge variant="secondary">{types.getCategoryNameAdmin(report.category, t)}</Badge> 
                       </div>
                       <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{report.comment}</p>
                       <p className="text-xs text-muted-foreground mt-2">{t('account.entries.submittedOn')}: {formatDateFn(report.createdAt, "yyyy-MM-dd HH:mm", { locale: dateLocale })}</p>
@@ -396,3 +396,4 @@ export default function AccountPage() {
 }
 
     
+
