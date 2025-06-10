@@ -92,6 +92,7 @@
   "account.tabs.myEntries": "My Entries",
   "account.tabs.searchHistory": "Search History",
   "account.tabs.payments": "Payments",
+  "account.tabs.notifications": "Notifications",
   "account.details.title": "Registration Information",
   "account.details.description": "Here you can view and edit your company's registration details.",
   "account.details.companyName": "Company Name",
@@ -135,6 +136,12 @@
   "account.payments.manageSubscriptionButton": "Manage Subscription (Stripe)",
   "account.payments.manageSubscriptionNote": "Subscription management will be handled via Stripe (integration will be added later).",
   "account.payments.footerNote": "If you have any questions regarding payments, please contact us.",
+  "account.notifications.title": "Notifications",
+  "account.notifications.description": "Important notifications related to your account.",
+  "account.notifications.noNotifications": "No new notifications.",
+  "account.notifications.markAsRead": "Mark as read",
+  "account.notifications.markAllAsRead": "Mark all as read",
+  "account.notifications.viewDetails": "View Details",
   "admin.pageTitle": "Administrator Panel",
   "admin.tabs.userManagement": "User Management",
   "admin.tabs.entryManagement": "Entry Management",
@@ -226,6 +233,10 @@
   "admin.users.toast.dataUpdated.description": "User {companyName} data successfully saved.",
   "admin.entries.toast.entryDeleted.title": "Entry Deleted",
   "admin.entries.toast.entryDeleted.description": "Selected entry has been successfully deleted.",
+  "notifications.accountStatusChanged.title": "Account Status Changed",
+  "notifications.accountStatusChanged.message": "Your account status was changed from \"{oldStatus}\" to \"{newStatus}\" by administrator {adminName}.",
+  "notifications.subscriptionWarning.title": "Subscription Reminder",
+  "notifications.subscriptionWarning.message": "Your annual subscription expires on {endDate} ({daysLeft} days left). Please remember to renew it.",
   "common.yes": "Yes",
   "common.no": "No",
   "common.notSpecified": "Not specified",
@@ -660,5 +671,5 @@
   "tags.pakenkta_imones_reputacijai": "Company reputation damaged",
   "tags.neteiseta_veikla_itariama": "Illegal activity suspected"
 }
-    
+
     

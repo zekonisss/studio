@@ -92,6 +92,7 @@
   "account.tabs.myEntries": "Mani Ieraksti",
   "account.tabs.searchHistory": "Meklēšanas Vēsture",
   "account.tabs.payments": "Maksājumi",
+  "account.tabs.notifications": "Paziņojumi",
   "account.details.title": "Reģistrācijas Informācija",
   "account.details.description": "Šeit jūs varat apskatīt un rediģēt sava uzņēmuma reģistrācijas datus.",
   "account.details.companyName": "Uzņēmuma Nosaukums",
@@ -135,6 +136,12 @@
   "account.payments.manageSubscriptionButton": "Pārvaldīt Abonementu (Stripe)",
   "account.payments.manageSubscriptionNote": "Abonementa pārvaldība tiks veikta caur Stripe (integrācija tiks pievienota vēlāk).",
   "account.payments.footerNote": "Ja jums ir jautājumi par maksājumiem, lūdzu, sazinieties ar mums.",
+  "account.notifications.title": "Paziņojumi",
+  "account.notifications.description": "Svarīgi paziņojumi, kas saistīti ar jūsu kontu.",
+  "account.notifications.noNotifications": "Jaunu paziņojumu nav.",
+  "account.notifications.markAsRead": "Atzīmēt kā izlasītu",
+  "account.notifications.markAllAsRead": "Atzīmēt visus kā izlasītus",
+  "account.notifications.viewDetails": "Skatīt detaļas",
   "admin.pageTitle": "Administratora Panelis",
   "admin.tabs.userManagement": "Lietotāju Pārvaldība",
   "admin.tabs.entryManagement": "Ierakstu Pārvaldība",
@@ -226,6 +233,10 @@
   "admin.users.toast.dataUpdated.description": "Lietotāja {companyName} dati veiksmīgi saglabāti.",
   "admin.entries.toast.entryDeleted.title": "Ieraksts Dzēsts",
   "admin.entries.toast.entryDeleted.description": "Izvēlētais ieraksts ir veiksmīgi dzēsts.",
+  "notifications.accountStatusChanged.title": "Konta Statuss Mainīts",
+  "notifications.accountStatusChanged.message": "Jūsu konta statuss tika mainīts no \"{oldStatus}\" uz \"{newStatus}\" administratora {adminName}.",
+  "notifications.subscriptionWarning.title": "Abonementa Atgādinājums",
+  "notifications.subscriptionWarning.message": "Jūsu gada abonements beidzas {endDate} (atlikušas {daysLeft} d.). Lūdzu, neaizmirstiet to atjaunot.",
   "common.yes": "Jā",
   "common.no": "Nē",
   "common.notSpecified": "Nav norādīts",
@@ -660,5 +671,5 @@
   "tags.pakenkta_imones_reputacijai": "Kaitēta uzņēmuma reputācijai",
   "tags.neteiseta_veikla_itariama": "Aizdomas par nelikumīgu darbību"
 }
-    
+
     

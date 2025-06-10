@@ -23,7 +23,7 @@ export interface UserProfile {
   accountActivatedAt?: string; // Date ISO string when the account was last set to 'active'
   password?: string; // Only for mock/initial setup, not stored long-term
   agreeToTerms?: boolean;
-  subUsers?: SubUserProfile[]; // Naujas laukas papildomiems vartotojams
+  subUsers?: SubUserProfile[];
 }
 
 export interface DetailedCategory {
@@ -63,6 +63,21 @@ export interface AuditLogEntry {
   actionKey: string; // Translation key for the action, e.g., "auditLog.action.userStatusChanged"
   details: Record<string, any>; // Additional details about the action
 }
+
+export interface UserNotification {
+  id: string;
+  userId: string;
+  type: 'account_status_change' | 'subscription_warning' | 'generic_message' | 'inquiry_received';
+  titleKey: string;
+  messageKey: string;
+  messageParams?: Record<string, string | number | undefined>;
+  createdAt: string; // ISO Date string
+  read: boolean;
+  link?: string;
+  senderId?: string; // For user-to-user messages
+  senderCompanyName?: string; // For user-to-user messages
+}
+
 
 const unsortedCountries: { value: string, label: string }[] = [
   { value: 'AF', label: 'Afganistanas' },
@@ -403,7 +418,7 @@ export const MOCK_USER: UserProfile = {
   isAdmin: true,
   accountActivatedAt: new Date(new Date().setMonth(new Date().getMonth() - 11)).toISOString(),
   agreeToTerms: true,
-  subUsers: [], // Pridėtas tuščias masyvas
+  subUsers: [],
 };
 
 export const MOCK_ADDITIONAL_USER_1: UserProfile = {
@@ -419,7 +434,7 @@ export const MOCK_ADDITIONAL_USER_1: UserProfile = {
   isAdmin: false,
   accountActivatedAt: new Date(new Date().setDate(new Date().getDate() - 10)).toISOString(),
   agreeToTerms: true,
-  subUsers: [], // Pridėtas tuščias masyvas
+  subUsers: [],
 };
 
 export const MOCK_ADDITIONAL_USER_2: UserProfile = {
@@ -434,7 +449,7 @@ export const MOCK_ADDITIONAL_USER_2: UserProfile = {
   isAdmin: false,
   accountActivatedAt: new Date('2023-01-15T00:00:00.000Z').toISOString(),
   agreeToTerms: true,
-  subUsers: [], // Pridėtas tuščias masyvas
+  subUsers: [],
 };
 
 export const MOCK_ADDITIONAL_USER_3: UserProfile = {
@@ -449,7 +464,7 @@ export const MOCK_ADDITIONAL_USER_3: UserProfile = {
   isAdmin: false,
   accountActivatedAt: undefined,
   agreeToTerms: true,
-  subUsers: [], // Pridėtas tuščias masyvas
+  subUsers: [],
 };
 
 
@@ -607,6 +622,7 @@ export const combineAndDeduplicateReports = (...reportArrays: Report[][]): Repor
 const LOCAL_STORAGE_REPORTS_KEY = 'driverCheckReports';
 const LOCAL_STORAGE_SEARCH_LOGS_KEY = 'driverCheckSearchLogs';
 const LOCAL_STORAGE_AUDIT_LOGS_KEY = 'driverCheckAuditLogs';
+const LOCAL_STORAGE_NOTIFICATIONS_KEY = 'driverCheckNotifications';
 
 
 export function getReportsFromLocalStoragePublic(): Report[] {
@@ -663,12 +679,61 @@ export function getAuditLogsFromLocalStorage(): AuditLogEntry[] {
 export function addAuditLogEntryToLocalStorage(entry: AuditLogEntry): void {
   if (typeof window !== 'undefined') {
     const existingLogs = getAuditLogsFromLocalStorage();
-    // Add new entry to the beginning to have newest logs first
     const updatedLogs = [entry, ...existingLogs]; 
-    // Optional: Limit the number of logs stored, e.g., to 100
-    // const limitedLogs = updatedLogs.slice(0, 100); 
     localStorage.setItem(LOCAL_STORAGE_AUDIT_LOGS_KEY, JSON.stringify(updatedLogs));
   }
+}
+
+export function getUserNotifications(userId: string): UserNotification[] {
+  if (typeof window === 'undefined') return [];
+  const allNotificationsJSON = localStorage.getItem(LOCAL_STORAGE_NOTIFICATIONS_KEY);
+  const allNotifications: UserNotification[] = allNotificationsJSON ? JSON.parse(allNotificationsJSON) : [];
+  return allNotifications
+    .filter(n => n.userId === userId)
+    .map(n => ({ ...n, createdAt: new Date(n.createdAt).toISOString() })) // Ensure createdAt is string
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+}
+
+export function addUserNotification(userId: string, notificationData: Omit<UserNotification, 'id' | 'createdAt' | 'read' | 'userId'>): void {
+  if (typeof window === 'undefined') return;
+  const allNotifications = getUserNotifications(userId); // Gets all for all users then filters
+  
+  const newNotification: UserNotification = {
+    id: `notif-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+    userId,
+    ...notificationData,
+    createdAt: new Date().toISOString(),
+    read: false,
+  };
+
+  // Retrieve all notifications for all users to preserve them
+  const allStoredNotificationsJSON = localStorage.getItem(LOCAL_STORAGE_NOTIFICATIONS_KEY);
+  const allStoredNotifications: UserNotification[] = allStoredNotificationsJSON ? JSON.parse(allStoredNotificationsJSON) : [];
+  
+  allStoredNotifications.push(newNotification);
+  localStorage.setItem(LOCAL_STORAGE_NOTIFICATIONS_KEY, JSON.stringify(allStoredNotifications));
+}
+
+export function markNotificationAsRead(userId: string, notificationId: string): void {
+  if (typeof window === 'undefined') return;
+  const allStoredNotificationsJSON = localStorage.getItem(LOCAL_STORAGE_NOTIFICATIONS_KEY);
+  let allStoredNotifications: UserNotification[] = allStoredNotificationsJSON ? JSON.parse(allStoredNotificationsJSON) : [];
+  
+  allStoredNotifications = allStoredNotifications.map(n => 
+    (n.userId === userId && n.id === notificationId) ? { ...n, read: true } : n
+  );
+  localStorage.setItem(LOCAL_STORAGE_NOTIFICATIONS_KEY, JSON.stringify(allStoredNotifications));
+}
+
+export function markAllNotificationsAsRead(userId: string): void {
+  if (typeof window === 'undefined') return;
+  const allStoredNotificationsJSON = localStorage.getItem(LOCAL_STORAGE_NOTIFICATIONS_KEY);
+  let allStoredNotifications: UserNotification[] = allStoredNotificationsJSON ? JSON.parse(allStoredNotificationsJSON) : [];
+
+  allStoredNotifications = allStoredNotifications.map(n => 
+    n.userId === userId ? { ...n, read: true } : n
+  );
+  localStorage.setItem(LOCAL_STORAGE_NOTIFICATIONS_KEY, JSON.stringify(allStoredNotifications));
 }
 
 

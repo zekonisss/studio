@@ -92,6 +92,7 @@
   "account.tabs.myEntries": "Мои Записи",
   "account.tabs.searchHistory": "История Поиска",
   "account.tabs.payments": "Платежи",
+  "account.tabs.notifications": "Уведомления",
   "account.details.title": "Регистрационная Информация",
   "account.details.description": "Здесь вы можете просматривать и редактировать регистрационные данные вашей компании.",
   "account.details.companyName": "Название Компании",
@@ -135,6 +136,12 @@
   "account.payments.manageSubscriptionButton": "Управлять Подпиской (Stripe)",
   "account.payments.manageSubscriptionNote": "Управление подпиской будет осуществляться через Stripe (интеграция будет добавлена позже).",
   "account.payments.footerNote": "Если у вас есть вопросы по поводу платежей, пожалуйста, свяжитесь с нами.",
+  "account.notifications.title": "Уведомления",
+  "account.notifications.description": "Важные уведомления, связанные с вашей учетной записью.",
+  "account.notifications.noNotifications": "Новых уведомлений нет.",
+  "account.notifications.markAsRead": "Отметить как прочитанное",
+  "account.notifications.markAllAsRead": "Отметить все как прочитанные",
+  "account.notifications.viewDetails": "Просмотреть",
   "admin.pageTitle": "Панель Администратора",
   "admin.tabs.userManagement": "Управление Пользователями",
   "admin.tabs.entryManagement": "Управление Записями",
@@ -226,6 +233,10 @@
   "admin.users.toast.dataUpdated.description": "Данные пользователя {companyName} успешно сохранены.",
   "admin.entries.toast.entryDeleted.title": "Запись удалена",
   "admin.entries.toast.entryDeleted.description": "Выбранная запись была успешно удалена.",
+  "notifications.accountStatusChanged.title": "Статус Учетной Записи Изменен",
+  "notifications.accountStatusChanged.message": "Статус вашей учетной записи изменен с \"{oldStatus}\" на \"{newStatus}\" администратором {adminName}.",
+  "notifications.subscriptionWarning.title": "Напоминание о Подписке",
+  "notifications.subscriptionWarning.message": "Ваша годовая подписка истекает {endDate} (осталось {daysLeft} дн.). Пожалуйста, не забудьте ее продлить.",
   "common.yes": "Да",
   "common.no": "Нет",
   "common.notSpecified": "Не указано",
@@ -661,5 +672,5 @@
   "tags.pakenkta_imones_reputacijai": "Нанесен ущерб репутации компании",
   "tags.neteiseta_veikla_itariama": "Подозревается незаконная деятельность"
 }
-    
+
     

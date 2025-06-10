@@ -8,17 +8,19 @@ import { useAuth } from "@/hooks/use-auth";
 import Link from "next/link";
 import { Search, FilePlus2, History, UserCircle, BarChart3, AlertTriangle, CheckCircle2, UserCog, Loader2, Layers } from "lucide-react";
 import Image from "next/image";
-import { format as formatDateFn, addYears, addMonths, isBefore } from 'date-fns';
+import { format as formatDateFn, addYears, addMonths, isBefore, differenceInDays } from 'date-fns';
 import { lt, enUS } from 'date-fns/locale';
-import type { Report, SearchLog } from '@/types'; // Added SearchLog
+import type { Report, SearchLog, UserNotification } from '@/types';
 import { 
   getReportsFromLocalStoragePublic, 
   MOCK_GENERAL_REPORTS, 
   combineAndDeduplicateReports,
-  getSearchLogsFromLocalStoragePublic, // Added
-  MOCK_USER, // Added
-  MOCK_USER_REPORTS, // Added
-  MOCK_USER_SEARCH_LOGS // Added
+  getSearchLogsFromLocalStoragePublic,
+  MOCK_USER, 
+  MOCK_USER_REPORTS, 
+  MOCK_USER_SEARCH_LOGS,
+  addUserNotification,
+  getUserNotifications
 } from '@/types';
 import { useLanguage } from '@/contexts/language-context';
 
@@ -26,13 +28,13 @@ export default function DashboardPage() {
   const { user } = useAuth();
   const { t, locale } = useLanguage();
   const [totalReportsCount, setTotalReportsCount] = useState(0);
-  const [userReportsCount, setUserReportsCount] = useState(0); // New state
-  const [userSearchesCount, setUserSearchesCount] = useState(0); // New state
+  const [userReportsCount, setUserReportsCount] = useState(0);
+  const [userSearchesCount, setUserSearchesCount] = useState(0);
 
   const dateLocale = locale === 'en' ? enUS : lt;
 
   useEffect(() => {
-    const fetchStats = () => {
+    const fetchStatsAndCheckNotifications = () => {
       // Total platform reports
       const localPlatformReports = getReportsFromLocalStoragePublic();
       const combinedPlatformReports = combineAndDeduplicateReports(localPlatformReports, MOCK_GENERAL_REPORTS);
@@ -40,10 +42,9 @@ export default function DashboardPage() {
 
       if (user) {
         // User-specific reports count
-        const allLocalReports = getReportsFromLocalStoragePublic(); // Get all from local storage
+        const allLocalReports = getReportsFromLocalStoragePublic(); 
         let userSpecificReports = allLocalReports.filter(r => r.reporterId === user.id);
         
-        // For MOCK_USER, ensure their mock reports are counted if not in localStorage yet
         if (user.id === MOCK_USER.id) {
           const mockUserReportsNotInLocal = MOCK_USER_REPORTS.filter(
             mr => !userSpecificReports.some(lsr => lsr.id === mr.id)
@@ -56,7 +57,6 @@ export default function DashboardPage() {
         const allLocalSearchLogs = getSearchLogsFromLocalStoragePublic();
         let userSpecificSearchLogs = allLocalSearchLogs.filter(log => log.userId === user.id);
 
-        // For MOCK_USER, ensure their mock search logs are counted if not in localStorage yet
         if (user.id === MOCK_USER.id) {
             const mockUserSearchLogsNotInLocal = MOCK_USER_SEARCH_LOGS.filter(
                 msl => !userSpecificSearchLogs.some(lsl => lsl.id === msl.id)
@@ -65,13 +65,37 @@ export default function DashboardPage() {
         }
         setUserSearchesCount(userSpecificSearchLogs.length);
 
+        // Check for subscription expiration notification
+        const subscriptionEndDate = user.accountActivatedAt ? addYears(new Date(user.accountActivatedAt), 1) : null;
+        if (user.paymentStatus === 'active' && subscriptionEndDate && isBefore(subscriptionEndDate, addMonths(new Date(), 1))) {
+          const existingNotifications = getUserNotifications(user.id);
+          const hasExistingWarning = existingNotifications.some(
+            n => n.type === 'subscription_warning' && 
+                 n.messageParams?.endDate === formatDateFn(subscriptionEndDate, "yyyy-MM-dd") &&
+                 !n.read
+          );
+
+          if (!hasExistingWarning) {
+            addUserNotification(user.id, {
+              type: 'subscription_warning',
+              titleKey: 'notifications.subscriptionWarning.title',
+              messageKey: 'notifications.subscriptionWarning.message',
+              messageParams: { 
+                endDate: formatDateFn(subscriptionEndDate, "yyyy-MM-dd", { locale: dateLocale }),
+                daysLeft: differenceInDays(subscriptionEndDate, new Date())
+              },
+              link: '/account?tab=payment'
+            });
+          }
+        }
+
       } else {
         setUserReportsCount(0);
         setUserSearchesCount(0);
       }
     };
-    fetchStats();
-  }, [user]);
+    fetchStatsAndCheckNotifications();
+  }, [user, dateLocale, t]);
 
 
   const subscriptionEndDate = user?.accountActivatedAt ? addYears(new Date(user.accountActivatedAt), 1) : null;
@@ -191,3 +215,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    

@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Loader2, ShieldAlert, Users, FileText, AlertTriangle, Trash2, Eye, MoreHorizontal, BarChart3, UserCheck, UserX, UserCog, CalendarDays, Building2, Tag, MessageSquare, Image as ImageIcon, CheckCircle2, CreditCard, Send, Briefcase, MapPin, Phone, Mail, ShieldCheck as ShieldCheckIcon, User as UserIcon, Globe, Edit3, Save, XCircle, Percent, Layers, ChevronLeft, ChevronRight, Activity } from "lucide-react";
 import type { UserProfile, Report, AuditLogEntry } from "@/types";
-import { getAllUsers, saveAllUsers, MOCK_GENERAL_REPORTS, combineAndDeduplicateReports, countries, detailedReportCategories, DESTRUCTIVE_REPORT_MAIN_CATEGORIES, getAuditLogsFromLocalStorage, addAuditLogEntryToLocalStorage } from "@/types";
+import { getAllUsers, saveAllUsers, MOCK_GENERAL_REPORTS, combineAndDeduplicateReports, countries, detailedReportCategories, DESTRUCTIVE_REPORT_MAIN_CATEGORIES, getAuditLogsFromLocalStorage, addAuditLogEntryToLocalStorage, addUserNotification } from "@/types";
 import { format as formatDateFn, addYears } from 'date-fns';
 import { lt, enUS } from 'date-fns/locale';
 import { useToast } from "@/hooks/use-toast";
@@ -91,7 +91,7 @@ export default function AdminPage() {
       details,
     };
     addAuditLogEntryToLocalStorage(newLogEntry);
-    setAuditLogs(prevLogs => [newLogEntry, ...prevLogs]);
+    setAuditLogs(prevLogs => [newLogEntry, ...prevLogs].sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime() ));
   };
 
   useEffect(() => {
@@ -155,6 +155,16 @@ export default function AdminPage() {
     return allUsersState.slice(startIndex, endIndex);
   }, [allUsersState, currentPage]);
 
+  const getStatusText = (status: UserProfile['paymentStatus']) => {
+    switch (status) {
+      case 'active': return t('admin.users.status.active');
+      case 'pending_verification': return t('admin.users.status.pending_verification');
+      case 'pending_payment': return t('admin.users.status.pending_payment');
+      case 'inactive': return t('admin.users.status.inactive');
+      default: return status;
+    }
+  };
+
   const handleUserStatusChange = (userId: string, newStatus: UserProfile['paymentStatus']) => {
     const targetUser = allUsersState.find(u => u.id === userId);
     if (!targetUser) return;
@@ -179,6 +189,19 @@ export default function AdminPage() {
       oldStatus: getStatusText(oldStatus), 
       newStatus: getStatusText(newStatus) 
     });
+
+    addUserNotification(targetUser.id, {
+      type: 'account_status_change',
+      titleKey: 'notifications.accountStatusChanged.title',
+      messageKey: 'notifications.accountStatusChanged.message',
+      messageParams: {
+        oldStatus: getStatusText(oldStatus),
+        newStatus: getStatusText(newStatus),
+        adminName: adminUser?.contactPerson || adminUser?.email || 'Administrator'
+      },
+      link: '/account?tab=details'
+    });
+
 
     let toastTitle = t('admin.users.toast.statusChanged.title');
     let toastDescription = t('admin.users.toast.statusChanged.description', {
@@ -341,16 +364,6 @@ export default function AdminPage() {
       default: return 'outline';
     }
   };
-
-  const getStatusText = (status: UserProfile['paymentStatus']) => {
-    switch (status) {
-      case 'active': return t('admin.users.status.active');
-      case 'pending_verification': return t('admin.users.status.pending_verification');
-      case 'pending_payment': return t('admin.users.status.pending_payment');
-      case 'inactive': return t('admin.users.status.inactive');
-      default: return status;
-    }
-  }
 
   const UserInfoField = ({ label, value, icon: Icon, name, isEditing, onChange }: { label: string, value: string | boolean | undefined, icon: React.ElementType, name?: string, isEditing?: boolean, onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void }) => (
     <div className="space-y-1">
@@ -813,3 +826,5 @@ export default function AdminPage() {
     </div>
   );
 }
+
+    

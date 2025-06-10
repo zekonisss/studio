@@ -92,6 +92,7 @@
   "account.tabs.myEntries": "Mano Įrašai",
   "account.tabs.searchHistory": "Paieškų Istorija",
   "account.tabs.payments": "Mokėjimai",
+  "account.tabs.notifications": "Pranešimai",
   "account.details.title": "Registracijos Informacija",
   "account.details.description": "Čia galite peržiūrėti ir redaguoti savo įmonės registracijos duomenis.",
   "account.details.companyName": "Įmonės Pavadinimas",
@@ -135,6 +136,12 @@
   "account.payments.manageSubscriptionButton": "Tvarkyti Prenumeratą (Stripe)",
   "account.payments.manageSubscriptionNote": "Prenumeratos tvarkymas bus atliekamas per Stripe platformą (integracija bus pridėta vėliau).",
   "account.payments.footerNote": "Jei turite klausimų dėl mokėjimų, susisiekite su mumis.",
+  "account.notifications.title": "Pranešimai",
+  "account.notifications.description": "Svarbūs pranešimai, susiję su jūsų paskyra.",
+  "account.notifications.noNotifications": "Naujų pranešimų nėra.",
+  "account.notifications.markAsRead": "Pažymėti kaip perskaitytą",
+  "account.notifications.markAllAsRead": "Pažymėti visus kaip perskaitytus",
+  "account.notifications.viewDetails": "Peržiūrėti",
   "admin.pageTitle": "Administratoriaus Skydas",
   "admin.tabs.userManagement": "Vartotojų Valdymas",
   "admin.tabs.entryManagement": "Įrašų Valdymas",
@@ -226,6 +233,10 @@
   "admin.users.toast.dataUpdated.description": "Vartotojo {companyName} duomenys sėkmingai išsaugoti.",
   "admin.entries.toast.entryDeleted.title": "Įrašas pašalintas",
   "admin.entries.toast.entryDeleted.description": "Pasirinktas įrašas buvo sėkmingai pašalintas.",
+  "notifications.accountStatusChanged.title": "Paskyros Būsena Pakeista",
+  "notifications.accountStatusChanged.message": "Jūsų paskyros būsena pakeista iš \"{oldStatus}\" į \"{newStatus}\" administratoriaus {adminName}.",
+  "notifications.subscriptionWarning.title": "Prenumeratos Priminimas",
+  "notifications.subscriptionWarning.message": "Jūsų metinė prenumerata baigiasi {endDate} (liko {daysLeft} d.). Nepamirškite jos pratęsti.",
   "common.yes": "Taip",
   "common.no": "Ne",
   "common.notSpecified": "Nenurodyta",
@@ -661,5 +672,5 @@
   "tags.pakenkta_imones_reputacijai": "Pakenkta įmonės reputacijai",
   "tags.neteiseta_veikla_itariama": "Neteisėta veikla įtariama"
 }
-    
+
     

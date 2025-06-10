@@ -92,6 +92,7 @@
   "account.tabs.myEntries": "Moje Wpisy",
   "account.tabs.searchHistory": "Historia Wyszukiwania",
   "account.tabs.payments": "Płatności",
+  "account.tabs.notifications": "Powiadomienia",
   "account.details.title": "Informacje Rejestracyjne",
   "account.details.description": "Tutaj możesz przeglądać i edytować dane rejestracyjne swojej firmy.",
   "account.details.companyName": "Nazwa Firmy",
@@ -135,6 +136,12 @@
   "account.payments.manageSubscriptionButton": "Zarządzaj Subskrypcją (Stripe)",
   "account.payments.manageSubscriptionNote": "Zarządzanie subskrypcją będzie obsługiwane przez Stripe (integracja zostanie dodana później).",
   "account.payments.footerNote": "Jeśli masz pytania dotyczące płatności, skontaktuj się z nami.",
+  "account.notifications.title": "Powiadomienia",
+  "account.notifications.description": "Ważne powiadomienia dotyczące Twojego konta.",
+  "account.notifications.noNotifications": "Brak nowych powiadomień.",
+  "account.notifications.markAsRead": "Oznacz jako przeczytane",
+  "account.notifications.markAllAsRead": "Oznacz wszystkie jako przeczytane",
+  "account.notifications.viewDetails": "Zobacz szczegóły",
   "admin.pageTitle": "Panel Administratora",
   "admin.tabs.userManagement": "Zarządzanie Użytkownikami",
   "admin.tabs.entryManagement": "Zarządzanie Wpisami",
@@ -226,6 +233,10 @@
   "admin.users.toast.dataUpdated.description": "Dane użytkownika {companyName} pomyślnie zapisane.",
   "admin.entries.toast.entryDeleted.title": "Wpis Usunięty",
   "admin.entries.toast.entryDeleted.description": "Wybrany wpis został pomyślnie usunięty.",
+  "notifications.accountStatusChanged.title": "Status Konta Zmieniony",
+  "notifications.accountStatusChanged.message": "Status Twojego konta został zmieniony z \"{oldStatus}\" na \"{newStatus}\" przez administratora {adminName}.",
+  "notifications.subscriptionWarning.title": "Przypomnienie o Subskrypcji",
+  "notifications.subscriptionWarning.message": "Twoja roczna subskrypcja wygasa {endDate} (pozostało {daysLeft} dni). Pamiętaj o jej odnowieniu.",
   "common.yes": "Tak",
   "common.no": "Nie",
   "common.notSpecified": "Nieokreślony",
@@ -661,5 +672,5 @@
   "tags.pakenkta_imones_reputacijai": "Naruszenie reputacji firmy",
   "tags.neteiseta_veikla_itariama": "Podejrzenie nielegalnej działalności"
 }
-    
+
     

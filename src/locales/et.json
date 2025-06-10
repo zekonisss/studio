@@ -92,6 +92,7 @@
   "account.tabs.myEntries": "Minu kirjed",
   "account.tabs.searchHistory": "Otsinguajalugu",
   "account.tabs.payments": "Maksed",
+  "account.tabs.notifications": "Teated",
   "account.details.title": "Registreerimisinfo",
   "account.details.description": "Siin saad vaadata ja muuta oma ettevõtte registreerimisandmeid.",
   "account.details.companyName": "Ettevõtte nimi",
@@ -135,6 +136,12 @@
   "account.payments.manageSubscriptionButton": "Halda tellimust (Stripe)",
   "account.payments.manageSubscriptionNote": "Tellimuse haldamine toimub Stripe'i kaudu (integratsioon lisatakse hiljem).",
   "account.payments.footerNote": "Kui sul on maksetega seotud küsimusi, võta meiega ühendust.",
+  "account.notifications.title": "Teated",
+  "account.notifications.description": "Sinu kontoga seotud olulised teated.",
+  "account.notifications.noNotifications": "Uusi teateid pole.",
+  "account.notifications.markAsRead": "Märgi loetuks",
+  "account.notifications.markAllAsRead": "Märgi kõik loetuks",
+  "account.notifications.viewDetails": "Vaata detaile",
   "admin.pageTitle": "Administraatori paneel",
   "admin.tabs.userManagement": "Kasutajate haldus",
   "admin.tabs.entryManagement": "Kirjete haldus",
@@ -226,6 +233,10 @@
   "admin.users.toast.dataUpdated.description": "Kasutaja {companyName} andmed edukalt salvestatud.",
   "admin.entries.toast.entryDeleted.title": "Kirje kustutatud",
   "admin.entries.toast.entryDeleted.description": "Valitud kirje on edukalt kustutatud.",
+  "notifications.accountStatusChanged.title": "Konto staatus muudetud",
+  "notifications.accountStatusChanged.message": "Sinu konto staatus muudeti \"{oldStatus}\" -> \"{newStatus}\" administraatori {adminName} poolt.",
+  "notifications.subscriptionWarning.title": "Tellimuse meeldetuletus",
+  "notifications.subscriptionWarning.message": "Sinu aastatellimus aegub {endDate} (jäänud {daysLeft} p). Palun ära unusta seda uuendada.",
   "common.yes": "Jah",
   "common.no": "Ei",
   "common.notSpecified": "Määramata",
@@ -659,5 +670,5 @@
   "tags.pakenkta_imones_reputacijai": "Ettevõtte maine kahjustatud",
   "tags.neteiseta_veikla_itariama": "Kahtlustatakse ebaseaduslikku tegevust"
 }
-    
+
     
