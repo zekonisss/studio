@@ -154,6 +154,7 @@
   "admin.users.table.email": "Эл. Почта",
   "admin.users.table.status": "Статус",
   "admin.users.table.actions": "Действия",
+  "admin.users.table.registrationDate": "Дата Регистрации",
   "admin.users.actions.userActions": "Действия пользователя",
   "admin.users.actions.viewProfile": "Просмотр Профиля",
   "admin.users.actions.changeStatus": "Изменить Статус",
@@ -167,6 +168,10 @@
   "admin.users.status.pending_verification": "Ожидает подтверждения личности",
   "admin.users.status.pending_payment": "Ожидает оплаты",
   "admin.users.status.inactive": "Неактивен",
+  "admin.users.displayOptions.title": "Показывать пользователей:",
+  "admin.users.displayOptions.byCompanyName": "По Названию Компании (А-Я)",
+  "admin.users.displayOptions.byRegistrationDate": "Группировать по Месяцу Регистрации (Новые Сверху)",
+  "admin.users.groupHeaderMonthFormat": "MMMM yyyy",
   "admin.entries.title": "Все Записи",
   "admin.entries.description": "Записи, представленные всеми пользователями в системе.",
   "admin.entries.table.personInEntry": "Лицо в Записи",
@@ -672,5 +677,3 @@
   "tags.pakenkta_imones_reputacijai": "Нанесен ущерб репутации компании",
   "tags.neteiseta_veikla_itariama": "Подозревается незаконная деятельность"
 }
-
-    

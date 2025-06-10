@@ -154,6 +154,7 @@
   "admin.users.table.email": "E-pasts",
   "admin.users.table.status": "Statuss",
   "admin.users.table.actions": "Darbības",
+  "admin.users.table.registrationDate": "Reģistrācijas Datums",
   "admin.users.actions.userActions": "Lietotāja darbības",
   "admin.users.actions.viewProfile": "Skatīt Profilu",
   "admin.users.actions.changeStatus": "Mainīt Statusu",
@@ -167,6 +168,10 @@
   "admin.users.status.pending_verification": "Gaida Identitātes Verifikāciju",
   "admin.users.status.pending_payment": "Gaida Apmaksu",
   "admin.users.status.inactive": "Neaktīvs",
+  "admin.users.displayOptions.title": "Rādīt lietotājus:",
+  "admin.users.displayOptions.byCompanyName": "Pēc Uzņēmuma Nosaukuma (A-Z)",
+  "admin.users.displayOptions.byRegistrationDate": "Grupēt pēc Reģistrācijas Mēneša (Jaunākie Vispirms)",
+  "admin.users.groupHeaderMonthFormat": "MMMM yyyy",
   "admin.entries.title": "Visi Ieraksti",
   "admin.entries.description": "Visi lietotāju iesniegtie ieraksti sistēmā.",
   "admin.entries.table.personInEntry": "Persona Ierakstā",
@@ -671,5 +676,3 @@
   "tags.pakenkta_imones_reputacijai": "Kaitēta uzņēmuma reputācijai",
   "tags.neteiseta_veikla_itariama": "Aizdomas par nelikumīgu darbību"
 }
-
-    

@@ -154,6 +154,7 @@
   "admin.users.table.email": "El. Paštas",
   "admin.users.table.status": "Būsena",
   "admin.users.table.actions": "Veiksmai",
+  "admin.users.table.registrationDate": "Registracijos Data",
   "admin.users.actions.userActions": "Vartotojo veiksmai",
   "admin.users.actions.viewProfile": "Peržiūrėti Anketą",
   "admin.users.actions.changeStatus": "Keisti Būseną",
@@ -167,6 +168,10 @@
   "admin.users.status.pending_verification": "Laukia Tapatybės Patvirtinimo",
   "admin.users.status.pending_payment": "Laukia Apmokėjimo",
   "admin.users.status.inactive": "Neaktyvi",
+  "admin.users.displayOptions.title": "Rodyti vartotojus:",
+  "admin.users.displayOptions.byCompanyName": "Pagal Įmonės Pavadinimą (A-Ž)",
+  "admin.users.displayOptions.byRegistrationDate": "Grupuoti pagal Registracijos Mėnesį (Naujausi Viršuje)",
+  "admin.users.groupHeaderMonthFormat": "yyyy MMMM",
   "admin.entries.title": "Visi Įrašai",
   "admin.entries.description": "Visų vartotojų pateikti įrašai sistemoje.",
   "admin.entries.table.personInEntry": "Asmuo Įraše",
@@ -672,5 +677,3 @@
   "tags.pakenkta_imones_reputacijai": "Pakenkta įmonės reputacijai",
   "tags.neteiseta_veikla_itariama": "Neteisėta veikla įtariama"
 }
-
-    

@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Loader2, ShieldAlert, Users, FileText, AlertTriangle, Trash2, Eye, MoreHorizontal, BarChart3, UserCheck, UserX, UserCog, CalendarDays, Building2, Tag, MessageSquare, Image as ImageIcon, CheckCircle2, CreditCard, Send, Briefcase, MapPin, Phone, Mail, ShieldCheck as ShieldCheckIcon, User as UserIcon, Globe, Edit3, Save, XCircle, Percent, Layers, ChevronLeft, ChevronRight, Activity } from "lucide-react";
+import { Loader2, ShieldAlert, Users, FileText, AlertTriangle, Trash2, Eye, MoreHorizontal, BarChart3, UserCheck, UserX, UserCog, CalendarDays, Building2, Tag, MessageSquare, Image as ImageIcon, CheckCircle2, CreditCard, Send, Briefcase, MapPin, Phone, Mail, ShieldCheck as ShieldCheckIcon, User as UserIcon, Globe, Edit3, Save, XCircle, Percent, Layers, ChevronLeft, ChevronRight, Activity, ListFilter } from "lucide-react";
 import type { UserProfile, Report, AuditLogEntry } from "@/types";
 import { getAllUsers, saveAllUsers, MOCK_GENERAL_REPORTS, combineAndDeduplicateReports, countries, detailedReportCategories, DESTRUCTIVE_REPORT_MAIN_CATEGORIES, getAuditLogsFromLocalStorage, addAuditLogEntryToLocalStorage, addUserNotification } from "@/types";
 import { format as formatDateFn, addYears } from 'date-fns';
@@ -24,9 +24,10 @@ import { Input } from "@/components/ui/input";
 import { useLanguage } from '@/contexts/language-context';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 import { ChartContainer, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const LOCAL_STORAGE_REPORTS_KEY = 'driverCheckReports';
-const USERS_PER_PAGE = 10; // For pagination
+const USERS_PER_PAGE = 10; 
 
 function getReportsFromLocalStorage(): Report[] {
   if (typeof window !== 'undefined') {
@@ -66,6 +67,7 @@ export default function AdminPage() {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [activeTab, setActiveTab] = useState("users");
+  const [userDisplayOption, setUserDisplayOption] = useState<'byCompanyName' | 'byRegistrationDate'>('byCompanyName');
 
   const dateLocale = locale === 'en' ? enUS : lt;
 
@@ -100,6 +102,7 @@ export default function AdminPage() {
     }
     if (adminUser && adminUser.isAdmin) {
       const fetchedUsers = getAllUsers();
+      // Default sort by company name, can be overridden by userDisplayOption later
       setAllUsersState(fetchedUsers.sort((a, b) => (a.companyName || "").localeCompare(b.companyName || "")));
 
       const localReports = getReportsFromLocalStorage();
@@ -121,7 +124,7 @@ export default function AdminPage() {
       if (counts[report.category] !== undefined) {
         counts[report.category]++;
       } else {
-        counts['other_category'] = (counts['other_category'] || 0) + 1; // Fallback for unknown categories
+        counts['other_category'] = (counts['other_category'] || 0) + 1; 
       }
     });
     return counts;
@@ -148,12 +151,27 @@ export default function AdminPage() {
     return config;
   }, [chartData]);
 
-  const totalUserPages = Math.ceil(allUsersState.length / USERS_PER_PAGE);
+  const processedUsers = useMemo(() => {
+    let users = [...allUsersState];
+    if (userDisplayOption === 'byCompanyName') {
+      users.sort((a, b) => (a.companyName || "").localeCompare(b.companyName || ""));
+    } else if (userDisplayOption === 'byRegistrationDate') {
+      users.sort((a, b) => {
+        const dateA = a.registeredAt ? new Date(a.registeredAt).getTime() : 0;
+        const dateB = b.registeredAt ? new Date(b.registeredAt).getTime() : 0;
+        return dateB - dateA; // Newest first
+      });
+    }
+    return users;
+  }, [allUsersState, userDisplayOption]);
+
+  const totalUserPages = Math.ceil(processedUsers.length / USERS_PER_PAGE);
   const paginatedUsers = useMemo(() => {
     const startIndex = (currentPage - 1) * USERS_PER_PAGE;
     const endIndex = startIndex + USERS_PER_PAGE;
-    return allUsersState.slice(startIndex, endIndex);
-  }, [allUsersState, currentPage]);
+    return processedUsers.slice(startIndex, endIndex);
+  }, [processedUsers, currentPage]);
+
 
   const getStatusText = (status: UserProfile['paymentStatus']) => {
     switch (status) {
@@ -179,7 +197,7 @@ export default function AdminPage() {
     const updatedUsers = allUsersState.map(u =>
       u.id === userId ? { ...u, paymentStatus: newStatus, accountActivatedAt: newAccountActivatedAt } : u
     );
-    setAllUsersState(updatedUsers.sort((a, b) => (a.companyName || "").localeCompare(b.companyName || "")));
+    setAllUsersState(updatedUsers); // No sort here, processedUsers will handle it
     saveAllUsers(updatedUsers);
 
     logAdminAction("auditLog.action.userStatusChanged", { 
@@ -291,7 +309,7 @@ export default function AdminPage() {
     };
 
     const updatedUsersList = allUsersState.map(u => u.id === updatedUser.id ? updatedUser : u);
-    setAllUsersState(updatedUsersList.sort((a, b) => (a.companyName || "").localeCompare(b.companyName || "")));
+    setAllUsersState(updatedUsersList);
     saveAllUsers(updatedUsersList);
     setSelectedUserForDetails(updatedUser);
     setIsEditingUserDetails(false);
@@ -379,6 +397,8 @@ export default function AdminPage() {
       )}
     </div>
   );
+  
+  let lastGroupHeader = '';
 
   return (
     <div className="container mx-auto py-8">
@@ -408,10 +428,29 @@ export default function AdminPage() {
         <TabsContent value="users">
           <Card className="shadow-xl">
             <CardHeader>
-              <CardTitle>{t('admin.users.title')} ({allUsersState.length})</CardTitle>
-              <CardDescription>
-                {t('admin.users.description')}
-              </CardDescription>
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                  <CardTitle>{t('admin.users.title')} ({processedUsers.length})</CardTitle>
+                  <CardDescription>
+                    {t('admin.users.description')}
+                  </CardDescription>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="user-display-option" className="text-sm text-muted-foreground whitespace-nowrap">
+                    <ListFilter className="inline h-4 w-4 mr-1.5 relative -top-px" />
+                    {t('admin.users.displayOptions.title')}
+                  </Label>
+                  <Select value={userDisplayOption} onValueChange={(value: 'byCompanyName' | 'byRegistrationDate') => setUserDisplayOption(value)}>
+                    <SelectTrigger id="user-display-option" className="w-auto sm:min-w-[250px]">
+                      <SelectValue placeholder={t('admin.users.displayOptions.title')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="byCompanyName">{t('admin.users.displayOptions.byCompanyName')}</SelectItem>
+                      <SelectItem value="byRegistrationDate">{t('admin.users.displayOptions.byRegistrationDate')}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
               {paginatedUsers.length > 0 ? (
@@ -421,64 +460,84 @@ export default function AdminPage() {
                       <TableHead>{t('admin.users.table.companyName')}</TableHead>
                       <TableHead className="hidden md:table-cell">{t('admin.users.table.contactPerson')}</TableHead>
                       <TableHead className="hidden lg:table-cell">{t('admin.users.table.email')}</TableHead>
+                       <TableHead className="hidden md:table-cell text-center">{t('admin.users.table.registrationDate')}</TableHead>
                       <TableHead className="text-center">{t('admin.users.table.status')}</TableHead>
                       <TableHead className="text-right">{t('admin.users.table.actions')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {paginatedUsers.map((u) => (
-                      <TableRow key={u.id}>
-                        <TableCell className="font-medium">{u.companyName}</TableCell>
-                        <TableCell className="hidden md:table-cell">{u.contactPerson}</TableCell>
-                        <TableCell className="hidden lg:table-cell">{u.email}</TableCell>
-                        <TableCell className="text-center">
-                          <Badge variant={getStatusBadgeVariant(u.paymentStatus)}>
-                            {getStatusText(u.paymentStatus)}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon">
-                                <MoreHorizontal className="h-4 w-4" />
-                                <span className="sr-only">{t('admin.users.actions.userActions')}</span>
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => handleViewUserDetails(u)}>
-                                <Eye className="mr-2 h-4 w-4" /> {t('admin.users.actions.viewProfile')}
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuLabel>{t('admin.users.actions.changeStatus')}</DropdownMenuLabel>
-                              <DropdownMenuSeparator />
-                              {u.paymentStatus === 'pending_verification' && (
-                                <DropdownMenuItem onClick={() => handleUserStatusChange(u.id, 'pending_payment')}>
-                                  <Send className="mr-2 h-4 w-4 text-blue-600" /> {t('admin.users.actions.verifyAndSendPayment')}
-                                </DropdownMenuItem>
-                              )}
-                              {u.paymentStatus === 'pending_payment' && (
-                                <DropdownMenuItem onClick={() => handleUserStatusChange(u.id, 'active')}>
-                                  <CreditCard className="mr-2 h-4 w-4 text-green-600" /> {t('admin.users.actions.activatePaymentReceived')}
-                                </DropdownMenuItem>
-                              )}
-                              {u.paymentStatus !== 'active' && u.paymentStatus !== 'pending_payment' && (
-                                <DropdownMenuItem onClick={() => handleUserStatusChange(u.id, 'active')}>
-                                  <UserCheck className="mr-2 h-4 w-4" /> {t('admin.users.actions.activate')}
-                                </DropdownMenuItem>
-                              )}
-                              {u.paymentStatus === 'active' && (
-                                <DropdownMenuItem onClick={() => handleUserStatusChange(u.id, 'inactive')}>
-                                  <UserX className="mr-2 h-4 w-4" /> {t('admin.users.actions.deactivate')}
-                                </DropdownMenuItem>
-                              )}
-                              <DropdownMenuItem onClick={() => handleUserStatusChange(u.id, 'pending_verification')} disabled={u.paymentStatus === 'pending_verification'}>
-                                <UserCog className="mr-2 h-4 w-4" /> {t('admin.users.actions.setPendingVerification')}
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {paginatedUsers.map((u) => {
+                      const currentMonthYearGroup = u.registeredAt ? formatDateFn(new Date(u.registeredAt), t('admin.users.groupHeaderMonthFormat'), { locale: dateLocale }) : t('common.notSpecified');
+                      const showGroupHeader = userDisplayOption === 'byRegistrationDate' && currentMonthYearGroup !== lastGroupHeader;
+                      if (showGroupHeader) {
+                        lastGroupHeader = currentMonthYearGroup;
+                      }
+                      return (
+                        <React.Fragment key={u.id}>
+                          {showGroupHeader && (
+                            <TableRow className="bg-muted/30 hover:bg-muted/40">
+                              <TableCell colSpan={6} className="py-3 px-4 font-semibold text-md text-foreground">
+                                {currentMonthYearGroup}
+                              </TableCell>
+                            </TableRow>
+                          )}
+                          <TableRow>
+                            <TableCell className="font-medium">{u.companyName}</TableCell>
+                            <TableCell className="hidden md:table-cell">{u.contactPerson}</TableCell>
+                            <TableCell className="hidden lg:table-cell">{u.email}</TableCell>
+                            <TableCell className="hidden md:table-cell text-center text-xs">
+                              {u.registeredAt ? formatDateFn(new Date(u.registeredAt), 'yyyy-MM-dd', { locale: dateLocale }) : '-'}
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <Badge variant={getStatusBadgeVariant(u.paymentStatus)}>
+                                {getStatusText(u.paymentStatus)}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                    <span className="sr-only">{t('admin.users.actions.userActions')}</span>
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={() => handleViewUserDetails(u)}>
+                                    <Eye className="mr-2 h-4 w-4" /> {t('admin.users.actions.viewProfile')}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuLabel>{t('admin.users.actions.changeStatus')}</DropdownMenuLabel>
+                                  <DropdownMenuSeparator />
+                                  {u.paymentStatus === 'pending_verification' && (
+                                    <DropdownMenuItem onClick={() => handleUserStatusChange(u.id, 'pending_payment')}>
+                                      <Send className="mr-2 h-4 w-4 text-blue-600" /> {t('admin.users.actions.verifyAndSendPayment')}
+                                    </DropdownMenuItem>
+                                  )}
+                                  {u.paymentStatus === 'pending_payment' && (
+                                    <DropdownMenuItem onClick={() => handleUserStatusChange(u.id, 'active')}>
+                                      <CreditCard className="mr-2 h-4 w-4 text-green-600" /> {t('admin.users.actions.activatePaymentReceived')}
+                                    </DropdownMenuItem>
+                                  )}
+                                  {u.paymentStatus !== 'active' && u.paymentStatus !== 'pending_payment' && (
+                                    <DropdownMenuItem onClick={() => handleUserStatusChange(u.id, 'active')}>
+                                      <UserCheck className="mr-2 h-4 w-4" /> {t('admin.users.actions.activate')}
+                                    </DropdownMenuItem>
+                                  )}
+                                  {u.paymentStatus === 'active' && (
+                                    <DropdownMenuItem onClick={() => handleUserStatusChange(u.id, 'inactive')}>
+                                      <UserX className="mr-2 h-4 w-4" /> {t('admin.users.actions.deactivate')}
+                                    </DropdownMenuItem>
+                                  )}
+                                  <DropdownMenuItem onClick={() => handleUserStatusChange(u.id, 'pending_verification')} disabled={u.paymentStatus === 'pending_verification'}>
+                                    <UserCog className="mr-2 h-4 w-4" /> {t('admin.users.actions.setPendingVerification')}
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
+                        </React.Fragment>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               ) : (
@@ -782,7 +841,9 @@ export default function AdminPage() {
               <UserInfoField label={t('admin.userDetailsModal.contactPerson')} value={isEditingUserDetails ? editingUserDetailsFormData.contactPerson || "" : selectedUserForDetails.contactPerson} icon={UserIcon} name="contactPerson" isEditing={isEditingUserDetails} onChange={handleUserDetailsInputChange} />
               <UserInfoField label={t('admin.userDetailsModal.email')} value={isEditingUserDetails ? editingUserDetailsFormData.email || "" : selectedUserForDetails.email} icon={Mail} name="email" isEditing={isEditingUserDetails} onChange={handleUserDetailsInputChange} />
               <UserInfoField label={t('admin.userDetailsModal.phone')} value={isEditingUserDetails ? editingUserDetailsFormData.phone || "" : selectedUserForDetails.phone} icon={Phone} name="phone" isEditing={isEditingUserDetails} onChange={handleUserDetailsInputChange} />
-
+              <div className="md:col-span-2">
+                 <UserInfoField label={t('admin.users.table.registrationDate')} value={selectedUserForDetails.registeredAt ? formatDateFn(new Date(selectedUserForDetails.registeredAt), "yyyy-MM-dd HH:mm", { locale: dateLocale }) : t('common.notSpecified')} icon={CalendarDays} />
+              </div>
               <div className="md:col-span-2">
                 <UserInfoField label={t('admin.userDetailsModal.status')} value={getStatusText(selectedUserForDetails.paymentStatus)} icon={CheckCircle2} />
               </div>
@@ -826,5 +887,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
-    

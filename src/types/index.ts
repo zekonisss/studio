@@ -20,6 +20,7 @@ export interface UserProfile {
   phone: string;
   paymentStatus: 'active' | 'inactive' | 'pending_verification' | 'pending_payment';
   isAdmin?: boolean;
+  registeredAt?: string; // ISO date string for registration
   accountActivatedAt?: string; // Date ISO string when the account was last set to 'active'
   password?: string; // Only for mock/initial setup, not stored long-term
   agreeToTerms?: boolean;
@@ -416,6 +417,7 @@ export const MOCK_USER: UserProfile = {
   phone: '+37060012345',
   paymentStatus: 'active',
   isAdmin: true,
+  registeredAt: new Date(new Date().setFullYear(new Date().getFullYear() - 1)).toISOString(), // Example: registered 1 year ago
   accountActivatedAt: new Date(new Date().setMonth(new Date().getMonth() - 11)).toISOString(),
   agreeToTerms: true,
   subUsers: [],
@@ -432,6 +434,7 @@ export const MOCK_ADDITIONAL_USER_1: UserProfile = {
   phone: '+37060054321',
   paymentStatus: 'active',
   isAdmin: false,
+  registeredAt: new Date(new Date().setDate(new Date().getDate() - 15)).toISOString(), // Example: registered 15 days ago
   accountActivatedAt: new Date(new Date().setDate(new Date().getDate() - 10)).toISOString(),
   agreeToTerms: true,
   subUsers: [],
@@ -447,6 +450,7 @@ export const MOCK_ADDITIONAL_USER_2: UserProfile = {
   phone: '+37060098765',
   paymentStatus: 'inactive',
   isAdmin: false,
+  registeredAt: new Date('2023-01-10T00:00:00.000Z').toISOString(),
   accountActivatedAt: new Date('2023-01-15T00:00:00.000Z').toISOString(),
   agreeToTerms: true,
   subUsers: [],
@@ -462,6 +466,7 @@ export const MOCK_ADDITIONAL_USER_3: UserProfile = {
   phone: '+37060011122',
   paymentStatus: 'pending_verification',
   isAdmin: false,
+  registeredAt: new Date(new Date().setDate(new Date().getDate() - 5)).toISOString(), // Example: registered 5 days ago
   accountActivatedAt: undefined,
   agreeToTerms: true,
   subUsers: [],
@@ -779,5 +784,3 @@ export function getCategoryNameForDisplay(categoryId: string, t: (key: string) =
   const category = detailedReportCategories.find(c => c.id === categoryId);
   return category ? t(category.nameKey) : categoryId;
 }
-
-    

@@ -154,6 +154,7 @@
   "admin.users.table.email": "E-post",
   "admin.users.table.status": "Staatus",
   "admin.users.table.actions": "Tegevused",
+  "admin.users.table.registrationDate": "Registreerimise Kuupäev",
   "admin.users.actions.userActions": "Kasutaja tegevused",
   "admin.users.actions.viewProfile": "Vaata profiili",
   "admin.users.actions.changeStatus": "Muuda staatust",
@@ -167,6 +168,10 @@
   "admin.users.status.pending_verification": "Ootab identiteedi kinnitamist",
   "admin.users.status.pending_payment": "Ootab makset",
   "admin.users.status.inactive": "Mitteaktiivne",
+  "admin.users.displayOptions.title": "Kuva kasutajad:",
+  "admin.users.displayOptions.byCompanyName": "Ettevõtte Nime Järgi (A-Z)",
+  "admin.users.displayOptions.byRegistrationDate": "Rühmita Registreerimiskuu Järgi (Uuemad Eespool)",
+  "admin.users.groupHeaderMonthFormat": "MMMM yyyy",
   "admin.entries.title": "Kõik kirjed",
   "admin.entries.description": "Kõigi kasutajate poolt süsteemi esitatud kirjed.",
   "admin.entries.table.personInEntry": "Isik kirjes",
@@ -670,5 +675,3 @@
   "tags.pakenkta_imones_reputacijai": "Ettevõtte maine kahjustatud",
   "tags.neteiseta_veikla_itariama": "Kahtlustatakse ebaseaduslikku tegevust"
 }
-
-    

@@ -193,8 +193,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           password: values.password, // Storing main user's password (ideally hashed server-side)
           paymentStatus: 'pending_verification', 
           isAdmin: false,
-          agreeToTerms: values.agreeToTerms,
+          registeredAt: new Date().toISOString(),
           accountActivatedAt: undefined,
+          agreeToTerms: values.agreeToTerms,
           subUsers: subUsersList,
         };
 

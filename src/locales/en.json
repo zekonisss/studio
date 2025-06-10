@@ -154,6 +154,7 @@
   "admin.users.table.email": "Email",
   "admin.users.table.status": "Status",
   "admin.users.table.actions": "Actions",
+  "admin.users.table.registrationDate": "Registration Date",
   "admin.users.actions.userActions": "User actions",
   "admin.users.actions.viewProfile": "View Profile",
   "admin.users.actions.changeStatus": "Change Status",
@@ -167,6 +168,10 @@
   "admin.users.status.pending_verification": "Pending Identity Verification",
   "admin.users.status.pending_payment": "Pending Payment",
   "admin.users.status.inactive": "Inactive",
+  "admin.users.displayOptions.title": "Display users:",
+  "admin.users.displayOptions.byCompanyName": "By Company Name (A-Z)",
+  "admin.users.displayOptions.byRegistrationDate": "Grouped by Registration Month (Newest First)",
+  "admin.users.groupHeaderMonthFormat": "MMMM yyyy",
   "admin.entries.title": "All Entries",
   "admin.entries.description": "Entries submitted by all users in the system.",
   "admin.entries.table.personInEntry": "Person in Entry",
@@ -671,5 +676,3 @@
   "tags.pakenkta_imones_reputacijai": "Company reputation damaged",
   "tags.neteiseta_veikla_itariama": "Illegal activity suspected"
 }
-
-    

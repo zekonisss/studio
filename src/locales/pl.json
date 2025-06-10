@@ -154,6 +154,7 @@
   "admin.users.table.email": "E-mail",
   "admin.users.table.status": "Status",
   "admin.users.table.actions": "Akcje",
+  "admin.users.table.registrationDate": "Data Rejestracji",
   "admin.users.actions.userActions": "Akcje użytkownika",
   "admin.users.actions.viewProfile": "Zobacz Profil",
   "admin.users.actions.changeStatus": "Zmień Status",
@@ -167,6 +168,10 @@
   "admin.users.status.pending_verification": "Oczekuje na Weryfikację Tożsamości",
   "admin.users.status.pending_payment": "Oczekuje na Płatność",
   "admin.users.status.inactive": "Nieaktywny",
+  "admin.users.displayOptions.title": "Wyświetl użytkowników:",
+  "admin.users.displayOptions.byCompanyName": "Według Nazwy Firmy (A-Z)",
+  "admin.users.displayOptions.byRegistrationDate": "Grupuj według Miesiąca Rejestracji (Najnowsze Najpierw)",
+  "admin.users.groupHeaderMonthFormat": "MMMM yyyy",
   "admin.entries.title": "Wszystkie Wpisy",
   "admin.entries.description": "Wpisy przesłane przez wszystkich użytkowników w systemie.",
   "admin.entries.table.personInEntry": "Osoba we Wpisie",
@@ -577,7 +582,6 @@
   "countries.PE": "Peru",
   "countries.PH": "Filipiny",
   "countries.PN": "Pitcairn",
-  "countries.PL": "Polska",
   "countries.PT": "Portugalia",
   "countries.PR": "Portoryko",
   "countries.QA": "Katar",
@@ -651,6 +655,7 @@
   "countries.ZM": "Zambia",
   "countries.ZW": "Zimbabwe",
   "countries.OTHER": "Inne / Nieokreślone",
+  "countries.PL": "Polska",
   "tags.kuro_vagyste": "Kradzież paliwa",
   "tags.krovinio_vagyste": "Kradzież ładunku",
   "tags.imones_turto_vagyste": "Kradzież mienia firmy",
@@ -672,5 +677,3 @@
   "tags.pakenkta_imones_reputacijai": "Naruszenie reputacji firmy",
   "tags.neteiseta_veikla_itariama": "Podejrzenie nielegalnej działalności"
 }
-
-    
