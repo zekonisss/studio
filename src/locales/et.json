@@ -688,9 +688,11 @@
   "support.faq.q5.question": "Kuidas tagatakse andmete turvalisus?",
   "support.faq.q5.answer": "Me kasutame andmete kaitsmiseks standardseid turvameetmeid. Kogu teave edastatakse krüpteeritud kanalite kaudu. Siiski oled ka sina vastutav oma sisselogimisandmete turvalisuse eest.",
   "support.faq.q6.question": "Mida teha, kui unustasin parooli?",
-  "support.faq.q6.answer": "Sisselogimisekraanil kliki lingil 'Unustasin parooli' ja järgi e-posti juhiseid parooli lähtestamiseks.",
+  "support.faq.q6.answer": "Kui sul on sisselogimisega probleeme või oled parooli unustanud, võta palun ühendust meie tugimeeskonnaga.",
   "support.contact.title": "Ei leidnud vastust?",
   "support.contact.description": "Kui sul on rohkem küsimusi või vajad abi, võta ühendust meie tugimeeskonnaga.",
   "support.contact.emailButton": "Võta ühendust e-posti teel",
   "support.contact.emailLink": "mailto:support@drivercheck.eu"
 }
+
+    

@@ -582,6 +582,7 @@
   "countries.PE": "Peru",
   "countries.PH": "Filipīnas",
   "countries.PN": "Pitkērna",
+  "countries.PL": "Polija",
   "countries.PT": "Portugāle",
   "countries.PR": "Puertoriko",
   "countries.QA": "Katara",
@@ -689,9 +690,11 @@
   "support.faq.q5.question": "Kā tiek nodrošināta datu drošība?",
   "support.faq.q5.answer": "Mēs izmantojam standarta drošības pasākumus datu aizsardzībai. Visa informācija tiek pārraidīta pa šifrētiem kanāliem. Tomēr jūs esat arī atbildīgs par savu pieteikšanās datu drošību.",
   "support.faq.q6.question": "Ko darīt, ja esmu aizmirsis paroli?",
-  "support.faq.q6.answer": "Pieteikšanās ekrānā noklikšķiniet uz saites 'Aizmirsu paroli' un sekojiet e-pasta norādījumiem, lai atiestatītu paroli.",
+  "support.faq.q6.answer": "Ja jums ir problēmas ar pieteikšanos vai esat aizmirsis paroli, lūdzu, sazinieties ar mūsu atbalsta komandu.",
   "support.contact.title": "Neatradāt Atbildi?",
   "support.contact.description": "Ja jums ir vēl jautājumi vai nepieciešama palīdzība, sazinieties ar mūsu atbalsta komandu.",
   "support.contact.emailButton": "Sazināties pa E-pastu",
   "support.contact.emailLink": "mailto:support@drivercheck.eu"
 }
+
+    

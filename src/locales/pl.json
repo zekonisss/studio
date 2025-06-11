@@ -690,9 +690,11 @@
   "support.faq.q5.question": "Jak zapewniane jest bezpieczeństwo danych?",
   "support.faq.q5.answer": "Używamy standardowych środków bezpieczeństwa do ochrony danych. Wszystkie informacje są przesyłane zaszyfrowanymi kanałami. Jednakże, jesteś również odpowiedzialny za bezpieczeństwo swoich danych logowania.",
   "support.faq.q6.question": "Co zrobić, jeśli zapomniałem hasła?",
-  "support.faq.q6.answer": "Na ekranie logowania kliknij link 'Zapomniałem hasła' i postępuj zgodnie z instrukcjami wysłanymi na Twój adres e-mail, aby zresetować hasło.",
+  "support.faq.q6.answer": "Jeśli masz problemy z logowaniem lub zapomniałeś hasła, skontaktuj się z naszym zespołem wsparcia.",
   "support.contact.title": "Nie znalazłeś odpowiedzi?",
   "support.contact.description": "Jeśli masz więcej pytań lub potrzebujesz pomocy, skontaktuj się z naszym zespołem wsparcia.",
   "support.contact.emailButton": "Skontaktuj się przez e-mail",
   "support.contact.emailLink": "mailto:support@drivercheck.eu"
 }
+
+    

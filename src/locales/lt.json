@@ -690,9 +690,11 @@
   "support.faq.q5.question": "Kaip užtikrinamas duomenų saugumas?",
   "support.faq.q5.answer": "Mes naudojame standartines saugumo priemones duomenims apsaugoti. Visa informacija perduodama šifruotais kanalais. Tačiau, Jūs taip pat esate atsakingi už savo prisijungimo duomenų saugumą.",
   "support.faq.q6.question": "Ką daryti, jei pamiršau slaptažodį?",
-  "support.faq.q6.answer": "Prisijungimo lange spauskite nuorodą 'Pamiršau slaptažodį' ir sekite instrukcijas el. paštu slaptažodžiui atkurti.",
+  "support.faq.q6.answer": "Jei kyla problemų prisijungiant ar pamiršote slaptažodį, prašome susisiekti su mūsų pagalbos komanda.",
   "support.contact.title": "Nerandate Atsakymo?",
   "support.contact.description": "Jei turite daugiau klausimų ar reikia pagalbos, susisiekite su mūsų palaikymo komanda.",
   "support.contact.emailButton": "Susisiekti El. Paštu",
   "support.contact.emailLink": "mailto:pagalba@drivercheck.eu"
 }
+
+    

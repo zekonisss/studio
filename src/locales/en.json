@@ -689,9 +689,11 @@
   "support.faq.q5.question": "How is data security ensured?",
   "support.faq.q5.answer": "We use standard security measures to protect data. All information is transmitted via encrypted channels. However, you are also responsible for the security of your login details.",
   "support.faq.q6.question": "What if I forget my password?",
-  "support.faq.q6.answer": "On the login screen, click the 'Forgot password' link and follow the email instructions to reset your password.",
+  "support.faq.q6.answer": "If you have trouble logging in or have forgotten your password, please contact our support team.",
   "support.contact.title": "Can't Find an Answer?",
   "support.contact.description": "If you have more questions or need help, contact our support team.",
   "support.contact.emailButton": "Contact via Email",
   "support.contact.emailLink": "mailto:support@drivercheck.eu"
 }
+
+    
