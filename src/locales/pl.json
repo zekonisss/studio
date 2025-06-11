@@ -28,6 +28,7 @@
   "login.loginButton": "Zaloguj",
   "login.noAccount": "Nie masz konta?",
   "login.signupLink": "Zarejestruj się",
+  "login.forgotPasswordLink": "Zapomniałeś hasła?",
   "signup.title": "Utwórz nowe konto",
   "signup.form.companyName.label": "Nazwa Firmy",
   "signup.form.companyName.placeholder": "np. Przykładowa Sp. z o.o.",
@@ -696,5 +697,3 @@
   "support.contact.emailButton": "Skontaktuj się przez e-mail",
   "support.contact.emailLink": "mailto:support@drivercheck.eu"
 }
-
-    

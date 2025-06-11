@@ -28,6 +28,7 @@
   "login.loginButton": "Prisijungti",
   "login.noAccount": "Neturite paskyros?",
   "login.signupLink": "Registruokitės",
+  "login.forgotPasswordLink": "Pamiršote slaptažodį?",
   "signup.title": "Sukurkite naują paskyrą",
   "signup.form.companyName.label": "Įmonės pavadinimas",
   "signup.form.companyName.placeholder": "UAB Pvz. Įmonė",
@@ -696,5 +697,3 @@
   "support.contact.emailButton": "Susisiekti El. Paštu",
   "support.contact.emailLink": "mailto:pagalba@drivercheck.eu"
 }
-
-    

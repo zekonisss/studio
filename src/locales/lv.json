@@ -28,6 +28,7 @@
   "login.loginButton": "Pieteikties",
   "login.noAccount": "Nav konta?",
   "login.signupLink": "Reģistrēties",
+  "login.forgotPasswordLink": "Aizmirsāt paroli?",
   "signup.title": "Izveidot jaunu kontu",
   "signup.form.companyName.label": "Uzņēmuma Nosaukums",
   "signup.form.companyName.placeholder": "piem., SIA Piemērs",
@@ -696,5 +697,3 @@
   "support.contact.emailButton": "Sazināties pa E-pastu",
   "support.contact.emailLink": "mailto:support@drivercheck.eu"
 }
-
-    

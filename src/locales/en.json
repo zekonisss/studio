@@ -28,6 +28,7 @@
   "login.loginButton": "Login",
   "login.noAccount": "Don't have an account?",
   "login.signupLink": "Sign up",
+  "login.forgotPasswordLink": "Forgot password?",
   "signup.title": "Create a new account",
   "signup.form.companyName.label": "Company Name",
   "signup.form.companyName.placeholder": "e.g. Example Ltd.",
@@ -695,5 +696,3 @@
   "support.contact.emailButton": "Contact via Email",
   "support.contact.emailLink": "mailto:support@drivercheck.eu"
 }
-
-    

@@ -80,6 +80,12 @@ export function LoginForm() {
             </FormItem>
           )}
         />
+        <div className="text-sm">
+          <Link href="/auth/forgot-password" // Placeholder link
+                className="font-medium text-primary hover:underline">
+            {t('login.forgotPasswordLink')}
+          </Link>
+        </div>
         <Button type="submit" className="w-full" disabled={loading}>
           {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           {t('login.loginButton')}

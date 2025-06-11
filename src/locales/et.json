@@ -28,6 +28,7 @@
   "login.loginButton": "Logi sisse",
   "login.noAccount": "Kontot pole?",
   "login.signupLink": "Registreeru",
+  "login.forgotPasswordLink": "Unustasid parooli?",
   "signup.title": "Loo uus konto",
   "signup.form.companyName.label": "Ettevõtte nimi",
   "signup.form.companyName.placeholder": "nt Näide OÜ",
@@ -694,5 +695,3 @@
   "support.contact.emailButton": "Võta ühendust e-posti teel",
   "support.contact.emailLink": "mailto:support@drivercheck.eu"
 }
-
-    
