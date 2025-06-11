@@ -1,46 +1,64 @@
 
+"use client";
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { ShieldQuestion, LifeBuoy } from "lucide-react";
+import { ShieldQuestion, LifeBuoy, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useLanguage } from "@/contexts/language-context";
 
-const faqItems = [
+const faqItemsBase = [
   {
-    question: "Kaip užsiregistruoti DriverCheck platformoje?",
-    answer: "Norėdami užsiregistruoti, pagrindiniame puslapyje spauskite 'Registruotis', užpildykite reikiamus įmonės ir kontaktinius duomenis, sutikite su taisyklėmis ir patvirtinkite el. paštą.",
+    questionKey: "support.faq.q1.question",
+    answerKey: "support.faq.q1.answer",
   },
   {
-    question: "Kiek kainuoja DriverCheck prenumerata?",
-    answer: "Metinė DriverCheck prenumerata kainuoja 1188 €. Prieiga prie sistemos suteikiama tik po sėkmingo mokėjimo.",
+    questionKey: "support.faq.q2.question",
+    answerKey: "support.faq.q2.answer",
   },
   {
-    question: "Kokią informaciją galiu rasti apie vairuotojus?",
-    answer: "Paieškos rezultatuose galite matyti vairuotojo vardą, pavardę, gimimo metus (jei pateikta), pranešimų kategorijas, žymas, komentarus ir pridėtus failus/nuotraukas, jei tokių yra.",
+    questionKey: "support.faq.q3.question",
+    answerKey: "support.faq.q3.answer",
   },
   {
-    question: "Ar galiu redaguoti ar ištrinti kitų vartotojų įvestą informaciją?",
-    answer: "Ne, Jūs galite peržiūrėti visus pranešimus, tačiau redaguoti ar ištrinti galite tik savo pačių įvestą informaciją.",
+    questionKey: "support.faq.q4.question",
+    answerKey: "support.faq.q4.answer",
   },
   {
-    question: "Kaip užtikrinamas duomenų saugumas?",
-    answer: "Mes naudojame standartines saugumo priemones duomenims apsaugoti. Visa informacija perduodama šifruotais kanalais. Tačiau, Jūs taip pat esate atsakingi už savo prisijungimo duomenų saugumą.",
+    questionKey: "support.faq.q5.question",
+    answerKey: "support.faq.q5.answer",
   },
   {
-    question: "Ką daryti, jei pamiršau slaptažodį?",
-    answer: "Prisijungimo lange spauskite nuorodą 'Pamiršau slaptažodį' ir sekite instrukcijas el. paštu slaptažodžiui atkurti.",
+    questionKey: "support.faq.q6.question",
+    answerKey: "support.faq.q6.answer",
   },
 ];
 
 export default function SupportPage() {
+  const router = useRouter();
+  const { t } = useLanguage();
+
+  const faqItems = faqItemsBase.map(item => ({
+    question: t(item.questionKey),
+    answer: t(item.answerKey)
+  }));
+
   return (
     <div className="container mx-auto py-12 px-4 md:px-6">
+      <div className="max-w-3xl mx-auto mb-6">
+        <Button variant="outline" onClick={() => router.back()} className="mb-4">
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          {t('common.goBack')}
+        </Button>
+      </div>
       <Card className="max-w-3xl mx-auto shadow-xl">
         <CardHeader className="text-center">
           <LifeBuoy className="h-12 w-12 text-primary mx-auto mb-4" />
-          <CardTitle className="text-3xl font-bold">Pagalba ir Dažniausiai Užduodami Klausimai</CardTitle>
+          <CardTitle className="text-3xl font-bold">{t('support.title')}</CardTitle>
           <CardDescription className="text-lg text-muted-foreground">
-            Raskite atsakymus į dažniausiai kylančius klausimus apie DriverCheck platformą.
+            {t('support.description')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -61,13 +79,13 @@ export default function SupportPage() {
           </Accordion>
 
           <div className="mt-12 text-center border-t pt-8">
-            <h3 className="text-2xl font-semibold mb-4 text-foreground">Nerandate Atsakymo?</h3>
+            <h3 className="text-2xl font-semibold mb-4 text-foreground">{t('support.contact.title')}</h3>
             <p className="text-muted-foreground mb-6">
-              Jei turite daugiau klausimų ar reikia pagalbos, susisiekite su mūsų palaikymo komanda.
+              {t('support.contact.description')}
             </p>
             <Button size="lg" asChild>
-              <Link href="mailto:pagalba@drivercheck.eu">
-                Susisiekti El. Paštu
+              <Link href={t('support.contact.emailLink')}>
+                {t('support.contact.emailButton')}
               </Link>
             </Button>
           </div>
