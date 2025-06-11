@@ -464,8 +464,7 @@ export default function AdminPage() {
                       <TableHead className="text-right">{t('admin.users.table.actions')}</TableHead>
                     </TableRow>
                   </TableHeader>
-                  <TableBody>
-                    {paginatedUsers.map((u) => {
+                  <TableBody>{paginatedUsers.map((u) => {
                       const currentMonthYearGroup = u.registeredAt ? formatDateFn(new Date(u.registeredAt), t('admin.users.groupHeaderMonthFormat'), { locale: dateLocale }) : t('common.notSpecified');
                       const showGroupHeader = userDisplayOption === 'byRegistrationDate' && currentMonthYearGroup !== lastGroupHeader;
                       if (showGroupHeader) {
@@ -534,10 +533,9 @@ export default function AdminPage() {
                               </DropdownMenu>
                             </TableCell>
                           </TableRow>
-                        </Fragment> 
+                        </Fragment>
                       );
-                    })}
-                  </TableBody>
+                    })}</TableBody>
                 </Table>
               ) : (
                 <div className="flex flex-col items-center justify-center py-10 text-center">
@@ -887,3 +885,5 @@ export default function AdminPage() {
   );
 }
 
+
+    
