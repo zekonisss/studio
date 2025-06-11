@@ -35,13 +35,9 @@ export function LoginForm() {
 
   async function onSubmit(values: LoginFormValues) {
     try {
-      await login(values); // login function now handles toasts internally
+      await login(values); 
     } catch (error: any) {
-      // Error handling is now more centralized in useAuth, but specific UI feedback can remain
-      // This catch block might be redundant if useAuth always throws for UI-displayable errors
-      // or if it directly updates UI state for errors.
-      // For now, let's assume some errors might still need to be caught here for generic fallback.
-      if (!error.isAuthManagedError) { // Add a flag to errors managed by useAuth
+      if (!error.isAuthManagedError) { 
          toast({
             variant: "destructive",
             title: t('toast.login.error.title'),
@@ -80,8 +76,8 @@ export function LoginForm() {
             </FormItem>
           )}
         />
-        <div className="text-sm">
-          <Link href="/auth/forgot-password" // Placeholder link
+        <div className="text-sm text-right">
+          <Link href="/auth/forgot-password" 
                 className="font-medium text-primary hover:underline">
             {t('login.forgotPasswordLink')}
           </Link>
