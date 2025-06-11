@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState, useMemo, Fragment } from "react"; // Added Fragment for group headers
+import { useEffect, useState, useMemo, Fragment } from "react"; 
 import { useAuth } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -102,7 +102,7 @@ export default function AdminPage() {
     }
     if (adminUser && adminUser.isAdmin) {
       const fetchedUsers = getAllUsers();
-      setAllUsersState(fetchedUsers); // Initial set, sorting will be handled by processedUsers
+      setAllUsersState(fetchedUsers); 
 
       const localReports = getReportsFromLocalStorage();
       const combined = combineAndDeduplicateReports(localReports, MOCK_GENERAL_REPORTS);
@@ -158,7 +158,7 @@ export default function AdminPage() {
       users.sort((a, b) => {
         const dateA = a.registeredAt ? new Date(a.registeredAt).getTime() : 0;
         const dateB = b.registeredAt ? new Date(b.registeredAt).getTime() : 0;
-        return dateB - dateA; // Newest first
+        return dateB - dateA; 
       });
     }
     return users;
@@ -472,7 +472,7 @@ export default function AdminPage() {
                         lastGroupHeader = currentMonthYearGroup;
                       }
                       return (
-                        <Fragment key={u.id}> {/* Changed React.Fragment to Fragment */}
+                        <Fragment key={u.id}>
                           {showGroupHeader && (
                             <TableRow className="bg-muted/30 hover:bg-muted/40">
                               <TableCell colSpan={6} className="py-3 px-4 font-semibold text-md text-foreground">
