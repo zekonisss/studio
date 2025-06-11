@@ -54,6 +54,12 @@ export const LoginSchema = z.object({
 
 export type LoginFormValues = z.infer<typeof LoginSchema>;
 
+export const ForgotPasswordSchema = z.object({
+  email: z.string().email({ message: "Neteisingas el. pašto formatas." }),
+});
+
+export type ForgotPasswordFormValues = z.infer<typeof ForgotPasswordSchema>;
+
 export const ReportSchema = z.object({
   fullName: z.string().min(3, { message: "Vardas ir pavardė turi būti bent 3 simbolių ilgio." }),
   nationality: z.string().optional(),
@@ -71,4 +77,3 @@ export const SearchSchema = z.object({
 });
 
 export type SearchFormValues = z.infer<typeof SearchSchema>;
-    
