@@ -9,13 +9,13 @@ export default function TermsPage() {
           <ScrollText className="h-12 w-12 text-primary mx-auto mb-4" />
           <CardTitle className="text-3xl font-bold">Naudojimosi Taisyklės</CardTitle>
           <CardDescription className="text-lg text-muted-foreground">
-            DriverShield platformos naudojimosi sąlygos ir nuostatos.
+            DriverCheck platformos naudojimosi sąlygos ir nuostatos.
           </CardDescription>
         </CardHeader>
         <CardContent className="prose prose-lg max-w-none dark:prose-invert prose-headings:text-primary prose-a:text-accent hover:prose-a:text-accent/80">
           <h2>1. Bendrosios Nuostatos</h2>
           <p>
-            Šios Naudojimosi Taisyklės (toliau – Taisyklės) reglamentuoja naudojimąsi DriverShield internetine platforma (toliau – Platforma), kurią teikia [Jūsų Įmonės Pavadinimas] (toliau – Teikėjas). Naudodamiesi Platforma, Jūs (toliau – Vartotojas) sutinkate su šiomis Taisyklėmis.
+            Šios Naudojimosi Taisyklės (toliau – Taisyklės) reglamentuoja naudojimąsi DriverCheck internetine platforma (toliau – Platforma), kurią teikia [Jūsų Įmonės Pavadinimas] (toliau – Teikėjas). Naudodamiesi Platforma, Jūs (toliau – Vartotojas) sutinkate su šiomis Taisyklėmis.
           </p>
 
           <h2>2. Paskyros Registracija ir Naudojimas</h2>
@@ -26,7 +26,7 @@ export default function TermsPage() {
 
           <h2>3. Atsakomybė už Turinį</h2>
           <p>
-            Vartotojas yra visiškai atsakingas už visą informaciją, kurią jis įkelia, pateikia ar kitaip perduoda per Platformą (toliau – Turinys). Vartotojas garantuoja, kad jo pateikiamas Turinys yra tikslus, teisėtas ir nepažeidžia trečiųjų šalių teisių bei galiojančių teisės aktų, įskaitant Bendrąjį duomenų apsaugos reglamentą (BDAR).
+            Vartotojas yra visiškai atsakingas už visą informaciją, kurią jis įkelia, pateikia ar kitaip perduoda per Platformą (toliau – Turinys). Vartotojas garantuoja, kad jo pateikiamas Turinys yra tikslus, teisėtas ir nepažeidžia trečiųjų šalių teisių bei galiojančių teisės aktų, įskaitant Bendrąjį duomenų apsaugos reglamento (BDAR).
             Teikėjas neatsako už Vartotojo pateikiamo Turinio tikslumą, teisėtumą ar patikimumą.
           </p>
           

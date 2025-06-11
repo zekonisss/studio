@@ -9,13 +9,13 @@ export default function PrivacyPage() {
           <ShieldLock className="h-12 w-12 text-primary mx-auto mb-4" />
           <CardTitle className="text-3xl font-bold">Privatumo Politika</CardTitle>
           <CardDescription className="text-lg text-muted-foreground">
-            Kaip DriverShield renka, naudoja ir saugo jūsų asmens duomenis.
+            Kaip DriverCheck renka, naudoja ir saugo jūsų asmens duomenis.
           </CardDescription>
         </CardHeader>
         <CardContent className="prose prose-lg max-w-none dark:prose-invert prose-headings:text-primary prose-a:text-accent hover:prose-a:text-accent/80">
           <h2>1. Įžanga</h2>
           <p>
-            Ši Privatumo Politika paaiškina, kaip [Jūsų Įmonės Pavadinimas] (toliau – Mes, Mūsų) renka, naudoja, saugo ir atskleidžia Jūsų (toliau – Vartotojas) asmens duomenis, kai naudojatės DriverShield internetine platforma (toliau – Platforma). Mes įsipareigojame saugoti Jūsų privatumą ir tvarkyti asmens duomenis laikantis Bendrojo duomenų apsaugos reglamento (BDAR) ir kitų taikomų teisės aktų.
+            Ši Privatumo Politika paaiškina, kaip [Jūsų Įmonės Pavadinimas] (toliau – Mes, Mūsų) renka, naudoja, saugo ir atskleidžia Jūsų (toliau – Vartotojas) asmens duomenis, kai naudojatės DriverCheck internetine platforma (toliau – Platforma). Mes įsipareigojame saugoti Jūsų privatumą ir tvarkyti asmens duomenis laikantis Bendrojo duomenų apsaugos reglamento (BDAR) ir kitų taikomų teisės aktų.
           </p>
 
           <h2>2. Renkami Asmens Duomenys</h2>
