@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { ShieldQuestion, LifeBuoy } from "lucide-react";
@@ -6,12 +7,12 @@ import Link from "next/link";
 
 const faqItems = [
   {
-    question: "Kaip užsiregistruoti DriverShield platformoje?",
+    question: "Kaip užsiregistruoti DriverCheck platformoje?",
     answer: "Norėdami užsiregistruoti, pagrindiniame puslapyje spauskite 'Registruotis', užpildykite reikiamus įmonės ir kontaktinius duomenis, sutikite su taisyklėmis ir patvirtinkite el. paštą.",
   },
   {
-    question: "Kiek kainuoja DriverShield prenumerata?",
-    answer: "Metinė DriverShield prenumerata kainuoja 1188 €. Prieiga prie sistemos suteikiama tik po sėkmingo mokėjimo.",
+    question: "Kiek kainuoja DriverCheck prenumerata?",
+    answer: "Metinė DriverCheck prenumerata kainuoja 1188 €. Prieiga prie sistemos suteikiama tik po sėkmingo mokėjimo.",
   },
   {
     question: "Kokią informaciją galiu rasti apie vairuotojus?",
@@ -39,7 +40,7 @@ export default function SupportPage() {
           <LifeBuoy className="h-12 w-12 text-primary mx-auto mb-4" />
           <CardTitle className="text-3xl font-bold">Pagalba ir Dažniausiai Užduodami Klausimai</CardTitle>
           <CardDescription className="text-lg text-muted-foreground">
-            Raskite atsakymus į dažniausiai kylančius klausimus apie DriverShield platformą.
+            Raskite atsakymus į dažniausiai kylančius klausimus apie DriverCheck platformą.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -65,7 +66,7 @@ export default function SupportPage() {
               Jei turite daugiau klausimų ar reikia pagalbos, susisiekite su mūsų palaikymo komanda.
             </p>
             <Button size="lg" asChild>
-              <Link href="mailto:pagalba@drivershield.eu">
+              <Link href="mailto:pagalba@drivercheck.eu">
                 Susisiekti El. Paštu
               </Link>
             </Button>
