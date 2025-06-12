@@ -219,7 +219,7 @@
   "admin.entryDetailsModal.submitterId": "Pateikėjo ID",
   "admin.entryDetailsModal.submissionDate": "Pateikimo Data",
   "admin.userDetailsModal.title": "Vartotojo Anketos Detalės",
-  "admin.userDetailsModal.description.part1": "Išsami informacija apie vartotoją",
+  "admin.userDetailsModal.description.part1": "Išsami informacija apie vartotoją ",
   "admin.userDetailsModal.companyName": "Įmonės Pavadinimas",
   "admin.userDetailsModal.companyCode": "Įmonės Kodas",
   "admin.userDetailsModal.vatCode": "PVM Kodas",
@@ -544,6 +544,7 @@
   "countries.LR": "Liberija",
   "countries.LY": "Libija",
   "countries.LI": "Lichtenšteinas",
+  "countries.LT": "Lietuva",
   "countries.LU": "Liuksemburgas",
   "countries.MO": "Makao",
   "countries.MG": "Madagaskaras",
@@ -664,7 +665,6 @@
   "countries.ZM": "Zambija",
   "countries.ZW": "Zimbabvė",
   "countries.OTHER": "Kita / Nenurodyta",
-  "countries.LT": "Lietuva",
   "tags.kuro_vagyste": "Kuro vagystė",
   "tags.krovinio_vagyste": "Krovinio vagystė",
   "tags.imones_turto_vagyste": "Įmonės turto vagystė",
@@ -704,3 +704,4 @@
   "support.contact.emailButton": "Susisiekti El. Paštu",
   "support.contact.emailLink": "mailto:pagalba@drivercheck.eu"
 }
+    
