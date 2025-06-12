@@ -582,28 +582,7 @@ export const MOCK_GENERAL_REPORTS: Report[] = [
     dataAiHint: "angry driver",
     createdAt: new Date("2024-03-01T11:00:00Z"),
   },
-  {
-    id: "report-imported-1",
-    reporterId: "admin-import",
-    reporterCompanyName: "Duomenų Importas (Excel)",
-    fullName: "Simas Simaitis (Importuotas)",
-    nationality: "DE",
-    birthYear: 1988,
-    category: "driving_safety",
-    tags: ["pavojingas_vairavimas", "kita_tag"],
-    comment: "Importuotas komentaras: dažnai viršija greitį greitkeliuose.",
-    createdAt: new Date("2024-02-15T00:00:00Z")
-  },
-  {
-    id: "report-imported-2",
-    reporterId: "admin-import",
-    reporterCompanyName: "Duomenų Importas (Excel)",
-    fullName: "Lina Linaitė (Importuota)",
-    category: "other_category",
-    tags: [],
-    comment: "Importuotas komentaras: kelis kartus pateikė netvarkingus kelionės dokumentus.",
-    createdAt: new Date("2024-02-10T00:00:00Z")
-  },
+  // Importuoti įrašai su reporterId: "admin-import" buvo čia, dabar pašalinti
 ];
 
 
@@ -760,13 +739,58 @@ export const MOCK_DISCIPLINE_REPORT: Report = {
     createdAt: new Date("2024-03-15T10:00:00Z"),
 };
 
-if (!MOCK_GENERAL_REPORTS.find(r => r.id === MOCK_DISCIPLINE_REPORT.id)) {
-    MOCK_GENERAL_REPORTS.push(MOCK_DISCIPLINE_REPORT);
-}
+// Ensure MOCK_DISCIPLINE_REPORT is included if not already present and conditions match
+const initialGeneralReports = [
+  {
+    id: "report-general-1",
+    reporterId: "user-generic-1",
+    reporterCompanyName: "UAB Logistika LT",
+    fullName: "Jonas Jonaitis",
+    nationality: "PL",
+    birthYear: 1985,
+    category: "fuel_theft",
+    tags: ["kuro_vagyste", "kita_tag"],
+    comment: "Vairuotojas buvo pastebėtas neteisėtai nupylinėjantis kurą iš įmonės sunkvežimio. Tai jau antras kartas per pastaruosius 6 mėnesius. Taip pat gauta informacija apie pavojingą vairavimą mieste.",
+    imageUrl: "https://placehold.co/600x400.png",
+    createdAt: new Date("2023-10-15T10:30:00Z"),
+    dataAiHint: "truck fuel"
+  },
+  {
+    id: "report-general-2",
+    reporterId: "user-generic-2",
+    reporterCompanyName: "UAB Greiti Pervežimai",
+    fullName: "Petras Petraitis",
+    nationality: "UA",
+    category: "technical_damage",
+    tags: ["techninis_neatsakingumas", "kita_tag"],
+    comment: "Grįžus iš reiso, pastebėta didelė žala priekabos šonui. Vairuotojas teigia nieko nepastebejęs. Rekomenduojama atlikti nuodugnesnį tyrimą.",
+    createdAt: new Date("2023-11-01T14:00:00Z"),
+  },
+  {
+    id: "report-general-3-from-456",
+    reporterId: "dev-user-456",
+    reporterCompanyName: 'UAB "Greiti Ratai"',
+    fullName: "Kazys Kazlauskas",
+    nationality: "BY",
+    birthYear: 1978,
+    category: "discipline",
+    tags: ["neatsakingas_poziuris_i_darba", "kita_tag"],
+    comment: "Vėlavo pristatyti krovinį 2 valandas be pateisinamos priežasties, grubiai bendravo su sandėlio darbuotojais.",
+    imageUrl: "https://placehold.co/600x400.png",
+    dataAiHint: "angry driver",
+    createdAt: new Date("2024-03-01T11:00:00Z"),
+  }
+];
 
-if (!MOCK_USER_REPORTS.find(r => r.id === MOCK_DISCIPLINE_REPORT.id) && MOCK_DISCIPLINE_REPORT.reporterId === MOCK_USER.id) {
-    MOCK_USER_REPORTS.push(MOCK_DISCIPLINE_REPORT);
+// Add MOCK_DISCIPLINE_REPORT to initialGeneralReports if it's not already there by ID
+if (!initialGeneralReports.find(r => r.id === MOCK_DISCIPLINE_REPORT.id)) {
+    initialGeneralReports.push(MOCK_DISCIPLINE_REPORT);
 }
+// Overwrite MOCK_GENERAL_REPORTS with the potentially updated list
+// This ensures MOCK_DISCIPLINE_REPORT is included but imported ones are not.
+MOCK_GENERAL_REPORTS.length = 0; // Clear existing array
+MOCK_GENERAL_REPORTS.push(...initialGeneralReports.filter(report => report.reporterId !== "admin-import"));
+
 
 // Helper function to get category name for display in admin, considering translation
 export function getCategoryNameAdmin(categoryId: string, t?: (key: string) => string): string {
@@ -784,3 +808,4 @@ export function getCategoryNameForDisplay(categoryId: string, t: (key: string) =
   const category = detailedReportCategories.find(c => c.id === categoryId);
   return category ? t(category.nameKey) : categoryId;
 }
+
