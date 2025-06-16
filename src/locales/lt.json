@@ -16,6 +16,10 @@
   "sidebar.section.account": "Paskyra ir Pagalba",
   "sidebar.section.admin": "Administratorius",
   "sidebar.importReports": "Importuoti Įrašus",
+  "sidebar.toggleTheme": "Perjungti temą",
+  "theme.light": "Šviesi",
+  "theme.dark": "Tamsi",
+  "theme.system": "Sistemos",
   "language.lithuanian": "Lietuvių",
   "language.english": "Anglų",
   "language.russian": "Rusų",
@@ -711,4 +715,3 @@
   "support.contact.emailButton": "Susisiekti El. Paštu",
   "support.contact.emailLink": "mailto:pagalba@drivercheck.eu"
 }
-    

@@ -16,6 +16,10 @@
   "sidebar.section.account": "Konto i wsparcie",
   "sidebar.section.admin": "Administrator",
   "sidebar.importReports": "Importuj wpisy",
+  "sidebar.toggleTheme": "Przełącz motyw",
+  "theme.light": "Jasny",
+  "theme.dark": "Ciemny",
+  "theme.system": "Systemowy",
   "language.lithuanian": "Litewski",
   "language.english": "Angielski",
   "language.russian": "Rosyjski",
@@ -711,4 +715,3 @@
   "support.contact.emailButton": "Skontaktuj się przez e-mail",
   "support.contact.emailLink": "mailto:support@drivercheck.eu"
 }
-

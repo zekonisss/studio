@@ -16,6 +16,10 @@
   "sidebar.section.account": "Konto ja tugi",
   "sidebar.section.admin": "Administraator",
   "sidebar.importReports": "Impordi kirjed",
+  "sidebar.toggleTheme": "Lülita teema",
+  "theme.light": "Hele",
+  "theme.dark": "Tume",
+  "theme.system": "Süsteemi",
   "language.lithuanian": "Leedu",
   "language.english": "Inglise",
   "language.russian": "Vene",
@@ -709,4 +713,3 @@
   "support.contact.emailButton": "Võta ühendust e-posti teel",
   "support.contact.emailLink": "mailto:support@drivercheck.eu"
 }
-

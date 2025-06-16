@@ -10,7 +10,8 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTitle, SheetTrigger, SheetClose } from '@/components/ui/sheet';
 import { Menu, Loader2 } from 'lucide-react';
 import { WelcomeModal } from '@/components/shared/welcome-modal';
-import { LanguageSwitcher } from '@/components/navigation/language-switcher'; // Added LanguageSwitcher import
+import { LanguageSwitcher } from '@/components/navigation/language-switcher';
+import { ThemeToggle } from '@/components/navigation/theme-toggle'; // Added ThemeToggle import
 
 export default function AuthenticatedLayout({
   children,
@@ -67,12 +68,13 @@ export default function AuthenticatedLayout({
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="p-0 w-72">
-                <SheetTitle className="sr-only">Navigacijos Meniu</SheetTitle> {/* Added sr-only title for accessibility */}
+                <SheetTitle className="sr-only">Navigacijos Meniu</SheetTitle>
                 <SidebarNav isInSheet={true} />
               </SheetContent>
             </Sheet>
           </div>
-          <div className="flex items-center gap-3 ml-auto"> {/* Wrapper for UserNav and LanguageSwitcher */}
+          <div className="flex items-center gap-2 ml-auto">
+            <ThemeToggle />
             <LanguageSwitcher />
             <UserNav />
           </div>

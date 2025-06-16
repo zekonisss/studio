@@ -16,6 +16,10 @@
   "sidebar.section.account": "Account and Support",
   "sidebar.section.admin": "Administrator",
   "sidebar.importReports": "Import Entries",
+  "sidebar.toggleTheme": "Toggle theme",
+  "theme.light": "Light",
+  "theme.dark": "Dark",
+  "theme.system": "System",
   "language.lithuanian": "Lithuanian",
   "language.english": "English",
   "language.russian": "Russian",
@@ -491,7 +495,6 @@
   "countries.SV": "El Salvador",
   "countries.GQ": "Equatorial Guinea",
   "countries.ER": "Eritrea",
-  "countries.EE": "Estonia",
   "countries.SZ": "Eswatini",
   "countries.ET": "Ethiopia",
   "countries.FK": "Falkland Islands (Malvinas)",
@@ -671,6 +674,7 @@
   "countries.ZM": "Zambia",
   "countries.ZW": "Zimbabwe",
   "countries.OTHER": "Other / Not Specified",
+  "countries.EE": "Estonia",
   "tags.kuro_vagyste": "Fuel theft",
   "tags.krovinio_vagyste": "Cargo theft",
   "tags.imones_turto_vagyste": "Company property theft",
@@ -710,4 +714,3 @@
   "support.contact.emailButton": "Contact via Email",
   "support.contact.emailLink": "mailto:support@drivercheck.eu"
 }
-
