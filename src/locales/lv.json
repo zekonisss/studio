@@ -187,10 +187,14 @@
   "admin.entries.table.actions": "Darbības",
   "admin.entries.actions.viewDetails": "Skatīt detaļas",
   "admin.entries.actions.deleteEntry": "Dzēst ierakstu",
+  "admin.entries.actions.deleteAllEntries": "Dzēst visus ierakstus",
   "admin.entries.deleteDialog.title": "Vai tiešām vēlaties dzēst šo ierakstu?",
   "admin.entries.deleteDialog.description.part1": "Šī darbība ir neatgriezeniska. Ieraksts par ",
   "admin.entries.deleteDialog.description.part2": " tiks neatgriezeniski dzēsts.",
   "admin.entries.deleteDialog.confirmDelete": "Jā, dzēst",
+  "admin.entries.deleteAllDialog.title": "Vai tiešām vēlaties dzēst VISUS ierakstus?",
+  "admin.entries.deleteAllDialog.description": "Šī darbība ir neatgriezeniska un neatgriezeniski dzēsīs VISUS ziņojumus no sistēmas.",
+  "admin.entries.deleteAllDialog.confirmDeleteAll": "Jā, dzēst visus",
   "admin.entries.noEntriesFound": "Ieraksti nav atrasti.",
   "admin.auditLog.title": "Administratora Darbību Žurnāls",
   "admin.auditLog.description": "Sistēmā veikto administratīvo darbību vēsture.",
@@ -201,6 +205,7 @@
   "admin.auditLog.noLogsFound": "Darbību žurnāla ieraksti nav atrasti.",
   "auditLog.action.userStatusChanged": "Mainīts lietotāja {companyName} ({userEmail}) statuss no \"{oldStatus}\" uz \"{newStatus}\"",
   "auditLog.action.reportDeleted": "Dzēsts ziņojums par {driverFullName} (ID: {reportId})",
+  "auditLog.action.allReportsDeleted": "Dzēsti visi ziņojumi (skaits: {count})",
   "auditLog.action.userDetailsUpdated": "Atjaunināti lietotāja {companyName} ({userEmail}) dati. Mainītie lauki: {updatedFields}",
   "admin.statistics.title": "Statistika",
   "admin.statistics.description": "Sistēmas lietošanas statistika.",
@@ -244,6 +249,8 @@
   "admin.users.toast.dataUpdated.description": "Lietotāja {companyName} dati veiksmīgi saglabāti.",
   "admin.entries.toast.entryDeleted.title": "Ieraksts Dzēsts",
   "admin.entries.toast.entryDeleted.description": "Izvēlētais ieraksts ir veiksmīgi dzēsts.",
+  "admin.entries.toast.allEntriesDeleted.title": "Visi ieraksti dzēsti",
+  "admin.entries.toast.allEntriesDeleted.description": "Visi {count} ieraksti ir veiksmīgi dzēsti no sistēmas.",
   "notifications.accountStatusChanged.title": "Konta Statuss Mainīts",
   "notifications.accountStatusChanged.message": "Jūsu konta statuss tika mainīts no \"{oldStatus}\" uz \"{newStatus}\" administratora {adminName}.",
   "notifications.subscriptionWarning.title": "Abonementa Atgādinājums",
@@ -703,3 +710,4 @@
   "support.contact.emailButton": "Sazināties pa E-pastu",
   "support.contact.emailLink": "mailto:support@drivercheck.eu"
 }
+

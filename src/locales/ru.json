@@ -187,10 +187,14 @@
   "admin.entries.table.actions": "Действия",
   "admin.entries.actions.viewDetails": "Посмотреть детали",
   "admin.entries.actions.deleteEntry": "Удалить запись",
+  "admin.entries.actions.deleteAllEntries": "Удалить все записи",
   "admin.entries.deleteDialog.title": "Вы уверены, что хотите удалить эту запись?",
   "admin.entries.deleteDialog.description.part1": "Это действие необратимо. Запись о ",
   "admin.entries.deleteDialog.description.part2": " будет удалена навсегда.",
   "admin.entries.deleteDialog.confirmDelete": "Да, удалить",
+  "admin.entries.deleteAllDialog.title": "Вы уверены, что хотите удалить ВСЕ записи?",
+  "admin.entries.deleteAllDialog.description": "Это действие необратимо и навсегда удалит ВСЕ отчеты из системы.",
+  "admin.entries.deleteAllDialog.confirmDeleteAll": "Да, удалить все",
   "admin.entries.noEntriesFound": "Записей не найдено.",
   "admin.auditLog.title": "Журнал Действий Администратора",
   "admin.auditLog.description": "История административных действий, выполненных в системе.",
@@ -201,6 +205,7 @@
   "admin.auditLog.noLogsFound": "Записей в журнале действий не найдено.",
   "auditLog.action.userStatusChanged": "Изменен статус пользователя {companyName} ({userEmail}) с \"{oldStatus}\" на \"{newStatus}\"",
   "auditLog.action.reportDeleted": "Удален отчет о {driverFullName} (ID: {reportId})",
+  "auditLog.action.allReportsDeleted": "Удалены все отчеты (количество: {count})",
   "auditLog.action.userDetailsUpdated": "Обновлены данные пользователя {companyName} ({userEmail}). Измененные поля: {updatedFields}",
   "admin.statistics.title": "Статистика",
   "admin.statistics.description": "Статистика использования системы.",
@@ -244,6 +249,8 @@
   "admin.users.toast.dataUpdated.description": "Данные пользователя {companyName} успешно сохранены.",
   "admin.entries.toast.entryDeleted.title": "Запись удалена",
   "admin.entries.toast.entryDeleted.description": "Выбранная запись была успешно удалена.",
+  "admin.entries.toast.allEntriesDeleted.title": "Все записи удалены",
+  "admin.entries.toast.allEntriesDeleted.description": "Все {count} записей были успешно удалены из системы.",
   "notifications.accountStatusChanged.title": "Статус Учетной Записи Изменен",
   "notifications.accountStatusChanged.message": "Статус вашей учетной записи изменен с \"{oldStatus}\" на \"{newStatus}\" администратором {adminName}.",
   "notifications.subscriptionWarning.title": "Напоминание о Подписке",
@@ -704,3 +711,4 @@
   "support.contact.emailButton": "Связаться по электронной почте",
   "support.contact.emailLink": "mailto:support@drivercheck.eu"
 }
+

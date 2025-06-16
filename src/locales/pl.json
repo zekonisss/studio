@@ -187,10 +187,14 @@
   "admin.entries.table.actions": "Akcje",
   "admin.entries.actions.viewDetails": "Zobacz szczegóły",
   "admin.entries.actions.deleteEntry": "Usuń wpis",
+  "admin.entries.actions.deleteAllEntries": "Usuń wszystkie wpisy",
   "admin.entries.deleteDialog.title": "Czy na pewno chcesz usunąć ten wpis?",
   "admin.entries.deleteDialog.description.part1": "Ta akcja jest nieodwracalna. Wpis o ",
   "admin.entries.deleteDialog.description.part2": " zostanie trwale usunięty.",
   "admin.entries.deleteDialog.confirmDelete": "Tak, usuń",
+  "admin.entries.deleteAllDialog.title": "Czy na pewno chcesz usunąć WSZYSTKIE wpisy?",
+  "admin.entries.deleteAllDialog.description": "Ta akcja jest nieodwracalna i trwale usunie WSZYSTKIE raporty z systemu.",
+  "admin.entries.deleteAllDialog.confirmDeleteAll": "Tak, usuń wszystkie",
   "admin.entries.noEntriesFound": "Nie znaleziono wpisów.",
   "admin.auditLog.title": "Dziennik Zdarzeń Administratora",
   "admin.auditLog.description": "Historia działań administracyjnych wykonanych w systemie.",
@@ -201,6 +205,7 @@
   "admin.auditLog.noLogsFound": "Nie znaleziono wpisów w dzienniku zdarzeń.",
   "auditLog.action.userStatusChanged": "Zmieniono status użytkownika {companyName} ({userEmail}) z \"{oldStatus}\" na \"{newStatus}\"",
   "auditLog.action.reportDeleted": "Usunięto raport o {driverFullName} (ID: {reportId})",
+  "auditLog.action.allReportsDeleted": "Usunięto wszystkie raporty (liczba: {count})",
   "auditLog.action.userDetailsUpdated": "Zaktualizowano dane użytkownika {companyName} ({userEmail}). Zmienione pola: {updatedFields}",
   "admin.statistics.title": "Statystyki",
   "admin.statistics.description": "Statystyki użytkowania systemu.",
@@ -244,6 +249,8 @@
   "admin.users.toast.dataUpdated.description": "Dane użytkownika {companyName} pomyślnie zapisane.",
   "admin.entries.toast.entryDeleted.title": "Wpis Usunięty",
   "admin.entries.toast.entryDeleted.description": "Wybrany wpis został pomyślnie usunięty.",
+  "admin.entries.toast.allEntriesDeleted.title": "Wszystkie wpisy usunięte",
+  "admin.entries.toast.allEntriesDeleted.description": "Wszystkie {count} wpisów zostało pomyślnie usuniętych z systemu.",
   "notifications.accountStatusChanged.title": "Status Konta Zmieniony",
   "notifications.accountStatusChanged.message": "Status Twojego konta został zmieniony z \"{oldStatus}\" na \"{newStatus}\" przez administratora {adminName}.",
   "notifications.subscriptionWarning.title": "Przypomnienie o Subskrypcji",
@@ -704,3 +711,4 @@
   "support.contact.emailButton": "Skontaktuj się przez e-mail",
   "support.contact.emailLink": "mailto:support@drivercheck.eu"
 }
+

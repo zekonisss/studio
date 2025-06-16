@@ -187,10 +187,14 @@
   "admin.entries.table.actions": "Tegevused",
   "admin.entries.actions.viewDetails": "Vaata detaile",
   "admin.entries.actions.deleteEntry": "Kustuta kirje",
+  "admin.entries.actions.deleteAllEntries": "Kustuta kõik kirjed",
   "admin.entries.deleteDialog.title": "Kas oled kindel, et soovid selle kirje kustutada?",
   "admin.entries.deleteDialog.description.part1": "See tegevus on pöördumatu. Kirje ",
   "admin.entries.deleteDialog.description.part2": " kohta kustutatakse jäädavalt.",
   "admin.entries.deleteDialog.confirmDelete": "Jah, kustuta",
+  "admin.entries.deleteAllDialog.title": "Kas oled kindel, et soovid kustutada KÕIK kirjed?",
+  "admin.entries.deleteAllDialog.description": "See tegevus on pöördumatu ja kustutab jäädavalt KÕIK aruanded süsteemist.",
+  "admin.entries.deleteAllDialog.confirmDeleteAll": "Jah, kustuta kõik",
   "admin.entries.noEntriesFound": "Kirjeid ei leitud.",
   "admin.auditLog.title": "Administraatori tegevuste logi",
   "admin.auditLog.description": "Süsteemis tehtud administratiivsete tegevuste ajalugu.",
@@ -201,6 +205,7 @@
   "admin.auditLog.noLogsFound": "Tegevuste logi kirjeid ei leitud.",
   "auditLog.action.userStatusChanged": "Kasutaja {companyName} ({userEmail}) staatus muudeti \"{oldStatus}\" -> \"{newStatus}\"",
   "auditLog.action.reportDeleted": "Kustutati aruanne {driverFullName} kohta (ID: {reportId})",
+  "auditLog.action.allReportsDeleted": "Kustutati kõik aruanded (arv: {count})",
   "auditLog.action.userDetailsUpdated": "Uuendati kasutaja {companyName} ({userEmail}) andmeid. Muudetud väljad: {updatedFields}",
   "admin.statistics.title": "Statistika",
   "admin.statistics.description": "Süsteemi kasutusstatistika.",
@@ -244,6 +249,8 @@
   "admin.users.toast.dataUpdated.description": "Kasutaja {companyName} andmed edukalt salvestatud.",
   "admin.entries.toast.entryDeleted.title": "Kirje kustutatud",
   "admin.entries.toast.entryDeleted.description": "Valitud kirje on edukalt kustutatud.",
+  "admin.entries.toast.allEntriesDeleted.title": "Kõik kirjed kustutatud",
+  "admin.entries.toast.allEntriesDeleted.description": "Kõik {count} kirjet on süsteemist edukalt kustutatud.",
   "notifications.accountStatusChanged.title": "Konto staatus muudetud",
   "notifications.accountStatusChanged.message": "Sinu konto staatus muudeti \"{oldStatus}\" -> \"{newStatus}\" administraatori {adminName} poolt.",
   "notifications.subscriptionWarning.title": "Tellimuse meeldetuletus",
@@ -702,3 +709,4 @@
   "support.contact.emailButton": "Võta ühendust e-posti teel",
   "support.contact.emailLink": "mailto:support@drivercheck.eu"
 }
+

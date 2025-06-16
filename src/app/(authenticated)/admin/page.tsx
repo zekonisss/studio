@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Loader2, ShieldAlert, Users, FileText, AlertTriangle, Trash2, Eye, MoreHorizontal, BarChart3, UserCheck, UserX, UserCog, CalendarDays, Building2, Tag, MessageSquare, Image as ImageIcon, CheckCircle2, CreditCard, Send, Briefcase, MapPin, Phone, Mail, ShieldCheck as ShieldCheckIcon, User as UserIcon, Globe, Edit3, Save, XCircle, Percent, Layers, ChevronLeft, ChevronRight, Activity, ListFilter } from "lucide-react";
+import { Loader2, ShieldAlert, Users, FileText, AlertTriangle, Trash2, Eye, MoreHorizontal, BarChart3, UserCheck, UserX, UserCog, CalendarDays, Building2, Tag, MessageSquare, Image as ImageIcon, CheckCircle2, CreditCard, Send, Briefcase, MapPin, Phone, Mail, ShieldCheck as ShieldCheckIcon, User as UserIcon, Globe, Edit3, Save, XCircle, Percent, Layers, ChevronLeft, ChevronRight, Activity, ListFilter, Trash } from "lucide-react";
 import type { UserProfile, Report, AuditLogEntry } from "@/types";
 import { getAllUsers, saveAllUsers, MOCK_GENERAL_REPORTS, combineAndDeduplicateReports, countries, detailedReportCategories, DESTRUCTIVE_REPORT_MAIN_CATEGORIES, getAuditLogsFromLocalStorage, addAuditLogEntryToLocalStorage, addUserNotification } from "@/types";
 import { format as formatDateFn, addYears } from 'date-fns';
@@ -61,6 +61,7 @@ export default function AdminPage() {
   const [selectedReportForDetails, setSelectedReportForDetails] = useState<Report | null>(null);
   const [selectedUserForDetails, setSelectedUserForDetails] = useState<UserProfile | null>(null);
   const [deletingReportId, setDeletingReportId] = useState<string | null>(null);
+  const [isDeletingAllReports, setIsDeletingAllReports] = useState(false);
 
   const [isEditingUserDetails, setIsEditingUserDetails] = useState(false);
   const [editingUserDetailsFormData, setEditingUserDetailsFormData] = useState<Partial<UserProfile>>({});
@@ -363,6 +364,22 @@ export default function AdminPage() {
     });
     setDeletingReportId(null);
   };
+  
+  const handleDeleteAllReports = async () => {
+    setIsDeletingAllReports(true);
+    await new Promise(resolve => setTimeout(resolve, 700)); // Simulate async operation
+
+    saveReportsToLocalStorage([]); // Clear all reports from localStorage
+    setAllReports([]); // Update local state
+
+    logAdminAction("auditLog.action.allReportsDeleted", { count: allReports.length });
+
+    toast({
+      title: t('admin.entries.toast.allEntriesDeleted.title'),
+      description: t('admin.entries.toast.allEntriesDeleted.description', { count: allReports.length }),
+    });
+    setIsDeletingAllReports(false);
+  };
 
   if (authLoading || !adminUser || !adminUser.isAdmin || isLoadingData) {
     return (
@@ -571,10 +588,38 @@ export default function AdminPage() {
         <TabsContent value="reports">
           <Card className="shadow-xl">
             <CardHeader>
-              <CardTitle>{t('admin.entries.title')} ({allReports.length})</CardTitle>
-              <CardDescription>
-                {t('admin.entries.description')}
-              </CardDescription>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div>
+                        <CardTitle>{t('admin.entries.title')} ({allReports.length})</CardTitle>
+                        <CardDescription>
+                            {t('admin.entries.description')}
+                        </CardDescription>
+                    </div>
+                    {allReports.length > 0 && (
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button variant="destructive" disabled={isDeletingAllReports}>
+                                    {isDeletingAllReports ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash className="mr-2 h-4 w-4" />}
+                                    {t('admin.entries.actions.deleteAllEntries')}
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                <AlertDialogTitle>{t('admin.entries.deleteAllDialog.title')}</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    {t('admin.entries.deleteAllDialog.description')}
+                                </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleDeleteAllReports} className="bg-destructive hover:bg-destructive/90">
+                                    {t('admin.entries.deleteAllDialog.confirmDeleteAll')}
+                                </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+                    )}
+                </div>
             </CardHeader>
             <CardContent>
               {allReports.length > 0 ? (
@@ -801,7 +846,7 @@ export default function AdminPage() {
                 <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Building2 className="mr-2 h-4 w-4" />{t('admin.entryDetailsModal.submittedByCompany')}</h4>
                 <p className="text-base text-foreground">{selectedReportForDetails.reporterCompanyName || t('common.notSpecified')}</p>
               </div>
-              <div className="space-y-1">
+               <div className="space-y-1">
                 <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Users className="mr-2 h-4 w-4" />{t('admin.entryDetailsModal.submitterId')}</h4>
                 <p className="text-xs text-foreground bg-secondary/30 p-2 rounded-md">{selectedReportForDetails.reporterId}</p>
               </div>
