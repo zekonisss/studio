@@ -367,16 +367,17 @@ export default function AdminPage() {
   
   const handleDeleteAllReports = async () => {
     setIsDeletingAllReports(true);
-    await new Promise(resolve => setTimeout(resolve, 700)); // Simulate async operation
+    const reportsToDeleteCount = allReports.length; 
+    await new Promise(resolve => setTimeout(resolve, 700)); 
 
-    saveReportsToLocalStorage([]); // Clear all reports from localStorage
-    setAllReports([]); // Update local state
+    saveReportsToLocalStorage([]); 
+    setAllReports([]); 
 
-    logAdminAction("auditLog.action.allReportsDeleted", { count: allReports.length });
+    logAdminAction("auditLog.action.allReportsDeleted", { count: reportsToDeleteCount });
 
     toast({
       title: t('admin.entries.toast.allEntriesDeleted.title'),
-      description: t('admin.entries.toast.allEntriesDeleted.description', { count: allReports.length }),
+      description: t('admin.entries.toast.allEntriesDeleted.description', { count: reportsToDeleteCount }),
     });
     setIsDeletingAllReports(false);
   };
@@ -595,14 +596,14 @@ export default function AdminPage() {
                             {t('admin.entries.description')}
                         </CardDescription>
                     </div>
-                    {allReports.length > 0 && (
-                        <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                                <Button variant="destructive" disabled={isDeletingAllReports}>
-                                    {isDeletingAllReports ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash className="mr-2 h-4 w-4" />}
-                                    {t('admin.entries.actions.deleteAllEntries')}
-                                </Button>
-                            </AlertDialogTrigger>
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button variant="destructive" disabled={isDeletingAllReports || allReports.length === 0}>
+                                {isDeletingAllReports ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash className="mr-2 h-4 w-4" />}
+                                {t('admin.entries.actions.deleteAllEntries')}
+                            </Button>
+                        </AlertDialogTrigger>
+                        {allReports.length > 0 && (
                             <AlertDialogContent>
                                 <AlertDialogHeader>
                                 <AlertDialogTitle>{t('admin.entries.deleteAllDialog.title')}</AlertDialogTitle>
@@ -617,8 +618,8 @@ export default function AdminPage() {
                                 </AlertDialogAction>
                                 </AlertDialogFooter>
                             </AlertDialogContent>
-                        </AlertDialog>
-                    )}
+                        )}
+                    </AlertDialog>
                 </div>
             </CardHeader>
             <CardContent>
@@ -929,6 +930,4 @@ export default function AdminPage() {
     </div>
   );
 }
-
-
     
