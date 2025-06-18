@@ -121,6 +121,10 @@
   "account.entries.noEntries": "Nie znaleziono wpisów.",
   "account.entries.viewAllButton": "Zobacz Wszystkie Wpisy",
   "account.entries.exportButton": "Eksportuj Moje Wpisy (JSON)",
+  "account.entries.exportButtonExcel": "Eksportuj Moje Wpisy (Excel)",
+  "account.entries.excel.sheetName": "Moje Wpisy",
+  "account.entries.excel.imageUrl": "URL Załączonego Pliku",
+  "account.entries.excel.entryId": "ID Wpisu",
   "account.searchHistory.title": "Twoja Historia Wyszukiwania",
   "account.searchHistory.description.part1": "Niektóre z Twoich ostatnich wyszukiwań. Pełną historię znajdziesz ",
   "account.searchHistory.description.link": "tutaj",
@@ -604,6 +608,7 @@
   "countries.PE": "Peru",
   "countries.PH": "Filipiny",
   "countries.PN": "Pitcairn",
+  "countries.PL": "Polska",
   "countries.PT": "Portugalia",
   "countries.PR": "Portoryko",
   "countries.QA": "Katar",
@@ -677,7 +682,6 @@
   "countries.ZM": "Zambia",
   "countries.ZW": "Zimbabwe",
   "countries.OTHER": "Inne / Nieokreślone",
-  "countries.PL": "Polska",
   "tags.kuro_vagyste": "Kradzież paliwa",
   "tags.krovinio_vagyste": "Kradzież ładunku",
   "tags.imones_turto_vagyste": "Kradzież mienia firmy",
@@ -717,5 +721,7 @@
   "support.contact.emailButton": "Skontaktuj się przez e-mail",
   "support.contact.emailLink": "mailto:support@drivercheck.eu"
 }
+
+    
 
     

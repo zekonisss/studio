@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
-import { Loader2, UserCircle, Building2, Briefcase, MapPin, User as UserIcon, Mail, Phone, History, ListChecks, Edit3, Save, CreditCard, ShieldCheck, CalendarDays, Percent, AlertTriangle, UserCog, Bell, Check, Trash2, BellOff, Download } from "lucide-react";
+import { Loader2, UserCircle, Building2, Briefcase, MapPin, User as UserIcon, Mail, Phone, History, ListChecks, Edit3, Save, CreditCard, ShieldCheck, CalendarDays, Percent, AlertTriangle, UserCog, Bell, Check, Trash2, BellOff, Download, FileSpreadsheet } from "lucide-react";
 import type { Report, SearchLog, UserProfile, UserNotification } from "@/types";
 import { format as formatDateFn, addYears } from "date-fns";
 import { lt, enUS } from "date-fns/locale";
@@ -17,6 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import * as types from "@/types"; 
 import { useLanguage } from '@/contexts/language-context';
+import * as XLSX from 'xlsx';
 
 
 // Mock data for initial display in Account page (limited view)
@@ -129,28 +130,55 @@ export default function AccountPage() {
     document.body.removeChild(link);
   };
 
-  const handleExportReports = () => {
-    if (!user) return;
+  const getUserReportsForExport = (): Report[] => {
+    if (!user) return [];
     const allLocalReports = types.getReportsFromLocalStoragePublic();
     let userSpecificReportsForExport = allLocalReports.filter(r => r.reporterId === user.id);
     
-    // Include MOCK_USER_REPORTS if the current user is MOCK_USER and these reports aren't already in local storage
     if (user.id === types.MOCK_USER.id) {
       const mockUserReportsNotInLocal = types.MOCK_USER_REPORTS.filter(
         mr => !userSpecificReportsForExport.some(lsr => lsr.id === mr.id)
       );
       userSpecificReportsForExport = [...userSpecificReportsForExport, ...mockUserReportsNotInLocal];
     }
-    
-    downloadJSON(userSpecificReportsForExport.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()), `drivercheck_my_entries_${user.id}`);
+    return userSpecificReportsForExport.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   };
+
+  const handleExportReports = () => {
+    if (!user) return;
+    const reportsToExport = getUserReportsForExport();
+    downloadJSON(reportsToExport, `drivercheck_my_entries_${user.id}`);
+  };
+
+  const handleExportReportsExcel = () => {
+    if (!user) return;
+    const reportsToExport = getUserReportsForExport();
+
+    const dataForExcel = reportsToExport.map(report => ({
+      [t('reports.history.detailsModal.driver')]: report.fullName,
+      [t('reports.history.detailsModal.nationality')]: report.nationality ? types.countries.find(c=>c.value === report.nationality)?.label : t('common.notSpecified'),
+      [t('reports.history.detailsModal.birthYear')]: report.birthYear || '',
+      [t('reports.history.detailsModal.mainCategory')]: types.getCategoryNameForDisplay(report.category, t),
+      [t('reports.history.detailsModal.tags')]: report.tags.map(tagKey => t(`tags.${tagKey}`)).join(', '),
+      [t('reports.history.detailsModal.comment')]: report.comment,
+      [t('account.entries.excel.imageUrl')]: report.imageUrl || '',
+      [t('reports.history.detailsModal.submissionDate')]: formatDateFn(new Date(report.createdAt), "yyyy-MM-dd HH:mm:ss", { locale: dateLocale }),
+      [t('reports.history.detailsModal.submittedByCompany')]: report.reporterCompanyName || t('common.notSpecified'),
+      [t('account.entries.excel.entryId')]: report.id
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(dataForExcel);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, t('account.entries.excel.sheetName'));
+    XLSX.writeFile(workbook, `drivercheck_my_entries_${user.id}.xlsx`);
+  };
+
 
   const handleExportSearchHistory = () => {
     if (!user) return;
     const allLocalSearchLogs = types.getSearchLogsFromLocalStoragePublic();
     let userSpecificSearchLogsForExport = allLocalSearchLogs.filter(log => log.userId === user.id);
 
-    // Include MOCK_USER_SEARCH_LOGS if the current user is MOCK_USER and these logs aren't already in local storage
     if (user.id === types.MOCK_USER.id) {
         const mockUserSearchLogsNotInLocal = types.MOCK_USER_SEARCH_LOGS.filter(
             msl => !userSpecificSearchLogsForExport.some(lsl => lsl.id === msl.id)
@@ -269,9 +297,13 @@ export default function AccountPage() {
                         <Link href="/reports/history">{t('account.entries.viewAllButton')}</Link>
                     </Button>
                 )}
-                 <Button variant="default" onClick={handleExportReports} className="w-full sm:w-auto">
+                 <Button variant="outline" onClick={handleExportReports} className="w-full sm:w-auto">
                     <Download className="mr-2 h-4 w-4" />
                     {t('account.entries.exportButton')}
+                </Button>
+                <Button variant="default" onClick={handleExportReportsExcel} className="w-full sm:w-auto">
+                    <FileSpreadsheet className="mr-2 h-4 w-4" />
+                    {t('account.entries.exportButtonExcel')}
                 </Button>
             </CardFooter>
           </Card>
@@ -446,6 +478,8 @@ export default function AccountPage() {
     </div>
   );
 }
+    
+
     
 
     

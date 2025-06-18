@@ -121,6 +121,10 @@
   "account.entries.noEntries": "Ierakstu nav atrasts.",
   "account.entries.viewAllButton": "Skatīt Visus Ierakstus",
   "account.entries.exportButton": "Eksportēt Manus Ierakstus (JSON)",
+  "account.entries.exportButtonExcel": "Eksportēt Manus Ierakstus (Excel)",
+  "account.entries.excel.sheetName": "Mani Ieraksti",
+  "account.entries.excel.imageUrl": "Pievienotā Faila URL",
+  "account.entries.excel.entryId": "Ieraksta ID",
   "account.searchHistory.title": "Jūsu Meklēšanas Vēsture",
   "account.searchHistory.description.part1": "Daži no jūsu pēdējiem meklējumiem. Pilnu vēsturi varat atrast ",
   "account.searchHistory.description.link": "šeit",
@@ -716,5 +720,7 @@
   "support.contact.emailButton": "Sazināties pa E-pastu",
   "support.contact.emailLink": "mailto:support@drivercheck.eu"
 }
+
+    
 
     

@@ -121,6 +121,10 @@
   "account.entries.noEntries": "Записей не найдено.",
   "account.entries.viewAllButton": "Посмотреть Все Записи",
   "account.entries.exportButton": "Экспорт Моих Записей (JSON)",
+  "account.entries.exportButtonExcel": "Экспорт Моих Записей (Excel)",
+  "account.entries.excel.sheetName": "Мои Записи",
+  "account.entries.excel.imageUrl": "URL Прикрепленного Файла",
+  "account.entries.excel.entryId": "ID Записи",
   "account.searchHistory.title": "Ваша История Поиска",
   "account.searchHistory.description.part1": "Некоторые из ваших недавних поисков. Полную историю можно найти ",
   "account.searchHistory.description.link": "здесь",
@@ -717,5 +721,7 @@
   "support.contact.emailButton": "Связаться по электронной почте",
   "support.contact.emailLink": "mailto:support@drivercheck.eu"
 }
+
+    
 
     

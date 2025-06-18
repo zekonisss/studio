@@ -121,6 +121,10 @@
   "account.entries.noEntries": "Kirjeid ei leitud.",
   "account.entries.viewAllButton": "Vaata kõiki kirjeid",
   "account.entries.exportButton": "Ekspordi Minu Kirjed (JSON)",
+  "account.entries.exportButtonExcel": "Ekspordi Minu Kirjed (Excel)",
+  "account.entries.excel.sheetName": "Minu Kirjed",
+  "account.entries.excel.imageUrl": "Lisatud Faili URL",
+  "account.entries.excel.entryId": "Kirje ID",
   "account.searchHistory.title": "Sinu otsinguajalugu",
   "account.searchHistory.description.part1": "Mõned sinu hiljutised otsingud. Täieliku ajaloo leiad ",
   "account.searchHistory.description.link": "siit",
@@ -675,7 +679,6 @@
   "countries.ZM": "Sambia",
   "countries.ZW": "Zimbabwe",
   "countries.OTHER": "Muu / Määramata",
-  "countries.EE": "Eesti",
   "tags.kuro_vagyste": "Kütuse vargus",
   "tags.krovinio_vagyste": "Kauba vargus",
   "tags.imones_turto_vagyste": "Ettevõtte vara vargus",
@@ -715,5 +718,7 @@
   "support.contact.emailButton": "Võta ühendust e-posti teel",
   "support.contact.emailLink": "mailto:support@drivercheck.eu"
 }
+
+    
 
     
