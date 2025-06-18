@@ -142,7 +142,7 @@ export default function AccountPage() {
       userSpecificReportsForExport = [...userSpecificReportsForExport, ...mockUserReportsNotInLocal];
     }
     
-    downloadJSON(userSpecificReportsForExport.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()), `drivercheck_my_entries_${user.id.substring(0,8)}`);
+    downloadJSON(userSpecificReportsForExport.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()), `drivercheck_my_entries_${user.id}`);
   };
 
   const handleExportSearchHistory = () => {
@@ -157,7 +157,7 @@ export default function AccountPage() {
         );
         userSpecificSearchLogsForExport = [...userSpecificSearchLogsForExport, ...mockUserSearchLogsNotInLocal];
     }
-    downloadJSON(userSpecificSearchLogsForExport.sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()), `drivercheck_search_history_${user.id.substring(0,8)}`);
+    downloadJSON(userSpecificSearchLogsForExport.sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()), `drivercheck_search_history_${user.id}`);
   };
 
 
