@@ -9,22 +9,22 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
-import { Loader2, UserCircle, Building2, Briefcase, MapPin, User as UserIcon, Mail, Phone, History, ListChecks, Edit3, Save, CreditCard, ShieldCheck, CalendarDays, Percent, AlertTriangle, UserCog, Bell, Check, Trash2, BellOff } from "lucide-react";
+import { Loader2, UserCircle, Building2, Briefcase, MapPin, User as UserIcon, Mail, Phone, History, ListChecks, Edit3, Save, CreditCard, ShieldCheck, CalendarDays, Percent, AlertTriangle, UserCog, Bell, Check, Trash2, BellOff, Download } from "lucide-react";
 import type { Report, SearchLog, UserProfile, UserNotification } from "@/types";
 import { format as formatDateFn, addYears } from "date-fns";
 import { lt, enUS } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
-import * as types from "@/types"; // Changed to namespace import
+import * as types from "@/types"; 
 import { useLanguage } from '@/contexts/language-context';
 
 
-// Mock data (same as used in respective history pages, filtered for this user)
-const mockUserReports: Report[] = [
-  { id: "report-user-1", reporterId: "dev-user-123", reporterCompanyName: 'UAB "DriverCheck Demo"', fullName: "Antanas Antanaitis", birthYear: 1992, category: "toksiskas_elgesys", tags: ["Konfliktiškas asmuo", "Kita"], comment: "Vairuotojas buvo nemandagus su klientu.", createdAt: new Date("2024-02-20T09:15:00Z") },
-  { id: "report-user-2", reporterId: "dev-user-123", reporterCompanyName: 'UAB "DriverCheck Demo"', fullName: "Zita Zitaite", category: "neatsakingas_vairavimas", tags: ["Avaringumas", "Kita"], comment: "GPS rodo greičio viršijimą.", createdAt: new Date("2024-01-10T16:45:00Z") },
+// Mock data for initial display in Account page (limited view)
+const mockUserReportsLimited: Report[] = [
+  { id: "report-user-1", reporterId: "dev-user-123", reporterCompanyName: 'UAB "DriverCheck Demo"', fullName: "Antanas Antanaitis", birthYear: 1992, category: "behavior", tags: ["konfliktiskas_asmuo", "kita_tag"], comment: "Vairuotojas buvo nemandagus su klientu.", createdAt: new Date("2024-02-20T09:15:00Z") },
+  { id: "report-user-2", reporterId: "dev-user-123", reporterCompanyName: 'UAB "DriverCheck Demo"', fullName: "Zita Zitaite", category: "driving_safety", tags: ["avaringumas", "kita_tag"], comment: "GPS rodo greičio viršijimą.", createdAt: new Date("2024-01-10T16:45:00Z") },
 ];
-const mockSearchLogs: SearchLog[] = [
+const mockSearchLogsLimited: SearchLog[] = [
   { id: "log1", userId: "dev-user-123", searchText: "Jonas Jonaitis", timestamp: new Date("2024-03-10T10:00:00Z"), resultsCount: 2 },
   { id: "log3", userId: "dev-user-123", searchText: "Petras Petraitis", timestamp: new Date("2024-03-09T11:20:00Z"), resultsCount: 1 },
 ];
@@ -51,7 +51,7 @@ export default function AccountPage() {
 
   const fetchNotifications = useCallback(() => {
     if (user) {
-      setNotifications(types.getUserNotifications(user.id)); // Updated to use types.
+      setNotifications(types.getUserNotifications(user.id)); 
     }
   }, [user]);
 
@@ -82,7 +82,7 @@ export default function AccountPage() {
   const handleSave = async () => {
     if (!user) return;
     setIsEditing(false);
-    const allUsers = types.getAllUsers(); // Updated to use types.
+    const allUsers = types.getAllUsers(); 
     const updatedUser = {
         ...user,
         companyName: formData.companyName,
@@ -94,20 +94,20 @@ export default function AccountPage() {
         phone: formData.phone,
     };
     const updatedUsersList = allUsers.map(u => u.id === user.id ? updatedUser : u);
-    types.saveAllUsers(updatedUsersList); // Updated to use types.
+    types.saveAllUsers(updatedUsersList); 
     updateUserInContext(updatedUser as UserProfile);
   };
 
   const handleMarkAsRead = (notificationId: string) => {
     if (user) {
-      types.markNotificationAsRead(user.id, notificationId); // Updated to use types.
+      types.markNotificationAsRead(user.id, notificationId); 
       fetchNotifications();
     }
   };
 
   const handleMarkAllAsRead = () => {
     if (user) {
-      types.markAllNotificationsAsRead(user.id); // Updated to use types.
+      types.markAllNotificationsAsRead(user.id); 
       fetchNotifications();
     }
   };
@@ -116,6 +116,50 @@ export default function AccountPage() {
     setActiveTab(value);
     router.push(`/account?tab=${value}`, { scroll: false });
   };
+
+  const downloadJSON = (data: any, filename: string) => {
+    const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(
+      JSON.stringify(data, null, 2)
+    )}`;
+    const link = document.createElement("a");
+    link.href = jsonString;
+    link.download = `${filename}.json`;
+    document.body.appendChild(link); // Required for Firefox
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleExportReports = () => {
+    if (!user) return;
+    const allLocalReports = types.getReportsFromLocalStoragePublic();
+    let userSpecificReportsForExport = allLocalReports.filter(r => r.reporterId === user.id);
+    
+    // Include MOCK_USER_REPORTS if the current user is MOCK_USER and these reports aren't already in local storage
+    if (user.id === types.MOCK_USER.id) {
+      const mockUserReportsNotInLocal = types.MOCK_USER_REPORTS.filter(
+        mr => !userSpecificReportsForExport.some(lsr => lsr.id === mr.id)
+      );
+      userSpecificReportsForExport = [...userSpecificReportsForExport, ...mockUserReportsNotInLocal];
+    }
+    
+    downloadJSON(userSpecificReportsForExport.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()), `drivercheck_my_entries_${user.id.substring(0,8)}`);
+  };
+
+  const handleExportSearchHistory = () => {
+    if (!user) return;
+    const allLocalSearchLogs = types.getSearchLogsFromLocalStoragePublic();
+    let userSpecificSearchLogsForExport = allLocalSearchLogs.filter(log => log.userId === user.id);
+
+    // Include MOCK_USER_SEARCH_LOGS if the current user is MOCK_USER and these logs aren't already in local storage
+    if (user.id === types.MOCK_USER.id) {
+        const mockUserSearchLogsNotInLocal = types.MOCK_USER_SEARCH_LOGS.filter(
+            msl => !userSpecificSearchLogsForExport.some(lsl => lsl.id === msl.id)
+        );
+        userSpecificSearchLogsForExport = [...userSpecificSearchLogsForExport, ...mockUserSearchLogsNotInLocal];
+    }
+    downloadJSON(userSpecificSearchLogsForExport.sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()), `drivercheck_search_history_${user.id.substring(0,8)}`);
+  };
+
 
   if (authLoading || !user) {
     return (
@@ -204,13 +248,13 @@ export default function AccountPage() {
               <CardDescription>{t('account.entries.description.part1')} <Link href="/reports/history" className="text-primary hover:underline">{t('account.entries.description.link')}</Link>{t('account.entries.description.part2')}</CardDescription>
             </CardHeader>
             <CardContent>
-              {mockUserReports.length > 0 ? (
+              {mockUserReportsLimited.length > 0 ? (
                 <ul className="space-y-4">
-                  {mockUserReports.slice(0, 3).map(report => (
+                  {mockUserReportsLimited.slice(0, 3).map(report => (
                     <li key={report.id} className="p-4 border rounded-md hover:bg-muted/30 transition-colors">
                       <div className="flex justify-between items-start">
                         <h4 className="font-semibold text-foreground">{report.fullName}</h4>
-                        <Badge variant="secondary">{types.getCategoryNameAdmin(report.category, t)}</Badge> 
+                        <Badge variant="secondary">{types.getCategoryNameForDisplay(report.category, t)}</Badge> 
                       </div>
                       <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{report.comment}</p>
                       <p className="text-xs text-muted-foreground mt-2">{t('account.entries.submittedOn')}: {formatDateFn(report.createdAt, "yyyy-MM-dd HH:mm", { locale: dateLocale })}</p>
@@ -218,14 +262,18 @@ export default function AccountPage() {
                   ))}
                 </ul>
               ) : <p className="text-muted-foreground">{t('account.entries.noEntries')}</p>}
-               {mockUserReports.length > 3 && (
-                 <div className="mt-6 text-center">
-                    <Button variant="outline" asChild>
+            </CardContent>
+            <CardFooter className="border-t pt-6 flex-col sm:flex-row justify-center sm:justify-end gap-3 items-center">
+                {mockUserReportsLimited.length > 3 && (
+                    <Button variant="outline" asChild className="w-full sm:w-auto">
                         <Link href="/reports/history">{t('account.entries.viewAllButton')}</Link>
                     </Button>
-                 </div>
                 )}
-            </CardContent>
+                 <Button variant="default" onClick={handleExportReports} className="w-full sm:w-auto">
+                    <Download className="mr-2 h-4 w-4" />
+                    {t('account.entries.exportButton')}
+                </Button>
+            </CardFooter>
           </Card>
         </TabsContent>
 
@@ -236,9 +284,9 @@ export default function AccountPage() {
               <CardDescription>{t('account.searchHistory.description.part1')} <Link href="/search/history" className="text-primary hover:underline">{t('account.searchHistory.description.link')}</Link>{t('account.searchHistory.description.part2')}</CardDescription>
             </CardHeader>
             <CardContent>
-              {mockSearchLogs.length > 0 ? (
+              {mockSearchLogsLimited.length > 0 ? (
                 <ul className="space-y-3">
-                  {mockSearchLogs.slice(0, 5).map(log => (
+                  {mockSearchLogsLimited.slice(0, 5).map(log => (
                     <li key={log.id} className="flex justify-between items-center p-3 border rounded-md hover:bg-muted/30 transition-colors">
                       <span className="font-medium text-foreground">{log.searchText}</span>
                       <div className="flex items-center gap-x-4">
@@ -249,14 +297,18 @@ export default function AccountPage() {
                   ))}
                 </ul>
               ) : <p className="text-muted-foreground">{t('account.searchHistory.noHistory')}</p>}
-               {mockSearchLogs.length > 5 && (
-                 <div className="mt-6 text-center">
-                    <Button variant="outline" asChild>
+            </CardContent>
+             <CardFooter className="border-t pt-6 flex-col sm:flex-row justify-center sm:justify-end gap-3 items-center">
+                {mockSearchLogsLimited.length > 5 && (
+                     <Button variant="outline" asChild className="w-full sm:w-auto">
                         <Link href="/search/history">{t('account.searchHistory.viewAllButton')}</Link>
                     </Button>
-                 </div>
                 )}
-            </CardContent>
+                 <Button variant="default" onClick={handleExportSearchHistory} className="w-full sm:w-auto">
+                    <Download className="mr-2 h-4 w-4" />
+                    {t('account.searchHistory.exportButton')}
+                </Button>
+            </CardFooter>
           </Card>
         </TabsContent>
 
@@ -394,6 +446,4 @@ export default function AccountPage() {
     </div>
   );
 }
-
     
-
