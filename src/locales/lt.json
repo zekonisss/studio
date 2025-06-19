@@ -120,11 +120,6 @@
   "account.entries.submittedOn": "Pateikta",
   "account.entries.noEntries": "Įrašų nerasta.",
   "account.entries.viewAllButton": "Žiūrėti Visus Įrašus",
-  "account.entries.exportButton": "Eksportuoti Mano Įrašus (JSON)",
-  "account.entries.exportButtonExcel": "Eksportuoti Mano Įrašus (Excel)",
-  "account.entries.excel.sheetName": "Mano Įrašai",
-  "account.entries.excel.imageUrl": "Pridėto Failo URL",
-  "account.entries.excel.entryId": "Įrašo ID",
   "account.searchHistory.title": "Jūsų Paieškų Istorija",
   "account.searchHistory.description.part1": "Keletas jūsų naujausių paieškų. Išsamią istoriją rasite ",
   "account.searchHistory.description.link": "čia",
@@ -721,7 +716,5 @@
   "support.contact.emailButton": "Susisiekti El. Paštu",
   "support.contact.emailLink": "mailto:pagalba@drivercheck.eu"
 }
-
-    
 
     

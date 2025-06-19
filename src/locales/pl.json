@@ -120,11 +120,6 @@
   "account.entries.submittedOn": "Zgłoszono",
   "account.entries.noEntries": "Nie znaleziono wpisów.",
   "account.entries.viewAllButton": "Zobacz Wszystkie Wpisy",
-  "account.entries.exportButton": "Eksportuj Moje Wpisy (JSON)",
-  "account.entries.exportButtonExcel": "Eksportuj Moje Wpisy (Excel)",
-  "account.entries.excel.sheetName": "Moje Wpisy",
-  "account.entries.excel.imageUrl": "URL Załączonego Pliku",
-  "account.entries.excel.entryId": "ID Wpisu",
   "account.searchHistory.title": "Twoja Historia Wyszukiwania",
   "account.searchHistory.description.part1": "Niektóre z Twoich ostatnich wyszukiwań. Pełną historię znajdziesz ",
   "account.searchHistory.description.link": "tutaj",
@@ -721,7 +716,5 @@
   "support.contact.emailButton": "Skontaktuj się przez e-mail",
   "support.contact.emailLink": "mailto:support@drivercheck.eu"
 }
-
-    
 
     
