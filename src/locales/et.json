@@ -16,6 +16,7 @@
   "sidebar.section.account": "Konto ja tugi",
   "sidebar.section.admin": "Administraator",
   "sidebar.importReports": "Impordi kirjed",
+  "sidebar.importUsers": "Impordi Kasutajad",
   "sidebar.toggleTheme": "Lülita teema",
   "theme.light": "Hele",
   "theme.dark": "Tume",
@@ -127,7 +128,6 @@
   "account.searchHistory.resultsSuffix": "tulem.",
   "account.searchHistory.noHistory": "Otsinguajalugu puudub.",
   "account.searchHistory.viewAllButton": "Vaata täielikku otsinguajalugu",
-  "account.searchHistory.exportButton": "Ekspordi Otsinguajalugu (JSON)",
   "account.payments.title": "Maksed ja tellimus",
   "account.payments.description": "Halda oma tellimust ja vaata maksete ajalugu.",
   "account.payments.status.active.title": "Aktiivne tellimus",
@@ -351,3 +351,4 @@
   "support.contact.emailButton": "Võta ühendust e-posti teel",
   "support.contact.emailLink": "mailto:support@drivercheck.eu"
 }
+

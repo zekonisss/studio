@@ -19,7 +19,8 @@ import {
   ShieldQuestion,
   ShieldAlert,
   UserSearch, 
-  FileSpreadsheet
+  FileSpreadsheet,
+  Users2 // Importuota Users2 ikona
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
@@ -47,6 +48,7 @@ const accountNavItemsBase = [
 const adminNavItemsBase = [
   { href: "/admin", labelKey: "sidebar.adminPanel", icon: ShieldAlert },
   { href: "/reports/import", labelKey: "sidebar.importReports", icon: FileSpreadsheet }, 
+  { href: "/admin/user-import", labelKey: "sidebar.importUsers", icon: Users2 },
 ];
 
 interface SidebarNavProps {

@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
-import { Loader2, UserCircle, Building2, Briefcase, MapPin, User as UserIcon, Mail, Phone, History, ListChecks, Edit3, Save, CreditCard, ShieldCheck, CalendarDays, Percent, AlertTriangle, UserCog, Bell, Check, Trash2, BellOff, Download } from "lucide-react";
+import { Loader2, UserCircle, Building2, Briefcase, MapPin, User as UserIcon, Mail, Phone, History, ListChecks, Edit3, Save, CreditCard, ShieldCheck, CalendarDays, Percent, AlertTriangle, UserCog, Bell, Check, BellOff } from "lucide-react";
 import type { Report, SearchLog, UserProfile, UserNotification } from "@/types";
 import { format as formatDateFn, addYears } from "date-fns";
 import { lt, enUS } from "date-fns/locale";
@@ -116,33 +116,6 @@ export default function AccountPage() {
     setActiveTab(value);
     router.push(`/account?tab=${value}`, { scroll: false });
   };
-
-  const downloadJSON = (data: any, filename: string) => {
-    const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(
-      JSON.stringify(data, null, 2)
-    )}`;
-    const link = document.createElement("a");
-    link.href = jsonString;
-    link.download = `${filename}.json`;
-    document.body.appendChild(link); // Required for Firefox
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  const handleExportSearchHistory = () => {
-    if (!user) return;
-    const allLocalSearchLogs = types.getSearchLogsFromLocalStoragePublic();
-    let userSpecificSearchLogsForExport = allLocalSearchLogs.filter(log => log.userId === user.id);
-
-    if (user.id === types.MOCK_USER.id) {
-        const mockUserSearchLogsNotInLocal = types.MOCK_USER_SEARCH_LOGS.filter(
-            msl => !userSpecificSearchLogsForExport.some(lsl => lsl.id === msl.id)
-        );
-        userSpecificSearchLogsForExport = [...userSpecificSearchLogsForExport, ...mockUserSearchLogsNotInLocal];
-    }
-    downloadJSON(userSpecificSearchLogsForExport.sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()), `drivercheck_search_history_${user.id}`);
-  };
-
 
   if (authLoading || !user) {
     return (
@@ -283,10 +256,6 @@ export default function AccountPage() {
                         <Link href="/search/history">{t('account.searchHistory.viewAllButton')}</Link>
                     </Button>
                 )}
-                 <Button variant="default" onClick={handleExportSearchHistory} className="w-full sm:w-auto">
-                    <Download className="mr-2 h-4 w-4" />
-                    {t('account.searchHistory.exportButton')}
-                </Button>
             </CardFooter>
           </Card>
         </TabsContent>
