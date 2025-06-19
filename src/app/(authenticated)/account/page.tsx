@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
-import { Loader2, UserCircle, Building2, Briefcase, MapPin, User as UserIcon, Mail, Phone, History, ListChecks, Edit3, Save, CreditCard, ShieldCheck, CalendarDays, Percent, AlertTriangle, UserCog, Bell, Check, BellOff } from "lucide-react";
+import { Loader2, UserCircle, Building2, Briefcase, MapPin, User as UserIcon, Mail, Phone, History, ListChecks, Edit3, Save, CreditCard, ShieldCheck, CalendarDays, Percent, AlertTriangle, UserCog, Bell, Check, BellOff, Download, FileSpreadsheet } from "lucide-react";
 import type { Report, SearchLog, UserProfile, UserNotification } from "@/types";
 import { format as formatDateFn, addYears } from "date-fns";
 import { lt, enUS } from "date-fns/locale";
@@ -17,6 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import * as types from "@/types"; 
 import { useLanguage } from '@/contexts/language-context';
+import * as XLSX from 'xlsx';
 
 
 // Mock data for initial display in Account page (limited view)
@@ -116,6 +117,79 @@ export default function AccountPage() {
     setActiveTab(value);
     router.push(`/account?tab=${value}`, { scroll: false });
   };
+
+  const handleExport = (data: any[], filename: string) => {
+    const json = JSON.stringify(data, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleExportReports = () => {
+    if (!user) return;
+    const allLocalReports = types.getReportsFromLocalStoragePublic();
+    let userSpecificReports = allLocalReports.filter(r => r.reporterId === user.id);
+    
+    if (user.id === types.MOCK_USER.id) {
+      const mockUserReportsNotInLocal = types.MOCK_USER_REPORTS.filter(
+        mr => !userSpecificReports.some(lsr => lsr.id === mr.id)
+      );
+      userSpecificReports = [...userSpecificReports, ...mockUserReportsNotInLocal];
+    }
+    handleExport(userSpecificReports, `drivercheck_my_entries_${user.id}.json`);
+  };
+
+  const handleExportReportsExcel = () => {
+    if (!user) return;
+    const allLocalReports = types.getReportsFromLocalStoragePublic();
+    let userSpecificReports = allLocalReports.filter(r => r.reporterId === user.id);
+
+    if (user.id === types.MOCK_USER.id) {
+      const mockUserReportsNotInLocal = types.MOCK_USER_REPORTS.filter(
+        mr => !userSpecificReports.some(lsr => lsr.id === mr.id)
+      );
+      userSpecificReports = [...userSpecificReports, ...mockUserReportsNotInLocal];
+    }
+
+    const dataForExcel = userSpecificReports.map(report => ({
+      [t('account.entries.excel.header.id')]: report.id,
+      [t('account.entries.excel.header.reporterId')]: report.reporterId,
+      [t('account.entries.excel.header.reporterCompanyName')]: report.reporterCompanyName || '',
+      [t('account.entries.excel.header.fullName')]: report.fullName,
+      [t('account.entries.excel.header.nationality')]: report.nationality ? types.countries.find(c => c.value === report.nationality)?.label || report.nationality : '',
+      [t('account.entries.excel.header.birthYear')]: report.birthYear || '',
+      [t('account.entries.excel.header.category')]: types.getCategoryNameForDisplay(report.category, t),
+      [t('account.entries.excel.header.tags')]: report.tags.map(tagKey => t(`tags.${tagKey}`)).join(', '),
+      [t('account.entries.excel.header.comment')]: report.comment,
+      [t('account.entries.excel.header.imageUrl')]: report.imageUrl || '',
+      [t('account.entries.excel.header.createdAt')]: formatDateFn(new Date(report.createdAt), "yyyy-MM-dd HH:mm:ss", { locale: dateLocale }),
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(dataForExcel);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, t('account.entries.excel.sheetName'));
+    XLSX.writeFile(workbook, `drivercheck_my_entries_${user.id}.xlsx`);
+  };
+
+  const handleExportSearchHistory = () => {
+    if (!user) return;
+    let userLogs = types.getSearchLogsFromLocalStoragePublic().filter(log => log.userId === user.id);
+    if (user.id === types.MOCK_USER.id && userLogs.length === 0 && types.MOCK_USER_SEARCH_LOGS.length > 0) {
+         const allLogsCurrentlyInStorage = types.getSearchLogsFromLocalStoragePublic();
+         const otherUserLogs = allLogsCurrentlyInStorage.filter(log => log.userId !== types.MOCK_USER.id);
+         const logsToSaveForMockUser = types.MOCK_USER_SEARCH_LOGS.filter(log => log.userId === types.MOCK_USER.id);
+         types.saveSearchLogsToLocalStoragePublic([...otherUserLogs, ...logsToSaveForMockUser]);
+         userLogs = logsToSaveForMockUser;
+    }
+    handleExport(userLogs, `drivercheck_search_history_${user.id}.json`);
+  };
+
 
   if (authLoading || !user) {
     return (
@@ -219,7 +293,15 @@ export default function AccountPage() {
                 </ul>
               ) : <p className="text-muted-foreground">{t('account.entries.noEntries')}</p>}
             </CardContent>
-            <CardFooter className="border-t pt-6 flex-col sm:flex-row justify-center sm:justify-end gap-3 items-center">
+            <CardFooter className="border-t pt-6 flex-col sm:flex-row justify-between items-center gap-3">
+                 <div className="flex flex-wrap gap-2">
+                    <Button variant="outline" onClick={handleExportReports}>
+                        <Download className="mr-2 h-4 w-4" /> {t('account.entries.exportButtonJson')}
+                    </Button>
+                     <Button variant="outline" onClick={handleExportReportsExcel}>
+                        <FileSpreadsheet className="mr-2 h-4 w-4" /> {t('account.entries.exportButtonExcel')}
+                    </Button>
+                </div>
                 {mockUserReportsLimited.length > 3 && (
                     <Button variant="outline" asChild className="w-full sm:w-auto">
                         <Link href="/reports/history">{t('account.entries.viewAllButton')}</Link>
@@ -250,7 +332,10 @@ export default function AccountPage() {
                 </ul>
               ) : <p className="text-muted-foreground">{t('account.searchHistory.noHistory')}</p>}
             </CardContent>
-             <CardFooter className="border-t pt-6 flex-col sm:flex-row justify-center sm:justify-end gap-3 items-center">
+             <CardFooter className="border-t pt-6 flex-col sm:flex-row justify-between items-center gap-3">
+                 <Button variant="outline" onClick={handleExportSearchHistory}>
+                    <Download className="mr-2 h-4 w-4" /> {t('account.searchHistory.exportButtonJson')}
+                </Button>
                 {mockSearchLogsLimited.length > 5 && (
                      <Button variant="outline" asChild className="w-full sm:w-auto">
                         <Link href="/search/history">{t('account.searchHistory.viewAllButton')}</Link>
@@ -399,3 +484,4 @@ export default function AccountPage() {
     
 
     
+
