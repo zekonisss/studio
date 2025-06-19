@@ -272,6 +272,7 @@
   "common.page": "Puslapis",
   "common.of": "iš",
   "common.goBack": "Grįžti atgal",
+  "common.localeForDate": "lt-LT",
   "toast.login.success.title": "Sėkmingai prisijungėte!",
   "toast.login.success.description": "Sveiki sugrįžę į DriverCheck.",
   "toast.login.error.title": "Prisijungimo klaida",
@@ -380,7 +381,8 @@
   "searchHistory.table.header.dateTime": "Data ir Laikas",
   "reports.import.title": "Importuoti Įrašus iš Excel",
   "reports.import.description": "Pasirinkite .xlsx formato failą, kad įkeltumėte vairuotojų įrašus. Sistema automatiškai bandys priskirti kategorijas ir žymas pagal komentarus.",
-  "reports.import.expectedHeaders": "Tikimasi, kad Excel failas turės šias antraštes: {headers}.",
+  "reports.import.expectedHeaders": "Tikimasi, kad Excel failas turės bent šias antraštes: \"{headers}\".",
+  "reports.import.optionalHeaders": "Kitos galimos",
   "reports.import.selectedFile": "Pasirinktas failas",
   "reports.import.button.parseFile": "Analizuoti Failą",
   "reports.import.button.parsing": "Analizuojama...",
@@ -407,8 +409,13 @@
   "reports.import.error.aiServiceOverloaded": "AI paslauga šiuo metu perkrauta. Bandykite vėliau.",
   "reports.import.error.aiServiceOverloadedMaxAttempts": "AI paslauga vis dar perkrauta po {attempts} bandymų. Bandykite vėliau.",
   "reports.import.error.aiDailyQuotaExceededFull": "Pasiektas dienos AI apdorojimo limitas. Detalės: {message}",
+  "reports.import.error.noCommentForAi": "Nėra komentaro AI analizei.",
   "reports.import.associatedCompanyPrefix": "Susijusi įmonė",
   "reports.import.unknownDriver": "Nežinomas vairuotojas",
+  "reports.import.aiProcessingMessage": "Dirbtinis intelektas apdoroja įrašus...",
+  "reports.import.dailyQuotaReachedMessage": "Pasiektas dienos AI užklausų limitas. Likę įrašai nebus apdoroti AI.",
+  "reports.import.toast.accessDenied.title": "Prieiga Negalima",
+  "reports.import.toast.accessDenied.description": "Neturite teisių pasiekti šį puslapį.",
   "reports.import.toast.invalidFileType.title": "Netinkamas failo tipas",
   "reports.import.toast.invalidFileType.description": "Prašome pasirinkti .xlsx formato failą.",
   "reports.import.toast.emptyFile.title": "Failas tuščias",
@@ -427,6 +434,7 @@
   "reports.import.toast.importError.description": "Įvyko klaida išsaugant duomenis.",
   "reports.import.toast.dailyQuotaReached.title": "Pasiektas Dienos AI Limitas",
   "reports.import.toast.dailyQuotaReached.description": "Viršytas dienos AI apdorojimo limitas. Tolimesnės eilutės šiame faile nebus analizuojamos AI. Bandykite rytoj arba atnaujinkite planą.",
+  "reports.import.toast.dailyQuotaReached.descriptionShort": "Pasiektas dienos AI limitas.",
   "countries.AF": "Afganistanas",
   "countries.AX": "Alandų Salos",
   "countries.AL": "Albanija",
@@ -716,5 +724,3 @@
   "support.contact.emailButton": "Susisiekti El. Paštu",
   "support.contact.emailLink": "mailto:pagalba@drivercheck.eu"
 }
-
-    
