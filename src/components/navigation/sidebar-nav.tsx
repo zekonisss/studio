@@ -19,8 +19,7 @@ import {
   ShieldQuestion,
   ShieldAlert,
   UserSearch, 
-  FileSpreadsheet,
-  Users2
+  FileSpreadsheet
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
@@ -47,8 +46,7 @@ const accountNavItemsBase = [
 
 const adminNavItemsBase = [
   { href: "/admin", labelKey: "sidebar.adminPanel", icon: ShieldAlert },
-  { href: "/reports/import", labelKey: "sidebar.importReports", icon: FileSpreadsheet }, 
-  // Removed: { href: "/admin/user-import", labelKey: "sidebar.importUsers", icon: Users2 },
+  { href: "/reports/import", labelKey: "sidebar.importReports", icon: FileSpreadsheet },
 ];
 
 interface SidebarNavProps {
@@ -218,3 +216,6 @@ export function SidebarNav({ isInSheet = false }: SidebarNavProps) {
 }
 
 
+
+
+    

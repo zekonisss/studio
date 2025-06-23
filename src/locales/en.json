@@ -120,20 +120,6 @@
   "account.entries.submittedOn": "Submitted",
   "account.entries.noEntries": "No entries found.",
   "account.entries.viewAllButton": "View All Entries",
-  "account.entries.exportButtonJson": "Export My Entries (JSON)",
-  "account.entries.exportButtonExcel": "Export My Entries (Excel)",
-  "account.entries.excel.sheetName": "My Entries",
-  "account.entries.excel.header.id": "ID",
-  "account.entries.excel.header.reporterId": "Reporter ID",
-  "account.entries.excel.header.reporterCompanyName": "Reporter Company",
-  "account.entries.excel.header.fullName": "Full Name",
-  "account.entries.excel.header.nationality": "Nationality",
-  "account.entries.excel.header.birthYear": "Birth Year",
-  "account.entries.excel.header.category": "Category",
-  "account.entries.excel.header.tags": "Tags",
-  "account.entries.excel.header.comment": "Comment",
-  "account.entries.excel.header.imageUrl": "Image URL",
-  "account.entries.excel.header.createdAt": "Creation Date",
   "account.searchHistory.title": "Your Search History",
   "account.searchHistory.description.part1": "Some of your recent searches. Full history can be found ",
   "account.searchHistory.description.link": "here",
@@ -141,7 +127,6 @@
   "account.searchHistory.resultsSuffix": "res.",
   "account.searchHistory.noHistory": "No search history.",
   "account.searchHistory.viewAllButton": "View Full Search History",
-  "account.searchHistory.exportButtonJson": "Export Search History (JSON)",
   "account.payments.title": "Payments and Subscription",
   "account.payments.description": "Manage your subscription and view payment history.",
   "account.payments.status.active.title": "Active Subscription",
@@ -434,8 +419,6 @@
   "reports.import.toast.invalidFileType.description": "Please select an .xlsx file.",
   "reports.import.toast.emptyFile.title": "File Empty",
   "reports.import.toast.emptyFile.description": "No data found in the selected file.",
-  "reports.import.toast.missingHeaders.title": "Missing Headers",
-  "reports.import.toast.missingHeaders.description": "The file is missing required column headers: {headers}.",
   "reports.import.toast.parseError.title": "File Parse Error",
   "reports.import.toast.parseError.description": "Could not read or process the file.",
   "reports.import.toast.waitAi.title": "Please Wait",
@@ -738,3 +721,5 @@
   "support.contact.emailButton": "Contact via Email",
   "support.contact.emailLink": "mailto:support@drivercheck.eu"
 }
+
+    

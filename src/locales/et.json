@@ -120,20 +120,6 @@
   "account.entries.submittedOn": "Esitatud",
   "account.entries.noEntries": "Kirjeid ei leitud.",
   "account.entries.viewAllButton": "Vaata kõiki kirjeid",
-  "account.entries.exportButtonJson": "Ekspordi Minu Kirjed (JSON)",
-  "account.entries.exportButtonExcel": "Ekspordi Minu Kirjed (Excel)",
-  "account.entries.excel.sheetName": "Minu Kirjed",
-  "account.entries.excel.header.id": "ID",
-  "account.entries.excel.header.reporterId": "Esitaja ID",
-  "account.entries.excel.header.reporterCompanyName": "Esitaja Ettevõte",
-  "account.entries.excel.header.fullName": "Täisnimi",
-  "account.entries.excel.header.nationality": "Kodakondsus",
-  "account.entries.excel.header.birthYear": "Sünniaasta",
-  "account.entries.excel.header.category": "Kategooria",
-  "account.entries.excel.header.tags": "Sildid",
-  "account.entries.excel.header.comment": "Kommentaar",
-  "account.entries.excel.header.imageUrl": "Pildi URL",
-  "account.entries.excel.header.createdAt": "Loomise Kuupäev",
   "account.searchHistory.title": "Sinu otsinguajalugu",
   "account.searchHistory.description.part1": "Mõned sinu hiljutised otsingud. Täieliku ajaloo leiad ",
   "account.searchHistory.description.link": "siit",
@@ -141,7 +127,6 @@
   "account.searchHistory.resultsSuffix": "tulem.",
   "account.searchHistory.noHistory": "Otsinguajalugu puudub.",
   "account.searchHistory.viewAllButton": "Vaata täielikku otsinguajalugu",
-  "account.searchHistory.exportButtonJson": "Ekspordi Otsinguajalugu (JSON)",
   "account.payments.title": "Maksed ja tellimus",
   "account.payments.description": "Halda oma tellimust ja vaata maksete ajalugu.",
   "account.payments.status.active.title": "Aktiivne tellimus",
@@ -365,3 +350,5 @@
   "support.contact.emailButton": "Võta ühendust e-posti teel",
   "support.contact.emailLink": "mailto:support@drivercheck.eu"
 }
+
+    

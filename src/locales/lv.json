@@ -120,20 +120,6 @@
   "account.entries.submittedOn": "Iesniegts",
   "account.entries.noEntries": "Ierakstu nav atrasts.",
   "account.entries.viewAllButton": "Skatīt Visus Ierakstus",
-  "account.entries.exportButtonJson": "Eksportēt Manus Ierakstus (JSON)",
-  "account.entries.exportButtonExcel": "Eksportēt Manus Ierakstus (Excel)",
-  "account.entries.excel.sheetName": "Mani Ieraksti",
-  "account.entries.excel.header.id": "ID",
-  "account.entries.excel.header.reporterId": "Iesniedzēja ID",
-  "account.entries.excel.header.reporterCompanyName": "Iesniedzēja Uzņēmums",
-  "account.entries.excel.header.fullName": "Vārds, Uzvārds",
-  "account.entries.excel.header.nationality": "Valstspiederība",
-  "account.entries.excel.header.birthYear": "Dzimšanas Gads",
-  "account.entries.excel.header.category": "Kategorija",
-  "account.entries.excel.header.tags": "Tagi",
-  "account.entries.excel.header.comment": "Komentārs",
-  "account.entries.excel.header.imageUrl": "Attēla URL",
-  "account.entries.excel.header.createdAt": "Izveides Datums",
   "account.searchHistory.title": "Jūsu Meklēšanas Vēsture",
   "account.searchHistory.description.part1": "Daži no jūsu pēdējiem meklējumiem. Pilnu vēsturi varat atrast ",
   "account.searchHistory.description.link": "šeit",
@@ -141,7 +127,6 @@
   "account.searchHistory.resultsSuffix": "rez.",
   "account.searchHistory.noHistory": "Meklēšanas vēstures nav.",
   "account.searchHistory.viewAllButton": "Skatīt Pilnu Meklēšanas Vēsturi",
-  "account.searchHistory.exportButtonJson": "Eksportēt Meklēšanas Vēsturi (JSON)",
   "account.payments.title": "Maksājumi un Abonements",
   "account.payments.description": "Pārvaldiet savu abonementu un skatiet maksājumu vēsturi.",
   "account.payments.status.active.title": "Aktīvs Abonements",
@@ -738,3 +723,5 @@
   "support.contact.emailButton": "Sazināties pa E-pastu",
   "support.contact.emailLink": "mailto:support@drivercheck.eu"
 }
+
+    

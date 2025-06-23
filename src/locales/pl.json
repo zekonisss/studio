@@ -120,20 +120,6 @@
   "account.entries.submittedOn": "Zgłoszono",
   "account.entries.noEntries": "Nie znaleziono wpisów.",
   "account.entries.viewAllButton": "Zobacz Wszystkie Wpisy",
-  "account.entries.exportButtonJson": "Eksportuj Moje Wpisy (JSON)",
-  "account.entries.exportButtonExcel": "Eksportuj Moje Wpisy (Excel)",
-  "account.entries.excel.sheetName": "Moje Wpisy",
-  "account.entries.excel.header.id": "ID",
-  "account.entries.excel.header.reporterId": "ID Zgłaszającego",
-  "account.entries.excel.header.reporterCompanyName": "Firma Zgłaszająca",
-  "account.entries.excel.header.fullName": "Imię i Nazwisko",
-  "account.entries.excel.header.nationality": "Narodowość",
-  "account.entries.excel.header.birthYear": "Rok Urodzenia",
-  "account.entries.excel.header.category": "Kategoria",
-  "account.entries.excel.header.tags": "Tagi",
-  "account.entries.excel.header.comment": "Komentarz",
-  "account.entries.excel.header.imageUrl": "URL Obrazka",
-  "account.entries.excel.header.createdAt": "Data Utworzenia",
   "account.searchHistory.title": "Twoja Historia Wyszukiwania",
   "account.searchHistory.description.part1": "Niektóre z Twoich ostatnich wyszukiwań. Pełną historię znajdziesz ",
   "account.searchHistory.description.link": "tutaj",
@@ -141,7 +127,6 @@
   "account.searchHistory.resultsSuffix": "wyn.",
   "account.searchHistory.noHistory": "Brak historii wyszukiwania.",
   "account.searchHistory.viewAllButton": "Zobacz Pełną Historię Wyszukiwania",
-  "account.searchHistory.exportButtonJson": "Eksportuj Historię Wyszukiwania (JSON)",
   "account.payments.title": "Płatności i Subskrypcja",
   "account.payments.description": "Zarządzaj swoją subskrypcją i przeglądaj historię płatności.",
   "account.payments.status.active.title": "Aktywna Subskrypcja",
@@ -738,3 +723,5 @@
   "support.contact.emailButton": "Skontaktuj się przez e-mail",
   "support.contact.emailLink": "mailto:support@drivercheck.eu"
 }
+
+    

@@ -120,20 +120,6 @@
   "account.entries.submittedOn": "Pateikta",
   "account.entries.noEntries": "Įrašų nerasta.",
   "account.entries.viewAllButton": "Žiūrėti Visus Įrašus",
-  "account.entries.exportButtonJson": "Eksportuoti Mano Įrašus (JSON)",
-  "account.entries.exportButtonExcel": "Eksportuoti Mano Įrašus (Excel)",
-  "account.entries.excel.sheetName": "Mano Įrašai",
-  "account.entries.excel.header.id": "ID",
-  "account.entries.excel.header.reporterId": "Pateikėjo ID",
-  "account.entries.excel.header.reporterCompanyName": "Pateikėjo Įmonė",
-  "account.entries.excel.header.fullName": "Vardas Pavardė",
-  "account.entries.excel.header.nationality": "Pilietybė",
-  "account.entries.excel.header.birthYear": "Gimimo Metai",
-  "account.entries.excel.header.category": "Kategorija",
-  "account.entries.excel.header.tags": "Žymos",
-  "account.entries.excel.header.comment": "Komentaras",
-  "account.entries.excel.header.imageUrl": "Paveikslėlio URL",
-  "account.entries.excel.header.createdAt": "Sukūrimo Data",
   "account.searchHistory.title": "Jūsų Paieškų Istorija",
   "account.searchHistory.description.part1": "Keletas jūsų naujausių paieškų. Išsamią istoriją rasite ",
   "account.searchHistory.description.link": "čia",
@@ -141,7 +127,6 @@
   "account.searchHistory.resultsSuffix": "rez.",
   "account.searchHistory.noHistory": "Paieškų istorijos nėra.",
   "account.searchHistory.viewAllButton": "Žiūrėti Visą Paieškų Istoriją",
-  "account.searchHistory.exportButtonJson": "Eksportuoti Paieškų Istoriją (JSON)",
   "account.payments.title": "Mokėjimai ir Prenumerata",
   "account.payments.description": "Tvarkykite savo prenumeratą ir peržiūrėkite mokėjimų istoriją.",
   "account.payments.status.active.title": "Aktyvi Prenumerata",
@@ -738,3 +723,5 @@
   "support.contact.emailButton": "Susisiekti El. Paštu",
   "support.contact.emailLink": "mailto:pagalba@drivercheck.eu"
 }
+
+    
