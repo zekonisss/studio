@@ -2,15 +2,14 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import Link from "next/link";
-import { Search, FilePlus2, History, UserCircle, BarChart3, AlertTriangle, CheckCircle2, UserCog, Loader2, Layers } from "lucide-react";
-import Image from "next/image";
+import { BarChart3, AlertTriangle, CheckCircle2, UserCog, Loader2, Layers, FileText } from "lucide-react";
 import { format as formatDateFn, addYears, addMonths, isBefore, differenceInDays } from 'date-fns';
 import { lt, enUS } from 'date-fns/locale';
-import type { Report, SearchLog, UserNotification } from '@/types';
+import type { Report } from '@/types';
 import { 
   getReportsFromLocalStoragePublic, 
   MOCK_GENERAL_REPORTS, 
@@ -20,9 +19,11 @@ import {
   MOCK_USER_REPORTS, 
   MOCK_USER_SEARCH_LOGS,
   addUserNotification,
-  getUserNotifications
+  getUserNotifications,
+  getCategoryNameForDisplay
 } from '@/types';
 import { useLanguage } from '@/contexts/language-context';
+import { Badge } from '@/components/ui/badge';
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -32,6 +33,7 @@ export default function DashboardPage() {
   const [userSearchesCount, setUserSearchesCount] = useState(0);
   const [showExpirationWarning, setShowExpirationWarning] = useState(false);
   const [expirationEndDate, setExpirationEndDate] = useState<string | null>(null);
+  const [recentReports, setRecentReports] = useState<Report[]>([]);
 
 
   const dateLocale = locale === 'en' ? enUS : lt;
@@ -41,6 +43,7 @@ export default function DashboardPage() {
       const localPlatformReports = getReportsFromLocalStoragePublic();
       const combinedPlatformReports = combineAndDeduplicateReports(localPlatformReports, MOCK_GENERAL_REPORTS);
       setTotalReportsCount(combinedPlatformReports.length);
+      setRecentReports(combinedPlatformReports.slice(0, 4));
 
       if (user) {
         const allLocalReports = getReportsFromLocalStoragePublic(); 
@@ -170,27 +173,7 @@ export default function DashboardPage() {
                 </div>
                 </div>
             )}
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-xl">{t('dashboard.usefulLinks.title')}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-             <div className="relative aspect-video w-full overflow-hidden rounded-lg mb-4">
-                <Image src="https://placehold.co/600x338.png" alt={t('dashboard.usefulLinks.imageAlt')} layout="fill" objectFit="cover" data-ai-hint="driving safety truck" />
-              </div>
-            <Button variant="link" asChild className="p-0 h-auto justify-start">
-              <Link href="/terms">{t('dashboard.usefulLinks.terms')}</Link>
-            </Button>
-            <Button variant="link" asChild className="p-0 h-auto justify-start">
-              <Link href="/privacy">{t('dashboard.usefulLinks.privacy')}</Link>
-            </Button>
-            <Button variant="link" asChild className="p-0 h-auto justify-start">
-              <Link href="/support">{t('dashboard.usefulLinks.support')}</Link>
-            </Button>
-            <div className="mt-4 pt-4 border-t">
+             <div className="mt-4 pt-4 border-t">
                 {user && user.paymentStatus === 'active' && subscriptionEndDateForDisplay ? (
                     <>
                         <p className="text-sm font-semibold flex items-center">
@@ -220,9 +203,44 @@ export default function DashboardPage() {
             </div>
           </CardContent>
         </Card>
+
+        <Card className="shadow-lg">
+          <CardHeader>
+            <CardTitle className="text-xl flex items-center">
+               <FileText className="mr-2 h-6 w-6 text-primary" />
+               {t('dashboard.recentReports.title')}
+            </CardTitle>
+            <CardDescription>{t('dashboard.recentReports.description')}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {recentReports.length > 0 ? (
+                <ul className="space-y-4">
+                    {recentReports.map(report => (
+                        <li key={report.id} className="flex items-center justify-between p-3 rounded-md hover:bg-muted/30 transition-colors border">
+                            <div>
+                                <p className="font-semibold">{report.fullName}</p>
+                                <p className="text-xs text-muted-foreground">{t('dashboard.recentReports.submittedBy')} {report.reporterCompanyName || t('common.notSpecified')}</p>
+                            </div>
+                            <div className="text-right flex-shrink-0 ml-2">
+                                <Badge variant="secondary" className="whitespace-nowrap">{getCategoryNameForDisplay(report.category, t)}</Badge>
+                                <p className="text-xs text-muted-foreground mt-1">{formatDateFn(report.createdAt, "yyyy-MM-dd", { locale: dateLocale })}</p>
+                            </div>
+                        </li>
+                    ))}
+                </ul>
+            ) : (
+                <div className="text-center text-muted-foreground py-4">
+                  <p>{t('dashboard.recentReports.noReports')}</p>
+                </div>
+            )}
+          </CardContent>
+          <CardFooter>
+            <Button variant="outline" asChild className="w-full">
+                <Link href="/search">{t('dashboard.recentReports.viewAll')}</Link>
+            </Button>
+          </CardFooter>
+        </Card>
       </div>
     </div>
   );
 }
-
-    
