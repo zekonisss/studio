@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, ChangeEvent, useEffect, useMemo } from 'react';
+import { useState, ChangeEvent, useEffect, useMemo, useCallback } from 'react';
 import * as XLSX from 'xlsx';
 import { z } from 'zod';
 import { Button } from "@/components/ui/button";
@@ -17,21 +17,19 @@ import { getAllUsers, saveAllUsers } from '@/types';
 import { useRouter } from "next/navigation";
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { SignUpSchema } from '@/lib/schemas'; // Naudosime dalį schemos validacijai
+import { SignUpSchema } from '@/lib/schemas';
 
 interface ParsedUserRow {
-  id: number; // Unikalus ID React raktui
+  id: number; 
   originalRow: Record<string, any>;
-  userPreview: Partial<UserProfile>; // Apkarpyta UserProfile versija peržiūrai
+  userPreview: Partial<UserProfile>; 
   validationStatus: 'pending' | 'valid' | 'invalid';
   errors?: string[];
 }
 
-// Tikėtinos antraštės lietuvių kalba (pagrindinė kalba stulpelių atpažinimui)
 const REQUIRED_USER_HEADERS_LT = ["Įmonės Pavadinimas", "Įmonės Kodas", "Kontaktinis Asmuo", "El. Paštas", "Telefonas"];
 const OPTIONAL_USER_HEADERS_LT = ["PVM Kodas", "Adresas"];
 
-// Angliški atitikmenys ir galimi variantai
 const USER_HEADER_MAPPINGS: Record<string, keyof UserProfile | 'raw_password_excel'> = {
     "Įmonės Pavadinimas": "companyName",
     "Company Name": "companyName",
@@ -47,7 +45,6 @@ const USER_HEADER_MAPPINGS: Record<string, keyof UserProfile | 'raw_password_exc
     "VAT Code": "vatCode",
     "Adresas": "address",
     "Address": "address",
-    // Slaptažodžių neimportuosime tiesiogiai, bet galime leisti stulpelį Excelyje, kurį ignoruosime
     "Slaptažodis": "raw_password_excel", 
     "Password": "raw_password_excel"
 };
@@ -76,16 +73,16 @@ export default function ImportUsersPage() {
     }
   }, [adminUser, authLoading, router, toast, t]);
 
-  const findHeaderKey = (headerRow: string[], targetHeaderLT: string): keyof UserProfile | 'raw_password_excel' | undefined => {
+  const findHeaderKey = useCallback((headerRow: string[], targetHeaderLT: string): keyof UserProfile | 'raw_password_excel' | undefined => {
     const lowerTargetHeaderLT = targetHeaderLT.toLowerCase();
-    const foundHeader = headerRow.find(header => 
+    const foundHeader = headerRow.find(header =>
       (typeof header === 'string' && header.toLowerCase() === lowerTargetHeaderLT) ||
       (USER_HEADER_MAPPINGS[header as string]?.toLowerCase() === USER_HEADER_MAPPINGS[targetHeaderLT]?.toLowerCase())
     );
     return foundHeader ? USER_HEADER_MAPPINGS[foundHeader] || USER_HEADER_MAPPINGS[targetHeaderLT] : undefined;
-  };
+  }, []);
 
-  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
     if (selectedFile) {
       if (selectedFile.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || selectedFile.name.endsWith('.xlsx')) {
@@ -103,20 +100,17 @@ export default function ImportUsersPage() {
         event.target.value = ""; // Reset file input
       }
     }
-  };
+  }, [t, toast]);
 
-  const validateRow = (rowData: Partial<UserProfile>, existingUsers: UserProfile[]): string[] => {
+  const validateRow = useCallback((rowData: Partial<UserProfile>, existingUsers: UserProfile[]): string[] => {
     const errors: string[] = [];
-    
-    // Naudojame SignUpSchema dalis validacijai, pritaikome importavimui
-    // Privalomi laukai
+
     if (!rowData.companyName || rowData.companyName.length < 2) errors.push(t('usersImport.validation.companyNameMinLength'));
     if (!rowData.companyCode || !/^\d{9}$/.test(rowData.companyCode)) errors.push(t('usersImport.validation.companyCodeFormat'));
     if (!rowData.contactPerson || rowData.contactPerson.length < 3) errors.push(t('usersImport.validation.contactPersonMinLength'));
     if (!rowData.email || !z.string().email().safeParse(rowData.email).success) errors.push(t('usersImport.validation.emailFormat'));
     if (!rowData.phone || !/^\+?\d{7,15}$/.test(rowData.phone)) errors.push(t('usersImport.validation.phoneFormat'));
 
-    // Unikalumo tikrinimai
     if (rowData.email && existingUsers.some(u => u.email.toLowerCase() === rowData.email!.toLowerCase())) {
       errors.push(t('usersImport.validation.emailExists', { email: rowData.email }));
     }
@@ -124,15 +118,13 @@ export default function ImportUsersPage() {
        errors.push(t('usersImport.validation.companyCodeExists', { code: rowData.companyCode }));
     }
 
-    // Neprivalomi laukai (jei yra, tikriname formatą)
     if (rowData.address && rowData.address.length < 5) errors.push(t('usersImport.validation.addressMinLength'));
-    // VAT kodui galima pridėti regex validaciją pagal poreikį
 
     return errors;
-  };
+  }, [t]);
 
 
-  const handleParseFile = async () => {
+  const handleParseFile = useCallback(async () => {
     if (!file || !adminUser) return;
     setIsLoadingFile(true);
     setParsedData([]);
@@ -148,8 +140,8 @@ export default function ImportUsersPage() {
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
         const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false }) as any[][];
-        
-        if (jsonData.length < 2) { // Tikimės bent antraštės ir vienos duomenų eilutės
+
+        if (jsonData.length < 2) { 
           toast({ variant: "destructive", title: t('usersImport.toast.emptyFile.title'), description: t('usersImport.toast.emptyFile.description') });
           setIsLoadingFile(false);
           return;
@@ -158,7 +150,6 @@ export default function ImportUsersPage() {
         const headerRow = jsonData[0].map(h => String(h).trim());
         const dataRows = jsonData.slice(1);
 
-        // Stulpelių atpažinimas
         const mappedHeaderKeys: Partial<Record<keyof UserProfile, string>> = {};
         REQUIRED_USER_HEADERS_LT.forEach(reqHeaderLt => {
             const key = findHeaderKey(headerRow, reqHeaderLt);
@@ -190,14 +181,14 @@ export default function ImportUsersPage() {
           setIsLoadingFile(false);
           return;
         }
-        
+
         const existingUsers = getAllUsers();
         const newParsedData: ParsedUserRow[] = dataRows.map((row, index) => {
           const originalRow: Record<string, any> = {};
           headerRow.forEach((header, i) => {
             originalRow[String(header).trim()] = row[i];
           });
-          
+
           const userPreviewData: Partial<UserProfile> = {};
           for (const [internalKey, excelHeaderName] of Object.entries(mappedHeaderKeys)) {
               const headerIndex = headerRow.findIndex(h => h === excelHeaderName);
@@ -205,7 +196,7 @@ export default function ImportUsersPage() {
                 (userPreviewData as any)[internalKey] = String(row[headerIndex]).trim();
               }
           }
-          
+
           const validationErrors = validateRow(userPreviewData, existingUsers);
 
           return {
@@ -215,7 +206,7 @@ export default function ImportUsersPage() {
             validationStatus: validationErrors.length === 0 ? 'valid' : 'invalid',
             errors: validationErrors.length > 0 ? validationErrors : undefined,
           };
-        }).filter(row => Object.keys(row.userPreview).length > 0); // Filtruojame visiškai tuščias eilutes
+        }).filter(row => Object.keys(row.userPreview).length > 0); 
 
         setParsedData(newParsedData);
 
@@ -227,9 +218,9 @@ export default function ImportUsersPage() {
       }
     };
     reader.readAsArrayBuffer(file);
-  };
+  }, [file, adminUser, t, toast, findHeaderKey, validateRow]);
 
-  const handleImportData = async () => {
+  const handleImportData = useCallback(async () => {
     if (!adminUser) return;
     const validRows = parsedData.filter(row => row.validationStatus === 'valid');
     if (validRows.length === 0) {
@@ -253,7 +244,7 @@ export default function ImportUsersPage() {
         isAdmin: false,
         registeredAt: new Date().toISOString(),
         accountActivatedAt: undefined,
-        agreeToTerms: true, // Admin import implies this for now
+        agreeToTerms: true, 
         subUsers: [],
       }));
 
@@ -271,8 +262,8 @@ export default function ImportUsersPage() {
     } finally {
       setIsImporting(false);
     }
-  };
-  
+  }, [adminUser, parsedData, t, toast]);
+
   const validCount = useMemo(() => parsedData.filter(r => r.validationStatus === 'valid').length, [parsedData]);
 
   if (authLoading || (!adminUser || !adminUser.isAdmin)) {
@@ -324,11 +315,11 @@ export default function ImportUsersPage() {
             </Button>
           </div>
           {fileName && <p className="text-sm text-muted-foreground">{t('usersImport.selectedFile')}: {fileName}</p>}
-          
+
           {parsedData.length > 0 && (
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">{t('usersImport.previewTitle')} ({parsedData.length} {t('usersImport.recordsFound')})</h3>
-              
+
               <div className="max-h-[500px] overflow-auto border rounded-md">
                 <Table>
                   <TableHeader className="sticky top-0 bg-muted/50 z-10">
@@ -369,9 +360,9 @@ export default function ImportUsersPage() {
         </CardContent>
         {parsedData.length > 0 && (
         <CardFooter className="border-t pt-6">
-            <Button 
-              onClick={handleImportData} 
-              disabled={isImporting || isLoadingFile || validCount === 0} 
+            <Button
+              onClick={handleImportData}
+              disabled={isImporting || isLoadingFile || validCount === 0}
               className="w-full sm:w-auto ml-auto"
             >
                 {isImporting ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <CheckCircle2 className="mr-2 h-5 w-5" />}
@@ -383,4 +374,3 @@ export default function ImportUsersPage() {
     </div>
   );
 }
-
