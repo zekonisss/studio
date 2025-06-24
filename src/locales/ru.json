@@ -103,6 +103,7 @@
   "account.tabs.searchHistory": "История Поиска",
   "account.tabs.payments": "Платежи",
   "account.tabs.notifications": "Уведомления",
+  "account.tabs.deletedEntries": "Удаленные Записи",
   "account.details.title": "Регистрационная Информация",
   "account.details.description": "Здесь вы можете просматривать и редактировать регистрационные данные вашей компании.",
   "account.details.companyName": "Название Компании",

@@ -103,6 +103,7 @@
   "account.tabs.searchHistory": "Meklēšanas Vēsture",
   "account.tabs.payments": "Maksājumi",
   "account.tabs.notifications": "Paziņojumi",
+  "account.tabs.deletedEntries": "Dzēstie Ieraksti",
   "account.details.title": "Reģistrācijas Informācija",
   "account.details.description": "Šeit jūs varat apskatīt un rediģēt sava uzņēmuma reģistrācijas datus.",
   "account.details.companyName": "Uzņēmuma Nosaukums",

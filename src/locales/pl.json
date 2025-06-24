@@ -103,6 +103,7 @@
   "account.tabs.searchHistory": "Historia Wyszukiwania",
   "account.tabs.payments": "Płatności",
   "account.tabs.notifications": "Powiadomienia",
+  "account.tabs.deletedEntries": "Usunięte Wpisy",
   "account.details.title": "Informacje Rejestracyjne",
   "account.details.description": "Tutaj możesz przeglądać i edytować dane rejestracyjne swojej firmy.",
   "account.details.companyName": "Nazwa Firmy",
