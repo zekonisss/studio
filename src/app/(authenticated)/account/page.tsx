@@ -300,7 +300,7 @@ export default function AccountPage() {
                             <p className="mt-3 text-sm text-green-600 dark:text-green-400">
                                 {t('account.payments.status.active.validUntil')}: <span className="font-medium">{formatDateFn(addYears(new Date(user.accountActivatedAt), 1), "yyyy 'm.' MMMM dd 'd.'", { locale: dateLocale })}</span>
                             </p>
-                             <p className="text-sm text-green-600 dark:text-green-400">{t('account.payments.status.active.price')}: <span className="font-medium">29.99 € ({t('account.payments.status.active.annualPrice')} 346.00 € {t('account.payments.status.active.vatExcluded')})</span></p>
+                             <p className="text-sm text-green-600 dark:text-green-400">{t('account.payments.status.active.price')}: <span className="font-medium">29.99 € ({t('account.payments.status.active.annualPrice')} 359.99 € {t('account.payments.status.active.vatExcluded')})</span></p>
                         </div>
                     ) : user.paymentStatus === 'pending_payment' ? (
                          <div className="p-6 border rounded-lg bg-yellow-50 border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-700">
@@ -422,5 +422,7 @@ export default function AccountPage() {
     
 
 
+
+    
 
     

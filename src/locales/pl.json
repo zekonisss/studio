@@ -713,7 +713,7 @@
   "support.faq.q1.question": "Jak zarejestrować się na platformie DriverCheck?",
   "support.faq.q1.answer": "Aby się zarejestrować, kliknij 'Zarejestruj się' na stronie głównej, wypełnij wymagane dane firmy i kontaktowe, zaakceptuj warunki i potwierdź swój adres e-mail.",
   "support.faq.q2.question": "Ile kosztuje subskrypcja DriverCheck?",
-  "support.faq.q2.answer": "Roczna subskrypcja DriverCheck kosztuje 1188 €. Dostęp do systemu jest udzielany tylko po pomyślnej płatności.",
+  "support.faq.q2.answer": "Roczna subskrypcja DriverCheck kosztuje 359.99€ lub 29.99€/mies. Dostęp do systemu jest udzielany tylko po pomyślnej płatności.",
   "support.faq.q3.question": "Jakie informacje mogę znaleźć o kierowcach?",
   "support.faq.q3.answer": "W wynikach wyszukiwania możesz zobaczyć imię, nazwisko kierowcy, rok urodzenia (jeśli podano), kategorie zgłoszeń, tagi, komentarze oraz załączone pliki/zdjęcia, jeśli istnieją.",
   "support.faq.q4.question": "Czy mogę edytować lub usuwać informacje wprowadzone przez innych użytkowników?",
@@ -727,3 +727,5 @@
   "support.contact.emailButton": "Skontaktuj się przez e-mail",
   "support.contact.emailLink": "mailto:support@drivercheck.eu"
 }
+
+    

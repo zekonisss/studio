@@ -713,7 +713,7 @@
   "support.faq.q1.question": "Kaip užsiregistruoti DriverCheck platformoje?",
   "support.faq.q1.answer": "Norėdami užsiregistruoti, pagrindiniame puslapyje spauskite 'Registruotis', užpildykite reikiamus įmonės ir kontaktinius duomenis, sutikite su taisyklėmis ir patvirtinkite el. paštą.",
   "support.faq.q2.question": "Kiek kainuoja DriverCheck prenumerata?",
-  "support.faq.q2.answer": "Metinė DriverCheck prenumerata kainuoja 1188 €. Prieiga prie sistemos suteikiama tik po sėkmingo mokėjimo.",
+  "support.faq.q2.answer": "Metinė DriverCheck prenumerata kainuoja 359.99eur arba 29.99eur/mėn. Prieiga prie sistemos suteikiama tik po sėkmingo mokėjimo.",
   "support.faq.q3.question": "Kokią informaciją galiu rasti apie vairuotojus?",
   "support.faq.q3.answer": "Paieškos rezultatuose galite matyti vairuotojo vardą, pavardę, gimimo metus (jei pateikta), pranešimų kategorijas, žymas, komentarus ir pridėtus failus/nuotraukas, jei tokių yra.",
   "support.faq.q4.question": "Ar galiu redaguoti ar ištrinti kitų vartotojų įvestą informaciją?",
@@ -727,3 +727,5 @@
   "support.contact.emailButton": "Susisiekti El. Paštu",
   "support.contact.emailLink": "mailto:pagalba@drivercheck.eu"
 }
+
+    

@@ -340,7 +340,7 @@
   "support.faq.q1.question": "Kuidas registreeruda DriverCheck platvormil?",
   "support.faq.q1.answer": "Registreerumiseks kliki avalehel 'Registreeru', täida nõutud ettevõtte ja kontaktandmed, nõustu tingimustega ja kinnita oma e-post.",
   "support.faq.q2.question": "Kui palju maksab DriverCheck tellimus?",
-  "support.faq.q2.answer": "DriverCheck aastatellimus maksab 1188 €. Juurdepääs süsteemile antakse alles pärast edukat makset.",
+  "support.faq.q2.answer": "DriverCheck aastatellimus maksab 359.99€ või 29.99€/kuus. Juurdepääs süsteemile antakse alles pärast edukat makset.",
   "support.faq.q3.question": "Millist teavet ma leian juhtide kohta?",
   "support.faq.q3.answer": "Otsingutulemustes näed juhi nime, perekonnanime, sünniaastat (kui on esitatud), teadete kategooriaid, silte, kommentaare ja lisatud faile/fotosid, kui neid on.",
   "support.faq.q4.question": "Kas ma saan muuta või kustutada teiste kasutajate sisestatud teavet?",
@@ -354,3 +354,5 @@
   "support.contact.emailButton": "Võta ühendust e-posti teel",
   "support.contact.emailLink": "mailto:support@drivercheck.eu"
 }
+
+    

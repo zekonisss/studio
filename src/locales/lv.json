@@ -713,7 +713,7 @@
   "support.faq.q1.question": "Kā reģistrēties DriverCheck platformā?",
   "support.faq.q1.answer": "Lai reģistrētos, galvenajā lapā noklikšķiniet uz 'Reģistrēties', aizpildiet nepieciešamos uzņēmuma un kontaktinformācijas datus, piekrītiet noteikumiem un apstipriniet savu e-pastu.",
   "support.faq.q2.question": "Cik maksā DriverCheck abonements?",
-  "support.faq.q2.answer": "Gada DriverCheck abonements maksā 1188 €. Piekļuve sistēmai tiek piešķirta tikai pēc veiksmīga maksājuma.",
+  "support.faq.q2.answer": "Gada DriverCheck abonements maksā 359.99€ vai 29.99€/mēn. Piekļuve sistēmai tiek piešķirta tikai pēc veiksmīga maksājuma.",
   "support.faq.q3.question": "Kādu informāciju es varu atrast par vadītājiem?",
   "support.faq.q3.answer": "Meklēšanas rezultātos jūs varat redzēt vadītāja vārdu, uzvārdu, dzimšanas gadu (ja norādīts), ziņojumu kategorijas, tagus, komentārus un pievienotos failus/fotoattēlus, ja tādi ir.",
   "support.faq.q4.question": "Vai es varu rediģēt vai dzēst citu lietotāju ievadīto informāciju?",
@@ -727,3 +727,5 @@
   "support.contact.emailButton": "Sazināties pa E-pastu",
   "support.contact.emailLink": "mailto:support@drivercheck.eu"
 }
+
+    
