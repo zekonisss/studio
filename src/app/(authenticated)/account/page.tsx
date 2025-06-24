@@ -76,7 +76,7 @@ export default function AccountPage() {
       fetchUserReports();
     }
     const tab = searchParams.get('tab');
-    if (tab && ["details", "reports", "deleted-reports", "searches", "payment", "notifications"].includes(tab)) {
+    if (tab && ["details", "reports", "searches", "payment", "notifications"].includes(tab)) {
         setActiveTab(tab);
     }
   }, [user, searchParams, fetchNotifications, fetchUserReports]);
@@ -163,10 +163,9 @@ export default function AccountPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={onTabChange} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-6 mb-6">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-5 mb-6">
           <TabsTrigger value="details" className="text-base py-2.5">{t('account.tabs.details')}</TabsTrigger>
           <TabsTrigger value="reports" className="text-base py-2.5">{t('account.tabs.myEntries')}</TabsTrigger>
-          <TabsTrigger value="deleted-reports" className="text-base py-2.5 flex items-center"><Archive className="mr-2 h-4 w-4" />{t('account.tabs.deletedEntries')}</TabsTrigger>
           <TabsTrigger value="searches" className="text-base py-2.5">{t('account.tabs.searchHistory')}</TabsTrigger>
           <TabsTrigger value="payment" className="text-base py-2.5">{t('account.tabs.payments')}</TabsTrigger>
           <TabsTrigger value="notifications" className="text-base py-2.5 flex items-center">
@@ -235,9 +234,7 @@ export default function AccountPage() {
                 )}
             </CardFooter>
           </Card>
-        </TabsContent>
-        
-        <TabsContent value="deleted-reports" className="space-y-6">
+          
            <Card className="shadow-xl">
             <CardHeader>
               <CardTitle className="text-xl flex items-center"><Archive className="mr-2 h-5 w-5 text-primary"/>{t('account.entries.deletedTitle')}</CardTitle>
@@ -264,6 +261,7 @@ export default function AccountPage() {
             </CardContent>
           </Card>
         </TabsContent>
+        
 
         <TabsContent value="searches">
           <Card className="shadow-xl">
