@@ -215,18 +215,22 @@ export default function DashboardPage() {
           <CardContent>
             {recentReports.length > 0 ? (
                 <ul className="space-y-4">
-                    {recentReports.map(report => (
-                        <li key={report.id} className="flex items-center justify-between p-3 rounded-md hover:bg-muted/30 transition-colors border">
-                            <div>
-                                <p className="font-semibold">{report.fullName}</p>
-                                <p className="text-xs text-muted-foreground">{t('dashboard.recentReports.submittedBy')} {report.reporterCompanyName || t('common.notSpecified')}</p>
-                            </div>
-                            <div className="text-right flex-shrink-0 ml-2">
-                                <Badge variant="secondary" className="whitespace-nowrap">{getCategoryNameForDisplay(report.category, t)}</Badge>
-                                <p className="text-xs text-muted-foreground mt-1">{formatDateFn(report.createdAt, "yyyy-MM-dd", { locale: dateLocale })}</p>
-                            </div>
-                        </li>
-                    ))}
+                  {recentReports.map(report => (
+                    <li key={report.id} className="flex items-start justify-between gap-4 p-3 rounded-md hover:bg-muted/30 transition-colors border">
+                        <div className="flex-1 min-w-0">
+                            <p className="font-semibold">{report.fullName}</p>
+                            <p className="text-xs text-muted-foreground">{t('dashboard.recentReports.submittedBy')} {report.reporterCompanyName || t('common.notSpecified')}</p>
+                        </div>
+                        <div className="text-right shrink-0">
+                            <Badge variant="secondary" className="whitespace-normal text-right">
+                                {getCategoryNameForDisplay(report.category, t)}
+                            </Badge>
+                            <p className="text-xs text-muted-foreground mt-1">
+                                {formatDateFn(report.createdAt, "yyyy-MM-dd", { locale: dateLocale })}
+                            </p>
+                        </div>
+                    </li>
+                  ))}
                 </ul>
             ) : (
                 <div className="text-center text-muted-foreground py-4">
