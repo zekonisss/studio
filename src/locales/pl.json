@@ -121,7 +121,7 @@
   "account.entries.noEntries": "Nie znaleziono wpisów.",
   "account.entries.viewAllButton": "Zobacz Wszystkie Wpisy",
   "account.entries.deletedTitle": "Twoje Usunięte Wpisy",
-  "account.entries.deletedDescription": "Tutaj wyświetlane są wpisy, które usunąłeś. Widzisz je tylko Ty i administrator.",
+  "account.entries.deletedDescription": "Tutaj wyświetlane są wpisy, które usunąłeś.",
   "account.entries.noDeletedEntries": "Nie znaleziono usuniętych wpisów.",
   "account.entries.deletedOn": "Usunięto",
   "account.searchHistory.title": "Twoja Historia Wyszukiwania",

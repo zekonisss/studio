@@ -121,7 +121,7 @@
   "account.entries.noEntries": "Įrašų nerasta.",
   "account.entries.viewAllButton": "Žiūrėti Visus Įrašus",
   "account.entries.deletedTitle": "Jūsų Ištrinti Įrašai",
-  "account.entries.deletedDescription": "Čia rodomi įrašai, kuriuos ištrynėte. Juos matote tik jūs ir administratorius.",
+  "account.entries.deletedDescription": "Čia rodomi įrašai, kuriuos ištrynėte.",
   "account.entries.noDeletedEntries": "Ištrintų įrašų nerasta.",
   "account.entries.deletedOn": "Ištrinta",
   "account.searchHistory.title": "Jūsų Paieškų Istorija",

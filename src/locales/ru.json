@@ -121,7 +121,7 @@
   "account.entries.noEntries": "Записей не найдено.",
   "account.entries.viewAllButton": "Посмотреть Все Записи",
   "account.entries.deletedTitle": "Ваши Удаленные Записи",
-  "account.entries.deletedDescription": "Здесь отображаются записи, которые вы удалили. Их видите только вы и администратор.",
+  "account.entries.deletedDescription": "Здесь отображаются записи, которые вы удалили.",
   "account.entries.noDeletedEntries": "Удаленных записей не найдено.",
   "account.entries.deletedOn": "Удалено",
   "account.searchHistory.title": "Ваша История Поиска",

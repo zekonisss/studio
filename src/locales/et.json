@@ -121,7 +121,7 @@
   "account.entries.noEntries": "Kirjeid ei leitud.",
   "account.entries.viewAllButton": "Vaata kõiki kirjeid",
   "account.entries.deletedTitle": "Sinu Kustutatud Kirjed",
-  "account.entries.deletedDescription": "Siin kuvatakse sinu kustutatud kirjed. Neid näed ainult sina ja administraator.",
+  "account.entries.deletedDescription": "Siin kuvatakse sinu kustutatud kirjed.",
   "account.entries.noDeletedEntries": "Kustutatud kirjeid ei leitud.",
   "account.entries.deletedOn": "Kustutatud",
   "account.searchHistory.title": "Sinu otsinguajalugu",

@@ -121,7 +121,7 @@
   "account.entries.noEntries": "No entries found.",
   "account.entries.viewAllButton": "View All Entries",
   "account.entries.deletedTitle": "Your Deleted Entries",
-  "account.entries.deletedDescription": "Here are the entries you have deleted. Only you and the administrator can see them.",
+  "account.entries.deletedDescription": "Here are the entries you have deleted.",
   "account.entries.noDeletedEntries": "No deleted entries found.",
   "account.entries.deletedOn": "Deleted on",
   "account.searchHistory.title": "Your Search History",
