@@ -46,6 +46,7 @@ export interface Report {
   imageUrl?: string;
   dataAiHint?: string;
   createdAt: Date;
+  deletedAt?: string; // ISO date string when the report was soft-deleted
 }
 
 export interface SearchLog {
@@ -808,4 +809,3 @@ export function getCategoryNameForDisplay(categoryId: string, t: (key: string) =
   const category = detailedReportCategories.find(c => c.id === categoryId);
   return category ? t(category.nameKey) : categoryId;
 }
-

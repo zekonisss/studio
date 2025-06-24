@@ -107,7 +107,8 @@ export default function AdminPage() {
 
       const localReports = getReportsFromLocalStorage();
       const combined = combineAndDeduplicateReports(localReports, MOCK_GENERAL_REPORTS);
-      setAllReports(combined.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+      // Only show active reports in the admin panel by default
+      setAllReports(combined.filter(r => !r.deletedAt).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
       
       const fetchedAuditLogs = getAuditLogsFromLocalStorage();
       setAuditLogs(fetchedAuditLogs.sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime() ));
@@ -119,8 +120,8 @@ export default function AdminPage() {
   const categoryReportCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     detailedReportCategories.forEach(cat => counts[cat.id] = 0);
-
-    allReports.forEach(report => {
+    // Only count active reports for stats
+    allReports.filter(r => !r.deletedAt).forEach(report => {
       if (counts[report.category] !== undefined) {
         counts[report.category]++;
       } else {
@@ -345,13 +346,16 @@ export default function AdminPage() {
   const handleDeleteReport = async (reportId: string, reportFullName: string) => {
     setDeletingReportId(reportId);
     await new Promise(resolve => setTimeout(resolve, 700));
-    const updatedReports = allReports.filter(report => report.id !== reportId);
-    setAllReports(updatedReports);
-    const localReports = getReportsFromLocalStorage();
-    const updatedLocalReports = localReports.filter(report => report.id !== reportId);
-    if (localReports.length !== updatedLocalReports.length) {
-      saveReportsToLocalStorage(updatedLocalReports);
-    }
+
+    // Soft delete the report
+    const allLocalReports = getReportsFromLocalStorage();
+    const updatedLocalReports = allLocalReports.map(report => 
+      report.id === reportId ? { ...report, deletedAt: new Date().toISOString() } : report
+    );
+    saveReportsToLocalStorage(updatedLocalReports);
+    
+    // Update the state to remove it from the admin view
+    setAllReports(prevReports => prevReports.filter(report => report.id !== reportId));
 
     logAdminAction("auditLog.action.reportDeleted", { 
       reportId: reportId,
@@ -367,11 +371,18 @@ export default function AdminPage() {
   
   const handleDeleteAllReports = async () => {
     setIsDeletingAllReports(true);
-    const reportsToDeleteCount = allReports.length; 
+    const reportsToSoftDelete = getReportsFromLocalStorage().filter(r => !r.deletedAt);
+    const reportsToDeleteCount = reportsToSoftDelete.length;
     await new Promise(resolve => setTimeout(resolve, 700)); 
 
-    saveReportsToLocalStorage([]); 
-    setAllReports([]); 
+    const allReports = getReportsFromLocalStorage();
+    const updatedReports = allReports.map(r => 
+        reportsToSoftDelete.find(toDelete => toDelete.id === r.id) 
+            ? { ...r, deletedAt: new Date().toISOString() } 
+            : r
+    );
+    saveReportsToLocalStorage(updatedReports);
+    setAllReports([]); // Clear from view
 
     logAdminAction("auditLog.action.allReportsDeleted", { count: reportsToDeleteCount });
 

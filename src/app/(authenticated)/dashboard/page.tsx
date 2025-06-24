@@ -40,18 +40,20 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const fetchStats = () => {
-      const localPlatformReports = getReportsFromLocalStoragePublic();
-      const combinedPlatformReports = combineAndDeduplicateReports(localPlatformReports, MOCK_GENERAL_REPORTS);
+      const allLocalReports = getReportsFromLocalStoragePublic();
+      const activeReports = allLocalReports.filter(r => !r.deletedAt);
+      
+      const combinedPlatformReports = combineAndDeduplicateReports(activeReports, MOCK_GENERAL_REPORTS.filter(r => !r.deletedAt));
       setTotalReportsCount(combinedPlatformReports.length);
       setRecentReports(combinedPlatformReports.slice(0, 4));
 
       if (user) {
-        const allLocalReports = getReportsFromLocalStoragePublic(); 
-        let userSpecificReports = allLocalReports.filter(r => r.reporterId === user.id);
+        // Count only active reports submitted by the user
+        let userSpecificReports = activeReports.filter(r => r.reporterId === user.id);
         
         if (user.id === MOCK_USER.id) {
           const mockUserReportsNotInLocal = MOCK_USER_REPORTS.filter(
-            mr => !userSpecificReports.some(lsr => lsr.id === mr.id)
+            mr => !mr.deletedAt && !userSpecificReports.some(lsr => lsr.id === mr.id)
           );
           userSpecificReports = [...userSpecificReports, ...mockUserReportsNotInLocal];
         }

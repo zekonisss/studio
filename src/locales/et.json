@@ -120,6 +120,10 @@
   "account.entries.submittedOn": "Esitatud",
   "account.entries.noEntries": "Kirjeid ei leitud.",
   "account.entries.viewAllButton": "Vaata kõiki kirjeid",
+  "account.entries.deletedTitle": "Sinu Kustutatud Kirjed",
+  "account.entries.deletedDescription": "Siin kuvatakse sinu kustutatud kirjed. Neid näed ainult sina ja administraator.",
+  "account.entries.noDeletedEntries": "Kustutatud kirjeid ei leitud.",
+  "account.entries.deletedOn": "Kustutatud",
   "account.searchHistory.title": "Sinu otsinguajalugu",
   "account.searchHistory.description.part1": "Mõned sinu hiljutised otsingud. Täieliku ajaloo leiad ",
   "account.searchHistory.description.link": "siit",
@@ -350,5 +354,3 @@
   "support.contact.emailButton": "Võta ühendust e-posti teel",
   "support.contact.emailLink": "mailto:support@drivercheck.eu"
 }
-
-    

@@ -120,6 +120,10 @@
   "account.entries.submittedOn": "Iesniegts",
   "account.entries.noEntries": "Ierakstu nav atrasts.",
   "account.entries.viewAllButton": "Skatīt Visus Ierakstus",
+  "account.entries.deletedTitle": "Jūsu Dzēstie Ieraksti",
+  "account.entries.deletedDescription": "Šeit tiek rādīti ieraksti, kurus esat dzēsis. Tos redzat tikai jūs un administrators.",
+  "account.entries.noDeletedEntries": "Dzēstu ierakstu nav atrasts.",
+  "account.entries.deletedOn": "Dzēsts",
   "account.searchHistory.title": "Jūsu Meklēšanas Vēsture",
   "account.searchHistory.description.part1": "Daži no jūsu pēdējiem meklējumiem. Pilnu vēsturi varat atrast ",
   "account.searchHistory.description.link": "šeit",
@@ -723,5 +727,3 @@
   "support.contact.emailButton": "Sazināties pa E-pastu",
   "support.contact.emailLink": "mailto:support@drivercheck.eu"
 }
-
-    

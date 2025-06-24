@@ -120,6 +120,10 @@
   "account.entries.submittedOn": "Pateikta",
   "account.entries.noEntries": "Įrašų nerasta.",
   "account.entries.viewAllButton": "Žiūrėti Visus Įrašus",
+  "account.entries.deletedTitle": "Jūsų Ištrinti Įrašai",
+  "account.entries.deletedDescription": "Čia rodomi įrašai, kuriuos ištrynėte. Juos matote tik jūs ir administratorius.",
+  "account.entries.noDeletedEntries": "Ištrintų įrašų nerasta.",
+  "account.entries.deletedOn": "Ištrinta",
   "account.searchHistory.title": "Jūsų Paieškų Istorija",
   "account.searchHistory.description.part1": "Keletas jūsų naujausių paieškų. Išsamią istoriją rasite ",
   "account.searchHistory.description.link": "čia",
@@ -723,5 +727,3 @@
   "support.contact.emailButton": "Susisiekti El. Paštu",
   "support.contact.emailLink": "mailto:pagalba@drivercheck.eu"
 }
-
-    

@@ -124,7 +124,7 @@ export default function ReportHistoryPage() {
         setIsLoading(true);
         await new Promise(resolve => setTimeout(resolve, 500));
 
-        const localUserReports = getReportsFromLocalStorage().filter(r => r.reporterId === user.id);
+        const localUserReports = getReportsFromLocalStorage().filter(r => r.reporterId === user.id && !r.deletedAt);
         let combinedReportsForUser = [...localUserReports];
 
         const mockUserReportsWithKeys = MOCK_USER_REPORTS.map(report => ({
@@ -132,7 +132,7 @@ export default function ReportHistoryPage() {
         }));
 
         if (user.id === MOCK_USER.id) {
-          const userSpecificMocks = mockUserReportsWithKeys.filter(mr => mr.reporterId === user.id);
+          const userSpecificMocks = mockUserReportsWithKeys.filter(mr => mr.reporterId === user.id && !mr.deletedAt);
           userSpecificMocks.forEach(mockReport => {
             if (!combinedReportsForUser.some(lr => lr.id === mockReport.id)) {
               combinedReportsForUser.push(mockReport);
@@ -154,9 +154,13 @@ export default function ReportHistoryPage() {
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     const allLocalReports = getReportsFromLocalStorage();
-    const updatedLocalReports = allLocalReports.filter(report => report.id !== reportId);
+    // Soft delete by setting deletedAt timestamp
+    const updatedLocalReports = allLocalReports.map(report => 
+        report.id === reportId ? { ...report, deletedAt: new Date().toISOString() } : report
+    );
     saveReportsToLocalStorage(updatedLocalReports);
 
+    // Remove from the current view
     setReports(prevReports => prevReports.filter(report => report.id !== reportId));
 
     toast({

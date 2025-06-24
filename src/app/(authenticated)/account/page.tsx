@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
-import { Loader2, UserCircle, Building2, Briefcase, MapPin, User as UserIcon, Mail, Phone, History, ListChecks, Edit3, Save, CreditCard, ShieldCheck, CalendarDays, Percent, AlertTriangle, UserCog, Bell, Check, BellOff } from "lucide-react";
+import { Loader2, UserCircle, Building2, Briefcase, MapPin, User as UserIcon, Mail, Phone, History, ListChecks, Edit3, Save, CreditCard, ShieldCheck, CalendarDays, Percent, AlertTriangle, UserCog, Bell, Check, BellOff, Archive, ArchiveRestore } from "lucide-react";
 import type { Report, SearchLog, UserProfile, UserNotification } from "@/types";
 import { format as formatDateFn, addYears } from "date-fns";
 import { lt, enUS } from "date-fns/locale";
@@ -18,16 +18,6 @@ import Link from "next/link";
 import * as types from "@/types"; 
 import { useLanguage } from '@/contexts/language-context';
 
-
-// Mock data for initial display in Account page (limited view)
-const mockUserReportsLimited: Report[] = [
-  { id: "report-user-1", reporterId: "dev-user-123", reporterCompanyName: 'UAB "DriverCheck Demo"', fullName: "Antanas Antanaitis", birthYear: 1992, category: "behavior", tags: ["konfliktiskas_asmuo", "kita_tag"], comment: "Vairuotojas buvo nemandagus su klientu.", createdAt: new Date("2024-02-20T09:15:00Z") },
-  { id: "report-user-2", reporterId: "dev-user-123", reporterCompanyName: 'UAB "DriverCheck Demo"', fullName: "Zita Zitaite", category: "driving_safety", tags: ["avaringumas", "kita_tag"], comment: "GPS rodo greičio viršijimą.", createdAt: new Date("2024-01-10T16:45:00Z") },
-];
-const mockSearchLogsLimited: SearchLog[] = [
-  { id: "log1", userId: "dev-user-123", searchText: "Jonas Jonaitis", timestamp: new Date("2024-03-10T10:00:00Z"), resultsCount: 2 },
-  { id: "log3", userId: "dev-user-123", searchText: "Petras Petraitis", timestamp: new Date("2024-03-09T11:20:00Z"), resultsCount: 1 },
-];
 
 export default function AccountPage() {
   const { user, loading: authLoading, updateUserInContext } = useAuth();
@@ -46,8 +36,24 @@ export default function AccountPage() {
   });
   const [activeTab, setActiveTab] = useState("details");
   const [notifications, setNotifications] = useState<UserNotification[]>([]);
+
+  const [userReports, setUserReports] = useState<Report[]>([]);
+  const [deletedUserReports, setDeletedUserReports] = useState<Report[]>([]);
   
   const dateLocale = locale === 'en' ? enUS : lt;
+
+  const fetchUserReports = useCallback(() => {
+    if (user) {
+      const allReports = types.getReportsFromLocalStoragePublic();
+      const allUserReports = allReports.filter(r => r.reporterId === user.id);
+      
+      const active = allUserReports.filter(r => !r.deletedAt).sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      const deleted = allUserReports.filter(r => !!r.deletedAt).sort((a,b) => new Date(b.deletedAt!).getTime() - new Date(a.deletedAt!).getTime());
+      
+      setUserReports(active);
+      setDeletedUserReports(deleted);
+    }
+  }, [user]);
 
   const fetchNotifications = useCallback(() => {
     if (user) {
@@ -67,12 +73,13 @@ export default function AccountPage() {
         phone: user.phone,
       });
       fetchNotifications();
+      fetchUserReports();
     }
     const tab = searchParams.get('tab');
     if (tab && ["details", "reports", "searches", "payment", "notifications"].includes(tab)) {
         setActiveTab(tab);
     }
-  }, [user, searchParams, fetchNotifications]);
+  }, [user, searchParams, fetchNotifications, fetchUserReports]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -197,16 +204,16 @@ export default function AccountPage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="reports">
+        <TabsContent value="reports" className="space-y-6">
           <Card className="shadow-xl">
             <CardHeader>
               <CardTitle className="text-xl flex items-center"><History className="mr-2 h-5 w-5 text-primary"/>{t('account.entries.title')}</CardTitle>
               <CardDescription>{t('account.entries.description.part1')} <Link href="/reports/history" className="text-primary hover:underline">{t('account.entries.description.link')}</Link>{t('account.entries.description.part2')}</CardDescription>
             </CardHeader>
             <CardContent>
-              {mockUserReportsLimited.length > 0 ? (
+              {userReports.length > 0 ? (
                 <ul className="space-y-4">
-                  {mockUserReportsLimited.slice(0, 3).map(report => (
+                  {userReports.slice(0, 3).map(report => (
                     <li key={report.id} className="p-4 border rounded-md hover:bg-muted/30 transition-colors">
                       <div className="flex justify-between items-start">
                         <h4 className="font-semibold text-foreground">{report.fullName}</h4>
@@ -220,12 +227,38 @@ export default function AccountPage() {
               ) : <p className="text-muted-foreground">{t('account.entries.noEntries')}</p>}
             </CardContent>
             <CardFooter className="border-t pt-6 flex justify-end">
-                {mockUserReportsLimited.length > 3 && (
+                {userReports.length > 3 && (
                     <Button variant="outline" asChild>
                         <Link href="/reports/history">{t('account.entries.viewAllButton')}</Link>
                     </Button>
                 )}
             </CardFooter>
+          </Card>
+
+          <Card className="shadow-xl">
+            <CardHeader>
+              <CardTitle className="text-xl flex items-center"><Archive className="mr-2 h-5 w-5 text-primary"/>{t('account.entries.deletedTitle')}</CardTitle>
+              <CardDescription>{t('account.entries.deletedDescription')}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {deletedUserReports.length > 0 ? (
+                <ul className="space-y-4">
+                  {deletedUserReports.map(report => (
+                    <li key={report.id} className="p-4 border rounded-md hover:bg-muted/30 transition-colors opacity-70">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h4 className="font-semibold text-foreground">{report.fullName}</h4>
+                          <p className="text-xs text-muted-foreground mt-1">{t('account.entries.deletedOn')}: {formatDateFn(new Date(report.deletedAt!), "yyyy-MM-dd HH:mm", { locale: dateLocale })}</p>
+                        </div>
+                        <Badge variant="destructive">{types.getCategoryNameForDisplay(report.category, t)}</Badge> 
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-muted-foreground">{t('account.entries.noDeletedEntries')}</p>
+              )}
+            </CardContent>
           </Card>
         </TabsContent>
 
@@ -236,26 +269,13 @@ export default function AccountPage() {
               <CardDescription>{t('account.searchHistory.description.part1')} <Link href="/search/history" className="text-primary hover:underline">{t('account.searchHistory.description.link')}</Link>{t('account.searchHistory.description.part2')}</CardDescription>
             </CardHeader>
             <CardContent>
-              {mockSearchLogsLimited.length > 0 ? (
-                <ul className="space-y-3">
-                  {mockSearchLogsLimited.slice(0, 5).map(log => (
-                    <li key={log.id} className="flex justify-between items-center p-3 border rounded-md hover:bg-muted/30 transition-colors">
-                      <span className="font-medium text-foreground">{log.searchText}</span>
-                      <div className="flex items-center gap-x-4">
-                        <Badge variant={log.resultsCount > 0 ? "default" : "outline"}>{log.resultsCount} {t('account.searchHistory.resultsSuffix')}</Badge>
-                        <span className="text-sm text-muted-foreground">{formatDateFn(log.timestamp, "yyyy-MM-dd HH:mm", { locale: dateLocale })}</span>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              ) : <p className="text-muted-foreground">{t('account.searchHistory.noHistory')}</p>}
+              {/* This part uses mock data, should be replaced with real data fetching in the future if needed */}
+              <p className="text-muted-foreground">{t('account.searchHistory.noHistory')}</p>
             </CardContent>
              <CardFooter className="border-t pt-6 flex justify-end">
-                {mockSearchLogsLimited.length > 5 && (
-                     <Button variant="outline" asChild>
-                        <Link href="/search/history">{t('account.searchHistory.viewAllButton')}</Link>
-                    </Button>
-                )}
+                <Button variant="outline" asChild>
+                    <Link href="/search/history">{t('account.searchHistory.viewAllButton')}</Link>
+                </Button>
             </CardFooter>
           </Card>
         </TabsContent>

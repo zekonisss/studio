@@ -120,6 +120,10 @@
   "account.entries.submittedOn": "Zgłoszono",
   "account.entries.noEntries": "Nie znaleziono wpisów.",
   "account.entries.viewAllButton": "Zobacz Wszystkie Wpisy",
+  "account.entries.deletedTitle": "Twoje Usunięte Wpisy",
+  "account.entries.deletedDescription": "Tutaj wyświetlane są wpisy, które usunąłeś. Widzisz je tylko Ty i administrator.",
+  "account.entries.noDeletedEntries": "Nie znaleziono usuniętych wpisów.",
+  "account.entries.deletedOn": "Usunięto",
   "account.searchHistory.title": "Twoja Historia Wyszukiwania",
   "account.searchHistory.description.part1": "Niektóre z Twoich ostatnich wyszukiwań. Pełną historię znajdziesz ",
   "account.searchHistory.description.link": "tutaj",
@@ -723,5 +727,3 @@
   "support.contact.emailButton": "Skontaktuj się przez e-mail",
   "support.contact.emailLink": "mailto:support@drivercheck.eu"
 }
-
-    

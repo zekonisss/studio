@@ -120,6 +120,10 @@
   "account.entries.submittedOn": "Отправлено",
   "account.entries.noEntries": "Записей не найдено.",
   "account.entries.viewAllButton": "Посмотреть Все Записи",
+  "account.entries.deletedTitle": "Ваши Удаленные Записи",
+  "account.entries.deletedDescription": "Здесь отображаются записи, которые вы удалили. Их видите только вы и администратор.",
+  "account.entries.noDeletedEntries": "Удаленных записей не найдено.",
+  "account.entries.deletedOn": "Удалено",
   "account.searchHistory.title": "Ваша История Поиска",
   "account.searchHistory.description.part1": "Некоторые из ваших недавних поисков. Полную историю можно найти ",
   "account.searchHistory.description.link": "здесь",
@@ -723,5 +727,3 @@
   "support.contact.emailButton": "Связаться по электронной почте",
   "support.contact.emailLink": "mailto:support@drivercheck.eu"
 }
-
-    

@@ -120,6 +120,10 @@
   "account.entries.submittedOn": "Submitted",
   "account.entries.noEntries": "No entries found.",
   "account.entries.viewAllButton": "View All Entries",
+  "account.entries.deletedTitle": "Your Deleted Entries",
+  "account.entries.deletedDescription": "Here are the entries you have deleted. Only you and the administrator can see them.",
+  "account.entries.noDeletedEntries": "No deleted entries found.",
+  "account.entries.deletedOn": "Deleted on",
   "account.searchHistory.title": "Your Search History",
   "account.searchHistory.description.part1": "Some of your recent searches. Full history can be found ",
   "account.searchHistory.description.link": "here",
@@ -721,5 +725,3 @@
   "support.contact.emailButton": "Contact via Email",
   "support.contact.emailLink": "mailto:support@drivercheck.eu"
 }
-
-    

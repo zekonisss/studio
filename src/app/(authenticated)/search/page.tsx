@@ -103,8 +103,10 @@ export default function SearchPage() {
       tags: Array.isArray(report.tags) ? report.tags.map(migrateTagIfNeeded) : [],
     }));
 
-    const combinedDataSource = combineAndDeduplicateReports(migratedLocalReports, MOCK_GENERAL_REPORTS.map(r => ({...r, createdAt: new Date(r.createdAt)})));
-
+    // Filter out deleted reports and combine with mock data
+    const activeLocalReports = migratedLocalReports.filter(r => !r.deletedAt);
+    const activeMockReports = MOCK_GENERAL_REPORTS.filter(r => !r.deletedAt);
+    const combinedDataSource = combineAndDeduplicateReports(activeLocalReports, activeMockReports.map(r => ({...r, createdAt: new Date(r.createdAt)})));
 
     const query = values.query.toLowerCase().trim();
     let results: Report[] = [];
