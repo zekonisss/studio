@@ -80,16 +80,13 @@ export function getAllReports(): Report[] {
   return Array.from(uniqueReportsMap.values()).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 }
 
-export function getUserReports(userId: string): { active: Report[], deleted: Report[] } {
-  const allUserReports = getLocalReports().filter(r => r.reporterId === userId);
-  const active = allUserReports.filter(r => !r.deletedAt).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  const deleted = allUserReports.filter(r => !!r.deletedAt).sort((a, b) => new Date(b.deletedAt!).getTime() - new Date(a.deletedAt!).getTime());
-  return { active, deleted };
-}
-
 export function addReport(report: Report): void {
   const reports = getLocalReports();
   reports.push(report);
+  saveLocalReports(reports);
+}
+
+export function saveAllReports(reports: Report[]): void {
   saveLocalReports(reports);
 }
 
@@ -109,6 +106,13 @@ export function softDeleteAllReports(): number {
   );
   saveLocalReports(updatedReports);
   return reportsToDelete.length;
+}
+
+export function getUserReports(userId: string): { active: Report[], deleted: Report[] } {
+  const allUserReports = getLocalReports().filter(r => r.reporterId === userId);
+  const active = allUserReports.filter(r => !r.deletedAt).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  const deleted = allUserReports.filter(r => !!r.deletedAt).sort((a, b) => new Date(b.deletedAt!).getTime() - new Date(a.deletedAt!).getTime());
+  return { active, deleted };
 }
 
 // --- Search Log Management ---

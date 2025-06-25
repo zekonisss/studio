@@ -13,7 +13,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/language-context";
 import type { Report, DetailedCategory } from '@/types';
 import { categorizeReport } from '@/ai/flows/categorize-report-flow';
-import { getReportsFromLocalStoragePublic, saveReportsToLocalStoragePublic, detailedReportCategories } from '@/types';
+import { detailedReportCategories } from '@/types';
+import { getAllReports, saveAllReports } from '@/lib/storage';
 import { useRouter } from "next/navigation";
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -292,7 +293,7 @@ export default function ImportReportsPage() {
 
     setIsImporting(true);
     try {
-      const existingReports = getReportsFromLocalStoragePublic();
+      const existingReports = getAllReports();
       const newReports: Report[] = completedRows.map(row => ({
         id: `imported-${Date.now()}-${Math.random().toString(36).substring(2, 9)}-${row.id}`,
         reporterId: user.id,
@@ -308,7 +309,7 @@ export default function ImportReportsPage() {
         createdAt: row.reportPreview.createdAt || new Date(),
       }));
 
-      saveReportsToLocalStoragePublic([...existingReports, ...newReports]);
+      saveAllReports([...existingReports, ...newReports]);
       toast({
         title: t('reports.import.toast.importSuccess.title'),
         description: t('reports.import.toast.importSuccess.description', { count: newReports.length }),
@@ -439,5 +440,3 @@ export default function ImportReportsPage() {
     </div>
   );
 }
-
-    
