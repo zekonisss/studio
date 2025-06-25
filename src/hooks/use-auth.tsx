@@ -1,13 +1,14 @@
 
 "use client";
 
-import type { UserProfile, SubUserProfile } from '@/types';
+import type { UserProfile } from '@/types';
 import type { LoginFormValues, SignUpFormValues } from '@/lib/schemas';
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { MOCK_USER, getAllUsers, saveAllUsers } from '@/types';
 import { useToast } from '@/hooks/use-toast';
-import { useLanguage } from '@/contexts/language-context'; // Import useLanguage
+import { useLanguage } from '@/contexts/language-context';
+import * as storage from '@/lib/storage';
+import { MOCK_USER } from '@/lib/mock-data';
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -26,16 +27,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const { toast } = useToast();
-  const { t } = useLanguage(); // Get translation function
+  const { t } = useLanguage(); 
 
   useEffect(() => {
     const checkAuthState = async () => {
       setLoading(true);
-      const storedUserJson = localStorage.getItem('driverCheckUser'); // Updated key
+      const storedUserJson = localStorage.getItem('driverCheckUser'); 
       if (storedUserJson) {
         try {
           const storedUser = JSON.parse(storedUserJson);
-          const allSystemUsers = getAllUsers();
+          const allSystemUsers = storage.getAllUsers();
           const currentUserData = allSystemUsers.find(u => u.id === storedUser.id);
 
           if (currentUserData) {
@@ -66,7 +67,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       await new Promise(resolve => setTimeout(resolve, 1000));
 
-      const allSystemUsers = getAllUsers();
+      const allSystemUsers = storage.getAllUsers();
       const foundUser = allSystemUsers.find(u => u.email === values.email);
 
       let loginError: { messageKey: string, isAuthManagedError?: boolean } | null = null;
@@ -133,7 +134,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
         await new Promise(resolve => setTimeout(resolve, 1000));
 
-        const allUsers = getAllUsers();
+        const allUsers = storage.getAllUsers();
         if (allUsers.some(u => u.email === values.email)) {
           toast({
             variant: "destructive",
@@ -165,24 +166,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           throw error;
         }
 
-
-        const newUserId = `user-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
-        const subUsersList: SubUserProfile[] = [];
-
-        if (values.addOneSubUser && values.subUserName && values.subUserEmail && values.subUserPassword) {
-            const subUserId = `subuser-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-            subUsersList.push({
-                id: subUserId,
-                fullName: values.subUserName,
-                email: values.subUserEmail,
-                // For now, using the main user's password for sub-user. In a real app, this should be handled differently.
-                // Or, use values.subUserPassword if it's intended for the sub-user to have a distinct one set at creation.
-                tempPassword: values.subUserPassword, // Using the password provided in the form for the sub-user
-            });
-        }
-
         const newUserProfile: UserProfile = {
-          id: newUserId,
+          id: `user-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
           companyName: values.companyName,
           companyCode: values.companyCode,
           vatCode: values.vatCode || undefined,
@@ -196,11 +181,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           registeredAt: new Date().toISOString(),
           accountActivatedAt: undefined,
           agreeToTerms: values.agreeToTerms,
-          subUsers: subUsersList,
+          subUsers: [],
         };
-
+        
+        if (values.addOneSubUser && values.subUserName && values.subUserEmail && values.subUserPassword) {
+            newUserProfile.subUsers?.push({
+                id: `subuser-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+                fullName: values.subUserName,
+                email: values.subUserEmail,
+                tempPassword: values.subUserPassword,
+            });
+        }
+        
         const updatedUsers = [...allUsers, newUserProfile];
-        saveAllUsers(updatedUsers);
+        storage.saveAllUsers(updatedUsers);
 
         toast({
           title: t('toast.signup.success.title'),
@@ -237,9 +231,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const sendVerificationEmail = async () => {
-    // console.log("Simulating admin notification / user pending state...");
     await new Promise(resolve => setTimeout(resolve, 1000));
-    // Potentially add a toast here for "Verification email resent"
   };
 
   return (

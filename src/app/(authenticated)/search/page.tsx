@@ -16,7 +16,8 @@ import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { format } from 'date-fns';
 import { lt, enUS } from 'date-fns/locale'; 
-import { MOCK_GENERAL_REPORTS, combineAndDeduplicateReports, countries, getReportsFromLocalStoragePublic, getSearchLogsFromLocalStoragePublic, saveSearchLogsToLocalStoragePublic, detailedReportCategories, DESTRUCTIVE_REPORT_MAIN_CATEGORIES, migrateTagIfNeeded } from "@/types";
+import { countries, detailedReportCategories, DESTRUCTIVE_REPORT_MAIN_CATEGORIES, migrateTagIfNeeded } from "@/types";
+import * as storage from '@/lib/storage';
 import { useLanguage } from "@/contexts/language-context"; 
 
 export default function SearchPage() {
@@ -53,17 +54,10 @@ export default function SearchPage() {
     setSearchPerformed(true);
     await new Promise(resolve => setTimeout(resolve, 1000));
 
-    const allLocalReportsRaw = getReportsFromLocalStoragePublic();
-    const migratedLocalReports = allLocalReportsRaw.map(report => ({
+    const combinedDataSource = storage.getAllReports().map(report => ({
       ...report,
-      createdAt: new Date(report.createdAt), // Ensure createdAt is a Date object
       tags: Array.isArray(report.tags) ? report.tags.map(migrateTagIfNeeded) : [],
     }));
-
-    // Filter out deleted reports and combine with mock data
-    const activeLocalReports = migratedLocalReports.filter(r => !r.deletedAt);
-    const activeMockReports = MOCK_GENERAL_REPORTS.filter(r => !r.deletedAt);
-    const combinedDataSource = combineAndDeduplicateReports(activeLocalReports, activeMockReports.map(r => ({...r, createdAt: new Date(r.createdAt)})));
 
     const query = values.query.toLowerCase().trim();
     let results: Report[] = [];
@@ -102,8 +96,7 @@ export default function SearchPage() {
         timestamp: new Date(),
         resultsCount: results.length,
       };
-      const existingLogs = getSearchLogsFromLocalStoragePublic();
-      saveSearchLogsToLocalStoragePublic([newSearchLog, ...existingLogs]);
+      storage.addSearchLog(newSearchLog);
     }
   };
 

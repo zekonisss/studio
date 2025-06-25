@@ -14,7 +14,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Loader2, ShieldAlert, Users, FileText, AlertTriangle, Trash2, Eye, MoreHorizontal, BarChart3, UserCheck, UserX, UserCog, CalendarDays, Building2, Tag, MessageSquare, Image as ImageIcon, CheckCircle2, CreditCard, Send, Briefcase, MapPin, Phone, Mail, ShieldCheck as ShieldCheckIcon, User as UserIcon, Globe, Edit3, Save, XCircle, Percent, Layers, ChevronLeft, ChevronRight, Activity, ListFilter, Trash } from "lucide-react";
 import type { UserProfile, Report, AuditLogEntry } from "@/types";
-import { getAllUsers, saveAllUsers, MOCK_GENERAL_REPORTS, combineAndDeduplicateReports, countries, detailedReportCategories, DESTRUCTIVE_REPORT_MAIN_CATEGORIES, getAuditLogsFromLocalStorage, addAuditLogEntryToLocalStorage, addUserNotification } from "@/types";
+import { countries, detailedReportCategories, DESTRUCTIVE_REPORT_MAIN_CATEGORIES } from "@/types";
+import * as storage from '@/lib/storage';
 import { format as formatDateFn, addYears } from 'date-fns';
 import { lt, enUS } from 'date-fns/locale';
 import { useToast } from "@/hooks/use-toast";
@@ -26,27 +27,7 @@ import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip as RechartsTooltip,
 import { ChartContainer, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-const LOCAL_STORAGE_REPORTS_KEY = 'driverCheckReports';
 const USERS_PER_PAGE = 10; 
-
-function getReportsFromLocalStorage(): Report[] {
-  if (typeof window !== 'undefined') {
-    const reportsJSON = localStorage.getItem(LOCAL_STORAGE_REPORTS_KEY);
-    if (reportsJSON) {
-      return JSON.parse(reportsJSON).map((report: any) => ({
-        ...report,
-        createdAt: new Date(report.createdAt),
-      }));
-    }
-  }
-  return [];
-}
-
-function saveReportsToLocalStorage(reports: Report[]): void {
-  if (typeof window !== 'undefined') {
-    localStorage.setItem(LOCAL_STORAGE_REPORTS_KEY, JSON.stringify(reports));
-  }
-}
 
 export default function AdminPage() {
   const { user: adminUser, loading: authLoading } = useAuth();
@@ -93,7 +74,7 @@ export default function AdminPage() {
       actionKey,
       details,
     };
-    addAuditLogEntryToLocalStorage(newLogEntry);
+    storage.addAuditLogEntry(newLogEntry);
     setAuditLogs(prevLogs => [newLogEntry, ...prevLogs].sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime() ));
   };
 
@@ -102,17 +83,9 @@ export default function AdminPage() {
       router.replace('/dashboard');
     }
     if (adminUser && adminUser.isAdmin) {
-      const fetchedUsers = getAllUsers();
-      setAllUsersState(fetchedUsers); 
-
-      const localReports = getReportsFromLocalStorage();
-      const combined = combineAndDeduplicateReports(localReports, MOCK_GENERAL_REPORTS);
-      // Only show active reports in the admin panel by default
-      setAllReports(combined.filter(r => !r.deletedAt).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
-      
-      const fetchedAuditLogs = getAuditLogsFromLocalStorage();
-      setAuditLogs(fetchedAuditLogs.sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime() ));
-
+      setAllUsersState(storage.getAllUsers());
+      setAllReports(storage.getAllReports().filter(r => !r.deletedAt));
+      setAuditLogs(storage.getAuditLogs().sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime() ));
       setIsLoadingData(false);
     }
   }, [adminUser, authLoading, router]);
@@ -199,7 +172,7 @@ export default function AdminPage() {
       u.id === userId ? { ...u, paymentStatus: newStatus, accountActivatedAt: newAccountActivatedAt } : u
     );
     setAllUsersState(updatedUsers);
-    saveAllUsers(updatedUsers);
+    storage.saveAllUsers(updatedUsers);
 
     logAdminAction("auditLog.action.userStatusChanged", { 
       userId: targetUser.id, 
@@ -209,7 +182,7 @@ export default function AdminPage() {
       newStatus: getStatusText(newStatus) 
     });
 
-    addUserNotification(targetUser.id, {
+    storage.addUserNotification(targetUser.id, {
       type: 'account_status_change',
       titleKey: 'notifications.accountStatusChanged.title',
       messageKey: 'notifications.accountStatusChanged.message',
@@ -311,7 +284,7 @@ export default function AdminPage() {
 
     const updatedUsersList = allUsersState.map(u => u.id === updatedUser.id ? updatedUser : u);
     setAllUsersState(updatedUsersList);
-    saveAllUsers(updatedUsersList);
+    storage.saveAllUsers(updatedUsersList);
     setSelectedUserForDetails(updatedUser);
     setIsEditingUserDetails(false);
     
@@ -347,14 +320,7 @@ export default function AdminPage() {
     setDeletingReportId(reportId);
     await new Promise(resolve => setTimeout(resolve, 700));
 
-    // Soft delete the report
-    const allLocalReports = getReportsFromLocalStorage();
-    const updatedLocalReports = allLocalReports.map(report => 
-      report.id === reportId ? { ...report, deletedAt: new Date().toISOString() } : report
-    );
-    saveReportsToLocalStorage(updatedLocalReports);
-    
-    // Update the state to remove it from the admin view
+    storage.softDeleteReport(reportId);
     setAllReports(prevReports => prevReports.filter(report => report.id !== reportId));
 
     logAdminAction("auditLog.action.reportDeleted", { 
@@ -371,24 +337,15 @@ export default function AdminPage() {
   
   const handleDeleteAllReports = async () => {
     setIsDeletingAllReports(true);
-    const reportsToSoftDelete = getReportsFromLocalStorage().filter(r => !r.deletedAt);
-    const reportsToDeleteCount = reportsToSoftDelete.length;
     await new Promise(resolve => setTimeout(resolve, 700)); 
-
-    const allReports = getReportsFromLocalStorage();
-    const updatedReports = allReports.map(r => 
-        reportsToSoftDelete.find(toDelete => toDelete.id === r.id) 
-            ? { ...r, deletedAt: new Date().toISOString() } 
-            : r
-    );
-    saveReportsToLocalStorage(updatedReports);
+    const deletedCount = storage.softDeleteAllReports();
     setAllReports([]); // Clear from view
 
-    logAdminAction("auditLog.action.allReportsDeleted", { count: reportsToDeleteCount });
+    logAdminAction("auditLog.action.allReportsDeleted", { count: deletedCount });
 
     toast({
       title: t('admin.entries.toast.allEntriesDeleted.title'),
-      description: t('admin.entries.toast.allEntriesDeleted.description', { count: reportsToDeleteCount }),
+      description: t('admin.entries.toast.allEntriesDeleted.description', { count: deletedCount }),
     });
     setIsDeletingAllReports(false);
   };

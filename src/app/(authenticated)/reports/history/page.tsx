@@ -33,7 +33,8 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { MOCK_USER, MOCK_USER_REPORTS, countries, detailedReportCategories, DESTRUCTIVE_REPORT_MAIN_CATEGORIES, getReportsFromLocalStoragePublic, saveReportsToLocalStoragePublic, migrateTagIfNeeded } from "@/types";
+import { countries, detailedReportCategories, DESTRUCTIVE_REPORT_MAIN_CATEGORIES } from "@/types";
+import * as storage from '@/lib/storage';
 import { useLanguage } from "@/contexts/language-context";
 
 export default function ReportHistoryPage() {
@@ -52,31 +53,8 @@ export default function ReportHistoryPage() {
       const fetchReports = async () => {
         setIsLoading(true);
         await new Promise(resolve => setTimeout(resolve, 500));
-
-        const allLocalReports = getReportsFromLocalStoragePublic();
-        const migratedReports = allLocalReports.map(report => ({
-          ...report,
-          createdAt: new Date(report.createdAt),
-          tags: Array.isArray(report.tags) ? report.tags.map(migrateTagIfNeeded) : [],
-        }));
-
-        const localUserReports = migratedReports.filter(r => r.reporterId === user.id && !r.deletedAt);
-        
-        let combinedReportsForUser = [...localUserReports];
-
-        const mockUserReportsWithKeys = MOCK_USER_REPORTS.map(report => ({
-          ...report,
-        }));
-
-        if (user.id === MOCK_USER.id) {
-          const userSpecificMocks = mockUserReportsWithKeys.filter(mr => mr.reporterId === user.id && !mr.deletedAt);
-          userSpecificMocks.forEach(mockReport => {
-            if (!combinedReportsForUser.some(lr => lr.id === mockReport.id)) {
-              combinedReportsForUser.push(mockReport);
-            }
-          });
-        }
-        setReports(combinedReportsForUser.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+        const { active } = storage.getUserReports(user.id);
+        setReports(active);
         setIsLoading(false);
       };
       fetchReports();
@@ -90,12 +68,7 @@ export default function ReportHistoryPage() {
     setDeletingId(reportId);
     await new Promise(resolve => setTimeout(resolve, 1000));
 
-    const allLocalReports = getReportsFromLocalStoragePublic();
-    // Soft delete by setting deletedAt timestamp
-    const updatedLocalReports = allLocalReports.map(report => 
-        report.id === reportId ? { ...report, deletedAt: new Date().toISOString() } : report
-    );
-    saveReportsToLocalStoragePublic(updatedLocalReports);
+    storage.softDeleteReport(reportId);
 
     // Remove from the current view
     setReports(prevReports => prevReports.filter(report => report.id !== reportId));

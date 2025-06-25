@@ -10,20 +10,10 @@ import { BarChart3, AlertTriangle, CheckCircle2, UserCog, Loader2, Layers, FileT
 import { format as formatDateFn, addYears, addMonths, isBefore, differenceInDays } from 'date-fns';
 import { lt, enUS } from 'date-fns/locale';
 import type { Report } from '@/types';
-import { 
-  getReportsFromLocalStoragePublic, 
-  MOCK_GENERAL_REPORTS, 
-  combineAndDeduplicateReports,
-  getSearchLogsFromLocalStoragePublic,
-  MOCK_USER, 
-  MOCK_USER_REPORTS, 
-  MOCK_USER_SEARCH_LOGS,
-  addUserNotification,
-  getUserNotifications,
-  getCategoryNameForDisplay
-} from '@/types';
 import { useLanguage } from '@/contexts/language-context';
 import { Badge } from '@/components/ui/badge';
+import * as storage from '@/lib/storage';
+import { getCategoryNameForDisplay } from '@/types';
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -40,35 +30,16 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const fetchStats = () => {
-      const allLocalReports = getReportsFromLocalStoragePublic();
-      const activeReports = allLocalReports.filter(r => !r.deletedAt);
-      
-      const combinedPlatformReports = combineAndDeduplicateReports(activeReports, MOCK_GENERAL_REPORTS.filter(r => !r.deletedAt));
-      setTotalReportsCount(combinedPlatformReports.length);
-      setRecentReports(combinedPlatformReports.slice(0, 4));
+      const allPlatformReports = storage.getAllReports();
+      setTotalReportsCount(allPlatformReports.length);
+      setRecentReports(allPlatformReports.slice(0, 4));
 
       if (user) {
-        // Count only active reports submitted by the user
-        let userSpecificReports = activeReports.filter(r => r.reporterId === user.id);
-        
-        if (user.id === MOCK_USER.id) {
-          const mockUserReportsNotInLocal = MOCK_USER_REPORTS.filter(
-            mr => !mr.deletedAt && !userSpecificReports.some(lsr => lsr.id === mr.id)
-          );
-          userSpecificReports = [...userSpecificReports, ...mockUserReportsNotInLocal];
-        }
-        setUserReportsCount(userSpecificReports.length);
+        const { active: activeUserReports } = storage.getUserReports(user.id);
+        setUserReportsCount(activeUserReports.length);
 
-        const allLocalSearchLogs = getSearchLogsFromLocalStoragePublic();
-        let userSpecificSearchLogs = allLocalSearchLogs.filter(log => log.userId === user.id);
-
-        if (user.id === MOCK_USER.id) {
-            const mockUserSearchLogsNotInLocal = MOCK_USER_SEARCH_LOGS.filter(
-                msl => !userSpecificSearchLogs.some(lsl => lsl.id === msl.id)
-            );
-            userSpecificSearchLogs = [...userSpecificSearchLogs, ...mockUserSearchLogsNotInLocal];
-        }
-        setUserSearchesCount(userSpecificSearchLogs.length);
+        const userSearchLogs = storage.getSearchLogs(user.id);
+        setUserSearchesCount(userSearchLogs.length);
       } else {
         setUserReportsCount(0);
         setUserSearchesCount(0);
@@ -86,7 +57,7 @@ export default function DashboardPage() {
       setExpirationEndDate(formatDateFn(subEndDate, "yyyy-MM-dd", { locale: dateLocale }));
 
       if (shouldWarn) {
-        const existingNotifications = getUserNotifications(user.id);
+        const existingNotifications = storage.getUserNotifications(user.id);
         const hasExistingWarning = existingNotifications.some(
           n => n.type === 'subscription_warning' && 
                n.messageParams?.endDate === formatDateFn(subEndDate, "yyyy-MM-dd") && // Use consistent formatting for check
@@ -94,7 +65,7 @@ export default function DashboardPage() {
         );
 
         if (!hasExistingWarning) {
-          addUserNotification(user.id, {
+          storage.addUserNotification(user.id, {
             type: 'subscription_warning',
             titleKey: 'notifications.subscriptionWarning.title',
             messageKey: 'notifications.subscriptionWarning.message',

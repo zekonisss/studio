@@ -6,17 +6,18 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2, UserCircle, Building2, Briefcase, MapPin, User as UserIcon, Mail, Phone, History, ListChecks, Edit3, Save, CreditCard, ShieldCheck, CalendarDays, Percent, AlertTriangle, UserCog, Bell, Check, BellOff, Archive } from "lucide-react";
-import type { Report, SearchLog, UserProfile, UserNotification } from "@/types";
+import type { Report, UserProfile, UserNotification } from "@/types";
 import { format as formatDateFn, addYears } from "date-fns";
 import { lt, enUS } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
-import * as types from "@/types"; 
 import { useLanguage } from '@/contexts/language-context';
+import { getCategoryNameForDisplay } from '@/types';
+import * as storage from '@/lib/storage';
+import { InfoField } from "@/components/account/InfoField";
 
 
 export default function AccountPage() {
@@ -44,12 +45,7 @@ export default function AccountPage() {
 
   const fetchUserReports = useCallback(() => {
     if (user) {
-      const allReports = types.getReportsFromLocalStoragePublic();
-      const allUserReports = allReports.filter(r => r.reporterId === user.id);
-      
-      const active = allUserReports.filter(r => !r.deletedAt).sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-      const deleted = allUserReports.filter(r => !!r.deletedAt).sort((a,b) => new Date(b.deletedAt!).getTime() - new Date(a.deletedAt!).getTime());
-      
+      const { active, deleted } = storage.getUserReports(user.id);
       setUserReports(active);
       setDeletedUserReports(deleted);
     }
@@ -57,7 +53,7 @@ export default function AccountPage() {
 
   const fetchNotifications = useCallback(() => {
     if (user) {
-      setNotifications(types.getUserNotifications(user.id)); 
+      setNotifications(storage.getUserNotifications(user.id)); 
     }
   }, [user]);
 
@@ -76,7 +72,7 @@ export default function AccountPage() {
       fetchUserReports();
     }
     const tab = searchParams.get('tab');
-    if (tab && ["details", "reports", "searches", "payment", "notifications"].includes(tab)) {
+    if (tab && ["details", "reports", "payment", "notifications"].includes(tab)) {
         setActiveTab(tab);
     }
   }, [user, searchParams, fetchNotifications, fetchUserReports]);
@@ -89,8 +85,8 @@ export default function AccountPage() {
   const handleSave = async () => {
     if (!user) return;
     setIsEditing(false);
-    const allUsers = types.getAllUsers(); 
-    const updatedUser = {
+    
+    const updatedUser: UserProfile = {
         ...user,
         companyName: formData.companyName,
         companyCode: formData.companyCode,
@@ -100,21 +96,23 @@ export default function AccountPage() {
         email: formData.email,
         phone: formData.phone,
     };
+    
+    const allUsers = storage.getAllUsers(); 
     const updatedUsersList = allUsers.map(u => u.id === user.id ? updatedUser : u);
-    types.saveAllUsers(updatedUsersList); 
-    updateUserInContext(updatedUser as UserProfile);
+    storage.saveAllUsers(updatedUsersList); 
+    updateUserInContext(updatedUser);
   };
 
   const handleMarkAsRead = (notificationId: string) => {
     if (user) {
-      types.markNotificationAsRead(user.id, notificationId); 
+      storage.markNotificationAsRead(user.id, notificationId); 
       fetchNotifications();
     }
   };
 
   const handleMarkAllAsRead = () => {
     if (user) {
-      types.markAllNotificationsAsRead(user.id); 
+      storage.markAllNotificationsAsRead(user.id); 
       fetchNotifications();
     }
   };
@@ -131,20 +129,7 @@ export default function AccountPage() {
       </div>
     );
   }
-
-  const InfoField = ({ label, value, icon: Icon, name, isEditing, onChange }: { label: string, value: string | undefined, icon: React.ElementType, name?: string, isEditing?: boolean, onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void }) => (
-    <div className="space-y-1">
-      <Label htmlFor={name} className="text-sm font-medium text-muted-foreground flex items-center">
-        <Icon className="mr-2 h-4 w-4" /> {label}
-      </Label>
-      {isEditing && name ? (
-        <Input id={name} name={name} value={value || ""} onChange={onChange} className="text-base" />
-      ) : (
-        <p className="text-base text-foreground bg-secondary/30 p-2.5 rounded-md min-h-[40px] flex items-center">{value || "-"}</p>
-      )}
-    </div>
-  );
-
+  
   const unreadNotificationsCount = notifications.filter(n => !n.read).length;
 
   return (
@@ -217,7 +202,7 @@ export default function AccountPage() {
                     <li key={report.id} className="p-4 border rounded-md hover:bg-muted/30 transition-colors">
                       <div className="flex justify-between items-start">
                         <h4 className="font-semibold text-foreground">{report.fullName}</h4>
-                        <Badge variant="secondary">{types.getCategoryNameForDisplay(report.category, t)}</Badge> 
+                        <Badge variant="secondary">{getCategoryNameForDisplay(report.category, t)}</Badge> 
                       </div>
                       <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{report.comment}</p>
                       <p className="text-xs text-muted-foreground mt-2">{t('account.entries.submittedOn')}: {formatDateFn(report.createdAt, "yyyy-MM-dd HH:mm", { locale: dateLocale })}</p>
@@ -250,7 +235,7 @@ export default function AccountPage() {
                           <h4 className="font-semibold text-foreground">{report.fullName}</h4>
                           <p className="text-xs text-muted-foreground mt-1">{t('account.entries.deletedOn')}: {formatDateFn(new Date(report.deletedAt!), "yyyy-MM-dd HH:mm", { locale: dateLocale })}</p>
                         </div>
-                        <Badge variant="destructive">{types.getCategoryNameForDisplay(report.category, t)}</Badge> 
+                        <Badge variant="destructive">{getCategoryNameForDisplay(report.category, t)}</Badge> 
                       </div>
                     </li>
                   ))}

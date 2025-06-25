@@ -19,27 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, FilePlus2, User, CalendarDays, CheckSquare, MessageSquare, Paperclip, Globe, Layers } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/contexts/language-context"; 
-
-const LOCAL_STORAGE_REPORTS_KEY = 'driverCheckReports';
-
-function getReportsFromLocalStorage(): Report[] {
-  if (typeof window !== 'undefined') {
-    const reportsJSON = localStorage.getItem(LOCAL_STORAGE_REPORTS_KEY);
-    if (reportsJSON) {
-      return JSON.parse(reportsJSON).map((report: any) => ({
-        ...report,
-        createdAt: new Date(report.createdAt), 
-      }));
-    }
-  }
-  return [];
-}
-
-function saveReportsToLocalStorage(reports: Report[]): void {
-  if (typeof window !== 'undefined') {
-    localStorage.setItem(LOCAL_STORAGE_REPORTS_KEY, JSON.stringify(reports));
-  }
-}
+import * as storage from '@/lib/storage';
 
 export default function AddReportPage() {
   const { user } = useAuth();
@@ -88,7 +68,6 @@ export default function AddReportPage() {
 
     await new Promise(resolve => setTimeout(resolve, 1000)); 
     
-    const allReports = getReportsFromLocalStorage();
     const newReport: Report = {
       id: `report-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
       reporterId: user.id,
@@ -104,8 +83,7 @@ export default function AddReportPage() {
       createdAt: new Date(),
     };
 
-    allReports.push(newReport);
-    saveReportsToLocalStorage(allReports);
+    storage.addReport(newReport);
     
     toast({
       title: t('reports.add.toast.success.title'),

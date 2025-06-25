@@ -9,33 +9,12 @@ import type { SearchLog } from "@/types";
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2, ListChecks, AlertTriangle, SearchCheck } from "lucide-react";
 import { format } from 'date-fns';
-import { lt, enUS } from 'date-fns/locale'; // Added enUS
+import { lt, enUS } from 'date-fns/locale'; 
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { MOCK_USER, MOCK_USER_SEARCH_LOGS } from "@/types";
-import { useLanguage } from "@/contexts/language-context"; // Added
+import * as storage from '@/lib/storage';
+import { useLanguage } from "@/contexts/language-context"; 
 
-
-const LOCAL_STORAGE_SEARCH_LOGS_KEY = 'driverCheckSearchLogs';
-
-function getSearchLogsFromLocalStorage(): SearchLog[] {
-  if (typeof window !== 'undefined') {
-    const logsJSON = localStorage.getItem(LOCAL_STORAGE_SEARCH_LOGS_KEY);
-    if (logsJSON) {
-      return JSON.parse(logsJSON).map((log: any) => ({
-        ...log,
-        timestamp: new Date(log.timestamp),
-      }));
-    }
-  }
-  return [];
-}
-
-function saveSearchLogsToLocalStorage(logs: SearchLog[]): void {
-  if (typeof window !== 'undefined') {
-    localStorage.setItem(LOCAL_STORAGE_SEARCH_LOGS_KEY, JSON.stringify(logs));
-  }
-}
 
 export default function SearchHistoryPage() {
   const { user, loading: authLoading } = useAuth();
@@ -55,16 +34,7 @@ export default function SearchHistoryPage() {
       setIsLoading(true);
       await new Promise(resolve => setTimeout(resolve, 500));
 
-      let userLogs = getSearchLogsFromLocalStorage().filter(log => log.userId === user.id);
-
-      if (user.id === MOCK_USER.id && userLogs.length === 0 && MOCK_USER_SEARCH_LOGS.length > 0) {
-         const allLogsCurrentlyInStorage = getSearchLogsFromLocalStorage();
-         const otherUserLogs = allLogsCurrentlyInStorage.filter(log => log.userId !== MOCK_USER.id);
-         const logsToSaveForMockUser = MOCK_USER_SEARCH_LOGS.filter(log => log.userId === MOCK_USER.id);
-         
-         saveSearchLogsToLocalStorage([...otherUserLogs, ...logsToSaveForMockUser]);
-         userLogs = logsToSaveForMockUser;
-      }
+      let userLogs = storage.getSearchLogs(user.id);
 
       setSearchLogs(userLogs.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()));
       setIsLoading(false);
