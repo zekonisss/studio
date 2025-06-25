@@ -33,79 +33,8 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { MOCK_USER, MOCK_USER_REPORTS, countries, detailedReportCategories, DESTRUCTIVE_REPORT_MAIN_CATEGORIES } from "@/types";
+import { MOCK_USER, MOCK_USER_REPORTS, countries, detailedReportCategories, DESTRUCTIVE_REPORT_MAIN_CATEGORIES, getReportsFromLocalStoragePublic, saveReportsToLocalStoragePublic, migrateTagIfNeeded } from "@/types";
 import { useLanguage } from "@/contexts/language-context";
-
-const LOCAL_STORAGE_REPORTS_KEY = 'driverCheckReports';
-
-// Helper function to migrate old Lithuanian tag values to keys
-const migrateTagIfNeeded = (tagValue: string): string => {
-  if (typeof tagValue !== 'string') return tagValue; 
-
-  const lithuanianToKeyMap: Record<string, string> = {
-    "Kuro vagystė": "kuro_vagyste",
-    "Krovinio vagystė": "krovinio_vagyste",
-    "Įmonės turto vagystė": "imones_turto_vagyste",
-    "Avaringumas": "avaringumas",
-    "Pavojingas vairavimas": "pavojingas_vairavimas",
-    "Dažni KET pažeidimai": "dazni_ket_pazeidimai",
-    "Grasinimai / agresija": "grasinimai_agresija",
-    "Netinkamas elgesys kolegų atžvilgiu": "netinkamas_elgesys_kolegu_atzvilgiu",
-    "Psichotropinių medžiagų vartojimas": "psichotropiniu_medziagu_vartojimas",
-    "Konfliktiškas asmuo": "konfliktiskas_asmuo",
-    "Neblaivus darbo metu": "neblaivus_darbo_metu",
-    "Neatvykimas į darbą be pateisinamos priežasties": "neatvykimas_i_darba_be_pateisinamos_priezasties",
-    "Neatsakingas požiūris į darbą": "neatsakingas_poziuris_i_darba",
-    "Techninis neatsakingumas": "techninis_neatsakingumas",
-    "Rizika saugumui ar kroviniui": "rizika_saugumui_ar_kroviniui",
-    "Dažni transporto priemonės pažeidimai": "dazni_transporto_priemones_pazeidimai",
-    "Buvo teisinis procesas / darbo ginčas": "buvo_teisinis_procesas_darbo_gincas",
-    "Pakenkta įmonės reputacijai": "pakenkta_imones_reputacijai",
-    "Neteisėta veikla įtariama": "neteiseta_veikla_itariama",
-    "Kita": "kita_tag"
-  };
-
-  if (lithuanianToKeyMap[tagValue]) {
-    return lithuanianToKeyMap[tagValue];
-  }
-
-  if (tagValue.startsWith("tags.")) {
-    const potentialPhrase = tagValue.substring(5);
-    if (lithuanianToKeyMap[potentialPhrase]) {
-      return lithuanianToKeyMap[potentialPhrase];
-    }
-  }
-  
-  return tagValue;
-};
-
-
-function getReportsFromLocalStorage(): Report[] {
-  if (typeof window !== 'undefined') {
-    const reportsJSON = localStorage.getItem(LOCAL_STORAGE_REPORTS_KEY);
-    if (reportsJSON) {
-      try {
-        const parsedReports: Report[] = JSON.parse(reportsJSON);
-        return parsedReports.map((report: any) => ({
-          ...report,
-          createdAt: new Date(report.createdAt),
-          tags: Array.isArray(report.tags) ? report.tags.map(migrateTagIfNeeded) : [],
-        }));
-      } catch (e) {
-        console.error("Failed to parse reports from localStorage", e);
-        localStorage.removeItem(LOCAL_STORAGE_REPORTS_KEY);
-        return [];
-      }
-    }
-  }
-  return [];
-}
-
-function saveReportsToLocalStorage(reports: Report[]): void {
-  if (typeof window !== 'undefined') {
-    localStorage.setItem(LOCAL_STORAGE_REPORTS_KEY, JSON.stringify(reports));
-  }
-}
 
 export default function ReportHistoryPage() {
   const { user, loading: authLoading } = useAuth();
@@ -124,7 +53,15 @@ export default function ReportHistoryPage() {
         setIsLoading(true);
         await new Promise(resolve => setTimeout(resolve, 500));
 
-        const localUserReports = getReportsFromLocalStorage().filter(r => r.reporterId === user.id && !r.deletedAt);
+        const allLocalReports = getReportsFromLocalStoragePublic();
+        const migratedReports = allLocalReports.map(report => ({
+          ...report,
+          createdAt: new Date(report.createdAt),
+          tags: Array.isArray(report.tags) ? report.tags.map(migrateTagIfNeeded) : [],
+        }));
+
+        const localUserReports = migratedReports.filter(r => r.reporterId === user.id && !r.deletedAt);
+        
         let combinedReportsForUser = [...localUserReports];
 
         const mockUserReportsWithKeys = MOCK_USER_REPORTS.map(report => ({
@@ -153,12 +90,12 @@ export default function ReportHistoryPage() {
     setDeletingId(reportId);
     await new Promise(resolve => setTimeout(resolve, 1000));
 
-    const allLocalReports = getReportsFromLocalStorage();
+    const allLocalReports = getReportsFromLocalStoragePublic();
     // Soft delete by setting deletedAt timestamp
     const updatedLocalReports = allLocalReports.map(report => 
         report.id === reportId ? { ...report, deletedAt: new Date().toISOString() } : report
     );
-    saveReportsToLocalStorage(updatedLocalReports);
+    saveReportsToLocalStoragePublic(updatedLocalReports);
 
     // Remove from the current view
     setReports(prevReports => prevReports.filter(report => report.id !== reportId));

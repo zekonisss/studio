@@ -16,51 +16,8 @@ import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { format } from 'date-fns';
 import { lt, enUS } from 'date-fns/locale'; 
-import { MOCK_GENERAL_REPORTS, combineAndDeduplicateReports, countries, getReportsFromLocalStoragePublic, getSearchLogsFromLocalStoragePublic, saveSearchLogsToLocalStoragePublic, detailedReportCategories, DESTRUCTIVE_REPORT_MAIN_CATEGORIES } from "@/types";
+import { MOCK_GENERAL_REPORTS, combineAndDeduplicateReports, countries, getReportsFromLocalStoragePublic, getSearchLogsFromLocalStoragePublic, saveSearchLogsToLocalStoragePublic, detailedReportCategories, DESTRUCTIVE_REPORT_MAIN_CATEGORIES, migrateTagIfNeeded } from "@/types";
 import { useLanguage } from "@/contexts/language-context"; 
-
-// Helper function to migrate old Lithuanian tag values to keys
-const migrateTagIfNeeded = (tagValue: string): string => {
-  if (typeof tagValue !== 'string') return tagValue; 
-
-  const lithuanianToKeyMap: Record<string, string> = {
-    "Kuro vagystė": "kuro_vagyste",
-    "Krovinio vagystė": "krovinio_vagyste",
-    "Įmonės turto vagystė": "imones_turto_vagyste",
-    "Avaringumas": "avaringumas",
-    "Pavojingas vairavimas": "pavojingas_vairavimas",
-    "Dažni KET pažeidimai": "dazni_ket_pazeidimai",
-    "Grasinimai / agresija": "grasinimai_agresija",
-    "Netinkamas elgesys kolegų atžvilgiu": "netinkamas_elgesys_kolegu_atzvilgiu",
-    "Psichotropinių medžiagų vartojimas": "psichotropiniu_medziagu_vartojimas",
-    "Konfliktiškas asmuo": "konfliktiskas_asmuo",
-    "Neblaivus darbo metu": "neblaivus_darbo_metu",
-    "Neatvykimas į darbą be pateisinamos priežasties": "neatvykimas_i_darba_be_pateisinamos_priezasties",
-    "Neatsakingas požiūris į darbą": "neatsakingas_poziuris_i_darba",
-    "Techninis neatsakingumas": "techninis_neatsakingumas",
-    "Rizika saugumui ar kroviniui": "rizika_saugumui_ar_kroviniui",
-    "Dažni transporto priemonės pažeidimai": "dazni_transporto_priemones_pazeidimai",
-    "Buvo teisinis procesas / darbo ginčas": "buvo_teisinis_procesas_darbo_gincas",
-    "Pakenkta įmonės reputacijai": "pakenkta_imones_reputacijai",
-    "Neteisėta veikla įtariama": "neteiseta_veikla_itariama",
-    "Kita": "kita_tag" // Important: "Kita" from old system should map to "kita_tag"
-  };
-
-  if (lithuanianToKeyMap[tagValue]) {
-    return lithuanianToKeyMap[tagValue];
-  }
-
-  // Heuristic to catch already prefixed old values if they snuck in
-  if (tagValue.startsWith("tags.")) { 
-    const potentialPhrase = tagValue.substring(5);
-    if (lithuanianToKeyMap[potentialPhrase]) {
-      return lithuanianToKeyMap[potentialPhrase];
-    }
-  }
-  
-  return tagValue; // Return original if no mapping or it's already a key
-};
-
 
 export default function SearchPage() {
   const { user } = useAuth();
