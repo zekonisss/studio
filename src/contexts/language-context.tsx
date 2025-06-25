@@ -30,16 +30,28 @@ const translations: Record<Locale, Record<string, string>> = {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export const LanguageProvider = ({ children }: { children: ReactNode }) => {
-  const [locale, setLocale] = useState<Locale>('lt'); // Default to Lithuanian
+  const [locale, setLocale] = useState<Locale>('lt'); // Default to Lithuanian initially
 
   useEffect(() => {
+    // This effect runs only once on the client-side
     const storedLocale = localStorage.getItem('drivercheck-locale') as Locale | null;
     if (storedLocale && translations.hasOwnProperty(storedLocale)) {
       setLocale(storedLocale);
+    } else {
+      // If no stored locale, detect from browser settings
+      const browserLang = navigator.language.split('-')[0] as Locale;
+      if (translations.hasOwnProperty(browserLang)) {
+        setLocale(browserLang);
+      } else {
+        // Fallback to English if the browser language is not supported
+        setLocale('en');
+      }
     }
   }, []);
 
   useEffect(() => {
+    // This effect runs whenever the locale changes, saving it to localStorage
+    // and updating the document's lang attribute.
     localStorage.setItem('drivercheck-locale', locale);
     if (typeof document !== 'undefined') {
         document.documentElement.lang = locale;
