@@ -13,7 +13,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/language-context";
 import type { UserProfile } from '@/types';
-import { getAllUsers, saveAllUsers } from '@/types';
+import { getAllUsers, saveAllUsers } from '@/lib/storage';
 import { useRouter } from "next/navigation";
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
