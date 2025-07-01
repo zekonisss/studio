@@ -69,7 +69,7 @@ export interface UserNotification {
   type: 'account_status_change' | 'subscription_warning' | 'generic_message' | 'inquiry_received';
   titleKey: string;
   messageKey: string;
-  messageParams?: Record<string, string | number | undefined>;
+  messageParams?: Record<string, string | number>;
   createdAt: string; // ISO Date string
   read: boolean;
   link?: string;
