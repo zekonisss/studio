@@ -15,7 +15,7 @@ type Locale = 'lt' | 'en' | 'ru' | 'lv' | 'et' | 'pl';
 interface LanguageContextType {
   locale: Locale;
   setLocale: Dispatch<SetStateAction<Locale>>;
-  t: (key: string, params?: Record<string, string | number>) => string;
+  t: (key: string, params?: Record<string, string | number | undefined>) => string;
 }
 
 const translations: Record<Locale, Record<string, string>> = {
@@ -58,11 +58,14 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [locale]);
 
-  const t = useCallback((key: string, params?: Record<string, string | number>): string => {
+  const t = useCallback((key: string, params?: Record<string, string | number | undefined>): string => {
     let translation = translations[locale]?.[key] || translations['en']?.[key] || key; // Fallback to English, then key itself
     if (params) {
       Object.keys(params).forEach(paramKey => {
-        translation = translation.replace(`{${paramKey}}`, String(params[paramKey]));
+        const value = params[paramKey];
+        if (value !== null && value !== undefined) {
+          translation = translation.replace(`{${paramKey}}`, String(value));
+        }
       });
     }
     return translation;
