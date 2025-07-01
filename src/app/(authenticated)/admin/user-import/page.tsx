@@ -23,7 +23,7 @@ interface ParsedUserRow {
   id: number; 
   originalRow: Record<string, any>;
   userPreview: Partial<UserProfile>; 
-  validationStatus: 'pending' | 'valid' | 'invalid';
+  validationStatus: 'valid' | 'invalid';
   errors?: string[];
 }
 
@@ -276,7 +276,6 @@ export default function ImportUsersPage() {
 
   const renderValidationStatusIcon = (status: ParsedUserRow['validationStatus']) => {
     switch (status) {
-      case 'pending': return <TooltipProvider><Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-6 w-6 cursor-default"><Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /></Button></TooltipTrigger><TooltipContent><p>{t('usersImport.status.pendingValidation')}</p></TooltipContent></Tooltip></TooltipProvider>;
       case 'valid': return <TooltipProvider><Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-6 w-6 cursor-default"><Check className="h-4 w-4 text-green-500" /></Button></TooltipTrigger><TooltipContent><p>{t('usersImport.status.valid')}</p></TooltipContent></Tooltip></TooltipProvider>;
       case 'invalid': return <TooltipProvider><Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-6 w-6 cursor-default"><AlertCircleIcon className="h-4 w-4 text-red-500" /></Button></TooltipTrigger><TooltipContent><p>{t('usersImport.status.invalid')}</p></TooltipContent></Tooltip></TooltipProvider>;
       default: return null;
@@ -374,3 +373,5 @@ export default function ImportUsersPage() {
     </div>
   );
 }
+
+    
