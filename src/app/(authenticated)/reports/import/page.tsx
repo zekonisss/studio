@@ -201,6 +201,8 @@ export default function ImportReportsPage() {
           
           const nationality = mappedHeaders.nationality !== undefined && row[mappedHeaders.nationality] ? String(row[mappedHeaders.nationality]).trim() : undefined;
 
+          const aiStatus: ParsedRow['aiStatus'] = comment ? 'pending' : 'skipped_quota';
+
           return {
             id: index,
             originalRow,
@@ -213,7 +215,7 @@ export default function ImportReportsPage() {
               reporterId: user.id,
               reporterCompanyName: user.companyName,
             },
-            aiStatus: comment ? 'pending' : 'skipped_quota', // Skip AI if no comment
+            aiStatus,
             aiResult: undefined,
             error: comment ? undefined : t('reports.import.error.noCommentForAi'),
           };
@@ -440,3 +442,4 @@ export default function ImportReportsPage() {
     </div>
   );
 }
+
