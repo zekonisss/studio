@@ -198,13 +198,12 @@ export default function ImportUsersPage() {
           }
 
           const validationErrors = validateRow(userPreviewData, existingUsers);
-          const status: 'valid' | 'invalid' = validationErrors.length === 0 ? 'valid' : 'invalid';
 
           return {
             id: index,
             originalRow,
             userPreview: userPreviewData,
-            validationStatus: status,
+            validationStatus: validationErrors.length === 0 ? 'valid' : 'invalid',
             errors: validationErrors.length > 0 ? validationErrors : undefined,
           };
         }).filter(row => Object.keys(row.userPreview).length > 0); 
