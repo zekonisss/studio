@@ -242,15 +242,17 @@ export default function SearchPage() {
                         <ImageIcon className="mr-1.5 h-4 w-4" /> {t('search.results.attachedFile')}
                       </h4>
                       <div className="w-full overflow-hidden rounded-lg border border-border shadow-sm">
-                        <Image
-                          src={report.imageUrl}
-                          alt={t('search.results.imageAlt', { fullName: report.fullName })}
-                          width={600}
-                          height={400}
-                          layout="responsive"
-                          objectFit="contain"
-                          data-ai-hint={report.dataAiHint || "incident document"}
-                        />
+                        <a href={report.imageUrl} target="_blank" rel="noopener noreferrer">
+                            <Image
+                              src={report.imageUrl}
+                              alt={t('search.results.imageAlt', { fullName: report.fullName })}
+                              width={600}
+                              height={400}
+                              layout="responsive"
+                              objectFit="contain"
+                              data-ai-hint={report.dataAiHint || "incident document"}
+                            />
+                        </a>
                       </div>
                     </div>
                   )}
