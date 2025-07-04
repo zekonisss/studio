@@ -1,3 +1,4 @@
+
 import type { UserProfile, Report, SearchLog } from '@/types';
 
 export const MOCK_USER: UserProfile = {
@@ -6,7 +7,7 @@ export const MOCK_USER: UserProfile = {
   companyCode: '123456789',
   vatCode: 'LT10000000012',
   address: 'Vilniaus g. 1, Vilnius',
-  contactPerson: 'Vardenis Pavardenis',
+  contactPerson: 'Sarunas Zekonis',
   email: 'sarunas.zekonis@gmail.com',
   phone: '+37060012345',
   password: 'Septoleteq1223',
@@ -109,8 +110,8 @@ const MOCK_DISCIPLINE_REPORT: Report = {
 const initialGeneralReports: Report[] = [
   {
     id: "report-general-1",
-    reporterId: "user-generic-1",
-    reporterCompanyName: "UAB Logistika LT",
+    reporterId: "test-client-001",
+    reporterCompanyName: 'UAB "Test Client"',
     fullName: "Jonas Jonaitis",
     nationality: "PL",
     birthYear: 1985,
@@ -123,8 +124,8 @@ const initialGeneralReports: Report[] = [
   },
   {
     id: "report-general-2",
-    reporterId: "user-generic-2",
-    reporterCompanyName: "UAB Greiti Pervežimai",
+    reporterId: "test-client-001",
+    reporterCompanyName: 'UAB "Test Client"',
     fullName: "Petras Petraitis",
     nationality: "UA",
     category: "technical_damage",
@@ -148,8 +149,8 @@ const initialGeneralReports: Report[] = [
   },
   {
     id: "report-general-4-from-101",
-    reporterId: "dev-user-101",
-    reporterCompanyName: 'MB "Logist"',
+    reporterId: "test-client-001",
+    reporterCompanyName: 'UAB "Test Client"',
     fullName: "Sergejus Volkovas",
     nationality: "RU",
     birthYear: 1990,
@@ -160,8 +161,8 @@ const initialGeneralReports: Report[] = [
   },
   {
     id: "report-general-5-from-456",
-    reporterId: "dev-user-456",
-    reporterCompanyName: 'UAB "Greiti Ratai"',
+    reporterId: "test-client-001",
+    reporterCompanyName: 'UAB "Test Client"',
     fullName: "Andrius Kaukėnas",
     nationality: "LT",
     birthYear: 1988,
@@ -237,3 +238,5 @@ export const MOCK_USER_SEARCH_LOGS: SearchLog[] = [
   { id: "log2-mock-user", userId: MOCK_USER.id, searchText: "Neatsakingas vairavimas", timestamp: new Date("2024-04-09T11:20:00Z"), resultsCount: 2 }, 
   { id: "log3-mock-user", userId: MOCK_USER.id, searchText: "Antanas Antanaitis", timestamp: new Date("2024-04-08T15:30:00Z"), resultsCount: 1 },
 ];
+
+    
