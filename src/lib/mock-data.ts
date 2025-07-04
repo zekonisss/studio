@@ -67,12 +67,30 @@ export const MOCK_ADDITIONAL_USER_3: UserProfile = {
   subUsers: [],
 };
 
+export const MOCK_TEST_CLIENT_USER: UserProfile = {
+  id: 'test-client-001',
+  companyName: 'UAB "Test Client"',
+  companyCode: '900123456',
+  vatCode: 'LT90012345611',
+  address: 'Testo g. 1, Kaunas',
+  contactPerson: 'Klientas Testuotojas',
+  email: 'test@drivercheck.lt',
+  phone: '+37060000000',
+  password: 'driver1',
+  paymentStatus: 'active',
+  isAdmin: false,
+  registeredAt: new Date().toISOString(),
+  accountActivatedAt: new Date().toISOString(),
+  agreeToTerms: true,
+  subUsers: [],
+};
 
 export const MOCK_ALL_USERS: UserProfile[] = [
   { ...MOCK_USER, subUsers: MOCK_USER.subUsers || [] },
   { ...MOCK_ADDITIONAL_USER_1, subUsers: MOCK_ADDITIONAL_USER_1.subUsers || [] },
   { ...MOCK_ADDITIONAL_USER_2, subUsers: MOCK_ADDITIONAL_USER_2.subUsers || [] },
   { ...MOCK_ADDITIONAL_USER_3, subUsers: MOCK_ADDITIONAL_USER_3.subUsers || [] },
+  { ...MOCK_TEST_CLIENT_USER, subUsers: MOCK_TEST_CLIENT_USER.subUsers || [] },
 ];
 
 const MOCK_DISCIPLINE_REPORT: Report = {
