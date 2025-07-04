@@ -26,7 +26,7 @@ export const MOCK_ADDITIONAL_USER_1: UserProfile = {
   address: 'Kauno g. 2, Kaunas',
   contactPerson: 'Petras Petrauskas',
   email: 'petras@greitiratai.lt',
-  phone: '+37060054321',
+  password: 'password123',
   paymentStatus: 'active',
   isAdmin: false,
   registeredAt: new Date(new Date().setDate(new Date().getDate() - 15)).toISOString(), // Example: registered 15 days ago
@@ -42,7 +42,7 @@ export const MOCK_ADDITIONAL_USER_2: UserProfile = {
   address: 'Klaipėdos g. 3, Klaipėda',
   contactPerson: 'Ona Onaitienė',
   email: 'ona@sauguskelias.lt',
-  phone: '+37060098765',
+  password: 'password123',
   paymentStatus: 'inactive',
   isAdmin: false,
   registeredAt: new Date('2023-01-10T00:00:00.000Z').toISOString(),
@@ -58,7 +58,7 @@ export const MOCK_ADDITIONAL_USER_3: UserProfile = {
   address: 'Panevėžio g. 10, Panevėžys',
   contactPerson: 'Laura Laurinavičė',
   email: 'laura@logist.lt',
-  phone: '+37060011122',
+  password: 'password123',
   paymentStatus: 'pending_verification',
   isAdmin: false,
   registeredAt: new Date(new Date().setDate(new Date().getDate() - 5)).toISOString(), // Example: registered 5 days ago
@@ -84,6 +84,7 @@ export const MOCK_TEST_CLIENT_USER: UserProfile = {
   agreeToTerms: true,
   subUsers: [],
 };
+
 
 export const MOCK_ALL_USERS: UserProfile[] = [
   { ...MOCK_USER, subUsers: MOCK_USER.subUsers || [] },
@@ -144,7 +145,57 @@ const initialGeneralReports: Report[] = [
     imageUrl: "https://placehold.co/600x400.png",
     dataAiHint: "angry driver",
     createdAt: new Date("2024-03-01T11:00:00Z"),
-  }
+  },
+  {
+    id: "report-general-4-from-101",
+    reporterId: "dev-user-101",
+    reporterCompanyName: 'MB "Logist"',
+    fullName: "Sergejus Volkovas",
+    nationality: "RU",
+    birthYear: 1990,
+    category: "driving_safety",
+    tags: ["pavojingas_vairavimas", "dazni_ket_pazeidimai"],
+    comment: "Vairuotojas kelis kartus užfiksuotas kalbantis telefonu vairuojant, nepaisant įspėjimų. Kelia pavojų sau ir aplinkiniams.",
+    createdAt: new Date(new Date().setDate(new Date().getDate() - 20)),
+  },
+  {
+    id: "report-general-5-from-456",
+    reporterId: "dev-user-456",
+    reporterCompanyName: 'UAB "Greiti Ratai"',
+    fullName: "Andrius Kaukėnas",
+    nationality: "LT",
+    birthYear: 1988,
+    category: "behavior",
+    tags: ["grasinimai_agresija", "konfliktiskas_asmuo"],
+    comment: "Gautas skundas iš kliento Vokietijoje dėl agresyvaus elgesio ir grasinimų. Klientas atsisakė priimti krovinį, kol nebus atsiųstas kitas vairuotojas.",
+    imageUrl: "https://placehold.co/600x400.png",
+    dataAiHint: "angry man shouting",
+    createdAt: new Date(new Date().setDate(new Date().getDate() - 10)),
+  },
+  {
+    id: "report-general-6-from-001",
+    reporterId: "test-client-001",
+    reporterCompanyName: 'UAB "Test Client"',
+    fullName: "Tomas Tomaitis",
+    nationality: "PL",
+    birthYear: 1995,
+    category: "technical_damage",
+    tags: ["techninis_neatsakingumas"],
+    comment: "Grįžęs iš reiso nepranešė apie sulaužytą veidrodėlį ir įlenktą durų šoną. Žala pastebėta tik per techninę apžiūrą.",
+    createdAt: new Date(new Date().setDate(new Date().getDate() - 5)),
+  },
+  {
+    id: "report-general-7-from-123",
+    reporterId: "dev-user-123",
+    reporterCompanyName: 'UAB "DriverCheck Demo"',
+    fullName: "Marek Kowalski",
+    nationality: "PL",
+    birthYear: 1982,
+    category: "legal_reputation",
+    tags: ["neteiseta_veikla_itariama"],
+    comment: "Gauta neoficiali informacija iš partnerių, kad vairuotojas galimai dalyvauja neteisėtoje prekyboje akcizinėmis prekėmis. Įmonė pradėjo vidinį tyrimą.",
+    createdAt: new Date(new Date().setDate(new Date().getDate() - 2)),
+  },
 ];
 
 if (!initialGeneralReports.find(r => r.id === MOCK_DISCIPLINE_REPORT.id)) {
