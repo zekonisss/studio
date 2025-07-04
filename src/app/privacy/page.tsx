@@ -1,12 +1,12 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ShieldLock } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 
 export default function PrivacyPage() {
   return (
     <div className="container mx-auto py-12 px-4 md:px-6">
       <Card className="max-w-3xl mx-auto shadow-xl">
         <CardHeader className="text-center">
-          <ShieldLock className="h-12 w-12 text-primary mx-auto mb-4" />
+          <ShieldCheck className="h-12 w-12 text-primary mx-auto mb-4" />
           <CardTitle className="text-3xl font-bold">Privatumo Politika</CardTitle>
           <CardDescription className="text-lg text-muted-foreground">
             Kaip DriverCheck renka, naudoja ir saugo jūsų asmens duomenis.
