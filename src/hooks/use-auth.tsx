@@ -68,7 +68,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       await new Promise(resolve => setTimeout(resolve, 1000));
 
       const allSystemUsers = storage.getAllUsers();
-      const foundUser = allSystemUsers.find(u => u.email === values.email);
+      const foundUser = allSystemUsers.find(u => u.email.toLowerCase() === values.email.toLowerCase() && u.password === values.password);
 
       let loginError: { messageKey: string, isAuthManagedError?: boolean } | null = null;
 
@@ -92,24 +92,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         } else {
           loginError = { messageKey: 'toast.login.error.accessDenied', isAuthManagedError: true };
         }
-      } else if (values.email === MOCK_USER.email) { // Fallback for the main mock user if not in localStorage yet
-         if (MOCK_USER.paymentStatus === 'pending_verification') {
-            loginError = { messageKey: 'toast.login.error.pendingVerification', isAuthManagedError: true };
-            router.push('/auth/pending-approval');
-         } else if (MOCK_USER.paymentStatus === 'pending_payment') {
-            loginError = { messageKey: 'toast.login.error.pendingPayment', isAuthManagedError: true };
-            router.push('/auth/pending-approval');
-         } else {
-            setUser(MOCK_USER);
-            localStorage.setItem('driverCheckUser', JSON.stringify(MOCK_USER));
-            toast({
-                title: t('toast.login.success.title'),
-                description: t('toast.login.success.description'),
-            });
-            router.push('/dashboard');
-         }
-      }
-      else {
+      } else {
         loginError = { messageKey: 'toast.login.error.invalidCredentials', isAuthManagedError: true };
       }
 

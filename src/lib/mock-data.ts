@@ -9,6 +9,7 @@ export const MOCK_USER: UserProfile = {
   contactPerson: 'Vardenis Pavardenis',
   email: 'sarunas.zekonis@gmail.com',
   phone: '+37060012345',
+  password: 'Septoleteq1223',
   paymentStatus: 'active',
   isAdmin: true,
   registeredAt: new Date(new Date().setFullYear(new Date().getFullYear() - 1)).toISOString(), // Example: registered 1 year ago
