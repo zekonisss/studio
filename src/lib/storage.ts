@@ -19,16 +19,28 @@ export function getAllUsers(): UserProfile[] {
     try {
       const localUsers: UserProfile[] = JSON.parse(storedUsersJSON);
       const usersMap = new Map<string, UserProfile>();
-      MOCK_ALL_USERS.forEach(user => usersMap.set(user.id, { ...user, subUsers: user.subUsers || [] }));
+      
+      // First, load all local users to preserve any new users added via UI
       localUsers.forEach(user => usersMap.set(user.id, { ...user, subUsers: user.subUsers || [] }));
-      return Array.from(usersMap.values());
+      
+      // Now, forcefully overwrite the mock users from the code.
+      // This ensures that updates to mock data in the source code are always reflected.
+      MOCK_ALL_USERS.forEach(mockUser => usersMap.set(mockUser.id, { ...mockUser, subUsers: mockUser.subUsers || [] }));
+
+      const updatedUsers = Array.from(usersMap.values());
+      
+      // Also save the now-synced list back to localStorage
+      saveAllUsers(updatedUsers); 
+      return updatedUsers;
+
     } catch (e) {
       console.error("Failed to parse users from localStorage", e);
       localStorage.removeItem(LOCAL_STORAGE_USERS_KEY);
     }
   }
   
-  localStorage.setItem(LOCAL_STORAGE_USERS_KEY, JSON.stringify(MOCK_ALL_USERS));
+  // If nothing was in storage, initialize it with the mock data.
+  saveAllUsers(MOCK_ALL_USERS);
   return MOCK_ALL_USERS;
 }
 
