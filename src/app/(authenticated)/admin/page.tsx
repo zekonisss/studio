@@ -83,10 +83,15 @@ export default function AdminPage() {
       router.replace('/dashboard');
     }
     if (adminUser && adminUser.isAdmin) {
-      setAllUsersState(storage.getAllUsers());
-      setAllReports(storage.getAllReports().filter(r => !r.deletedAt));
-      setAuditLogs(storage.getAuditLogs().sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime() ));
-      setIsLoadingData(false);
+        const fetchData = async () => {
+            setIsLoadingData(true);
+            const users = await storage.getAllUsers();
+            setAllUsersState(users);
+            setAllReports(storage.getAllReports().filter(r => !r.deletedAt));
+            setAuditLogs(storage.getAuditLogs().sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime() ));
+            setIsLoadingData(false);
+        };
+        fetchData();
     }
   }, [adminUser, authLoading, router]);
 
@@ -157,7 +162,7 @@ export default function AdminPage() {
     }
   };
 
-  const handleUserStatusChange = (userId: string, newStatus: UserProfile['paymentStatus']) => {
+  const handleUserStatusChange = async (userId: string, newStatus: UserProfile['paymentStatus']) => {
     const targetUser = allUsersState.find(u => u.id === userId);
     if (!targetUser) return;
 
@@ -167,12 +172,13 @@ export default function AdminPage() {
     if (newStatus === 'active' && oldStatus !== 'active') {
       newAccountActivatedAt = new Date().toISOString();
     }
+    
+    const updatedUserData = { paymentStatus: newStatus, accountActivatedAt: newAccountActivatedAt };
+    await storage.updateUserProfile(userId, updatedUserData);
 
-    const updatedUsers = allUsersState.map(u =>
-      u.id === userId ? { ...u, paymentStatus: newStatus, accountActivatedAt: newAccountActivatedAt } : u
-    );
-    setAllUsersState(updatedUsers);
-    storage.saveAllUsers(updatedUsers);
+    setAllUsersState(prevUsers => prevUsers.map(u =>
+      u.id === userId ? { ...u, ...updatedUserData } : u
+    ));
 
     logAdminAction("auditLog.action.userStatusChanged", { 
       userId: targetUser.id, 
@@ -268,7 +274,7 @@ export default function AdminPage() {
     setEditingUserDetailsFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSaveUserDetails = () => {
+  const handleSaveUserDetails = async () => {
     if (!selectedUserForDetails) return;
 
     const updatedUser: UserProfile = {
@@ -281,10 +287,10 @@ export default function AdminPage() {
       email: editingUserDetailsFormData.email || selectedUserForDetails.email,
       phone: editingUserDetailsFormData.phone || selectedUserForDetails.phone,
     };
+    
+    await storage.updateUserProfile(updatedUser.id, updatedUser);
 
-    const updatedUsersList = allUsersState.map(u => u.id === updatedUser.id ? updatedUser : u);
-    setAllUsersState(updatedUsersList);
-    storage.saveAllUsers(updatedUsersList);
+    setAllUsersState(prevUsers => prevUsers.map(u => u.id === updatedUser.id ? updatedUser : u));
     setSelectedUserForDetails(updatedUser);
     setIsEditingUserDetails(false);
     

@@ -19,12 +19,11 @@ const USERS_COLLECTION = 'users';
 export async function seedInitialUsers() {
   if (!isBrowser) return;
   const usersCollectionRef = collection(db, USERS_COLLECTION);
-  const q = query(usersCollectionRef, where(documentId(), "in", MOCK_ALL_USERS.map(u => u.id)));
-  const snapshot = await getDocs(q);
+  const snapshot = await getDocs(query(usersCollectionRef, where(documentId(), "in", MOCK_ALL_USERS.map(u => u.id))));
 
   // Seed only if mock users are missing, to avoid overwriting real data
-  if (snapshot.size < MOCK_ALL_USERS.length) {
-    console.log("Some mock users are missing, seeding initial data...");
+  if (snapshot.size === 0) {
+    console.log("Users collection is empty, seeding initial data...");
     const batch = writeBatch(db);
     MOCK_ALL_USERS.forEach(user => {
       const userDocRef = doc(db, USERS_COLLECTION, user.id);
@@ -52,6 +51,16 @@ export async function addUserProfileWithId(userId: string, user: UserProfile): P
   if (!isBrowser) return;
   const userDocRef = doc(db, USERS_COLLECTION, userId);
   await setDoc(userDocRef, user);
+}
+
+export async function addUsersBatch(users: UserProfile[]): Promise<void> {
+  if (!isBrowser) return;
+  const batch = writeBatch(db);
+  users.forEach(user => {
+    const userDocRef = doc(db, USERS_COLLECTION, user.id);
+    batch.set(userDocRef, user);
+  });
+  await batch.commit();
 }
 
 export async function updateUserProfile(userId: string, userData: Partial<UserProfile>): Promise<void> {

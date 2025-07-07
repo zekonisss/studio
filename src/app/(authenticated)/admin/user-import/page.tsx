@@ -13,7 +13,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/language-context";
 import type { UserProfile } from '@/types';
-import { getAllUsers, saveAllUsers } from '@/lib/storage';
+import * as storage from '@/lib/storage';
 import { useRouter } from "next/navigation";
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -182,7 +182,7 @@ export default function ImportUsersPage() {
           return;
         }
 
-        const existingUsers = getAllUsers();
+        const existingUsers = await storage.getAllUsers();
         const newParsedData: ParsedUserRow[] = dataRows.map((row, index) => {
           const originalRow: Record<string, any> = {};
           headerRow.forEach((header, i) => {
@@ -231,7 +231,6 @@ export default function ImportUsersPage() {
 
     setIsImporting(true);
     try {
-      const existingUsers = getAllUsers();
       const newUsers: UserProfile[] = validRows.map(row => ({
         id: `imported-user-${Date.now()}-${Math.random().toString(36).substring(2, 9)}-${row.id}`,
         companyName: row.userPreview.companyName!,
@@ -249,7 +248,7 @@ export default function ImportUsersPage() {
         subUsers: [],
       }));
 
-      saveAllUsers([...existingUsers, ...newUsers]);
+      await storage.addUsersBatch(newUsers);
       toast({
         title: t('usersImport.toast.importSuccess.title'),
         description: t('usersImport.toast.importSuccess.description', { count: newUsers.length }),

@@ -18,6 +18,7 @@ import { useLanguage } from '@/contexts/language-context';
 import { getCategoryNameForDisplay } from '@/types';
 import * as storage from '@/lib/storage';
 import { InfoField } from "@/components/account/InfoField";
+import { useToast } from "@/hooks/use-toast";
 
 
 export default function AccountPage() {
@@ -25,6 +26,7 @@ export default function AccountPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { t, locale } = useLanguage();
+  const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({
