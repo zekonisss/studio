@@ -1,57 +1,88 @@
 
 import type { Report, UserProfile, SearchLog, AuditLogEntry, UserNotification } from '@/types';
 import { MOCK_ALL_USERS, MOCK_GENERAL_REPORTS, MOCK_USER_REPORTS, MOCK_USER_SEARCH_LOGS } from './mock-data';
+import { db } from './firebase';
+import { collection, getDocs, doc, setDoc, query, where, getDoc, updateDoc, writeBatch, documentId } from 'firebase/firestore';
 
-const LOCAL_STORAGE_USERS_KEY = 'driverCheckAllUsers';
+
 const LOCAL_STORAGE_REPORTS_KEY = 'driverCheckReports';
 const LOCAL_STORAGE_SEARCH_LOGS_KEY = 'driverCheckSearchLogs';
 const LOCAL_STORAGE_AUDIT_LOGS_KEY = 'driverCheckAuditLogs';
 const LOCAL_STORAGE_NOTIFICATIONS_KEY = 'driverCheckNotifications';
 
 const isBrowser = typeof window !== 'undefined';
+const USERS_COLLECTION = 'users';
 
-// --- User Management ---
+// --- User Management (Firestore) ---
 
-export function getAllUsers(): UserProfile[] {
-  if (!isBrowser) return MOCK_ALL_USERS;
+// Helper function to seed initial users if the collection is empty
+export async function seedInitialUsers() {
+  if (!isBrowser) return;
+  const usersCollectionRef = collection(db, USERS_COLLECTION);
+  const q = query(usersCollectionRef, where(documentId(), "in", MOCK_ALL_USERS.map(u => u.id)));
+  const snapshot = await getDocs(q);
 
-  const storedUsersJSON = localStorage.getItem(LOCAL_STORAGE_USERS_KEY);
-  if (storedUsersJSON) {
-    try {
-      const localUsers: UserProfile[] = JSON.parse(storedUsersJSON);
-      const usersMap = new Map<string, UserProfile>();
-      
-      // First, load all local users to preserve any new users added via UI
-      localUsers.forEach(user => usersMap.set(user.id, { ...user, subUsers: user.subUsers || [] }));
-      
-      // Now, forcefully overwrite the mock users from the code.
-      // This ensures that updates to mock data in the source code are always reflected.
-      MOCK_ALL_USERS.forEach(mockUser => usersMap.set(mockUser.id, { ...mockUser, subUsers: mockUser.subUsers || [] }));
+  // Seed only if mock users are missing, to avoid overwriting real data
+  if (snapshot.size < MOCK_ALL_USERS.length) {
+    console.log("Some mock users are missing, seeding initial data...");
+    const batch = writeBatch(db);
+    MOCK_ALL_USERS.forEach(user => {
+      const userDocRef = doc(db, USERS_COLLECTION, user.id);
+      batch.set(userDocRef, user);
+    });
+    await batch.commit();
+    console.log("Initial users seeded.");
+  }
+}
 
-      const updatedUsers = Array.from(usersMap.values());
-      
-      // Also save the now-synced list back to localStorage
-      saveAllUsers(updatedUsers); 
-      return updatedUsers;
 
-    } catch (e) {
-      console.error("Failed to parse users from localStorage", e);
-      localStorage.removeItem(LOCAL_STORAGE_USERS_KEY);
+export async function getAllUsers(): Promise<UserProfile[]> {
+  if (!isBrowser) return [];
+  await seedInitialUsers();
+  const usersCollectionRef = collection(db, USERS_COLLECTION);
+  const snapshot = await getDocs(usersCollectionRef);
+  const users: UserProfile[] = [];
+  snapshot.forEach(doc => {
+    users.push({ id: doc.id, ...doc.data() } as UserProfile);
+  });
+  return users;
+}
+
+export async function addUserProfileWithId(userId: string, user: UserProfile): Promise<void> {
+  if (!isBrowser) return;
+  const userDocRef = doc(db, USERS_COLLECTION, userId);
+  await setDoc(userDocRef, user);
+}
+
+export async function updateUserProfile(userId: string, userData: Partial<UserProfile>): Promise<void> {
+  if (!isBrowser) return;
+  const userDocRef = doc(db, USERS_COLLECTION, userId);
+  await updateDoc(userDocRef, userData);
+}
+
+export async function findUserByEmail(email: string): Promise<UserProfile | null> {
+  if (!isBrowser) return null;
+  const q = query(collection(db, USERS_COLLECTION), where("email", "==", email.toLowerCase()));
+  const querySnapshot = await getDocs(q);
+  if (querySnapshot.empty) {
+    return null;
+  }
+  const userDoc = querySnapshot.docs[0];
+  return { id: userDoc.id, ...userDoc.data() } as UserProfile;
+}
+
+export async function getUserById(userId: string): Promise<UserProfile | null> {
+    if (!isBrowser) return null;
+    const userDocRef = doc(db, USERS_COLLECTION, userId);
+    const docSnap = await getDoc(userDocRef);
+    if (docSnap.exists()) {
+        return { id: docSnap.id, ...docSnap.data() } as UserProfile;
     }
-  }
-  
-  // If nothing was in storage, initialize it with the mock data.
-  saveAllUsers(MOCK_ALL_USERS);
-  return MOCK_ALL_USERS;
+    return null;
 }
 
-export function saveAllUsers(users: UserProfile[]): void {
-  if (isBrowser) {
-    localStorage.setItem(LOCAL_STORAGE_USERS_KEY, JSON.stringify(users.map(u => ({ ...u, subUsers: u.subUsers || [] }))));
-  }
-}
-
-// --- Report Management ---
+// --- Report, Log, and Notification Management (Still using localStorage) ---
+// TODO: Migrate these to Firestore as well for a complete solution.
 
 function getLocalReports(): Report[] {
   if (!isBrowser) return [...MOCK_USER_REPORTS, ...MOCK_GENERAL_REPORTS];
@@ -128,8 +159,6 @@ export function getUserReports(userId: string): { active: Report[], deleted: Rep
   return { active, deleted };
 }
 
-// --- Search Log Management ---
-
 export function getSearchLogs(userId?: string): SearchLog[] {
     if (!isBrowser) return MOCK_USER_SEARCH_LOGS;
 
@@ -161,8 +190,6 @@ export function addSearchLog(log: SearchLog): void {
   }
 }
 
-// --- Audit Log Management ---
-
 export function getAuditLogs(): AuditLogEntry[] {
     if (!isBrowser) return [];
     const logsJSON = localStorage.getItem(LOCAL_STORAGE_AUDIT_LOGS_KEY);
@@ -184,8 +211,6 @@ export function addAuditLogEntry(entry: AuditLogEntry): void {
         localStorage.setItem(LOCAL_STORAGE_AUDIT_LOGS_KEY, JSON.stringify(logs));
     }
 }
-
-// --- Notification Management ---
 
 function getAllNotifications(): UserNotification[] {
   if (!isBrowser) return [];

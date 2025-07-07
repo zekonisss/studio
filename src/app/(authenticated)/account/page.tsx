@@ -26,6 +26,7 @@ export default function AccountPage() {
   const searchParams = useSearchParams();
   const { t, locale } = useLanguage();
   const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({
     companyName: "",
     companyCode: "",
@@ -84,10 +85,9 @@ export default function AccountPage() {
 
   const handleSave = async () => {
     if (!user) return;
-    setIsEditing(false);
+    setIsSaving(true);
     
-    const updatedUser: UserProfile = {
-        ...user,
+    const updatedUserData: Partial<UserProfile> = {
         companyName: formData.companyName,
         companyCode: formData.companyCode,
         vatCode: formData.vatCode || undefined,
@@ -97,10 +97,23 @@ export default function AccountPage() {
         phone: formData.phone,
     };
     
-    const allUsers = storage.getAllUsers(); 
-    const updatedUsersList = allUsers.map(u => u.id === user.id ? updatedUser : u);
-    storage.saveAllUsers(updatedUsersList); 
-    updateUserInContext(updatedUser);
+    try {
+        await updateUserInContext({ ...user, ...updatedUserData });
+        toast({
+            title: t('admin.users.toast.dataUpdated.title'),
+            description: t('admin.users.toast.dataUpdated.description', { companyName: updatedUserData.companyName || '' }),
+        });
+    } catch(error) {
+        console.error("Failed to save user data", error);
+        toast({
+            variant: 'destructive',
+            title: 'Klaida',
+            description: 'Nepavyko išsaugoti duomenų.'
+        })
+    } finally {
+        setIsSaving(false);
+        setIsEditing(false);
+    }
   };
 
   const handleMarkAsRead = (notificationId: string) => {
@@ -140,8 +153,8 @@ export default function AccountPage() {
           {t('account.pageTitle')}
         </h1>
         {activeTab === "details" && (
-          <Button onClick={() => isEditing ? handleSave() : setIsEditing(true)} variant={isEditing ? "default" : "outline"}>
-            {isEditing ? <Save className="mr-2 h-4 w-4" /> : <Edit3 className="mr-2 h-4 w-4" />}
+          <Button onClick={() => isEditing ? handleSave() : setIsEditing(true)} variant={isEditing ? "default" : "outline"} disabled={isSaving}>
+            {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : (isEditing ? <Save className="mr-2 h-4 w-4" /> : <Edit3 className="mr-2 h-4 w-4" />)}
             {isEditing ? t('account.saveChangesButton') : t('account.editDataButton')}
           </Button>
         )}
@@ -400,14 +413,3 @@ export default function AccountPage() {
     </div>
   );
 }
-    
-
-    
-
-    
-
-
-
-    
-
-    
