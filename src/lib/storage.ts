@@ -15,22 +15,19 @@ const USERS_COLLECTION = 'users';
 
 // --- User Management (Firestore) ---
 
-// Helper function to seed initial users if the collection is empty
+// Helper function to seed or update mock users from mock-data.ts
 export async function seedInitialUsers() {
   if (!isBrowser) return;
-  const usersCollectionRef = collection(db, USERS_COLLECTION);
-  const snapshot = await getDocs(query(usersCollectionRef, where(documentId(), "in", MOCK_ALL_USERS.map(u => u.id))));
-
-  // Seed only if mock users are missing, to avoid overwriting real data
-  if (snapshot.size === 0) {
-    console.log("Users collection is empty, seeding initial data...");
+  try {
     const batch = writeBatch(db);
     MOCK_ALL_USERS.forEach(user => {
       const userDocRef = doc(db, USERS_COLLECTION, user.id);
-      batch.set(userDocRef, user);
+      // set with overwrite will ensure mock users always have the latest data from the code
+      batch.set(userDocRef, user); 
     });
     await batch.commit();
-    console.log("Initial users seeded.");
+  } catch (error) {
+    console.error("Error seeding mock users:", error);
   }
 }
 

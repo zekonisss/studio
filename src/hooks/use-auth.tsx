@@ -31,6 +31,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const checkAuthState = useCallback(async () => {
     setLoading(true);
+    await storage.seedInitialUsers(); 
     const storedUserId = localStorage.getItem(USER_ID_STORAGE_KEY); 
     if (storedUserId) {
       try {
@@ -62,6 +63,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = async (values: LoginFormValues) => {
     setLoading(true);
     try {
+      await storage.seedInitialUsers();
       const foundUser = await storage.findUserByEmail(values.email);
       let loginError: { messageKey: string, isAuthManagedError?: boolean, route?: string } | null = null;
 
