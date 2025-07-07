@@ -63,77 +63,40 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = async (values: LoginFormValues) => {
     setLoading(true);
     try {
-      // Hardcoded check for special demo users to ensure they can always log in.
-      // This bypasses any potential issues with stale database passwords for these specific accounts.
-      const demoUsers = {
-        'sarunas.zekonis@gmail.com': { id: 'dev-user-123', pass: 'Septoleteq1223' },
-        'test@drivercheck.lt': { id: 'test-client-001', pass: 'driver1' },
-      };
-
-      const emailLower = values.email.toLowerCase();
-      const demoUser = demoUsers[emailLower as keyof typeof demoUsers];
+      await storage.seedInitialUsers(); // Ensure mock users are up-to-date
       
-      let foundUser: UserProfile | null = null;
-      let passwordCorrect = false;
+      const foundUser = await storage.findUserByEmail(values.email);
 
-      if (demoUser && demoUser.pass === values.password) {
-        // For demo users, if password is correct, fetch the latest profile from DB to get latest statuses etc.
-        foundUser = await storage.getUserById(demoUser.id);
-        passwordCorrect = !!foundUser;
-      } else if (!demoUser) {
-        // For regular users, check password from the database
-        foundUser = await storage.findUserByEmail(values.email);
-        if (foundUser && foundUser.password === values.password) {
-          passwordCorrect = true;
-        }
-      }
-
-      let loginError: { messageKey: string; isAuthManagedError?: boolean; route?: string } | null = null;
-
-      if (foundUser && passwordCorrect) {
-        // Common success/status check logic for all users
-        if (foundUser.paymentStatus === 'pending_verification') {
-          loginError = { messageKey: 'toast.login.error.pendingVerification', isAuthManagedError: true, route: '/auth/pending-approval' };
-        } else if (foundUser.paymentStatus === 'pending_payment') {
-          loginError = { messageKey: 'toast.login.error.pendingPayment', isAuthManagedError: true, route: '/auth/pending-approval' };
-        } else if (foundUser.paymentStatus === 'inactive') {
-          loginError = { messageKey: 'toast.login.error.inactive', isAuthManagedError: true };
-        } else if (foundUser.paymentStatus === 'active') {
-          setUser(foundUser);
-          localStorage.setItem(USER_ID_STORAGE_KEY, foundUser.id);
-          toast({
-            title: t('toast.login.success.title'),
-            description: t('toast.login.success.description'),
-          });
-          router.push('/dashboard');
-        } else {
-          loginError = { messageKey: 'toast.login.error.accessDenied', isAuthManagedError: true };
-        }
+      if (foundUser && foundUser.password === values.password) {
+          if (foundUser.paymentStatus === 'pending_verification') {
+            toast({ variant: 'destructive', title: t('toast.login.error.title'), description: t('toast.login.error.pendingVerification') });
+            router.push('/auth/pending-approval');
+            throw new Error(t('toast.login.error.pendingVerification'));
+          } else if (foundUser.paymentStatus === 'pending_payment') {
+            toast({ variant: 'destructive', title: t('toast.login.error.title'), description: t('toast.login.error.pendingPayment') });
+            router.push('/auth/pending-approval');
+             throw new Error(t('toast.login.error.pendingPayment'));
+          } else if (foundUser.paymentStatus === 'inactive') {
+            toast({ variant: 'destructive', title: t('toast.login.error.title'), description: t('toast.login.error.inactive') });
+            throw new Error(t('toast.login.error.inactive'));
+          } else if (foundUser.paymentStatus === 'active') {
+            setUser(foundUser);
+            localStorage.setItem(USER_ID_STORAGE_KEY, foundUser.id);
+            toast({
+              title: t('toast.login.success.title'),
+              description: t('toast.login.success.description'),
+            });
+            router.push('/dashboard');
+          } else {
+            toast({ variant: 'destructive', title: t('toast.login.error.title'), description: t('toast.login.error.accessDenied') });
+            throw new Error(t('toast.login.error.accessDenied'));
+          }
       } else {
-        loginError = { messageKey: 'toast.login.error.invalidCredentials', isAuthManagedError: true };
-      }
-
-      if (loginError) {
-        toast({
-          variant: 'destructive',
-          title: t('toast.login.error.title'),
-          description: t(loginError.messageKey),
-        });
-        if (loginError.route) {
-          router.push(loginError.route);
-        }
-        const error = new Error(t(loginError.messageKey)) as any;
-        error.isAuthManagedError = loginError.isAuthManagedError;
-        throw error;
+        toast({ variant: 'destructive', title: t('toast.login.error.title'), description: t('toast.login.error.invalidCredentials') });
+        throw new Error(t('toast.login.error.invalidCredentials'));
       }
     } catch (error: any) {
-      if (!error.isAuthManagedError) {
-        toast({
-          variant: 'destructive',
-          title: t('toast.login.error.title'),
-          description: t('toast.login.error.descriptionGeneric'),
-        });
-      }
+      console.error("Login failed:", error.message);
     } finally {
       setLoading(false);
     }

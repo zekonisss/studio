@@ -1,23 +1,24 @@
 
 import type { UserProfile, Report, SearchLog } from '@/types';
 
-export const MOCK_USER: UserProfile = {
-  id: 'dev-user-123',
-  companyName: 'UAB "DriverCheck Demo"',
-  companyCode: '123456789',
-  vatCode: 'LT10000000012',
+export const MOCK_ADMIN_USER: UserProfile = {
+  id: 'admin-user-001',
+  companyName: 'DriverCheck Admin',
+  companyCode: '000000000',
+  vatCode: 'LT00000000012',
   address: 'Vilniaus g. 1, Vilnius',
-  contactPerson: 'Sarunas Zekonis',
-  email: 'sarunas.zekonis@gmail.com',
-  phone: '+37060012345',
-  password: 'Septoleteq1223',
+  contactPerson: 'Admin User',
+  email: 'admin@drivercheck.lt',
+  phone: '+37060000000',
+  password: 'adminpass',
   paymentStatus: 'active',
   isAdmin: true,
-  registeredAt: new Date(new Date().setFullYear(new Date().getFullYear() - 1)).toISOString(), // Example: registered 1 year ago
+  registeredAt: new Date(new Date().setFullYear(new Date().getFullYear() - 1)).toISOString(), 
   accountActivatedAt: new Date(new Date().setMonth(new Date().getMonth() - 11)).toISOString(),
   agreeToTerms: true,
   subUsers: [],
 };
+
 
 export const MOCK_ADDITIONAL_USER_1: UserProfile = {
   id: 'dev-user-456',
@@ -91,24 +92,12 @@ export const MOCK_TEST_CLIENT_USER: UserProfile = {
 
 
 export const MOCK_ALL_USERS: UserProfile[] = [
-  { ...MOCK_USER, subUsers: MOCK_USER.subUsers || [] },
+  { ...MOCK_ADMIN_USER, subUsers: MOCK_ADMIN_USER.subUsers || [] },
   { ...MOCK_ADDITIONAL_USER_1, subUsers: MOCK_ADDITIONAL_USER_1.subUsers || [] },
   { ...MOCK_ADDITIONAL_USER_2, subUsers: MOCK_ADDITIONAL_USER_2.subUsers || [] },
   { ...MOCK_ADDITIONAL_USER_3, subUsers: MOCK_ADDITIONAL_USER_3.subUsers || [] },
   { ...MOCK_TEST_CLIENT_USER, subUsers: MOCK_TEST_CLIENT_USER.subUsers || [] },
 ];
-
-const MOCK_DISCIPLINE_REPORT: Report = {
-    id: "report-discipline-1",
-    reporterId: "dev-user-123",
-    reporterCompanyName: 'UAB "DriverCheck Demo"',
-    fullName: "Testas Testuolis",
-    nationality: "LT",
-    category: "discipline", 
-    tags: ["neblaivus_darbo_metu", "neatsakingas_poziuris_i_darba", "kita_tag"],
-    comment: "Vairuotojas buvo rastas neblaivus darbo vietoje.",
-    createdAt: new Date("2024-03-15T10:00:00Z"),
-};
 
 const initialGeneralReports: Report[] = [
   {
@@ -190,8 +179,8 @@ const initialGeneralReports: Report[] = [
   },
   {
     id: "report-general-7-from-123",
-    reporterId: "dev-user-123",
-    reporterCompanyName: 'UAB "DriverCheck Demo"',
+    reporterId: "admin-user-001",
+    reporterCompanyName: 'DriverCheck Admin',
     fullName: "Marek Kowalski",
     nationality: "PL",
     birthYear: 1982,
@@ -200,19 +189,52 @@ const initialGeneralReports: Report[] = [
     comment: "Gauta neoficiali informacija iš partnerių, kad vairuotojas galimai dalyvauja neteisėtoje prekyboje akcizinėmis prekėmis. Įmonė pradėjo vidinį tyrimą.",
     createdAt: new Date(new Date().setDate(new Date().getDate() - 2)),
   },
+   {
+    id: "report-general-8",
+    reporterId: "test-client-001",
+    reporterCompanyName: 'UAB "Test Client"',
+    fullName: "Ivan Petrov",
+    nationality: "BY",
+    birthYear: 1991,
+    category: "behavior",
+    tags: ["konfliktiskas_asmuo", "netinkamas_elgesys_kolegu_atzvilgiu"],
+    comment: "Konfliktavo su logistikos vadybininku dėl maršruto pakeitimo, vartojo necenzūrinę leksiką.",
+    createdAt: new Date(new Date().setDate(new Date().getDate() - 3)),
+  },
+  {
+    id: "report-general-9",
+    reporterId: "dev-user-456",
+    reporterCompanyName: 'UAB "Greiti Ratai"',
+    fullName: "Adam Nowak",
+    nationality: "PL",
+    birthYear: 1980,
+    category: "fuel_theft",
+    tags: ["kuro_vagyste"],
+    comment: "Pagal GPS duomenis, sunkvežimis stovėjo degalinėje ilgiau nei įprastai. Kuro lygio davikliai rodo 50 litrų neatitikimą.",
+    createdAt: new Date(new Date().setDate(new Date().getDate() - 7)),
+  },
+  {
+    id: "report-general-10",
+    reporterId: "admin-user-001",
+    reporterCompanyName: 'DriverCheck Admin',
+    fullName: "Jonas Jonaitis",
+    nationality: "LT",
+    birthYear: 1985,
+    category: "other_category",
+    tags: [],
+    comment: "Vairuotojas nuolat palieka netvarkingą kabiną, nepaisant įspėjimų.",
+    createdAt: new Date(new Date().setDate(new Date().getDate() - 1)),
+  }
 ];
 
-if (!initialGeneralReports.find(r => r.id === MOCK_DISCIPLINE_REPORT.id)) {
-    initialGeneralReports.push(MOCK_DISCIPLINE_REPORT);
-}
 
 export const MOCK_GENERAL_REPORTS: Report[] = initialGeneralReports;
 
 export const MOCK_USER_REPORTS: Report[] = [
   {
     id: "report-user-1",
-    reporterId: "dev-user-123",
-    reporterCompanyName: 'UAB "DriverCheck Demo"',
+    reporterId: "admin-user-001",
+    reporterCompanyName: 'DriverCheck Admin',
     fullName: "Antanas Antanaitis",
     nationality: "LT",
     birthYear: 1992,
@@ -223,8 +245,8 @@ export const MOCK_USER_REPORTS: Report[] = [
   },
   {
     id: "report-user-2",
-    reporterId: "dev-user-123",
-    reporterCompanyName: 'UAB "DriverCheck Demo"',
+    reporterId: "admin-user-001",
+    reporterCompanyName: 'DriverCheck Admin',
     fullName: "Zita Zitaite",
     nationality: "LT",
     category: "driving_safety",
@@ -237,9 +259,9 @@ export const MOCK_USER_REPORTS: Report[] = [
 ];
 
 export const MOCK_USER_SEARCH_LOGS: SearchLog[] = [
-  { id: "log1-mock-user", userId: MOCK_USER.id, searchText: "Jonas Jonaitis", timestamp: new Date("2024-04-10T10:00:00Z"), resultsCount: 1 },
-  { id: "log2-mock-user", userId: MOCK_USER.id, searchText: "Neatsakingas vairavimas", timestamp: new Date("2024-04-09T11:20:00Z"), resultsCount: 2 }, 
-  { id: "log3-mock-user", userId: MOCK_USER.id, searchText: "Antanas Antanaitis", timestamp: new Date("2024-04-08T15:30:00Z"), resultsCount: 1 },
+  { id: "log1-mock-user", userId: "admin-user-001", searchText: "Jonas Jonaitis", timestamp: new Date("2024-04-10T10:00:00Z"), resultsCount: 1 },
+  { id: "log2-mock-user", userId: "admin-user-001", searchText: "Neatsakingas vairavimas", timestamp: new Date("2024-04-09T11:20:00Z"), resultsCount: 2 }, 
+  { id: "log3-mock-user", userId: "admin-user-001", searchText: "Antanas Antanaitis", timestamp: new Date("2024-04-08T15:30:00Z"), resultsCount: 1 },
 ];
 
     
