@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect } from 'react';
@@ -12,7 +13,10 @@ export default function HomePage() {
   useEffect(() => {
     if (!loading) {
       if (user) {
-        router.replace('/dashboard');
+        // For returning users, redirect them to the most relevant page.
+        // Admins go to the admin panel, regular users go to the dashboard.
+        const targetPath = user.isAdmin ? '/admin' : '/dashboard';
+        router.replace(targetPath);
       } else {
         router.replace('/auth/login');
       }

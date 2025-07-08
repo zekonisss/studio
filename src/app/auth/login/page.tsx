@@ -14,7 +14,9 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (user) {
-      router.replace(user.isAdmin ? '/admin' : '/dashboard');
+      // After a successful login, all users are redirected to the main dashboard.
+      // The admin can then navigate to the admin panel from the sidebar.
+      router.replace('/dashboard');
     }
   }, [user, router]);
 
