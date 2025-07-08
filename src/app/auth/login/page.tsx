@@ -1,16 +1,23 @@
 
-"use client"; // Required for using hooks
+"use client";
 
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { LoginForm } from "@/components/auth/login-form";
-import { useLanguage } from "@/contexts/language-context"; // Added
-
-// export const metadata: Metadata = { // Metadata needs to be in server component or layout
-// title: 'Prisijungimas - DriverCheck',
-// description: 'Prisijunkite prie DriverCheck platformos.',
-// };
+import { useLanguage } from "@/contexts/language-context";
+import { useAuth } from '@/hooks/use-auth';
 
 export default function LoginPage() {
-  const { t } = useLanguage(); // Added
+  const { t } = useLanguage();
+  const { user } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (user) {
+      router.replace(user.isAdmin ? '/admin' : '/dashboard');
+    }
+  }, [user, router]);
+
   return (
     <>
       <h2 className="mb-6 text-center text-2xl font-semibold tracking-tight text-foreground">

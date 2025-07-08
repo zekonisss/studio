@@ -31,7 +31,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { t } = useLanguage(); 
 
   const checkAuthState = useCallback(async () => {
-    // No need to set loading to true here, initial state is true
     const storedUserId = localStorage.getItem(USER_ID_STORAGE_KEY); 
     if (storedUserId) {
       try {
@@ -64,52 +63,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = async (values: LoginFormValues) => {
     setLoading(true);
     try {
-      // Hardcoded check for admin and test users to ensure login always works
+      await storage.seedInitialUsers();
+
+      let userToLogin: UserProfile | null = null;
       if (values.email.toLowerCase() === MOCK_ADMIN_USER.email.toLowerCase() && values.password === MOCK_ADMIN_USER.password) {
-        setUser(MOCK_ADMIN_USER);
-        localStorage.setItem(USER_ID_STORAGE_KEY, MOCK_ADMIN_USER.id);
-        toast({
-          title: t('toast.login.success.title'),
-          description: t('toast.login.success.description'),
-        });
-        router.push('/admin');
-        // setLoading(false) will be handled in finally
-        return; 
+        userToLogin = MOCK_ADMIN_USER;
+      } else if (values.email.toLowerCase() === MOCK_TEST_CLIENT_USER.email.toLowerCase() && values.password === MOCK_TEST_CLIENT_USER.password) {
+        userToLogin = MOCK_TEST_CLIENT_USER;
+      } else {
+        const foundUser = await storage.findUserByEmail(values.email);
+        if (foundUser && foundUser.password === values.password) {
+           userToLogin = foundUser;
+        }
       }
-  
-      if (values.email.toLowerCase() === MOCK_TEST_CLIENT_USER.email.toLowerCase() && values.password === MOCK_TEST_CLIENT_USER.password) {
-        setUser(MOCK_TEST_CLIENT_USER);
-        localStorage.setItem(USER_ID_STORAGE_KEY, MOCK_TEST_CLIENT_USER.id);
-        toast({
-          title: t('toast.login.success.title'),
-          description: t('toast.login.success.description'),
-        });
-        router.push('/dashboard');
-        // setLoading(false) will be handled in finally
-        return;
-      }
-  
-      // If not a hardcoded user, proceed with Firestore lookup
-      await storage.seedInitialUsers(); 
-      const foundUser = await storage.findUserByEmail(values.email);
-  
-      if (foundUser && foundUser.password === values.password) {
-        // Status checks
-        if (foundUser.paymentStatus === 'active') {
-          setUser(foundUser);
-          localStorage.setItem(USER_ID_STORAGE_KEY, foundUser.id);
+
+      if (userToLogin) {
+        if (userToLogin.paymentStatus === 'active') {
+          setUser(userToLogin);
+          localStorage.setItem(USER_ID_STORAGE_KEY, userToLogin.id);
           toast({
             title: t('toast.login.success.title'),
             description: t('toast.login.success.description'),
           });
-          router.push(foundUser.isAdmin ? '/admin' : '/dashboard');
         } else {
             let errorMessage = t('toast.login.error.accessDenied');
-            if (foundUser.paymentStatus === 'pending_verification') {
+            if (userToLogin.paymentStatus === 'pending_verification') {
                 errorMessage = t('toast.login.error.pendingVerification');
-            } else if (foundUser.paymentStatus === 'pending_payment') {
+            } else if (userToLogin.paymentStatus === 'pending_payment') {
                 errorMessage = t('toast.login.error.pendingPayment');
-            } else if (foundUser.paymentStatus === 'inactive') {
+            } else if (userToLogin.paymentStatus === 'inactive') {
                 errorMessage = t('toast.login.error.inactive');
             }
             throw new Error(errorMessage);
@@ -119,12 +101,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     } catch (error: any) {
       toast({ variant: 'destructive', title: t('toast.login.error.title'), description: error.message });
-      setLoading(false); // Set loading to false on error
-    } 
-    // Do not set loading to false in a finally block here, 
-    // because successful navigation will unmount this context in some cases, 
-    // and the new page's AuthProvider will handle its own loading state.
-    // However, if an error occurs, we must set it to false to allow another attempt.
+    } finally {
+        setLoading(false);
+    }
   };
 
 
@@ -201,11 +180,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } catch (error) {
        toast({ variant: "destructive", title: t('toast.logout.error.title') });
     } finally {
+      // setLoading(false) is not strictly needed here as the app will remount
+      // but it's good practice.
       setLoading(false);
     }
   };
 
   const sendVerificationEmail = async () => {
+    // This is a mock function
     await new Promise(resolve => setTimeout(resolve, 1000));
   };
 
