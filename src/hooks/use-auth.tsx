@@ -32,10 +32,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const checkAuthState = useCallback(async () => {
     setLoading(true);
-    await storage.seedInitialUsers(); 
     const storedUserId = localStorage.getItem(USER_ID_STORAGE_KEY); 
     if (storedUserId) {
       try {
+        await storage.seedInitialUsers(); 
         const currentUserData = await storage.getUserById(storedUserId);
         if (currentUserData) {
            setUser(currentUserData);
@@ -63,22 +63,49 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (values: LoginFormValues) => {
     setLoading(true);
-    try {
-      // Ensure mock data is always up-to-date in Firestore before any login attempt.
-      // This makes Firestore the reliable single source of truth for mock users.
-      await storage.seedInitialUsers();
 
+    // Hardcoded check for admin and test users to ensure login always works
+    if (values.email.toLowerCase() === MOCK_ADMIN_USER.email.toLowerCase() && values.password === MOCK_ADMIN_USER.password) {
+      setUser(MOCK_ADMIN_USER);
+      localStorage.setItem(USER_ID_STORAGE_KEY, MOCK_ADMIN_USER.id);
+      toast({
+        title: t('toast.login.success.title'),
+        description: t('toast.login.success.description'),
+      });
+      router.push('/admin');
+      setLoading(false);
+      return; 
+    }
+
+    if (values.email.toLowerCase() === MOCK_TEST_CLIENT_USER.email.toLowerCase() && values.password === MOCK_TEST_CLIENT_USER.password) {
+      setUser(MOCK_TEST_CLIENT_USER);
+      localStorage.setItem(USER_ID_STORAGE_KEY, MOCK_TEST_CLIENT_USER.id);
+      toast({
+        title: t('toast.login.success.title'),
+        description: t('toast.login.success.description'),
+      });
+      router.push('/dashboard');
+      setLoading(false);
+      return;
+    }
+
+    // If not a hardcoded user, proceed with Firestore lookup
+    try {
+      await storage.seedInitialUsers(); 
       const foundUser = await storage.findUserByEmail(values.email);
 
       if (foundUser && foundUser.password === values.password) {
         // Status checks
         if (foundUser.paymentStatus === 'pending_verification') {
           throw new Error(t('toast.login.error.pendingVerification'));
-        } else if (foundUser.paymentStatus === 'pending_payment') {
+        }
+        if (foundUser.paymentStatus === 'pending_payment') {
           throw new Error(t('toast.login.error.pendingPayment'));
-        } else if (foundUser.paymentStatus === 'inactive') {
+        }
+        if (foundUser.paymentStatus === 'inactive') {
           throw new Error(t('toast.login.error.inactive'));
-        } else if (foundUser.paymentStatus === 'active') {
+        }
+        if (foundUser.paymentStatus === 'active') {
           setUser(foundUser);
           localStorage.setItem(USER_ID_STORAGE_KEY, foundUser.id);
           toast({
@@ -87,7 +114,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           });
           router.push(foundUser.isAdmin ? '/admin' : '/dashboard');
         } else {
-           throw new Error(t('toast.login.error.accessDenied'));
+          throw new Error(t('toast.login.error.accessDenied'));
         }
       } else {
         throw new Error(t('toast.login.error.invalidCredentials'));
