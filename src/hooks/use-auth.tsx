@@ -8,7 +8,6 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/language-context';
 import * as storage from '@/lib/storage';
-// Import mock users directly for hardcoded check
 import { MOCK_ADMIN_USER, MOCK_TEST_CLIENT_USER } from '@/lib/mock-data';
 
 interface AuthContextType {
@@ -65,26 +64,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = async (values: LoginFormValues) => {
     setLoading(true);
     try {
-      // Hardcoded check to guarantee login for admin and test accounts
-      if (values.email.toLowerCase() === MOCK_ADMIN_USER.email.toLowerCase() && values.password === MOCK_ADMIN_USER.password) {
-          const userToLogin = MOCK_ADMIN_USER;
-          setUser(userToLogin);
-          localStorage.setItem(USER_ID_STORAGE_KEY, userToLogin.id);
-          toast({ title: t('toast.login.success.title'), description: t('toast.login.success.description') });
-          router.push('/admin');
-          return;
-      }
-      if (values.email.toLowerCase() === MOCK_TEST_CLIENT_USER.email.toLowerCase() && values.password === MOCK_TEST_CLIENT_USER.password) {
-          const userToLogin = MOCK_TEST_CLIENT_USER;
-          setUser(userToLogin);
-          localStorage.setItem(USER_ID_STORAGE_KEY, userToLogin.id);
-          toast({ title: t('toast.login.success.title'), description: t('toast.login.success.description') });
-          router.push('/dashboard');
-          return;
-      }
+      // Ensure mock data is always up-to-date in Firestore before any login attempt.
+      // This makes Firestore the reliable single source of truth for mock users.
+      await storage.seedInitialUsers();
 
-      // Regular login flow for other users via Firestore
       const foundUser = await storage.findUserByEmail(values.email);
+
       if (foundUser && foundUser.password === values.password) {
         // Status checks
         if (foundUser.paymentStatus === 'pending_verification') {
@@ -109,9 +94,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     } catch (error: any) {
       toast({ variant: 'destructive', title: t('toast.login.error.title'), description: error.message });
-      const customError = new Error(error.message) as any;
-      customError.isAuthManagedError = true;
-      // Re-throw to be caught by component if needed, but not necessary here.
     } finally {
       setLoading(false);
     }
