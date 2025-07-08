@@ -73,7 +73,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         description: t('toast.login.success.description'),
       });
       router.push('/admin');
-      setLoading(false);
       return; 
     }
 
@@ -85,7 +84,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         description: t('toast.login.success.description'),
       });
       router.push('/dashboard');
-      setLoading(false);
       return;
     }
 
@@ -97,13 +95,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (foundUser && foundUser.password === values.password) {
         // Status checks
         if (foundUser.paymentStatus === 'pending_verification') {
-          throw new Error(t('toast.login.error.pendingVerification'));
+            setLoading(false);
+            throw new Error(t('toast.login.error.pendingVerification'));
         }
         if (foundUser.paymentStatus === 'pending_payment') {
-          throw new Error(t('toast.login.error.pendingPayment'));
+            setLoading(false);
+            throw new Error(t('toast.login.error.pendingPayment'));
         }
         if (foundUser.paymentStatus === 'inactive') {
-          throw new Error(t('toast.login.error.inactive'));
+            setLoading(false);
+            throw new Error(t('toast.login.error.inactive'));
         }
         if (foundUser.paymentStatus === 'active') {
           setUser(foundUser);
@@ -114,15 +115,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           });
           router.push(foundUser.isAdmin ? '/admin' : '/dashboard');
         } else {
+          setLoading(false);
           throw new Error(t('toast.login.error.accessDenied'));
         }
       } else {
+        setLoading(false);
         throw new Error(t('toast.login.error.invalidCredentials'));
       }
     } catch (error: any) {
-      toast({ variant: 'destructive', title: t('toast.login.error.title'), description: error.message });
-    } finally {
       setLoading(false);
+      toast({ variant: 'destructive', title: t('toast.login.error.title'), description: error.message });
     }
   };
 
