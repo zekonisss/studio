@@ -2,7 +2,7 @@
 import type { Report, UserProfile, SearchLog, AuditLogEntry, UserNotification } from '@/types';
 import { MOCK_ALL_USERS, MOCK_GENERAL_REPORTS, MOCK_USER_REPORTS, MOCK_USER_SEARCH_LOGS } from './mock-data';
 import { db } from './firebase';
-import { collection, getDocs, doc, setDoc, query, where, getDoc, updateDoc, writeBatch, documentId } from 'firebase/firestore';
+import { collection, getDocs, doc, setDoc, query, where, getDoc, updateDoc, writeBatch, documentId, enableNetwork } from 'firebase/firestore';
 
 
 const LOCAL_STORAGE_REPORTS_KEY = 'driverCheckReports';
@@ -13,11 +13,25 @@ const LOCAL_STORAGE_NOTIFICATIONS_KEY = 'driverCheckNotifications';
 const isBrowser = typeof window !== 'undefined';
 const USERS_COLLECTION = 'users';
 
+// --- Firestore Network Helper ---
+async function ensureNetwork(): Promise<void> {
+    if(isBrowser) {
+        try {
+            await enableNetwork(db);
+        } catch (error) {
+            console.error("Failed to enable Firestore network:", error);
+            // We don't re-throw, as it might work anyway if it was already enabled.
+        }
+    }
+}
+
+
 // --- User Management (Firestore) ---
 
 // Helper function to seed or update mock users from mock-data.ts
 export async function seedInitialUsers() {
   if (!isBrowser) return;
+  await ensureNetwork();
   try {
     const batch = writeBatch(db);
     MOCK_ALL_USERS.forEach(user => {
@@ -34,7 +48,8 @@ export async function seedInitialUsers() {
 
 export async function getAllUsers(): Promise<UserProfile[]> {
   if (!isBrowser) return [];
-  await seedInitialUsers();
+  await ensureNetwork();
+  // Seeding is now handled more explicitly in auth hooks
   const usersCollectionRef = collection(db, USERS_COLLECTION);
   const snapshot = await getDocs(usersCollectionRef);
   const users: UserProfile[] = [];
@@ -46,12 +61,14 @@ export async function getAllUsers(): Promise<UserProfile[]> {
 
 export async function addUserProfileWithId(userId: string, user: UserProfile): Promise<void> {
   if (!isBrowser) return;
+  await ensureNetwork();
   const userDocRef = doc(db, USERS_COLLECTION, userId);
   await setDoc(userDocRef, user);
 }
 
 export async function addUsersBatch(users: UserProfile[]): Promise<void> {
   if (!isBrowser) return;
+  await ensureNetwork();
   const batch = writeBatch(db);
   users.forEach(user => {
     const userDocRef = doc(db, USERS_COLLECTION, user.id);
@@ -62,12 +79,14 @@ export async function addUsersBatch(users: UserProfile[]): Promise<void> {
 
 export async function updateUserProfile(userId: string, userData: Partial<UserProfile>): Promise<void> {
   if (!isBrowser) return;
+  await ensureNetwork();
   const userDocRef = doc(db, USERS_COLLECTION, userId);
   await updateDoc(userDocRef, userData);
 }
 
 export async function findUserByEmail(email: string): Promise<UserProfile | null> {
   if (!isBrowser) return null;
+  await ensureNetwork();
   const q = query(collection(db, USERS_COLLECTION), where("email", "==", email.toLowerCase()));
   const querySnapshot = await getDocs(q);
   if (querySnapshot.empty) {
@@ -79,6 +98,7 @@ export async function findUserByEmail(email: string): Promise<UserProfile | null
 
 export async function getUserById(userId: string): Promise<UserProfile | null> {
     if (!isBrowser) return null;
+    await ensureNetwork();
     const userDocRef = doc(db, USERS_COLLECTION, userId);
     const docSnap = await getDoc(userDocRef);
     if (docSnap.exists()) {
