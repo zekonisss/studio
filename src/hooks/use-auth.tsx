@@ -14,7 +14,7 @@ interface AuthContextType {
   user: UserProfile | null;
   loading: boolean;
   login: (values: LoginFormValues) => Promise<void>;
-  signup: (values: SignUpFormValues) => Promise<void>;
+  signup: (values: SignUpFormValues) => Promise<boolean>;
   logout: () => Promise<void>;
   sendVerificationEmail: () => Promise<void>;
   updateUserInContext: (updatedUser: UserProfile) => Promise<void>;
@@ -63,32 +63,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = async (values: LoginFormValues) => {
     setLoading(true);
     try {
-      // Ensure mock users are always up-to-date in Firestore for login purposes
       await storage.seedInitialUsers();
 
-      // Special handling for mock users to ensure login always works
+      let foundUser: UserProfile | null = null;
       if (values.email.toLowerCase() === MOCK_ADMIN_USER.email.toLowerCase() && values.password === MOCK_ADMIN_USER.password) {
-        const adminUser = await storage.getUserById(MOCK_ADMIN_USER.id);
-        if (adminUser) {
-          setUser(adminUser);
-          localStorage.setItem(USER_ID_STORAGE_KEY, adminUser.id);
-          toast({ title: t('toast.login.success.title'), description: t('toast.login.success.description') });
-          return;
-        }
-      }
-      if (values.email.toLowerCase() === MOCK_TEST_CLIENT_USER.email.toLowerCase() && values.password === MOCK_TEST_CLIENT_USER.password) {
-        const testUser = await storage.getUserById(MOCK_TEST_CLIENT_USER.id);
-         if (testUser) {
-          setUser(testUser);
-          localStorage.setItem(USER_ID_STORAGE_KEY, testUser.id);
-          toast({ title: t('toast.login.success.title'), description: t('toast.login.success.description') });
-          return;
+        foundUser = await storage.getUserById(MOCK_ADMIN_USER.id);
+      } else if (values.email.toLowerCase() === MOCK_TEST_CLIENT_USER.email.toLowerCase() && values.password === MOCK_TEST_CLIENT_USER.password) {
+        foundUser = await storage.getUserById(MOCK_TEST_CLIENT_USER.id);
+      } else {
+        const userFromDb = await storage.findUserByEmail(values.email);
+        if (userFromDb && userFromDb.password === values.password) {
+            foundUser = userFromDb;
         }
       }
 
-      // Login for other users from Firestore
-      const foundUser = await storage.findUserByEmail(values.email);
-      if (foundUser && foundUser.password === values.password) {
+      if (foundUser) {
         if (foundUser.paymentStatus === 'active') {
           setUser(foundUser);
           localStorage.setItem(USER_ID_STORAGE_KEY, foundUser.id);
@@ -112,7 +101,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
 
-  const signup = async (values: SignUpFormValues) => {
+  const signup = async (values: SignUpFormValues): Promise<boolean> => {
     setLoading(true);
     try {
         const existingUser = await storage.findUserByEmail(values.email);
@@ -158,16 +147,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           title: t('toast.signup.success.title'),
           description: t('toast.signup.success.description'),
         });
-        router.push('/auth/pending-approval');
+        return true;
     } catch (error: any) {
         toast({
             variant: "destructive",
             title: t('toast.signup.error.title'),
             description: error.message || t('toast.signup.error.descriptionGeneric'),
         });
-        const customError = new Error(error.message) as any;
-        customError.isAuthManagedError = true;
-        throw customError;
+        return false;
     } finally {
         setLoading(false);
     }

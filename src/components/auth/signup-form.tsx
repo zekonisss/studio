@@ -22,11 +22,13 @@ import { useToast } from "@/hooks/use-toast";
 import { Building2, Briefcase, MapPin, User, Mail, Phone, Lock, Loader2, Percent, UserPlus } from "lucide-react";
 import { useLanguage } from "@/contexts/language-context";
 import { Separator } from "@/components/ui/separator";
+import { useRouter } from "next/navigation";
 
 export function SignupForm() {
   const { signup, loading } = useAuth();
   const { toast } = useToast();
   const { t } = useLanguage();
+  const router = useRouter();
 
   const form = useForm<SignUpFormValues>({
     resolver: zodResolver(SignUpSchema),
@@ -54,18 +56,9 @@ export function SignupForm() {
   });
 
   async function onSubmit(values: SignUpFormValues) {
-    try {
-      await signup(values);
-      // Toast messages are now handled within useAuth using translated strings
-    } catch (error: any) {
-      // Error handling is now more centralized in useAuth
-      if (!error.isAuthManagedError) {
-         toast({
-            variant: "destructive",
-            title: t('toast.signup.error.title'),
-            description: error.message || t('toast.signup.error.descriptionGeneric'),
-        });
-      }
+    const success = await signup(values);
+    if (success) {
+      router.push('/auth/pending-approval');
     }
   }
 
