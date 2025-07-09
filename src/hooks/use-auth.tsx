@@ -84,7 +84,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             title: t('toast.login.success.title'),
             description: t('toast.login.success.description'),
           });
-          router.push('/dashboard');
+          router.push(userFromDb.isAdmin ? '/admin' : '/dashboard');
           return true;
         } else {
           let errorMessage = t('toast.login.error.accessDenied');
@@ -132,7 +132,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           paymentStatus: 'pending_verification', 
           isAdmin: false,
           registeredAt: new Date().toISOString(),
-          accountActivatedAt: undefined,
+          // `accountActivatedAt` is intentionally omitted here as it's not set on signup.
+          // This prevents sending `undefined` to Firestore, which was the root cause of the hang.
           agreeToTerms: values.agreeToTerms,
           subUsers: [],
         };
