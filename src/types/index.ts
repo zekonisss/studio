@@ -19,7 +19,7 @@ export interface UserProfile {
   isAdmin?: boolean;
   registeredAt?: string; // ISO date string for registration
   accountActivatedAt?: string; // Date ISO string when the account was last set to 'active'
-  password?: string; // Only for mock/initial setup, not stored long-term
+  password?: string; // Only for mock/initial setup, not stored long-term in the live user object state.
   agreeToTerms?: boolean;
   subUsers?: SubUserProfile[];
 }

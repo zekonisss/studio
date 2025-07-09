@@ -8,15 +8,13 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/language-context';
 import * as storage from '@/lib/storage';
-import { MOCK_ADMIN_USER, MOCK_TEST_CLIENT_USER } from '@/lib/mock-data';
 
 interface AuthContextType {
   user: UserProfile | null;
   loading: boolean;
-  login: (values: LoginFormValues) => Promise<void>;
+  login: (values: LoginFormValues) => Promise<boolean>;
   signup: (values: SignUpFormValues) => Promise<boolean>;
   logout: () => Promise<void>;
-  sendVerificationEmail: () => Promise<void>;
   updateUserInContext: (updatedUser: UserProfile) => Promise<void>;
 }
 
@@ -26,11 +24,11 @@ const USER_ID_STORAGE_KEY = 'driverCheckUserId';
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const router = useRouter();
   const { toast } = useToast();
   const { t } = useLanguage(); 
 
   const checkAuthState = useCallback(async () => {
+    setLoading(true);
     const storedUserId = localStorage.getItem(USER_ID_STORAGE_KEY); 
     if (storedUserId) {
       try {
@@ -39,8 +37,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (currentUserData) {
            setUser(currentUserData);
         } else {
+          // If user ID is in storage but not in DB, clear it.
           localStorage.removeItem(USER_ID_STORAGE_KEY);
-           setUser(null);
+          setUser(null);
         }
       } catch (e) {
         console.error("Failed to fetch user from storage", e);
@@ -60,33 +59,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await storage.updateUserProfile(updatedUser.id, updatedUser);
   };
 
-  const login = async (values: LoginFormValues) => {
+  const login = async (values: LoginFormValues): Promise<boolean> => {
     setLoading(true);
     try {
       await storage.seedInitialUsers();
 
-      let foundUser: UserProfile | null = null;
-      if (values.email.toLowerCase() === MOCK_ADMIN_USER.email.toLowerCase() && values.password === MOCK_ADMIN_USER.password) {
-        foundUser = await storage.getUserById(MOCK_ADMIN_USER.id);
-      } else if (values.email.toLowerCase() === MOCK_TEST_CLIENT_USER.email.toLowerCase() && values.password === MOCK_TEST_CLIENT_USER.password) {
-        foundUser = await storage.getUserById(MOCK_TEST_CLIENT_USER.id);
-      } else {
-        const userFromDb = await storage.findUserByEmail(values.email);
-        if (userFromDb && userFromDb.password === values.password) {
-            foundUser = userFromDb;
-        }
-      }
+      const userFromDb = await storage.findUserByEmail(values.email);
 
-      if (foundUser) {
-        if (foundUser.paymentStatus === 'active') {
-          setUser(foundUser);
-          localStorage.setItem(USER_ID_STORAGE_KEY, foundUser.id);
+      if (userFromDb && userFromDb.password === values.password) {
+        if (userFromDb.paymentStatus === 'active') {
+          setUser(userFromDb);
+          localStorage.setItem(USER_ID_STORAGE_KEY, userFromDb.id);
           toast({ title: t('toast.login.success.title'), description: t('toast.login.success.description') });
+          return true;
         } else {
           let errorMessage = t('toast.login.error.accessDenied');
-          if (foundUser.paymentStatus === 'pending_verification') errorMessage = t('toast.login.error.pendingVerification');
-          else if (foundUser.paymentStatus === 'pending_payment') errorMessage = t('toast.login.error.pendingPayment');
-          else if (foundUser.paymentStatus === 'inactive') errorMessage = t('toast.login.error.inactive');
+          if (userFromDb.paymentStatus === 'pending_verification') errorMessage = t('toast.login.error.pendingVerification');
+          else if (userFromDb.paymentStatus === 'pending_payment') errorMessage = t('toast.login.error.pendingPayment');
+          else if (userFromDb.paymentStatus === 'inactive') errorMessage = t('toast.login.error.inactive');
           throw new Error(errorMessage);
         }
       } else {
@@ -94,7 +84,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     } catch (error: any) {
       toast({ variant: 'destructive', title: t('toast.login.error.title'), description: error.message });
-      throw error;
+      return false;
     } finally {
       setLoading(false);
     }
@@ -164,20 +154,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     setUser(null);
     localStorage.removeItem(USER_ID_STORAGE_KEY);
-    router.push('/auth/login');
-    await new Promise(resolve => setTimeout(resolve, 100)); // Short delay to allow state to clear
-    setLoading(false);
+    // The redirect is now handled by the layout component which will see the user is null
+    setLoading(false); 
     toast({ title: t('toast.logout.success.title') });
   };
   
-
+  // This is a mock function, not needed for real Firebase Auth, but kept for consistency
   const sendVerificationEmail = async () => {
-    // This is a mock function
     await new Promise(resolve => setTimeout(resolve, 1000));
   };
 
+  const value = { user, loading, login, signup, logout, sendVerificationEmail: sendVerificationEmail, updateUserInContext };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, signup, logout, sendVerificationEmail, updateUserInContext }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

@@ -19,11 +19,14 @@ import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { Mail, Lock, Loader2 } from "lucide-react";
 import { useLanguage } from "@/contexts/language-context";
+import { useRouter } from "next/navigation";
+
 
 export function LoginForm() {
   const { login, loading } = useAuth();
   const { toast } = useToast();
   const { t } = useLanguage();
+  const router = useRouter();
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(LoginSchema),
@@ -34,17 +37,9 @@ export function LoginForm() {
   });
 
   async function onSubmit(values: LoginFormValues) {
-    try {
-      await login(values); 
-    } catch (error: any) {
-      if (!error.isAuthManagedError) { 
-         toast({
-            variant: "destructive",
-            title: t('toast.login.error.title'),
-            description: error.message || t('toast.login.error.descriptionGeneric'),
-        });
-      }
-    }
+    const success = await login(values);
+    // The redirection logic is now handled by the login page itself,
+    // which monitors the user state. This component just calls the login function.
   }
 
   return (
