@@ -25,21 +25,45 @@ async function ensureNetwork(): Promise<void> {
     }
 }
 
+// Helper function to retry Firestore operations on "offline" errors
+async function withFirestoreRetry<T>(operation: () => Promise<T>): Promise<T> {
+    try {
+        return await operation();
+    } catch (error: any) {
+        // Check if it's the specific offline error
+        if (error.message && (error.message.includes('offline') || error.message.includes('Failed to get document'))) {
+            console.warn("Firestore client is offline. Attempting to re-enable network and retry...");
+            await ensureNetwork();
+            // Wait a moment for the network to re-establish
+            await new Promise(resolve => setTimeout(resolve, 500)); 
+            // Retry the operation once
+            return await operation();
+        }
+        // If it's a different error, or the retry fails, re-throw it
+        throw error;
+    }
+}
+
 
 // --- User Management (Firestore) ---
 
 // Helper function to seed or update mock users from mock-data.ts
 export async function seedInitialUsers() {
   if (!isBrowser) return;
-  await ensureNetwork();
+  
   try {
     const batch = writeBatch(db);
     MOCK_ALL_USERS.forEach(user => {
       const userDocRef = doc(db, USERS_COLLECTION, user.id);
-      // set with overwrite will ensure mock users always have the latest data from the code
-      batch.set(userDocRef, user); 
+      batch.set(userDocRef, user, { merge: true }); 
     });
-    await batch.commit();
+    
+    // Wrap the commit operation with the retry logic
+    await withFirestoreRetry(async () => {
+        await ensureNetwork();
+        return batch.commit();
+    });
+
   } catch (error) {
     console.error("Error seeding mock users:", error);
   }
@@ -48,63 +72,76 @@ export async function seedInitialUsers() {
 
 export async function getAllUsers(): Promise<UserProfile[]> {
   if (!isBrowser) return [];
-  await ensureNetwork();
-  // Seeding is now handled more explicitly in auth hooks
-  const usersCollectionRef = collection(db, USERS_COLLECTION);
-  const snapshot = await getDocs(usersCollectionRef);
-  const users: UserProfile[] = [];
-  snapshot.forEach(doc => {
-    users.push({ id: doc.id, ...doc.data() } as UserProfile);
+  return withFirestoreRetry(async () => {
+      await ensureNetwork();
+      const usersCollectionRef = collection(db, USERS_COLLECTION);
+      const snapshot = await getDocs(usersCollectionRef);
+      const users: UserProfile[] = [];
+      snapshot.forEach(doc => {
+        users.push({ id: doc.id, ...doc.data() } as UserProfile);
+      });
+      return users;
   });
-  return users;
 }
 
 export async function addUserProfileWithId(userId: string, user: UserProfile): Promise<void> {
   if (!isBrowser) return;
-  await ensureNetwork();
-  const userDocRef = doc(db, USERS_COLLECTION, userId);
-  await setDoc(userDocRef, user);
+  await withFirestoreRetry(async () => {
+    await ensureNetwork();
+    const userDocRef = doc(db, USERS_COLLECTION, userId);
+    await setDoc(userDocRef, user);
+  });
 }
 
 export async function addUsersBatch(users: UserProfile[]): Promise<void> {
   if (!isBrowser) return;
-  await ensureNetwork();
-  const batch = writeBatch(db);
-  users.forEach(user => {
-    const userDocRef = doc(db, USERS_COLLECTION, user.id);
-    batch.set(userDocRef, user);
+  await withFirestoreRetry(async () => {
+    await ensureNetwork();
+    const batch = writeBatch(db);
+    users.forEach(user => {
+        const userDocRef = doc(db, USERS_COLLECTION, user.id);
+        batch.set(userDocRef, user);
+    });
+    await batch.commit();
   });
-  await batch.commit();
 }
 
 export async function updateUserProfile(userId: string, userData: Partial<UserProfile>): Promise<void> {
   if (!isBrowser) return;
-  await ensureNetwork();
-  const userDocRef = doc(db, USERS_COLLECTION, userId);
-  await updateDoc(userDocRef, userData);
+  await withFirestoreRetry(async () => {
+    await ensureNetwork();
+    const userDocRef = doc(db, USERS_COLLECTION, userId);
+    await updateDoc(userDocRef, userData);
+  });
 }
 
 export async function findUserByEmail(email: string): Promise<UserProfile | null> {
   if (!isBrowser) return null;
-  await ensureNetwork();
-  const q = query(collection(db, USERS_COLLECTION), where("email", "==", email.toLowerCase()));
-  const querySnapshot = await getDocs(q);
-  if (querySnapshot.empty) {
-    return null;
-  }
-  const userDoc = querySnapshot.docs[0];
-  return { id: userDoc.id, ...userDoc.data() } as UserProfile;
+  
+  return withFirestoreRetry(async () => {
+      await ensureNetwork();
+      const q = query(collection(db, USERS_COLLECTION), where("email", "==", email.toLowerCase()));
+      const querySnapshot = await getDocs(q);
+      if (querySnapshot.empty) {
+        return null;
+      }
+      const userDoc = querySnapshot.docs[0];
+      return { id: userDoc.id, ...userDoc.data() } as UserProfile;
+  });
 }
 
 export async function getUserById(userId: string): Promise<UserProfile | null> {
     if (!isBrowser) return null;
-    await ensureNetwork();
-    const userDocRef = doc(db, USERS_COLLECTION, userId);
-    const docSnap = await getDoc(userDocRef);
-    if (docSnap.exists()) {
-        return { id: docSnap.id, ...docSnap.data() } as UserProfile;
-    }
-    return null;
+
+    return withFirestoreRetry(async () => {
+        await ensureNetwork();
+        const userDocRef = doc(db, USERS_COLLECTION, userId);
+        const docSnap = await getDoc(userDocRef);
+        if (docSnap.exists()) {
+            return { id: docSnap.id, ...docSnap.data() } as UserProfile;
+        }
+        return null;
+    });
 }
 
 // --- Report, Log, and Notification Management (Still using localStorage) ---
