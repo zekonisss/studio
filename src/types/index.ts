@@ -15,7 +15,7 @@ export interface UserProfile {
   contactPerson: string;
   email: string;
   phone: string;
-  password?: string; // Restored for mock auth to work
+  password?: string;
   paymentStatus: 'active' | 'inactive' | 'pending_verification' | 'pending_payment';
   isAdmin?: boolean;
   registeredAt?: string; // ISO date string for registration

@@ -61,7 +61,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const login = async (values: LoginFormValues): Promise<boolean> => {
-    // Special case for admin to bypass DB issues
     if (values.email === MOCK_ADMIN_USER.email && values.password === MOCK_ADMIN_USER.password) {
       setUser(MOCK_ADMIN_USER);
       localStorage.setItem(USER_ID_STORAGE_KEY, MOCK_ADMIN_USER.id);
@@ -69,7 +68,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         title: t('toast.login.success.title'),
         description: t('toast.login.success.description'),
       });
-      router.push('/admin'); // Directly route admin
+      router.push('/admin');
       return true;
     }
 
@@ -129,10 +128,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           contactPerson: values.contactPerson,
           email: values.email.toLowerCase(),
           phone: values.phone,
-          password: values.password, 
+          password: values.password,
           paymentStatus: 'pending_verification', 
           isAdmin: false,
           registeredAt: new Date().toISOString(),
+          accountActivatedAt: undefined,
           agreeToTerms: values.agreeToTerms,
           subUsers: [],
         };

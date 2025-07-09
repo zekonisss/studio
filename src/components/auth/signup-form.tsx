@@ -56,17 +56,20 @@ export function SignupForm() {
   });
 
   async function onSubmit(values: SignUpFormValues) {
+    if (isSubmitting) return;
     setIsSubmitting(true);
+    
     try {
       const success = await signup(values);
       if (success) {
         router.push('/auth/pending-approval');
       }
     } catch (error) {
-      // The auth hook already shows a toast, so we just log it here for debugging
-      console.error("Signup submission failed:", error);
+      // Error toast is handled by the useAuth hook
+      console.error("Signup submission failed in form:", error);
     } finally {
-      // This will run regardless of success or failure, preventing the spinner from getting stuck.
+      // This block ensures the loading spinner is always turned off,
+      // even if the signup succeeds and navigates away, or if it fails.
       setIsSubmitting(false);
     }
   }
