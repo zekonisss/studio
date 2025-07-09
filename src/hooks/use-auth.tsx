@@ -4,7 +4,6 @@
 import type { UserProfile } from '@/types';
 import type { LoginFormValues, SignUpFormValues } from '@/lib/schemas';
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/language-context';
 import * as storage from '@/lib/storage';
@@ -13,8 +12,8 @@ import { MOCK_ADMIN_USER } from '@/lib/mock-data';
 interface AuthContextType {
   user: UserProfile | null;
   loading: boolean;
-  login: (values: LoginFormValues) => Promise<void>;
-  signup: (values: SignUpFormValues) => Promise<void>;
+  login: (values: LoginFormValues) => Promise<boolean>;
+  signup: (values: SignUpFormValues) => Promise<boolean>;
   logout: () => Promise<void>;
   updateUserInContext: (updatedUser: UserProfile) => Promise<void>;
 }
@@ -27,7 +26,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { t } = useLanguage();
-  const router = useRouter();
 
   const checkAuthState = useCallback(async () => {
     setLoading(true);
@@ -61,7 +59,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await storage.updateUserProfile(updatedUser.id, updatedUser);
   };
 
-  const login = async (values: LoginFormValues): Promise<void> => {
+  const login = async (values: LoginFormValues): Promise<boolean> => {
     setLoading(true);
     try {
       if (
@@ -98,18 +96,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             title: t('toast.login.success.title'),
             description: t('toast.login.success.description'),
         });
+        setLoading(false);
+        return true;
     } catch (error: any) {
       toast({
         variant: 'destructive',
         title: t('toast.login.error.title'),
         description: error.message,
       });
-    } finally {
-        setLoading(false);
+      setLoading(false);
+      return false;
     }
   };
 
-  const signup = async (values: SignUpFormValues): Promise<void> => {
+  const signup = async (values: SignUpFormValues): Promise<boolean> => {
     setLoading(true);
     try {
         const existingUser = await storage.findUserByEmail(values.email);
@@ -155,15 +155,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           title: t('toast.signup.success.title'),
           description: t('toast.signup.success.description'),
         });
-        setLoading(false); // Fix: Turn off loading BEFORE navigating
-        router.push('/auth/pending-approval');
+        setLoading(false);
+        return true;
     } catch (error: any) {
         toast({
             variant: "destructive",
             title: t('toast.signup.error.title'),
             description: error.message || t('toast.signup.error.descriptionGeneric'),
         });
-        setLoading(false); // Also turn off loading on error
+        setLoading(false);
+        return false;
     }
   };
 
@@ -173,7 +174,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.removeItem(USER_ID_STORAGE_KEY);
     setLoading(false); 
     toast({ title: t('toast.logout.success.title') });
-    router.push('/auth/login');
   };
   
   const value = { user, loading, login, signup, logout, updateUserInContext };

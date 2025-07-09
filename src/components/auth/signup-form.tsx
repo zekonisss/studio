@@ -4,6 +4,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useWatch } from "react-hook-form";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -18,7 +19,6 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { SignUpSchema, type SignUpFormValues } from "@/lib/schemas";
 import { useAuth } from "@/hooks/use-auth";
-import { useToast } from "@/hooks/use-toast";
 import { Building2, Briefcase, MapPin, User, Mail, Phone, Lock, Loader2, Percent, UserPlus } from "lucide-react";
 import { useLanguage } from "@/contexts/language-context";
 import { Separator } from "@/components/ui/separator";
@@ -26,6 +26,7 @@ import { Separator } from "@/components/ui/separator";
 export function SignupForm() {
   const { signup, loading } = useAuth();
   const { t } = useLanguage();
+  const router = useRouter();
 
   const form = useForm<SignUpFormValues>({
     resolver: zodResolver(SignUpSchema),
@@ -53,7 +54,10 @@ export function SignupForm() {
   });
 
   async function onSubmit(values: SignUpFormValues) {
-    await signup(values);
+    const success = await signup(values);
+    if (success) {
+      router.push('/auth/pending-approval');
+    }
   }
 
   return (
