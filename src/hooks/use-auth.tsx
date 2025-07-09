@@ -62,7 +62,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (values: LoginFormValues): Promise<boolean> => {
     // Hardcoded admin login check
-    if (values.email === MOCK_ADMIN_USER.email && values.password === MOCK_ADMIN_USER.password) {
+    if (values.email.toLowerCase() === MOCK_ADMIN_USER.email && values.password === MOCK_ADMIN_USER.password) {
         setUser(MOCK_ADMIN_USER);
         localStorage.setItem(USER_ID_STORAGE_KEY, MOCK_ADMIN_USER.id);
         toast({
@@ -109,58 +109,60 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signup = async (values: SignUpFormValues): Promise<boolean> => {
     try {
-        const existingUser = await storage.findUserByEmail(values.email);
+        const email = values.email.toLowerCase();
+        const subUserEmail = values.subUserEmail?.toLowerCase();
+
+        const existingUser = await storage.findUserByEmail(email);
         if (existingUser) {
             throw new Error(t('toast.signup.error.emailExists'));
         }
-        if (values.addOneSubUser && values.subUserEmail) {
-            const existingSubUser = await storage.findUserByEmail(values.subUserEmail);
+        if (values.addOneSubUser && subUserEmail) {
+            const existingSubUser = await storage.findUserByEmail(subUserEmail);
             if (existingSubUser) {
                 throw new Error(t('toast.signup.error.subUserEmailExists'));
             }
-            if (values.subUserEmail === values.email) {
+            if (subUserEmail === email) {
                 throw new Error(t('toast.signup.error.subUserEmailSameAsMain'));
             }
         }
 
         const newUserId = `user-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
-
-        const newUserProfileData: Omit<UserProfile, 'id' | 'vatCode' | 'subUsers'> & { vatCode?: string; subUsers?: any[] } = {
+        
+        const newUserPayload: Omit<UserProfile, 'id'> = {
             companyName: values.companyName,
             companyCode: values.companyCode,
             address: values.address,
             contactPerson: values.contactPerson,
-            email: values.email.toLowerCase(),
+            email: email,
             phone: values.phone,
             password: values.password,
             paymentStatus: 'pending_verification',
             isAdmin: false,
             registeredAt: new Date().toISOString(),
-            accountActivatedAt: undefined,
             agreeToTerms: values.agreeToTerms,
+            subUsers: [],
         };
 
         if (values.vatCode) {
-            newUserProfileData.vatCode = values.vatCode;
+            newUserPayload.vatCode = values.vatCode;
         }
 
-        if (values.addOneSubUser && values.subUserName && values.subUserEmail && values.subUserPassword) {
-            newUserProfileData.subUsers = [{
+        if (values.addOneSubUser && values.subUserName && subUserEmail && values.subUserPassword) {
+            newUserPayload.subUsers = [{
                 id: `subuser-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
                 fullName: values.subUserName,
-                email: values.subUserEmail,
+                email: subUserEmail,
                 tempPassword: values.subUserPassword,
             }];
-        } else {
-            newUserProfileData.subUsers = [];
         }
 
-        await storage.addUserProfileWithId(newUserId, newUserProfileData);
-
+        await storage.addUserProfileWithId(newUserId, newUserPayload);
+        
         toast({
             title: t('toast.signup.success.title'),
             description: t('toast.signup.success.description'),
         });
+        
         return true;
     } catch (error: any) {
         console.error("Signup error in useAuth:", error);
