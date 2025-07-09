@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/language-context';
 import * as storage from '@/lib/storage';
 import { MOCK_ADMIN_USER } from '@/lib/mock-data';
+import { useRouter } from 'next/navigation';
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -26,6 +27,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { t } = useLanguage();
+  const router = useRouter();
 
   const checkAuthState = useCallback(async () => {
     setLoading(true);
@@ -37,7 +39,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (currentUserData) {
            setUser(currentUserData);
         } else {
-          // If user ID is in storage but not in DB, clear it.
           localStorage.removeItem(USER_ID_STORAGE_KEY);
           setUser(null);
         }
@@ -74,7 +75,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser(finalAdminUser);
         localStorage.setItem(USER_ID_STORAGE_KEY, MOCK_ADMIN_USER.id);
       } else {
-         await storage.seedInitialUsers();
+        await storage.seedInitialUsers();
         const userFromDb = await storage.findUserByEmail(values.email);
 
         if (userFromDb && userFromDb.password === values.password) {
@@ -155,7 +156,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           title: t('toast.signup.success.title'),
           description: t('toast.signup.success.description'),
         });
-        setLoading(false);
         return true;
     } catch (error: any) {
         toast({
@@ -163,8 +163,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             title: t('toast.signup.error.title'),
             description: error.message || t('toast.signup.error.descriptionGeneric'),
         });
-        setLoading(false);
         return false;
+    } finally {
+        setLoading(false);
     }
   };
 
