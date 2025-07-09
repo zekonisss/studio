@@ -58,7 +58,6 @@ export function SignupForm() {
   async function onSubmit(values: SignUpFormValues) {
     if (isSubmitting) return;
     setIsSubmitting(true);
-    
     try {
       const success = await signup(values);
       if (success) {

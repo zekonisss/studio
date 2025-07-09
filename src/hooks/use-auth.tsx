@@ -111,47 +111,55 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
         const existingUser = await storage.findUserByEmail(values.email);
         if (existingUser) {
-          throw new Error(t('toast.signup.error.emailExists'));
+            throw new Error(t('toast.signup.error.emailExists'));
         }
         if (values.addOneSubUser && values.subUserEmail) {
             const existingSubUser = await storage.findUserByEmail(values.subUserEmail);
-            if(existingSubUser) throw new Error(t('toast.signup.error.subUserEmailExists'));
-            if(values.subUserEmail === values.email) throw new Error(t('toast.signup.error.subUserEmailSameAsMain'));
+            if (existingSubUser) {
+                throw new Error(t('toast.signup.error.subUserEmailExists'));
+            }
+            if (values.subUserEmail === values.email) {
+                throw new Error(t('toast.signup.error.subUserEmailSameAsMain'));
+            }
         }
 
         const newUserId = `user-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
-        
-        // Correctly prepare the user object, excluding the 'id' for the data payload.
-        const newUserProfileData: Omit<UserProfile, 'id'> = {
-          companyName: values.companyName,
-          companyCode: values.companyCode,
-          vatCode: values.vatCode || '',
-          address: values.address,
-          contactPerson: values.contactPerson,
-          email: values.email.toLowerCase(),
-          phone: values.phone,
-          password: values.password,
-          paymentStatus: 'pending_verification', 
-          isAdmin: false,
-          registeredAt: new Date().toISOString(),
-          agreeToTerms: values.agreeToTerms,
-          subUsers: [],
+
+        const newUserProfileData: Omit<UserProfile, 'id' | 'vatCode' | 'subUsers'> & { vatCode?: string; subUsers?: any[] } = {
+            companyName: values.companyName,
+            companyCode: values.companyCode,
+            address: values.address,
+            contactPerson: values.contactPerson,
+            email: values.email.toLowerCase(),
+            phone: values.phone,
+            password: values.password,
+            paymentStatus: 'pending_verification',
+            isAdmin: false,
+            registeredAt: new Date().toISOString(),
+            accountActivatedAt: undefined,
+            agreeToTerms: values.agreeToTerms,
         };
-        
+
+        if (values.vatCode) {
+            newUserProfileData.vatCode = values.vatCode;
+        }
+
         if (values.addOneSubUser && values.subUserName && values.subUserEmail && values.subUserPassword) {
-            newUserProfileData.subUsers?.push({
+            newUserProfileData.subUsers = [{
                 id: `subuser-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
                 fullName: values.subUserName,
                 email: values.subUserEmail,
                 tempPassword: values.subUserPassword,
-            });
+            }];
+        } else {
+            newUserProfileData.subUsers = [];
         }
-        
+
         await storage.addUserProfileWithId(newUserId, newUserProfileData);
 
         toast({
-          title: t('toast.signup.success.title'),
-          description: t('toast.signup.success.description'),
+            title: t('toast.signup.success.title'),
+            description: t('toast.signup.success.description'),
         });
         return true;
     } catch (error: any) {
@@ -164,6 +172,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return false;
     }
   };
+
 
   const logout = async () => {
     setLoading(true);
