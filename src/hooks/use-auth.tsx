@@ -109,72 +109,88 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signup = async (values: SignUpFormValues): Promise<boolean> => {
     try {
-        const email = values.email.toLowerCase();
-        const subUserEmail = values.subUserEmail?.toLowerCase();
+      const email = values.email.toLowerCase();
+      const subUserEmail = values.subUserEmail?.toLowerCase();
 
-        const existingUser = await storage.findUserByEmail(email);
-        if (existingUser) {
-            throw new Error(t('toast.signup.error.emailExists'));
+      // Check if main user exists
+      const existingUser = await storage.findUserByEmail(email);
+      if (existingUser) {
+        throw new Error(t('toast.signup.error.emailExists'));
+      }
+
+      // Check if sub-user exists or has the same email as the main user
+      if (values.addOneSubUser && subUserEmail) {
+        if (subUserEmail === email) {
+          throw new Error(t('toast.signup.error.subUserEmailSameAsMain'));
         }
-        if (values.addOneSubUser && subUserEmail) {
-            const existingSubUser = await storage.findUserByEmail(subUserEmail);
-            if (existingSubUser) {
-                throw new Error(t('toast.signup.error.subUserEmailExists'));
-            }
-            if (subUserEmail === email) {
-                throw new Error(t('toast.signup.error.subUserEmailSameAsMain'));
-            }
+        const existingSubUser = await storage.findUserByEmail(subUserEmail);
+        if (existingSubUser) {
+          throw new Error(t('toast.signup.error.subUserEmailExists'));
         }
+      }
 
-        const newUserId = `user-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
-        
-        const newUserPayload: Omit<UserProfile, 'id'> = {
-            companyName: values.companyName,
-            companyCode: values.companyCode,
-            address: values.address,
-            contactPerson: values.contactPerson,
-            email: email,
-            phone: values.phone,
-            password: values.password,
-            paymentStatus: 'pending_verification',
-            isAdmin: false,
-            registeredAt: new Date().toISOString(),
-            agreeToTerms: values.agreeToTerms,
-            subUsers: [],
-        };
+      const newUserId = `user-${Date.now()}-${Math.random()
+        .toString(36)
+        .substring(2, 7)}`;
 
-        if (values.vatCode) {
-            newUserPayload.vatCode = values.vatCode;
-        }
+      // Construct a clean user object, ensuring no 'undefined' values are sent to Firestore.
+      const userToCreate: Omit<UserProfile, 'id'> = {
+        companyName: values.companyName,
+        companyCode: values.companyCode,
+        address: values.address,
+        contactPerson: values.contactPerson,
+        email: email,
+        phone: values.phone,
+        password: values.password,
+        paymentStatus: 'pending_verification',
+        isAdmin: false,
+        registeredAt: new Date().toISOString(),
+        agreeToTerms: values.agreeToTerms,
+        subUsers: [],
+      };
+      
+      // Only add optional fields if they have a non-empty value.
+      if (values.vatCode) {
+        userToCreate.vatCode = values.vatCode;
+      }
+      
+      if (
+        values.addOneSubUser &&
+        values.subUserName &&
+        subUserEmail &&
+        values.subUserPassword
+      ) {
+        userToCreate.subUsers = [
+          {
+            id: `subuser-${Date.now()}-${Math.random()
+              .toString(36)
+              .substring(2, 9)}`,
+            fullName: values.subUserName,
+            email: subUserEmail,
+            tempPassword: values.subUserPassword,
+          },
+        ];
+      }
+      
+      await storage.addUserProfileWithId(newUserId, userToCreate);
 
-        if (values.addOneSubUser && values.subUserName && subUserEmail && values.subUserPassword) {
-            newUserPayload.subUsers = [{
-                id: `subuser-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
-                fullName: values.subUserName,
-                email: subUserEmail,
-                tempPassword: values.subUserPassword,
-            }];
-        }
+      toast({
+        title: t('toast.signup.success.title'),
+        description: t('toast.signup.success.description'),
+      });
+      return true;
 
-        await storage.addUserProfileWithId(newUserId, newUserPayload);
-        
-        toast({
-            title: t('toast.signup.success.title'),
-            description: t('toast.signup.success.description'),
-        });
-        
-        return true;
     } catch (error: any) {
-        console.error("Signup error in useAuth:", error);
-        toast({
-            variant: "destructive",
-            title: t('toast.signup.error.title'),
-            description: error.message || t('toast.signup.error.descriptionGeneric'),
-        });
-        return false;
+      console.error('Signup error in useAuth:', error);
+      toast({
+        variant: 'destructive',
+        title: t('toast.signup.error.title'),
+        description:
+          error.message || t('toast.signup.error.descriptionGeneric'),
+      });
+      return false;
     }
   };
-
 
   const logout = async () => {
     setLoading(true);
