@@ -65,11 +65,8 @@ export function SignupForm() {
         router.push('/auth/pending-approval');
       }
     } catch (error) {
-      // Error toast is handled by the useAuth hook
       console.error("Signup submission failed in form:", error);
     } finally {
-      // This block ensures the loading spinner is always turned off,
-      // even if the signup succeeds and navigates away, or if it fails.
       setIsSubmitting(false);
     }
   }
