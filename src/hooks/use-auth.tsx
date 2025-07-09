@@ -69,7 +69,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         values.email.toLowerCase() === MOCK_ADMIN_USER.email.toLowerCase() &&
         values.password === MOCK_ADMIN_USER.password
       ) {
-        setUser(MOCK_ADMIN_USER);
+        const adminUserFromDb = await storage.getUserById(MOCK_ADMIN_USER.id);
+        setUser(adminUserFromDb);
         localStorage.setItem(USER_ID_STORAGE_KEY, MOCK_ADMIN_USER.id);
         toast({
           title: t('toast.login.success.title'),
