@@ -60,49 +60,45 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await storage.updateUserProfile(updatedUser.id, updatedUser);
   };
 
-  const login = async (values: LoginFormValues) => {
+ const login = async (values: LoginFormValues) => {
     setLoading(true);
     try {
       await storage.seedInitialUsers();
 
-      let userToLogin: UserProfile | null = null;
       if (values.email.toLowerCase() === MOCK_ADMIN_USER.email.toLowerCase() && values.password === MOCK_ADMIN_USER.password) {
-        userToLogin = MOCK_ADMIN_USER;
-      } else if (values.email.toLowerCase() === MOCK_TEST_CLIENT_USER.email.toLowerCase() && values.password === MOCK_TEST_CLIENT_USER.password) {
-        userToLogin = MOCK_TEST_CLIENT_USER;
-      } else {
-        const foundUser = await storage.findUserByEmail(values.email);
-        if (foundUser && foundUser.password === values.password) {
-           userToLogin = foundUser;
-        }
+        setUser(MOCK_ADMIN_USER);
+        localStorage.setItem(USER_ID_STORAGE_KEY, MOCK_ADMIN_USER.id);
+        toast({ title: t('toast.login.success.title'), description: t('toast.login.success.description') });
+        return;
+      }
+      if (values.email.toLowerCase() === MOCK_TEST_CLIENT_USER.email.toLowerCase() && values.password === MOCK_TEST_CLIENT_USER.password) {
+        setUser(MOCK_TEST_CLIENT_USER);
+        localStorage.setItem(USER_ID_STORAGE_KEY, MOCK_TEST_CLIENT_USER.id);
+        toast({ title: t('toast.login.success.title'), description: t('toast.login.success.description') });
+        return;
       }
 
-      if (userToLogin) {
-        if (userToLogin.paymentStatus === 'active') {
-          setUser(userToLogin);
-          localStorage.setItem(USER_ID_STORAGE_KEY, userToLogin.id);
-          toast({
-            title: t('toast.login.success.title'),
-            description: t('toast.login.success.description'),
-          });
+      const foundUser = await storage.findUserByEmail(values.email);
+      if (foundUser && foundUser.password === values.password) {
+        if (foundUser.paymentStatus === 'active') {
+          setUser(foundUser);
+          localStorage.setItem(USER_ID_STORAGE_KEY, foundUser.id);
+          toast({ title: t('toast.login.success.title'), description: t('toast.login.success.description') });
         } else {
-            let errorMessage = t('toast.login.error.accessDenied');
-            if (userToLogin.paymentStatus === 'pending_verification') {
-                errorMessage = t('toast.login.error.pendingVerification');
-            } else if (userToLogin.paymentStatus === 'pending_payment') {
-                errorMessage = t('toast.login.error.pendingPayment');
-            } else if (userToLogin.paymentStatus === 'inactive') {
-                errorMessage = t('toast.login.error.inactive');
-            }
-            throw new Error(errorMessage);
+          let errorMessage = t('toast.login.error.accessDenied');
+          if (foundUser.paymentStatus === 'pending_verification') errorMessage = t('toast.login.error.pendingVerification');
+          else if (foundUser.paymentStatus === 'pending_payment') errorMessage = t('toast.login.error.pendingPayment');
+          else if (foundUser.paymentStatus === 'inactive') errorMessage = t('toast.login.error.inactive');
+          throw new Error(errorMessage);
         }
       } else {
         throw new Error(t('toast.login.error.invalidCredentials'));
       }
     } catch (error: any) {
       toast({ variant: 'destructive', title: t('toast.login.error.title'), description: error.message });
+      throw error;
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
   };
 
@@ -125,7 +121,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           id: newUserId,
           companyName: values.companyName,
           companyCode: values.companyCode,
-          vatCode: values.vatCode || undefined,
+          vatCode: values.vatCode || '',
           address: values.address,
           contactPerson: values.contactPerson,
           email: values.email.toLowerCase(),
@@ -134,7 +130,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           paymentStatus: 'pending_verification', 
           isAdmin: false,
           registeredAt: new Date().toISOString(),
-          accountActivatedAt: undefined,
           agreeToTerms: values.agreeToTerms,
           subUsers: [],
         };
