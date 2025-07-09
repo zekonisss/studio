@@ -63,8 +63,10 @@ export function SignupForm() {
         router.push('/auth/pending-approval');
       }
     } catch (error) {
-      console.error("Signup failed:", error);
+      // The auth hook already shows a toast, so we just log it here for debugging
+      console.error("Signup submission failed:", error);
     } finally {
+      // This will run regardless of success or failure, preventing the spinner from getting stuck.
       setIsSubmitting(false);
     }
   }

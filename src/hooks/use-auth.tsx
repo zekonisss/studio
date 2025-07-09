@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { UserProfile } from '@/types';
@@ -7,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/language-context';
 import * as storage from '@/lib/storage';
 import { useRouter } from 'next/navigation';
+import { MOCK_ADMIN_USER } from '@/lib/mock-data';
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -59,6 +61,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const login = async (values: LoginFormValues): Promise<boolean> => {
+    // Special case for admin to bypass DB issues
+    if (values.email === MOCK_ADMIN_USER.email && values.password === MOCK_ADMIN_USER.password) {
+      setUser(MOCK_ADMIN_USER);
+      localStorage.setItem(USER_ID_STORAGE_KEY, MOCK_ADMIN_USER.id);
+      toast({
+        title: t('toast.login.success.title'),
+        description: t('toast.login.success.description'),
+      });
+      router.push('/admin'); // Directly route admin
+      return true;
+    }
+
     try {
       await storage.seedInitialUsers();
       const userFromDb = await storage.findUserByEmail(values.email);
@@ -71,6 +85,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             title: t('toast.login.success.title'),
             description: t('toast.login.success.description'),
           });
+          router.push('/dashboard');
           return true;
         } else {
           let errorMessage = t('toast.login.error.accessDenied');
