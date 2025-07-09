@@ -22,11 +22,13 @@ import { useAuth } from "@/hooks/use-auth";
 import { Building2, Briefcase, MapPin, User, Mail, Phone, Lock, Loader2, Percent, UserPlus } from "lucide-react";
 import { useLanguage } from "@/contexts/language-context";
 import { Separator } from "@/components/ui/separator";
+import { useState } from 'react';
 
 export function SignupForm() {
-  const { signup, loading } = useAuth();
+  const { signup } = useAuth();
   const { t } = useLanguage();
   const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<SignUpFormValues>({
     resolver: zodResolver(SignUpSchema),
@@ -54,9 +56,16 @@ export function SignupForm() {
   });
 
   async function onSubmit(values: SignUpFormValues) {
-    const success = await signup(values);
-    if (success) {
-      router.push('/auth/pending-approval');
+    setIsSubmitting(true);
+    try {
+      const success = await signup(values);
+      if (success) {
+        router.push('/auth/pending-approval');
+      }
+    } catch (error) {
+      console.error("Signup failed:", error);
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -282,8 +291,8 @@ export function SignupForm() {
             </FormItem>
           )}
         />
-        <Button type="submit" className="w-full" disabled={loading}>
-          {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+        <Button type="submit" className="w-full" disabled={isSubmitting}>
+          {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           {t('signup.form.submitButton')}
         </Button>
         <p className="text-center text-sm text-muted-foreground">

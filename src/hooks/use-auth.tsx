@@ -1,4 +1,3 @@
-
 "use client";
 
 import type { UserProfile } from '@/types';
@@ -7,7 +6,6 @@ import React, { createContext, useContext, useState, useEffect, ReactNode, useCa
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/language-context';
 import * as storage from '@/lib/storage';
-import { MOCK_ADMIN_USER } from '@/lib/mock-data';
 import { useRouter } from 'next/navigation';
 
 interface AuthContextType {
@@ -61,57 +59,40 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const login = async (values: LoginFormValues): Promise<boolean> => {
-    setLoading(true);
     try {
-      if (
-        values.email.toLowerCase() === MOCK_ADMIN_USER.email.toLowerCase() &&
-        values.password === MOCK_ADMIN_USER.password
-      ) {
-        const adminUserFromDb = await storage.getUserById(MOCK_ADMIN_USER.id);
-        if (!adminUserFromDb) {
-           await storage.seedInitialUsers();
-        }
-        const finalAdminUser = await storage.getUserById(MOCK_ADMIN_USER.id);
-        setUser(finalAdminUser);
-        localStorage.setItem(USER_ID_STORAGE_KEY, MOCK_ADMIN_USER.id);
-      } else {
-        await storage.seedInitialUsers();
-        const userFromDb = await storage.findUserByEmail(values.email);
+      await storage.seedInitialUsers();
+      const userFromDb = await storage.findUserByEmail(values.email);
 
-        if (userFromDb && userFromDb.password === values.password) {
-          if (userFromDb.paymentStatus === 'active') {
-            setUser(userFromDb);
-            localStorage.setItem(USER_ID_STORAGE_KEY, userFromDb.id);
-          } else {
-            let errorMessage = t('toast.login.error.accessDenied');
-            if (userFromDb.paymentStatus === 'pending_verification') errorMessage = t('toast.login.error.pendingVerification');
-            else if (userFromDb.paymentStatus === 'pending_payment') errorMessage = t('toast.login.error.pendingPayment');
-            else if (userFromDb.paymentStatus === 'inactive') errorMessage = t('toast.login.error.inactive');
-            throw new Error(errorMessage);
-          }
-        } else {
-          throw new Error(t('toast.login.error.invalidCredentials'));
-        }
-      }
-        toast({
+      if (userFromDb && userFromDb.password === values.password) {
+        if (userFromDb.paymentStatus === 'active' || userFromDb.isAdmin) {
+          setUser(userFromDb);
+          localStorage.setItem(USER_ID_STORAGE_KEY, userFromDb.id);
+          toast({
             title: t('toast.login.success.title'),
             description: t('toast.login.success.description'),
-        });
-        setLoading(false);
-        return true;
+          });
+          return true;
+        } else {
+          let errorMessage = t('toast.login.error.accessDenied');
+          if (userFromDb.paymentStatus === 'pending_verification') errorMessage = t('toast.login.error.pendingVerification');
+          else if (userFromDb.paymentStatus === 'pending_payment') errorMessage = t('toast.login.error.pendingPayment');
+          else if (userFromDb.paymentStatus === 'inactive') errorMessage = t('toast.login.error.inactive');
+          throw new Error(errorMessage);
+        }
+      } else {
+        throw new Error(t('toast.login.error.invalidCredentials'));
+      }
     } catch (error: any) {
       toast({
         variant: 'destructive',
         title: t('toast.login.error.title'),
         description: error.message,
       });
-      setLoading(false);
       return false;
     }
   };
 
   const signup = async (values: SignUpFormValues): Promise<boolean> => {
-    setLoading(true);
     try {
         const existingUser = await storage.findUserByEmail(values.email);
         if (existingUser) {
@@ -164,8 +145,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             description: error.message || t('toast.signup.error.descriptionGeneric'),
         });
         return false;
-    } finally {
-        setLoading(false);
     }
   };
 
@@ -173,6 +152,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     setUser(null);
     localStorage.removeItem(USER_ID_STORAGE_KEY);
+    router.push('/auth/login');
     setLoading(false); 
     toast({ title: t('toast.logout.success.title') });
   };

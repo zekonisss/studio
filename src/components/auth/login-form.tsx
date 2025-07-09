@@ -20,13 +20,15 @@ import { useToast } from "@/hooks/use-toast";
 import { Mail, Lock, Loader2 } from "lucide-react";
 import { useLanguage } from "@/contexts/language-context";
 import { useRouter } from "next/navigation";
+import { useState } from 'react';
 
 
 export function LoginForm() {
-  const { login, loading } = useAuth();
+  const { login } = useAuth();
   const { toast } = useToast();
   const { t } = useLanguage();
   const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(LoginSchema),
@@ -37,9 +39,14 @@ export function LoginForm() {
   });
 
   async function onSubmit(values: LoginFormValues) {
-    const success = await login(values);
-    // The redirection logic is now handled by the login page itself,
-    // which monitors the user state. This component just calls the login function.
+    setIsSubmitting(true);
+    try {
+      await login(values);
+    } catch (error) {
+      console.error("Login failed in form:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -77,8 +84,8 @@ export function LoginForm() {
             {t('login.forgotPasswordLink')}
           </Link>
         </div>
-        <Button type="submit" className="w-full" disabled={loading}>
-          {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+        <Button type="submit" className="w-full" disabled={isSubmitting}>
+          {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           {t('login.loginButton')}
         </Button>
         <p className="text-center text-sm text-muted-foreground">
