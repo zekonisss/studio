@@ -155,6 +155,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           title: t('toast.signup.success.title'),
           description: t('toast.signup.success.description'),
         });
+        setLoading(false); // Fix: Turn off loading BEFORE navigating
         router.push('/auth/pending-approval');
     } catch (error: any) {
         toast({
@@ -162,8 +163,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             title: t('toast.signup.error.title'),
             description: error.message || t('toast.signup.error.descriptionGeneric'),
         });
-    } finally {
-        setLoading(false);
+        setLoading(false); // Also turn off loading on error
     }
   };
 
