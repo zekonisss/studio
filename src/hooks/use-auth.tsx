@@ -60,24 +60,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await storage.updateUserProfile(updatedUser.id, updatedUser);
   };
 
- const login = async (values: LoginFormValues) => {
+  const login = async (values: LoginFormValues) => {
     setLoading(true);
     try {
+      // Ensure mock users are always up-to-date in Firestore for login purposes
       await storage.seedInitialUsers();
 
+      // Special handling for mock users to ensure login always works
       if (values.email.toLowerCase() === MOCK_ADMIN_USER.email.toLowerCase() && values.password === MOCK_ADMIN_USER.password) {
-        setUser(MOCK_ADMIN_USER);
-        localStorage.setItem(USER_ID_STORAGE_KEY, MOCK_ADMIN_USER.id);
-        toast({ title: t('toast.login.success.title'), description: t('toast.login.success.description') });
-        return;
+        const adminUser = await storage.getUserById(MOCK_ADMIN_USER.id);
+        if (adminUser) {
+          setUser(adminUser);
+          localStorage.setItem(USER_ID_STORAGE_KEY, adminUser.id);
+          toast({ title: t('toast.login.success.title'), description: t('toast.login.success.description') });
+          return;
+        }
       }
       if (values.email.toLowerCase() === MOCK_TEST_CLIENT_USER.email.toLowerCase() && values.password === MOCK_TEST_CLIENT_USER.password) {
-        setUser(MOCK_TEST_CLIENT_USER);
-        localStorage.setItem(USER_ID_STORAGE_KEY, MOCK_TEST_CLIENT_USER.id);
-        toast({ title: t('toast.login.success.title'), description: t('toast.login.success.description') });
-        return;
+        const testUser = await storage.getUserById(MOCK_TEST_CLIENT_USER.id);
+         if (testUser) {
+          setUser(testUser);
+          localStorage.setItem(USER_ID_STORAGE_KEY, testUser.id);
+          toast({ title: t('toast.login.success.title'), description: t('toast.login.success.description') });
+          return;
+        }
       }
 
+      // Login for other users from Firestore
       const foundUser = await storage.findUserByEmail(values.email);
       if (foundUser && foundUser.password === values.password) {
         if (foundUser.paymentStatus === 'active') {
@@ -168,18 +177,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     setUser(null);
     localStorage.removeItem(USER_ID_STORAGE_KEY);
-    try {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      toast({ title: t('toast.logout.success.title') });
-      router.push('/auth/login');
-    } catch (error) {
-       toast({ variant: "destructive", title: t('toast.logout.error.title') });
-    } finally {
-      // setLoading(false) is not strictly needed here as the app will remount
-      // but it's good practice.
-      setLoading(false);
-    }
+    router.push('/auth/login');
+    await new Promise(resolve => setTimeout(resolve, 100)); // Short delay to allow state to clear
+    setLoading(false);
+    toast({ title: t('toast.logout.success.title') });
   };
+  
 
   const sendVerificationEmail = async () => {
     // This is a mock function

@@ -281,7 +281,7 @@ export default function AdminPage() {
       ...selectedUserForDetails,
       companyName: editingUserDetailsFormData.companyName || selectedUserForDetails.companyName,
       companyCode: editingUserDetailsFormData.companyCode || selectedUserForDetails.companyCode,
-      vatCode: editingUserDetailsFormData.vatCode || undefined,
+      vatCode: editingUserDetailsFormData.vatCode || '',
       address: editingUserDetailsFormData.address || selectedUserForDetails.address,
       contactPerson: editingUserDetailsFormData.contactPerson || selectedUserForDetails.contactPerson,
       email: editingUserDetailsFormData.email || selectedUserForDetails.email,
@@ -904,6 +904,3 @@ export default function AdminPage() {
     </div>
   );
 }
-    
-
-    

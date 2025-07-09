@@ -92,7 +92,7 @@ export default function AccountPage() {
     const updatedUserData: Partial<UserProfile> = {
         companyName: formData.companyName,
         companyCode: formData.companyCode,
-        vatCode: formData.vatCode || undefined,
+        vatCode: formData.vatCode || "",
         address: formData.address,
         contactPerson: formData.contactPerson,
         email: formData.email,

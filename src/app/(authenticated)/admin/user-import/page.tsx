@@ -102,7 +102,7 @@ export default function ImportUsersPage() {
     }
   }, [t, toast]);
 
-  const validateRow = useCallback((rowData: Partial<UserProfile>, existingUsers: UserProfile[]): string[] => {
+  const validateRow = useCallback(async (rowData: Partial<UserProfile>, existingUsers: UserProfile[]): Promise<string[]> => {
     const errors: string[] = [];
 
     if (!rowData.companyName || rowData.companyName.length < 2) errors.push(t('usersImport.validation.companyNameMinLength'));
@@ -111,9 +111,13 @@ export default function ImportUsersPage() {
     if (!rowData.email || !z.string().email().safeParse(rowData.email).success) errors.push(t('usersImport.validation.emailFormat'));
     if (!rowData.phone || !/^\+?\d{7,15}$/.test(rowData.phone)) errors.push(t('usersImport.validation.phoneFormat'));
 
-    if (rowData.email && existingUsers.some(u => u.email.toLowerCase() === rowData.email!.toLowerCase())) {
-      errors.push(t('usersImport.validation.emailExists', { email: rowData.email }));
+    if (rowData.email) {
+      const userExists = await storage.findUserByEmail(rowData.email);
+      if(userExists) {
+        errors.push(t('usersImport.validation.emailExists', { email: rowData.email }));
+      }
     }
+    
     if (rowData.companyCode && existingUsers.some(u => u.companyCode === rowData.companyCode)) {
        errors.push(t('usersImport.validation.companyCodeExists', { code: rowData.companyCode }));
     }
@@ -183,7 +187,8 @@ export default function ImportUsersPage() {
         }
 
         const existingUsers = await storage.getAllUsers();
-        const newParsedData: ParsedUserRow[] = dataRows.map((row, index) => {
+        
+        const newParsedDataPromises: Promise<ParsedUserRow>[] = dataRows.map(async (row, index) => {
           const originalRow: Record<string, any> = {};
           headerRow.forEach((header, i) => {
             originalRow[String(header).trim()] = row[i];
@@ -197,7 +202,7 @@ export default function ImportUsersPage() {
               }
           }
 
-          const validationErrors = validateRow(userPreviewData, existingUsers);
+          const validationErrors = await validateRow(userPreviewData, existingUsers);
           const status: 'valid' | 'invalid' = validationErrors.length === 0 ? 'valid' : 'invalid';
 
           return {
@@ -207,7 +212,10 @@ export default function ImportUsersPage() {
             validationStatus: status,
             errors: validationErrors.length > 0 ? validationErrors : undefined,
           };
-        }).filter(row => Object.keys(row.userPreview).length > 0); 
+        });
+
+        const newParsedData = (await Promise.all(newParsedDataPromises))
+            .filter(row => Object.keys(row.userPreview).length > 0);
 
         setParsedData(newParsedData);
 
@@ -238,7 +246,7 @@ export default function ImportUsersPage() {
         contactPerson: row.userPreview.contactPerson!,
         email: row.userPreview.email!,
         phone: row.userPreview.phone!,
-        vatCode: row.userPreview.vatCode || undefined,
+        vatCode: row.userPreview.vatCode || '',
         address: row.userPreview.address || '',
         paymentStatus: 'pending_verification',
         isAdmin: false,
