@@ -13,8 +13,8 @@ import { MOCK_ADMIN_USER } from '@/lib/mock-data';
 interface AuthContextType {
   user: UserProfile | null;
   loading: boolean;
-  login: (values: LoginFormValues) => Promise<boolean>;
-  signup: (values: SignUpFormValues) => Promise<boolean>;
+  login: (values: LoginFormValues) => Promise<void>;
+  signup: (values: SignUpFormValues) => Promise<void>;
   logout: () => Promise<void>;
   updateUserInContext: (updatedUser: UserProfile) => Promise<void>;
 }
@@ -61,63 +61,56 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await storage.updateUserProfile(updatedUser.id, updatedUser);
   };
 
-  const login = async (values: LoginFormValues): Promise<boolean> => {
+  const login = async (values: LoginFormValues): Promise<void> => {
     setLoading(true);
     try {
-      // Hardcoded check for admin user for guaranteed reliability
       if (
         values.email.toLowerCase() === MOCK_ADMIN_USER.email.toLowerCase() &&
         values.password === MOCK_ADMIN_USER.password
       ) {
         const adminUserFromDb = await storage.getUserById(MOCK_ADMIN_USER.id);
-        setUser(adminUserFromDb);
+        if (!adminUserFromDb) {
+           await storage.seedInitialUsers();
+        }
+        const finalAdminUser = await storage.getUserById(MOCK_ADMIN_USER.id);
+        setUser(finalAdminUser);
         localStorage.setItem(USER_ID_STORAGE_KEY, MOCK_ADMIN_USER.id);
-        toast({
-          title: t('toast.login.success.title'),
-          description: t('toast.login.success.description'),
-        });
-        setLoading(false);
-        return true;
-      }
-      
-      // Existing logic for all other users
-      await storage.seedInitialUsers();
-      const userFromDb = await storage.findUserByEmail(values.email);
+      } else {
+         await storage.seedInitialUsers();
+        const userFromDb = await storage.findUserByEmail(values.email);
 
-      if (userFromDb && userFromDb.password === values.password) {
-        if (userFromDb.paymentStatus === 'active') {
-          setUser(userFromDb);
-          localStorage.setItem(USER_ID_STORAGE_KEY, userFromDb.id);
-          toast({
+        if (userFromDb && userFromDb.password === values.password) {
+          if (userFromDb.paymentStatus === 'active') {
+            setUser(userFromDb);
+            localStorage.setItem(USER_ID_STORAGE_KEY, userFromDb.id);
+          } else {
+            let errorMessage = t('toast.login.error.accessDenied');
+            if (userFromDb.paymentStatus === 'pending_verification') errorMessage = t('toast.login.error.pendingVerification');
+            else if (userFromDb.paymentStatus === 'pending_payment') errorMessage = t('toast.login.error.pendingPayment');
+            else if (userFromDb.paymentStatus === 'inactive') errorMessage = t('toast.login.error.inactive');
+            throw new Error(errorMessage);
+          }
+        } else {
+          throw new Error(t('toast.login.error.invalidCredentials'));
+        }
+      }
+        toast({
             title: t('toast.login.success.title'),
             description: t('toast.login.success.description'),
-          });
-          setLoading(false);
-          return true;
-        } else {
-          let errorMessage = t('toast.login.error.accessDenied');
-          if (userFromDb.paymentStatus === 'pending_verification') errorMessage = t('toast.login.error.pendingVerification');
-          else if (userFromDb.paymentStatus === 'pending_payment') errorMessage = t('toast.login.error.pendingPayment');
-          else if (userFromDb.paymentStatus === 'inactive') errorMessage = t('toast.login.error.inactive');
-          throw new Error(errorMessage);
-        }
-      } else {
-        throw new Error(t('toast.login.error.invalidCredentials'));
-      }
+        });
     } catch (error: any) {
       toast({
         variant: 'destructive',
         title: t('toast.login.error.title'),
         description: error.message,
       });
-      setLoading(false);
-      return false;
+    } finally {
+        setLoading(false);
     }
   };
 
-  const signup = async (values: SignUpFormValues): Promise<boolean> => {
+  const signup = async (values: SignUpFormValues): Promise<void> => {
     setLoading(true);
-    let success = false;
     try {
         const existingUser = await storage.findUserByEmail(values.email);
         if (existingUser) {
@@ -162,18 +155,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           title: t('toast.signup.success.title'),
           description: t('toast.signup.success.description'),
         });
-        success = true;
+        router.push('/auth/pending-approval');
     } catch (error: any) {
         toast({
             variant: "destructive",
             title: t('toast.signup.error.title'),
             description: error.message || t('toast.signup.error.descriptionGeneric'),
         });
-        success = false;
     } finally {
         setLoading(false);
     }
-    return success;
   };
 
   const logout = async () => {
