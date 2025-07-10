@@ -46,8 +46,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             if (userProfile) {
                 setUser(userProfile);
             } else {
-                 // This can happen if user exists in Auth but not in Firestore, e.g., right after signup.
-                 // For this app, we'll create a temporary profile and log a warning.
                  console.warn(`User with UID ${firebaseUser.uid} found in Auth, but not in Firestore. This might happen during registration.`);
                  const tempUser: UserProfile = {
                     id: firebaseUser.uid,
@@ -89,12 +87,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = async (values: LoginFormValues): Promise<boolean> => {
     try {
       await signInWithEmailAndPassword(auth, values.email, values.password);
-      // setUser is now handled by onAuthStateChanged listener.
       toast({
         title: t('toast.login.success.title'),
         description: t('toast.login.success.description'),
       });
-      // The redirect is handled by the page component to avoid race conditions.
       return true;
     } catch (error: any) {
       console.error("Login failed:", error.code, error.message);
@@ -115,11 +111,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
  const signup = async (values: SignUpFormValues): Promise<boolean> => {
     try {
-      // Step 1: Create user in Firebase Authentication
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       const newFirebaseUser = userCredential.user;
 
-      // Step 2: Create user profile object to be saved
       const userToCreate: UserProfile = {
         id: newFirebaseUser.uid,
         companyName: values.companyName,
@@ -136,10 +130,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         vatCode: values.vatCode || '',
       };
 
-      // Step 3: Save the profile to Firestore
       await storage.addUserProfile(userToCreate);
       
-      // Step 4: Sign out the user immediately after registration
       await signOut(auth);
 
       toast({
@@ -147,7 +139,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         description: t('toast.signup.success.description'),
       });
       
-      // Step 5: Redirect to the pending approval page
       router.push('/auth/pending-approval');
       
       return true;
@@ -156,13 +147,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.error('Signup error in useAuth:', error);
       let errorMessage = error.message;
 
-      // Translate Firebase error codes into user-friendly messages
       if (error.code === 'auth/email-already-in-use') {
         errorMessage = t('toast.signup.error.emailExists');
       } else if (error.code === 'auth/weak-password') {
         errorMessage = 'Slaptažodis yra per silpnas. Jis turi būti bent 8 simbolių ilgio.';
-      } else if (error.code === 'permission-denied') {
-        errorMessage = 'Permission denied to write to Firestore. Check security rules.';
+      } else if (error.code === 'permission-denied' || error.code?.includes('permission-denied')) {
+        errorMessage = 'Prieigos klaida. Patikrinkite Firestore saugumo taisykles.';
       } else {
         errorMessage = t('toast.signup.error.descriptionGeneric');
       }

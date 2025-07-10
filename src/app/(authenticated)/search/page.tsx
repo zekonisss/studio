@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
@@ -30,16 +30,16 @@ export default function SearchPage() {
 
   const dateLocale = locale === 'en' ? enUS : lt;
 
-  const getNationalityLabel = (nationalityCode?: string) => {
+  const getNationalityLabel = useCallback((nationalityCode?: string) => {
     if (!nationalityCode) return "";
     const country = countries.find(c => c.value === nationalityCode);
     return country ? t('countries.' + country.value) : nationalityCode; 
-  };
+  }, [t]);
 
-  const getCategoryNameSearch = (categoryId: string) => {
+  const getCategoryNameSearch = useCallback((categoryId: string) => {
     const category = detailedReportCategories.find(c => c.id === categoryId);
     return category ? t(category.nameKey) : categoryId;
-  };
+  }, [t]);
 
 
   const form = useForm<SearchFormValues>({
@@ -52,9 +52,10 @@ export default function SearchPage() {
     setNoResults(false);
     setSearchResults([]);
     setSearchPerformed(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    const allReports = await storage.getAllReports();
 
-    const combinedDataSource = storage.getAllReports().map(report => ({
+    const combinedDataSource = allReports.map(report => ({
       ...report,
       tags: Array.isArray(report.tags) ? report.tags.map(migrateTagIfNeeded) : [],
     }));
@@ -89,14 +90,13 @@ export default function SearchPage() {
     setIsLoading(false);
 
     if (user && query) {
-      const newSearchLog: SearchLog = {
-        id: 'searchlog-' + Date.now() + '-' + Math.random().toString(36).substring(2, 9),
+      const newSearchLog: Omit<SearchLog, 'id'> = {
         userId: user.id,
         searchText: values.query,
         timestamp: new Date(),
         resultsCount: results.length,
       };
-      storage.addSearchLog(newSearchLog);
+      await storage.addSearchLog(newSearchLog);
     }
   };
 

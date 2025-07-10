@@ -65,25 +65,22 @@ export default function AddReportPage() {
       setIsSubmitting(false);
       return;
     }
-
-    await new Promise(resolve => setTimeout(resolve, 1000)); 
     
-    const newReport: Report = {
-      id: `report-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+    const newReport: Omit<Report, 'id'> = {
       reporterId: user.id,
       reporterCompanyName: user.companyName,
       fullName: values.fullName,
       nationality: values.nationality,
       birthYear: values.birthYear ? Number(values.birthYear) : undefined,
       category: values.category,
-      tags: values.tags || [], // tags are now keys
+      tags: values.tags || [],
       comment: values.comment,
       imageUrl: values.image ? "https://placehold.co/600x400.png" : undefined,
       dataAiHint: values.image ? "entry attachment" : undefined,
       createdAt: new Date(),
     };
 
-    storage.addReport(newReport);
+    await storage.addReport(newReport);
     
     toast({
       title: t('reports.add.toast.success.title'),
@@ -296,6 +293,3 @@ export default function AddReportPage() {
     </div>
   );
 }
-    
-
-    

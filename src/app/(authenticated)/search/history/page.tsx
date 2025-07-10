@@ -18,7 +18,7 @@ import { useLanguage } from "@/contexts/language-context";
 
 export default function SearchHistoryPage() {
   const { user, loading: authLoading } = useAuth();
-  const { t, locale } = useLanguage(); // Added
+  const { t, locale } = useLanguage();
   const [searchLogs, setSearchLogs] = useState<SearchLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const dateLocale = locale === 'en' ? enUS : lt;
@@ -32,11 +32,8 @@ export default function SearchHistoryPage() {
       }
 
       setIsLoading(true);
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      let userLogs = storage.getSearchLogs(user.id);
-
-      setSearchLogs(userLogs.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()));
+      const userLogs = await storage.getSearchLogs(user.id);
+      setSearchLogs(userLogs);
       setIsLoading(false);
     };
 
@@ -113,7 +110,7 @@ export default function SearchHistoryPage() {
                         {log.resultsCount}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-right text-muted-foreground">{format(log.timestamp, "yyyy-MM-dd HH:mm:ss", { locale: dateLocale })}</TableCell>
+                    <TableCell className="text-right text-muted-foreground">{format(new Date(log.timestamp), "yyyy-MM-dd HH:mm:ss", { locale: dateLocale })}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

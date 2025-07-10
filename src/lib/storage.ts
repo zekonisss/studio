@@ -39,10 +39,6 @@ export async function seedInitialUsers() {
             const docSnap = await getDoc(userDocRef);
 
             if (!docSnap.exists()) {
-                // If user doesn't exist in Firestore, we assume they don't exist in Auth either for seeding purposes
-                // This part is tricky because we don't have passwords for mock users.
-                // For a real app, this seeding should be done via a secure backend script.
-                // For this demo, we'll just ensure the Firestore documents exist.
                 await setDoc(userDocRef, mockUser);
                 console.log(`Mock user ${mockUser.email} seeded into Firestore.`);
             }
@@ -143,12 +139,11 @@ export async function getAllReports(): Promise<Report[]> {
     }
 }
 
-export async function addReport(reportData: Omit<Report, 'id' | 'createdAt'>): Promise<void> {
+export async function addReport(reportData: Omit<Report, 'id'>): Promise<void> {
     if (!isBrowser) return;
     try {
         await addDoc(collection(db, REPORTS_COLLECTION), {
             ...reportData,
-            createdAt: serverTimestamp(),
         });
     } catch (error) {
         console.error("Error adding report:", error);
@@ -172,7 +167,7 @@ export async function softDeleteReport(reportId: string): Promise<void> {
 export async function softDeleteAllReports(): Promise<number> {
     if (!isBrowser) return 0;
     try {
-        const reportsSnapshot = await getDocs(query(collection(db, REPORTS_COLLECTION), where("deletedAt", "==", null)));
+        const reportsSnapshot = await getDocs(query(collection(db, REPORTS_COLLECTION), where("deletedAt", "==", undefined)));
         const batch = writeBatch(db);
         reportsSnapshot.docs.forEach(doc => {
             batch.update(doc.ref, { deletedAt: new Date().toISOString() });
@@ -192,7 +187,7 @@ export async function getUserReports(userId: string): Promise<{ active: Report[]
         const snapshot = await getDocs(q);
         const allUserReports = snapshot.docs.map(doc => convertFirestoreTimestampToDate({ id: doc.id, ...doc.data() }) as Report);
         
-        const active = allUserReports.filter(r => !r.deletedAt).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+        const active = allUserReports.filter(r => !r.deletedAt).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
         const deleted = allUserReports.filter(r => !!r.deletedAt).sort((a, b) => new Date(b.deletedAt!).getTime() - new Date(a.deletedAt!).getTime());
         
         return { active, deleted };
@@ -220,12 +215,11 @@ export async function getSearchLogs(userId?: string): Promise<SearchLog[]> {
     }
 }
 
-export async function addSearchLog(logData: Omit<SearchLog, 'id' | 'timestamp'>): Promise<void> {
+export async function addSearchLog(logData: Omit<SearchLog, 'id'>): Promise<void> {
     if (!isBrowser) return;
     try {
         await addDoc(collection(db, SEARCH_LOGS_COLLECTION), {
             ...logData,
-            timestamp: serverTimestamp(),
         });
     } catch (error) {
         console.error("Error adding search log:", error);
@@ -244,12 +238,11 @@ export async function getAuditLogs(): Promise<AuditLogEntry[]> {
     }
 }
 
-export async function addAuditLogEntry(entryData: Omit<AuditLogEntry, 'id' | 'timestamp'>): Promise<void> {
+export async function addAuditLogEntry(entryData: Omit<AuditLogEntry, 'id'>): Promise<void> {
     if (!isBrowser) return;
     try {
         await addDoc(collection(db, AUDIT_LOGS_COLLECTION), {
             ...entryData,
-            timestamp: serverTimestamp(),
         });
     } catch (error) {
         console.error("Error adding audit log entry:", error);

@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState, useMemo, Fragment } from "react"; 
+import { useEffect, useState, useMemo, Fragment, useCallback } from "react"; 
 import { useAuth } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -53,30 +53,30 @@ export default function AdminPage() {
 
   const dateLocale = locale === 'en' ? enUS : lt;
 
-  const getCategoryNameAdmin = (categoryId: string) => {
+  const getCategoryNameAdmin = useCallback((categoryId: string) => {
     const category = detailedReportCategories.find(c => c.id === categoryId);
     return category ? t(category.nameKey) : categoryId;
-  };
+  }, [t]);
 
-  const getNationalityLabel = (nationalityCode?: string) => {
+  const getNationalityLabel = useCallback((nationalityCode?: string) => {
     if (!nationalityCode) return t('common.notSpecified');
     const country = countries.find(c => c.value === nationalityCode);
     return country ? t('countries.' + country.value) : nationalityCode;
-  };
+  }, [t]);
 
-  const logAdminAction = (actionKey: string, details: Record<string, any> = {}) => {
+  const logAdminAction = useCallback(async (actionKey: string, details: Record<string, any> = {}) => {
     if (!adminUser) return;
-    const newLogEntry: AuditLogEntry = {
-      id: `audit-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+    const newLogEntry: Omit<AuditLogEntry, 'id'> = {
       timestamp: new Date(),
       adminId: adminUser.id,
       adminName: adminUser.contactPerson || adminUser.email,
       actionKey,
       details,
     };
-    storage.addAuditLogEntry(newLogEntry);
-    setAuditLogs(prevLogs => [newLogEntry, ...prevLogs].sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime() ));
-  };
+    await storage.addAuditLogEntry(newLogEntry);
+    const updatedLogs = await storage.getAuditLogs();
+    setAuditLogs(updatedLogs);
+  },[adminUser]);
 
   useEffect(() => {
     if (!authLoading && (!adminUser || !adminUser.isAdmin)) {
@@ -85,10 +85,14 @@ export default function AdminPage() {
     if (adminUser && adminUser.isAdmin) {
         const fetchData = async () => {
             setIsLoadingData(true);
-            const users = await storage.getAllUsers();
+            const [users, reports, logs] = await Promise.all([
+                storage.getAllUsers(),
+                storage.getAllReports(),
+                storage.getAuditLogs()
+            ]);
             setAllUsersState(users);
-            setAllReports(storage.getAllReports().filter(r => !r.deletedAt));
-            setAuditLogs(storage.getAuditLogs().sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime() ));
+            setAllReports(reports.filter(r => !r.deletedAt));
+            setAuditLogs(logs);
             setIsLoadingData(false);
         };
         fetchData();
@@ -98,7 +102,6 @@ export default function AdminPage() {
   const categoryReportCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     detailedReportCategories.forEach(cat => counts[cat.id] = 0);
-    // Only count active reports for stats
     allReports.filter(r => !r.deletedAt).forEach(report => {
       if (counts[report.category] !== undefined) {
         counts[report.category]++;
@@ -117,7 +120,7 @@ export default function AdminPage() {
         fill: `hsl(var(--chart-${(index % 5) + 1}))`,
       }))
       .filter(item => item.value > 0); 
-  }, [categoryReportCounts, getCategoryNameAdmin, t]);
+  }, [categoryReportCounts, getCategoryNameAdmin]);
 
   const chartConfig = useMemo(() => {
     const config: ChartConfig = {};
@@ -180,7 +183,7 @@ export default function AdminPage() {
       u.id === userId ? { ...u, ...updatedUserData } : u
     ));
 
-    logAdminAction("auditLog.action.userStatusChanged", { 
+    await logAdminAction("auditLog.action.userStatusChanged", { 
       userId: targetUser.id, 
       userEmail: targetUser.email,
       companyName: targetUser.companyName,
@@ -188,7 +191,7 @@ export default function AdminPage() {
       newStatus: getStatusText(newStatus) 
     });
 
-    storage.addUserNotification(targetUser.id, {
+    await storage.addUserNotification(targetUser.id, {
       type: 'account_status_change',
       titleKey: 'notifications.accountStatusChanged.title',
       messageKey: 'notifications.accountStatusChanged.message',
@@ -294,7 +297,7 @@ export default function AdminPage() {
     setSelectedUserForDetails(updatedUser);
     setIsEditingUserDetails(false);
     
-    logAdminAction("auditLog.action.userDetailsUpdated", {
+    await logAdminAction("auditLog.action.userDetailsUpdated", {
       userId: updatedUser.id,
       userEmail: updatedUser.email,
       companyName: updatedUser.companyName,
@@ -324,12 +327,10 @@ export default function AdminPage() {
 
   const handleDeleteReport = async (reportId: string, reportFullName: string) => {
     setDeletingReportId(reportId);
-    await new Promise(resolve => setTimeout(resolve, 700));
-
-    storage.softDeleteReport(reportId);
+    await storage.softDeleteReport(reportId);
     setAllReports(prevReports => prevReports.filter(report => report.id !== reportId));
 
-    logAdminAction("auditLog.action.reportDeleted", { 
+    await logAdminAction("auditLog.action.reportDeleted", { 
       reportId: reportId,
       driverFullName: reportFullName,
     });
@@ -343,11 +344,10 @@ export default function AdminPage() {
   
   const handleDeleteAllReports = async () => {
     setIsDeletingAllReports(true);
-    await new Promise(resolve => setTimeout(resolve, 700)); 
-    const deletedCount = storage.softDeleteAllReports();
+    const deletedCount = await storage.softDeleteAllReports();
     setAllReports([]); // Clear from view
 
-    logAdminAction("auditLog.action.allReportsDeleted", { count: deletedCount });
+    await logAdminAction("auditLog.action.allReportsDeleted", { count: deletedCount });
 
     toast({
       title: t('admin.entries.toast.allEntriesDeleted.title'),
