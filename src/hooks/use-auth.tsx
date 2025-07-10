@@ -46,9 +46,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             if (userProfile) {
                 setUser(userProfile);
             } else {
-                 // This case can happen if the user exists in Auth but not in Firestore.
+                 // This can happen if user exists in Auth but not in Firestore, e.g., right after signup.
                  // For this app, we'll create a temporary profile and log a warning.
-                 console.warn(`User with UID ${firebaseUser.uid} found in Auth, but not in Firestore.`);
+                 console.warn(`User with UID ${firebaseUser.uid} found in Auth, but not in Firestore. This might happen during registration.`);
                  const tempUser: UserProfile = {
                     id: firebaseUser.uid,
                     email: firebaseUser.email || 'no-email@example.com',
@@ -67,8 +67,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setUser(null);
              toast({
                 variant: 'destructive',
-                title: 'Klaida gaunant profilį',
-                description: 'Nepavyko gauti vartotojo profilio duomenų.',
+                title: t('toast.login.error.title'),
+                description: t('toast.login.error.descriptionGeneric'),
             });
         }
       } else {
@@ -78,7 +78,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     return () => unsubscribe();
-  }, [toast]);
+  }, [toast, t]);
   
 
   const updateUserInContext = async (updatedUser: UserProfile) => {
@@ -137,9 +137,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       };
 
       // Step 3: Save the profile to Firestore
-      const userDocRef = doc(db, "users", newFirebaseUser.uid);
-      await setDoc(userDocRef, userToCreate);
-
+      await storage.addUserProfile(userToCreate);
+      
       // Step 4: Sign out the user immediately after registration
       await signOut(auth);
 
@@ -161,7 +160,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (error.code === 'auth/email-already-in-use') {
         errorMessage = t('toast.signup.error.emailExists');
       } else if (error.code === 'auth/weak-password') {
-        errorMessage = 'Slaptažodis yra per silpnas. Jis turi būti bent 6 simbolių ilgio.';
+        errorMessage = 'Slaptažodis yra per silpnas. Jis turi būti bent 8 simbolių ilgio.';
+      } else if (error.code === 'permission-denied') {
+        errorMessage = 'Permission denied to write to Firestore. Check security rules.';
       } else {
         errorMessage = t('toast.signup.error.descriptionGeneric');
       }

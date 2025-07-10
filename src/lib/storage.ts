@@ -21,53 +21,20 @@ const USERS_COLLECTION = 'users';
 export async function seedInitialUsers() {
     if (!isBrowser) return;
 
-    const usersToSeed = [MOCK_ADMIN_USER, MOCK_TEST_CLIENT_USER];
-
-    for (const mockUser of usersToSeed) {
+    // This is a simplified seeding for demo purposes.
+    // It does not create Auth users anymore to avoid complexity,
+    // assuming they will be created manually or via signup for a real app.
+    // It just ensures the Firestore documents exist for the mock data.
+    for (const mockUser of MOCK_ALL_USERS) {
         try {
-            // Check if user exists in Firestore by email. This is our source of truth for existence.
-            const q = query(collection(db, USERS_COLLECTION), where("email", "==", mockUser.email));
-            const querySnapshot = await getDocs(q);
-
-            if (!querySnapshot.empty) {
-                // console.log(`User ${mockUser.email} already exists. Skipping seeding.`);
-                continue;
+            const userDocRef = doc(db, USERS_COLLECTION, mockUser.id);
+            const docSnap = await getDoc(userDocRef);
+            if (!docSnap.exists()) {
+                await setDoc(userDocRef, mockUser);
+                console.log(`Mock user ${mockUser.email} seeded into Firestore.`);
             }
-
-            // Temporarily sign in with a throwaway account if needed to perform admin actions
-            // This part is complex and might not be needed if rules are set up correctly for seeding.
-            // For simplicity, we assume we can create users.
-            
-            // Create user in Firebase Auth.
-            // NOTE: This will fail if the user already exists in Auth but not Firestore.
-            // This is an acceptable edge case for a seeding script.
-            const userCredential = await createUserWithEmailAndPassword(auth, mockUser.email, 'password123');
-            const newFirebaseUser = userCredential.user;
-
-            console.log(`Created user in Auth with UID: ${newFirebaseUser.uid}`);
-
-            const userProfileData: UserProfile = {
-                ...mockUser,
-                id: newFirebaseUser.uid, // IMPORTANT: Use the UID from Auth
-            };
-            
-            // Add the full profile to Firestore using the new UID as the document ID
-            const userDocRef = doc(db, USERS_COLLECTION, newFirebaseUser.uid);
-            await setDoc(userDocRef, userProfileData);
-            console.log(`User profile for ${mockUser.email} created in Firestore.`);
-
-            // IMPORTANT: Sign out immediately after creating the user to avoid being logged in as them.
-            if (auth.currentUser?.uid === newFirebaseUser.uid) {
-               await auth.signOut();
-            }
-
-        } catch (error: any) {
-            if (error.code === 'auth/email-already-in-use') {
-                // This is fine, means Auth user exists. We can proceed to ensure Firestore doc is there.
-                // console.log(`Auth user for ${mockUser.email} already exists.`);
-            } else {
-                console.error("Error seeding user:", mockUser.email, error);
-            }
+        } catch (error) {
+            console.error("Error seeding user:", mockUser.email, error);
         }
     }
 }
