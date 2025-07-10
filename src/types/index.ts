@@ -1,9 +1,7 @@
-
 export interface SubUserProfile {
   id: string;
   fullName: string;
   email: string;
-  tempPassword?: string; 
 }
 
 export interface UserProfile {

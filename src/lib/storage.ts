@@ -1,6 +1,6 @@
 import type { Report, UserProfile, SearchLog, AuditLogEntry, UserNotification } from '@/types';
 import { MOCK_ALL_USERS, MOCK_GENERAL_REPORTS, MOCK_USER_REPORTS, MOCK_USER_SEARCH_LOGS, MOCK_ADMIN_USER, MOCK_TEST_CLIENT_USER } from './mock-data';
-import { db, auth } from './firebase';
+import { db, auth } from '@/lib/firebase';
 import { collection, getDocs, doc, setDoc, query, where, getDoc, updateDoc, writeBatch } from 'firebase/firestore';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 
@@ -39,7 +39,7 @@ export async function seedInitialUsers() {
         await auth.signOut();
       }
 
-      const userCredential = await createUserWithEmailAndPassword(auth, mockUser.email, mockUser.password || 'password123' );
+      const userCredential = await createUserWithEmailAndPassword(auth, mockUser.email, 'password123' ); // Use a default password for seeding
       const newFirebaseUser = userCredential.user;
 
       console.log(`Created user in Auth with UID: ${newFirebaseUser.uid}`);

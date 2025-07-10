@@ -1,4 +1,3 @@
-
 import type { UserProfile, Report, SearchLog } from '@/types';
 
 export const MOCK_ADMIN_USER: UserProfile = {
@@ -10,7 +9,6 @@ export const MOCK_ADMIN_USER: UserProfile = {
   contactPerson: 'Admin User',
   email: 'admin@drivercheck.lt',
   phone: '+37060000000',
-  password: 'adminpass',
   paymentStatus: 'active',
   isAdmin: true,
   registeredAt: new Date(new Date().setFullYear(new Date().getFullYear() - 1)).toISOString(), 
@@ -29,7 +27,6 @@ export const MOCK_ADDITIONAL_USER_1: UserProfile = {
   contactPerson: 'Petras Petrauskas',
   email: 'petras@greitiratai.lt',
   phone: '+37061111111',
-  password: 'password123',
   paymentStatus: 'active',
   isAdmin: false,
   registeredAt: new Date(new Date().setDate(new Date().getDate() - 15)).toISOString(), // Example: registered 15 days ago
@@ -46,7 +43,6 @@ export const MOCK_ADDITIONAL_USER_2: UserProfile = {
   contactPerson: 'Ona Onaitienė',
   email: 'ona@sauguskelias.lt',
   phone: '+37062222222',
-  password: 'password123',
   paymentStatus: 'inactive',
   isAdmin: false,
   registeredAt: new Date('2023-01-10T00:00:00.000Z').toISOString(),
@@ -63,7 +59,6 @@ export const MOCK_ADDITIONAL_USER_3: UserProfile = {
   contactPerson: 'Laura Laurinavičė',
   email: 'laura@logist.lt',
   phone: '+37063333333',
-  password: 'password123',
   paymentStatus: 'pending_verification',
   isAdmin: false,
   registeredAt: new Date(new Date().setDate(new Date().getDate() - 5)).toISOString(), // Example: registered 5 days ago
@@ -81,7 +76,6 @@ export const MOCK_TEST_CLIENT_USER: UserProfile = {
   contactPerson: 'Klientas Testuotojas',
   email: 'test@drivercheck.lt',
   phone: '+37060000000',
-  password: 'driver1',
   paymentStatus: 'active',
   isAdmin: false,
   registeredAt: new Date().toISOString(),
