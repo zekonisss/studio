@@ -74,7 +74,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     try {
-        await storage.seedInitialUsers();
         const userFromDb = await storage.findUserByEmail(values.email);
 
         if (userFromDb && userFromDb.password === values.password) {
@@ -132,8 +131,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const newUserId = `user-${Date.now()}-${Math.random()
         .toString(36)
         .substring(2, 7)}`;
-
-      // Construct a clean user object, ensuring no 'undefined' values are sent to Firestore.
+      
       const userToCreate: Omit<UserProfile, 'id'> = {
         companyName: values.companyName,
         companyCode: values.companyCode,
@@ -149,7 +147,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         subUsers: [],
       };
       
-      // Only add optional fields if they have a non-empty value.
       if (values.vatCode) {
         userToCreate.vatCode = values.vatCode;
       }

@@ -21,14 +21,20 @@ export async function seedInitialUsers() {
   if (!isBrowser) return;
   
   try {
-    const batch = writeBatch(db);
-    MOCK_ALL_USERS.forEach(user => {
-      const userDocRef = doc(db, USERS_COLLECTION, user.id);
-      batch.set(userDocRef, user, { merge: true }); 
-    });
-    
-    await batch.commit();
+    const usersCollectionRef = collection(db, USERS_COLLECTION);
+    const snapshot = await getDocs(usersCollectionRef);
 
+    // Only seed if the collection is empty
+    if (snapshot.empty) {
+      console.log("Users collection is empty, seeding mock users...");
+      const batch = writeBatch(db);
+      MOCK_ALL_USERS.forEach(user => {
+        const userDocRef = doc(db, USERS_COLLECTION, user.id);
+        batch.set(userDocRef, user); 
+      });
+      await batch.commit();
+      console.log("Mock users seeded successfully.");
+    }
   } catch (error) {
     console.error("Error seeding mock users:", error);
   }
