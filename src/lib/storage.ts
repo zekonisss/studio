@@ -52,10 +52,10 @@ export async function getAllUsers(): Promise<UserProfile[]> {
   return users;
 }
 
-export async function addUserProfileWithId(userId: string, user: Omit<UserProfile, 'id' | 'password'>): Promise<void> {
-  if (!isBrowser) return;
-  const userDocRef = doc(db, USERS_COLLECTION, userId);
-  await setDoc(userDocRef, user);
+export async function addUserProfile(user: UserProfile): Promise<void> {
+    if (!isBrowser) return;
+    const userDocRef = doc(db, USERS_COLLECTION, user.id);
+    await setDoc(userDocRef, user);
 }
 
 export async function addUsersBatch(users: UserProfile[]): Promise<void> {

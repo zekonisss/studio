@@ -111,13 +111,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const email = values.email.toLowerCase();
       const subUserEmail = values.subUserEmail?.toLowerCase();
 
-      // Check if main user exists
       const existingUser = await storage.findUserByEmail(email);
       if (existingUser) {
         throw new Error(t('toast.signup.error.emailExists'));
       }
 
-      // Check if sub-user exists or has the same email as the main user
       if (values.addOneSubUser && subUserEmail) {
         if (subUserEmail === email) {
           throw new Error(t('toast.signup.error.subUserEmailSameAsMain'));
@@ -132,7 +130,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .toString(36)
         .substring(2, 7)}`;
       
-      const userToCreate: Omit<UserProfile, 'id'> = {
+      const userToCreate: UserProfile = {
+        id: newUserId,
         companyName: values.companyName,
         companyCode: values.companyCode,
         address: values.address,
@@ -169,7 +168,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         ];
       }
       
-      await storage.addUserProfileWithId(newUserId, userToCreate);
+      await storage.addUserProfile(userToCreate);
 
       toast({
         title: t('toast.signup.success.title'),
