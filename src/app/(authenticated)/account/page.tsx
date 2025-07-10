@@ -46,17 +46,18 @@ export default function AccountPage() {
   
   const dateLocale = locale === 'en' ? enUS : lt;
 
-  const fetchUserReports = useCallback(() => {
+  const fetchUserReports = useCallback(async () => {
     if (user) {
-      const { active, deleted } = storage.getUserReports(user.id);
+      const { active, deleted } = await storage.getUserReports(user.id);
       setUserReports(active);
       setDeletedUserReports(deleted);
     }
   }, [user]);
 
-  const fetchNotifications = useCallback(() => {
+  const fetchNotifications = useCallback(async () => {
     if (user) {
-      setNotifications(storage.getUserNotifications(user.id)); 
+      const userNotifications = await storage.getUserNotifications(user.id);
+      setNotifications(userNotifications); 
     }
   }, [user]);
 
@@ -118,16 +119,16 @@ export default function AccountPage() {
     }
   };
 
-  const handleMarkAsRead = (notificationId: string) => {
+  const handleMarkAsRead = async (notificationId: string) => {
     if (user) {
-      storage.markNotificationAsRead(user.id, notificationId); 
+      await storage.markNotificationAsRead(notificationId); 
       fetchNotifications();
     }
   };
 
-  const handleMarkAllAsRead = () => {
+  const handleMarkAllAsRead = async () => {
     if (user) {
-      storage.markAllNotificationsAsRead(user.id); 
+      await storage.markAllNotificationsAsRead(user.id); 
       fetchNotifications();
     }
   };
