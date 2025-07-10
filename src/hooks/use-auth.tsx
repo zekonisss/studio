@@ -8,7 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/language-context';
 import * as storage from '@/lib/storage';
 import { useRouter } from 'next/navigation';
-import { auth, db } from '@/lib/firebase';
+import { auth } from '@/lib/firebase';
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -16,7 +16,6 @@ import {
   onAuthStateChanged,
   type User as FirebaseUser,
 } from 'firebase/auth';
-import { doc, getDoc, setDoc } from "firebase/firestore";
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -38,30 +37,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
+      setLoading(true);
       if (firebaseUser) {
         try {
             const userProfile = await storage.getUserById(firebaseUser.uid);
             if (userProfile) {
                 setUser(userProfile);
             } else {
-                 console.warn(`User with UID ${firebaseUser.uid} found in Auth, but not in Firestore. This might happen during registration.`);
-                 const tempUser: UserProfile = {
-                    id: firebaseUser.uid,
-                    email: firebaseUser.email || 'no-email@example.com',
-                    companyName: 'Vartotojas',
-                    companyCode: '000000000',
-                    address: 'Nenurodyta',
-                    contactPerson: firebaseUser.displayName || 'Vartotojas',
-                    phone: 'Nenurodytas',
-                    paymentStatus: 'inactive', 
-                    isAdmin: firebaseUser.email === 'admin@drivercheck.lt' 
-                };
-                setUser(tempUser);
+                 // This case can happen briefly during registration before the Firestore doc is created.
+                 // We will set a temporary user object, but the profile will be updated shortly.
+                 console.warn(`User with UID ${firebaseUser.uid} found in Auth, but not in Firestore. This is expected during signup flow.`);
+                 setUser(null); // Set to null to avoid showing partial data
             }
         } catch (error) {
             console.error("Error fetching user profile:", error);
             setUser(null);
-             toast({
+            toast({
                 variant: 'destructive',
                 title: t('toast.login.error.title'),
                 description: t('toast.login.error.descriptionGeneric'),
@@ -75,7 +66,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     return () => unsubscribe();
   }, [toast, t]);
-  
+
 
   const updateUserInContext = async (updatedUser: UserProfile) => {
     setUser(updatedUser);
@@ -84,11 +75,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (values: LoginFormValues): Promise<boolean> => {
     try {
-      await signInWithEmailAndPassword(auth, values.email, values.password);
+      const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
+      const firebaseUser = userCredential.user;
+      
+      const userProfile = await storage.getUserById(firebaseUser.uid);
+
+      if (!userProfile) {
+        throw new Error("User profile not found in database.");
+      }
+      
+      setUser(userProfile); // Manually set user state to ensure it's up to date
+
       toast({
         title: t('toast.login.success.title'),
         description: t('toast.login.success.description'),
       });
+      
+      // Redirect based on role
+      if (userProfile.isAdmin) {
+          router.push('/admin');
+      } else {
+          router.push('/dashboard');
+      }
+
       return true;
     } catch (error: any) {
       console.error("Login failed:", error.code, error.message);
@@ -130,13 +139,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       await storage.addUserProfile(userToCreate);
       
-      await signOut(auth);
+      // CRITICAL FIX: DO NOT sign out the user immediately.
+      // Firebase needs the user to be logged in to establish the session correctly.
+      // await signOut(auth);
 
       toast({
         title: t('toast.signup.success.title'),
         description: t('toast.signup.success.description'),
       });
       
+      // Redirect to a page that explains the next steps, without logging them out.
       router.push('/auth/pending-approval');
       
       return true;
@@ -167,6 +179,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = async () => {
     try {
       await signOut(auth);
+      setUser(null);
       router.push('/auth/login');
       toast({ title: t('toast.logout.success.title') });
     } catch (error: any) {
