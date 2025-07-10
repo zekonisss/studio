@@ -6,10 +6,10 @@ import { getAuth } from "firebase/auth";
 // NOTE: This object is now populated with the correct Firebase configuration
 // from your project settings.
 const FIREBASE_CLIENT_CONFIG = {
-  apiKey: "YVycCOvx6iSAZbWq5cSwllsbOoNdcUmQ92e_LOVPWFM",
+  apiKey: "AIzaSyBusklRtrpm-gfnwCdmi2yj5vTumqLte3c",
   authDomain: "drivershield.firebaseapp.com",
   projectId: "drivershield",
-  storageBucket: "drivershield.firebasestorage.app",
+  storageBucket: "drivershield.appspot.com",
   messagingSenderId: "688007961476",
   appId: "1:688007961476:web:d6d663ef7430182d781bd1"
 };
