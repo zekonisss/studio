@@ -29,16 +29,16 @@ export default function DashboardPage() {
   const dateLocale = locale === 'en' ? enUS : lt;
 
   useEffect(() => {
-    const fetchStats = () => {
-      const allPlatformReports = storage.getAllReports();
+    const fetchStats = async () => {
+      const allPlatformReports = await storage.getAllReports();
       setTotalReportsCount(allPlatformReports.length);
       setRecentReports(allPlatformReports.slice(0, 4));
 
       if (user) {
-        const { active: activeUserReports } = storage.getUserReports(user.id);
+        const { active: activeUserReports } = await storage.getUserReports(user.id);
         setUserReportsCount(activeUserReports.length);
 
-        const userSearchLogs = storage.getSearchLogs(user.id);
+        const userSearchLogs = await storage.getSearchLogs(user.id);
         setUserSearchesCount(userSearchLogs.length);
       } else {
         setUserReportsCount(0);
@@ -57,25 +57,28 @@ export default function DashboardPage() {
       setExpirationEndDate(formatDateFn(subEndDate, "yyyy-MM-dd", { locale: dateLocale }));
 
       if (shouldWarn) {
-        const existingNotifications = storage.getUserNotifications(user.id);
-        const hasExistingWarning = existingNotifications.some(
-          n => n.type === 'subscription_warning' && 
-               n.messageParams?.endDate === formatDateFn(subEndDate, "yyyy-MM-dd") && // Use consistent formatting for check
-               !n.read
-        );
+        const fetchAndSetNotifications = async () => {
+          const existingNotifications = await storage.getUserNotifications(user.id);
+          const hasExistingWarning = existingNotifications.some(
+            n => n.type === 'subscription_warning' && 
+                 n.messageParams?.endDate === formatDateFn(subEndDate, "yyyy-MM-dd") &&
+                 !n.read
+          );
 
-        if (!hasExistingWarning) {
-          storage.addUserNotification(user.id, {
-            type: 'subscription_warning',
-            titleKey: 'notifications.subscriptionWarning.title',
-            messageKey: 'notifications.subscriptionWarning.message',
-            messageParams: { 
-              endDate: formatDateFn(subEndDate, "yyyy-MM-dd", { locale: dateLocale }),
-              daysLeft: differenceInDays(subEndDate, new Date())
-            },
-            link: '/account?tab=payment'
-          });
-        }
+          if (!hasExistingWarning) {
+            await storage.addUserNotification(user.id, {
+              type: 'subscription_warning',
+              titleKey: 'notifications.subscriptionWarning.title',
+              messageKey: 'notifications.subscriptionWarning.message',
+              messageParams: { 
+                endDate: formatDateFn(subEndDate, "yyyy-MM-dd", { locale: dateLocale }),
+                daysLeft: differenceInDays(subEndDate, new Date())
+              },
+              link: '/account?tab=payment'
+            });
+          }
+        };
+        fetchAndSetNotifications();
       }
     } else {
       setShowExpirationWarning(false);
