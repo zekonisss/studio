@@ -8,7 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/language-context';
 import * as storage from '@/lib/storage';
 import { useRouter } from 'next/navigation';
-import { auth } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -16,6 +16,7 @@ import {
   onAuthStateChanged,
   type User as FirebaseUser,
 } from 'firebase/auth';
+import { doc, getDoc, setDoc } from "firebase/firestore";
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -40,20 +41,36 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
       if (firebaseUser) {
-        // Bypassing Firestore read to avoid permission errors.
-        // Creating a temporary user profile from auth data.
-        const tempUser: UserProfile = {
-            id: firebaseUser.uid,
-            email: firebaseUser.email || 'no-email@example.com',
-            companyName: 'Vartotojas',
-            companyCode: '000000000',
-            address: 'Nenurodyta',
-            contactPerson: firebaseUser.displayName || 'Vartotojas',
-            phone: 'Nenurodytas',
-            paymentStatus: 'active',
-            isAdmin: firebaseUser.email === 'admin@drivercheck.lt' // Temporary admin check
-        };
-        setUser(tempUser);
+        try {
+            const userProfile = await storage.getUserById(firebaseUser.uid);
+            if (userProfile) {
+                setUser(userProfile);
+            } else {
+                 // This case can happen if the user exists in Auth but not in Firestore.
+                 // For this app, we'll create a temporary profile and log a warning.
+                 console.warn(`User with UID ${firebaseUser.uid} found in Auth, but not in Firestore.`);
+                 const tempUser: UserProfile = {
+                    id: firebaseUser.uid,
+                    email: firebaseUser.email || 'no-email@example.com',
+                    companyName: 'Vartotojas',
+                    companyCode: '000000000',
+                    address: 'Nenurodyta',
+                    contactPerson: firebaseUser.displayName || 'Vartotojas',
+                    phone: 'Nenurodytas',
+                    paymentStatus: 'inactive', 
+                    isAdmin: firebaseUser.email === 'admin@drivercheck.lt' 
+                };
+                setUser(tempUser);
+            }
+        } catch (error) {
+            console.error("Error fetching user profile:", error);
+            setUser(null);
+             toast({
+                variant: 'destructive',
+                title: 'Klaida gaunant profilį',
+                description: 'Nepavyko gauti vartotojo profilio duomenų.',
+            });
+        }
       } else {
         setUser(null);
       }
@@ -61,7 +78,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [toast]);
   
 
   const updateUserInContext = async (updatedUser: UserProfile) => {
@@ -77,36 +94,39 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         title: t('toast.login.success.title'),
         description: t('toast.login.success.description'),
       });
-      router.push(values.email === 'admin@drivercheck.lt' ? '/admin' : '/dashboard');
+      // The redirect is handled by the page component to avoid race conditions.
       return true;
     } catch (error: any) {
+      console.error("Login failed:", error.code, error.message);
+      let description = t('toast.login.error.invalidCredentials');
+      if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+          description = t('toast.login.error.invalidCredentials');
+      } else {
+          description = error.message || t('toast.login.error.descriptionGeneric');
+      }
       toast({
         variant: 'destructive',
         title: t('toast.login.error.title'),
-        description: error.message || t('toast.login.error.descriptionGeneric'),
+        description: description,
       });
       return false;
     }
   };
 
-  const signup = async (values: SignUpFormValues): Promise<boolean> => {
+ const signup = async (values: SignUpFormValues): Promise<boolean> => {
     try {
-      const email = values.email.toLowerCase();
-      const existingUserByEmail = await storage.findUserByEmail(email);
-      if (existingUserByEmail) {
-        throw new Error(t('toast.signup.error.emailExists'));
-      }
-      
-      const userCredential = await createUserWithEmailAndPassword(auth, email, values.password);
+      // Step 1: Create user in Firebase Authentication
+      const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       const newFirebaseUser = userCredential.user;
 
+      // Step 2: Create user profile object to be saved
       const userToCreate: UserProfile = {
         id: newFirebaseUser.uid,
         companyName: values.companyName,
         companyCode: values.companyCode,
         address: values.address,
         contactPerson: values.contactPerson,
-        email: email,
+        email: values.email.toLowerCase(),
         phone: values.phone,
         paymentStatus: 'pending_verification',
         isAdmin: false,
@@ -115,22 +135,41 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         subUsers: [],
         vatCode: values.vatCode || '',
       };
-      
-      await storage.addUserProfile(userToCreate);
+
+      // Step 3: Save the profile to Firestore
+      const userDocRef = doc(db, "users", newFirebaseUser.uid);
+      await setDoc(userDocRef, userToCreate);
+
+      // Step 4: Sign out the user immediately after registration
       await signOut(auth);
-      
+
       toast({
         title: t('toast.signup.success.title'),
         description: t('toast.signup.success.description'),
       });
+      
+      // Step 5: Redirect to the pending approval page
+      router.push('/auth/pending-approval');
+      
       return true;
 
     } catch (error: any) {
       console.error('Signup error in useAuth:', error);
+      let errorMessage = error.message;
+
+      // Translate Firebase error codes into user-friendly messages
+      if (error.code === 'auth/email-already-in-use') {
+        errorMessage = t('toast.signup.error.emailExists');
+      } else if (error.code === 'auth/weak-password') {
+        errorMessage = 'Slaptažodis yra per silpnas. Jis turi būti bent 6 simbolių ilgio.';
+      } else {
+        errorMessage = t('toast.signup.error.descriptionGeneric');
+      }
+
       toast({
         variant: 'destructive',
         title: t('toast.signup.error.title'),
-        description: error.message || t('toast.signup.error.descriptionGeneric'),
+        description: errorMessage,
       });
       return false;
     }
