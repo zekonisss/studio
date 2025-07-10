@@ -130,11 +130,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         paymentStatus: 'pending_verification',
         isAdmin: false,
         registeredAt: new Date().toISOString(),
+        accountActivatedAt: '', // Initialize as empty string
         agreeToTerms: values.agreeToTerms,
         subUsers: [],
       };
       
-      if (values.vatCode) {
+      if (values.vatCode && values.vatCode.trim() !== "") {
         userToCreate.vatCode = values.vatCode;
       }
       
