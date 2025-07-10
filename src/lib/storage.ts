@@ -1,7 +1,8 @@
 import type { Report, UserProfile, SearchLog, AuditLogEntry, UserNotification } from '@/types';
-import { MOCK_ALL_USERS, MOCK_GENERAL_REPORTS, MOCK_USER_REPORTS, MOCK_USER_SEARCH_LOGS } from './mock-data';
-import { db } from './firebase';
+import { MOCK_ALL_USERS, MOCK_GENERAL_REPORTS, MOCK_USER_REPORTS, MOCK_USER_SEARCH_LOGS, MOCK_ADMIN_USER, MOCK_TEST_CLIENT_USER } from './mock-data';
+import { db, auth } from './firebase';
 import { collection, getDocs, doc, setDoc, query, where, getDoc, updateDoc, writeBatch } from 'firebase/firestore';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 
 
 const LOCAL_STORAGE_REPORTS_KEY = 'driverCheckReports';
@@ -16,26 +17,59 @@ const USERS_COLLECTION = 'users';
 // --- User Management (Firestore) ---
 
 // Helper function to seed or update mock users from mock-data.ts
+// This function is now more robust. It creates users in Auth and then in Firestore.
 export async function seedInitialUsers() {
   if (!isBrowser) return;
-  
-  try {
-    const usersCollectionRef = collection(db, USERS_COLLECTION);
-    const snapshot = await getDocs(usersCollectionRef);
 
-    // Only seed if the collection is empty
-    if (snapshot.empty) {
-      console.log("Users collection is empty, seeding mock users...");
-      const batch = writeBatch(db);
-      MOCK_ALL_USERS.forEach(user => {
-        const userDocRef = doc(db, USERS_COLLECTION, user.id);
-        batch.set(userDocRef, user); 
-      });
-      await batch.commit();
-      console.log("Mock users seeded successfully.");
+  const usersToSeed = [MOCK_ADMIN_USER, MOCK_TEST_CLIENT_USER];
+
+  for (const mockUser of usersToSeed) {
+    try {
+      // Check if user already exists in Firestore by email
+      const existingUser = await findUserByEmail(mockUser.email);
+      if (existingUser) {
+        // console.log(`User with email ${mockUser.email} already exists. Skipping seeding.`);
+        continue;
+      }
+      
+      // If user does not exist, create them in Firebase Auth
+      // We need to sign out any currently signed-in user to do this cleanly
+      const currentAuthUser = auth.currentUser;
+
+      const userCredential = await createUserWithEmailAndPassword(auth, mockUser.email, 'password123');
+      const newFirebaseUser = userCredential.user;
+
+      console.log(`Created user in Auth with UID: ${newFirebaseUser.uid}`);
+
+      const userProfileData: UserProfile = {
+        ...mockUser,
+        id: newFirebaseUser.uid, // IMPORTANT: Use the UID from Auth
+      };
+      
+      // Add the full profile to Firestore
+      await addUserProfile(userProfileData);
+      console.log(`User profile for ${mockUser.email} created in Firestore.`);
+
+      // If there was a user signed in before, sign them back in
+      if (currentAuthUser) {
+          await signInWithEmailAndPassword(auth, currentAuthUser.email!, 'password123').catch(() => {
+              // This might fail if the password is not 'password123', which is fine.
+              // The main goal is to re-authenticate the original user if they were logged in.
+          });
+      } else {
+        // If no one was signed in, sign out the newly created user
+         await auth.signOut();
+      }
+
+    } catch (error: any) {
+      // It's common for this to fail if the user already exists in Auth but not Firestore
+      // (e.g., from a previous failed attempt). This is okay.
+      if (error.code === 'auth/email-already-in-use') {
+         // console.log(`Auth user for ${mockUser.email} already exists. Skipping Auth creation.`);
+      } else {
+        console.error("Error seeding user:", mockUser.email, error);
+      }
     }
-  } catch (error) {
-    console.error("Error seeding mock users:", error);
   }
 }
 
@@ -55,11 +89,9 @@ export async function addUserProfile(user: UserProfile): Promise<void> {
     if (!isBrowser) return;
     try {
         const userDocRef = doc(db, USERS_COLLECTION, user.id);
-        console.log("Attempting to add user to Firestore:", user); // Debugging log
         await setDoc(userDocRef, user);
-        console.log("User added successfully to Firestore:", user.id); // Success log
     } catch (error) {
-        console.error("Failed to add user to Firestore:", error); // Detailed error log
+        console.error("Failed to add user to Firestore:", error);
         throw new Error("Failed to save user profile to the database.");
     }
 }

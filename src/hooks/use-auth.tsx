@@ -8,7 +8,6 @@ import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/language-context';
 import * as storage from '@/lib/storage';
 import { useRouter } from 'next/navigation';
-import { MOCK_ADMIN_USER } from '@/lib/mock-data';
 import { auth } from '@/lib/firebase';
 import {
   createUserWithEmailAndPassword,
@@ -37,30 +36,40 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const router = useRouter();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
-      setLoading(true);
-      await storage.seedInitialUsers(); // Ensure mock users are available
-      if (firebaseUser) {
-        try {
-          const currentUserData = await storage.getUserById(firebaseUser.uid);
-          if (currentUserData) {
-            setUser(currentUserData);
-          } else {
-            setUser(null);
-            await signOut(auth); // Log out if no profile found
-          }
-        } catch (e) {
-          console.error("Failed to fetch user profile", e);
-          setUser(null);
-          await signOut(auth);
-        }
-      } else {
-        setUser(null);
-      }
-      setLoading(false);
-    });
+    const initializeAuth = async () => {
+      // Ensure mock users are created in Auth and Firestore if they don't exist.
+      await storage.seedInitialUsers();
 
-    return () => unsubscribe();
+      const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
+        if (firebaseUser) {
+          try {
+            const currentUserData = await storage.getUserById(firebaseUser.uid);
+            if (currentUserData) {
+              setUser(currentUserData);
+            } else {
+              // This can happen if a user exists in Auth but not in Firestore.
+              // For this app's logic, we log them out.
+              setUser(null);
+              await signOut(auth);
+            }
+          } catch (e) {
+            console.error("Failed to fetch user profile", e);
+            setUser(null);
+            await signOut(auth);
+          }
+        } else {
+          setUser(null);
+        }
+        setLoading(false);
+      });
+      return unsubscribe;
+    };
+
+    const unsubscribePromise = initializeAuth();
+
+    return () => {
+      unsubscribePromise.then(unsubscribe => unsubscribe && unsubscribe());
+    };
   }, []);
 
   const updateUserInContext = async (updatedUser: UserProfile) => {
@@ -75,7 +84,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (userFromDb) {
         if (userFromDb.paymentStatus === 'active' || userFromDb.isAdmin) {
-          setUser(userFromDb);
+          // setUser is handled by onAuthStateChanged listener, no need to set here.
           toast({
             title: t('toast.login.success.title'),
             description: t('toast.login.success.description'),
@@ -91,6 +100,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           throw new Error(errorMessage);
         }
       } else {
+        // This case is unlikely if signup is correct, but good to have.
         await signOut(auth);
         throw new Error(t('toast.login.error.invalidCredentials'));
       }
@@ -112,6 +122,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (existingUser) {
         throw new Error(t('toast.signup.error.emailExists'));
       }
+      
+      if(values.addOneSubUser && values.subUserEmail){
+         const subUserEmail = values.subUserEmail.toLowerCase();
+         if(email === subUserEmail){
+            throw new Error(t('toast.signup.error.subUserEmailSameAsMain'));
+         }
+         const existingSubUser = await storage.findUserByEmail(subUserEmail);
+         if (existingSubUser) {
+            throw new Error(t('toast.signup.error.subUserEmailExists'));
+         }
+      }
 
       // Step 2: Create user in Firebase Authentication
       const userCredential = await createUserWithEmailAndPassword(auth, email, values.password);
@@ -131,18 +152,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         registeredAt: new Date().toISOString(),
         agreeToTerms: values.agreeToTerms,
         subUsers: [],
+        vatCode: values.vatCode || '', // Ensure it's an empty string if not provided
       };
-      
-      if (values.vatCode && values.vatCode.trim() !== "") {
-        userToCreate.vatCode = values.vatCode;
-      }
       
       if (values.addOneSubUser && values.subUserName && values.subUserEmail && values.subUserPassword) {
         userToCreate.subUsers = [{
           id: `subuser-${Date.now()}`,
           fullName: values.subUserName,
           email: values.subUserEmail.toLowerCase(),
-          tempPassword: values.subUserPassword,
+          // Don't store passwords in Firestore
         }];
       }
       
@@ -171,7 +189,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = async () => {
     try {
       await signOut(auth);
-      setUser(null);
+      // setUser(null) is handled by onAuthStateChanged
       router.push('/auth/login');
       toast({ title: t('toast.logout.success.title') });
     } catch (error: any) {
