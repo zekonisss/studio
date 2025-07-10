@@ -31,6 +31,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const checkAuthState = useCallback(async () => {
     setLoading(true);
+    await storage.seedInitialUsers(); // Ensure mock users are available on first load
     const storedUserId = localStorage.getItem(USER_ID_STORAGE_KEY); 
     if (storedUserId) {
       try {
@@ -61,18 +62,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (values: LoginFormValues): Promise<boolean> => {
     try {
-      // Hardcoded admin login check
-      if (values.email.toLowerCase() === MOCK_ADMIN_USER.email && values.password === MOCK_ADMIN_USER.password) {
-          setUser(MOCK_ADMIN_USER);
-          localStorage.setItem(USER_ID_STORAGE_KEY, MOCK_ADMIN_USER.id);
-          toast({
-              title: t('toast.login.success.title'),
-              description: t('toast.login.success.description'),
-          });
-          router.push('/admin');
-          return true;
-      }
-
       const userFromDb = await storage.findUserByEmail(values.email);
 
       if (userFromDb && userFromDb.password === values.password) {

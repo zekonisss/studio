@@ -64,6 +64,7 @@ export function SignupForm() {
         router.push('/auth/pending-approval');
       }
     } catch (error) {
+      // Toast is already handled inside useAuth's signup function
       console.error("Signup submission failed in form:", error);
     } finally {
       setIsSubmitting(false);
