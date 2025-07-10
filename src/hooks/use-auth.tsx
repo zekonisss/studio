@@ -9,6 +9,14 @@ import { useLanguage } from '@/contexts/language-context';
 import * as storage from '@/lib/storage';
 import { useRouter } from 'next/navigation';
 import { MOCK_ADMIN_USER } from '@/lib/mock-data';
+import { auth } from '@/lib/firebase';
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+  type User as FirebaseUser,
+} from 'firebase/auth';
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -20,7 +28,6 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-const USER_ID_STORAGE_KEY = 'driverCheckUserId';
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -29,31 +36,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { t } = useLanguage();
   const router = useRouter();
 
-  const checkAuthState = useCallback(async () => {
-    setLoading(true);
-    await storage.seedInitialUsers(); // Ensure mock users are available on first load
-    const storedUserId = localStorage.getItem(USER_ID_STORAGE_KEY); 
-    if (storedUserId) {
-      try {
-        const currentUserData = await storage.getUserById(storedUserId);
-        if (currentUserData) {
-           setUser(currentUserData);
-        } else {
-          localStorage.removeItem(USER_ID_STORAGE_KEY);
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
+      setLoading(true);
+      await storage.seedInitialUsers(); // Ensure mock users are available
+      if (firebaseUser) {
+        try {
+          const currentUserData = await storage.getUserById(firebaseUser.uid);
+          if (currentUserData) {
+            setUser(currentUserData);
+          } else {
+            setUser(null);
+            await signOut(auth); // Log out if no profile found
+          }
+        } catch (e) {
+          console.error("Failed to fetch user profile", e);
           setUser(null);
+          await signOut(auth);
         }
-      } catch (e) {
-        console.error("Failed to fetch user from storage", e);
-        localStorage.removeItem(USER_ID_STORAGE_KEY);
+      } else {
         setUser(null);
       }
-    }
-    setLoading(false);
-  }, []);
+      setLoading(false);
+    });
 
-  useEffect(() => {
-    checkAuthState();
-  }, [checkAuthState]);
+    return () => unsubscribe();
+  }, []);
 
   const updateUserInContext = async (updatedUser: UserProfile) => {
     setUser(updatedUser);
@@ -62,33 +70,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (values: LoginFormValues): Promise<boolean> => {
     try {
-      const userFromDb = await storage.findUserByEmail(values.email);
+      const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
+      const userFromDb = await storage.getUserById(userCredential.user.uid);
 
-      if (userFromDb && userFromDb.password === values.password) {
-          if (userFromDb.paymentStatus === 'active' || userFromDb.isAdmin) {
-              setUser(userFromDb);
-              localStorage.setItem(USER_ID_STORAGE_KEY, userFromDb.id);
-              toast({
-                  title: t('toast.login.success.title'),
-                  description: t('toast.login.success.description'),
-              });
-              router.push(userFromDb.isAdmin ? '/admin' : '/dashboard');
-              return true;
-          } else {
-              let errorMessage = t('toast.login.error.accessDenied');
-              if (userFromDb.paymentStatus === 'pending_verification') errorMessage = t('toast.login.error.pendingVerification');
-              else if (userFromDb.paymentStatus === 'pending_payment') errorMessage = t('toast.login.error.pendingPayment');
-              else if (userFromDb.paymentStatus === 'inactive') errorMessage = t('toast.login.error.inactive');
-              throw new Error(errorMessage);
-          }
+      if (userFromDb) {
+        if (userFromDb.paymentStatus === 'active' || userFromDb.isAdmin) {
+          setUser(userFromDb);
+          toast({
+            title: t('toast.login.success.title'),
+            description: t('toast.login.success.description'),
+          });
+          router.push(userFromDb.isAdmin ? '/admin' : '/dashboard');
+          return true;
+        } else {
+          let errorMessage = t('toast.login.error.accessDenied');
+          if (userFromDb.paymentStatus === 'pending_verification') errorMessage = t('toast.login.error.pendingVerification');
+          else if (userFromDb.paymentStatus === 'pending_payment') errorMessage = t('toast.login.error.pendingPayment');
+          else if (userFromDb.paymentStatus === 'inactive') errorMessage = t('toast.login.error.inactive');
+          await signOut(auth);
+          throw new Error(errorMessage);
+        }
       } else {
-          throw new Error(t('toast.login.error.invalidCredentials'));
+        await signOut(auth);
+        throw new Error(t('toast.login.error.invalidCredentials'));
       }
     } catch (error: any) {
       toast({
-          variant: 'destructive',
-          title: t('toast.login.error.title'),
-          description: error.message,
+        variant: 'destructive',
+        title: t('toast.login.error.title'),
+        description: error.message || t('toast.login.error.descriptionGeneric'),
       });
       return false;
     }
@@ -96,37 +106,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signup = async (values: SignUpFormValues): Promise<boolean> => {
     try {
+      // Step 1: Check if user already exists in Firestore before creating in Auth
       const email = values.email.toLowerCase();
-      const subUserEmail = values.subUserEmail?.toLowerCase();
-
       const existingUser = await storage.findUserByEmail(email);
       if (existingUser) {
         throw new Error(t('toast.signup.error.emailExists'));
       }
 
-      if (values.addOneSubUser && subUserEmail) {
-        if (subUserEmail === email) {
-          throw new Error(t('toast.signup.error.subUserEmailSameAsMain'));
-        }
-        const existingSubUser = await storage.findUserByEmail(subUserEmail);
-        if (existingSubUser) {
-          throw new Error(t('toast.signup.error.subUserEmailExists'));
-        }
-      }
+      // Step 2: Create user in Firebase Authentication
+      const userCredential = await createUserWithEmailAndPassword(auth, email, values.password);
+      const newFirebaseUser = userCredential.user;
 
-      const newUserId = `user-${Date.now()}-${Math.random()
-        .toString(36)
-        .substring(2, 7)}`;
-      
-      const userToCreate: Partial<UserProfile> = {
-        id: newUserId,
+      // Step 3: Create user profile in Firestore
+      const userToCreate: UserProfile = {
+        id: newFirebaseUser.uid, // Use the UID from Firebase Auth
         companyName: values.companyName,
         companyCode: values.companyCode,
         address: values.address,
         contactPerson: values.contactPerson,
         email: email,
         phone: values.phone,
-        password: values.password,
         paymentStatus: 'pending_verification',
         isAdmin: false,
         registeredAt: new Date().toISOString(),
@@ -138,26 +137,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         userToCreate.vatCode = values.vatCode;
       }
       
-      if (
-        values.addOneSubUser &&
-        values.subUserName &&
-        subUserEmail &&
-        values.subUserPassword
-      ) {
-        userToCreate.subUsers = [
-          {
-            id: `subuser-${Date.now()}-${Math.random()
-              .toString(36)
-              .substring(2, 9)}`,
-            fullName: values.subUserName,
-            email: subUserEmail,
-            tempPassword: values.subUserPassword,
-          },
-        ];
+      if (values.addOneSubUser && values.subUserName && values.subUserEmail && values.subUserPassword) {
+        userToCreate.subUsers = [{
+          id: `subuser-${Date.now()}`,
+          fullName: values.subUserName,
+          email: values.subUserEmail.toLowerCase(),
+          tempPassword: values.subUserPassword,
+        }];
       }
       
-      await storage.addUserProfile(userToCreate as UserProfile);
+      await storage.addUserProfile(userToCreate);
 
+      // Step 4: Log out the newly created user until admin approval
+      await signOut(auth);
+      
       toast({
         title: t('toast.signup.success.title'),
         description: t('toast.signup.success.description'),
@@ -169,20 +162,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       toast({
         variant: 'destructive',
         title: t('toast.signup.error.title'),
-        description:
-          error.message || t('toast.signup.error.descriptionGeneric'),
+        description: error.message || t('toast.signup.error.descriptionGeneric'),
       });
       return false;
     }
   };
 
   const logout = async () => {
-    setLoading(true);
-    setUser(null);
-    localStorage.removeItem(USER_ID_STORAGE_KEY);
-    router.push('/auth/login');
-    setLoading(false); 
-    toast({ title: t('toast.logout.success.title') });
+    try {
+      await signOut(auth);
+      setUser(null);
+      router.push('/auth/login');
+      toast({ title: t('toast.logout.success.title') });
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: t('toast.logout.error.title'),
+        description: error.message,
+      });
+    }
   };
   
   const value = { user, loading, login, signup, logout, updateUserInContext };
