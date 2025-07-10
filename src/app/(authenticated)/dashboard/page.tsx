@@ -24,25 +24,32 @@ export default function DashboardPage() {
   const [showExpirationWarning, setShowExpirationWarning] = useState(false);
   const [expirationEndDate, setExpirationEndDate] = useState<string | null>(null);
   const [recentReports, setRecentReports] = useState<Report[]>([]);
-
+  const [isLoading, setIsLoading] = useState(true);
 
   const dateLocale = locale === 'en' ? enUS : lt;
 
   useEffect(() => {
     const fetchStats = async () => {
-      const allPlatformReports = await storage.getAllReports();
-      setTotalReportsCount(allPlatformReports.length);
-      setRecentReports(allPlatformReports.slice(0, 4));
+      setIsLoading(true);
+      try {
+        const allPlatformReports = await storage.getAllReports();
+        setTotalReportsCount(allPlatformReports.length);
+        setRecentReports(allPlatformReports.slice(0, 4));
 
-      if (user) {
-        const { active: activeUserReports } = await storage.getUserReports(user.id);
-        setUserReportsCount(activeUserReports.length);
+        if (user) {
+          const { active: activeUserReports } = await storage.getUserReports(user.id);
+          setUserReportsCount(activeUserReports.length);
 
-        const userSearchLogs = await storage.getSearchLogs(user.id);
-        setUserSearchesCount(userSearchLogs.length);
-      } else {
-        setUserReportsCount(0);
-        setUserSearchesCount(0);
+          const userSearchLogs = await storage.getSearchLogs(user.id);
+          setUserSearchesCount(userSearchLogs.length);
+        } else {
+          setUserReportsCount(0);
+          setUserSearchesCount(0);
+        }
+      } catch (error) {
+        console.error("Failed to fetch dashboard stats:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchStats();
@@ -58,6 +65,7 @@ export default function DashboardPage() {
 
       if (shouldWarn) {
         const fetchAndSetNotifications = async () => {
+          if (!user) return;
           const existingNotifications = await storage.getUserNotifications(user.id);
           const hasExistingWarning = existingNotifications.some(
             n => n.type === 'subscription_warning' && 
@@ -88,6 +96,14 @@ export default function DashboardPage() {
 
 
   const subscriptionEndDateForDisplay = user?.accountActivatedAt ? addYears(new Date(user.accountActivatedAt), 1) : null;
+  
+   if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-[calc(100vh-10rem)]">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto py-8 px-4 md:px-0">

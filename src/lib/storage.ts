@@ -1,6 +1,6 @@
+
 import type { Report, UserProfile, SearchLog, AuditLogEntry, UserNotification } from '@/types';
-import { MOCK_ALL_USERS } from './mock-data';
-import { db, auth } from '@/lib/firebase';
+import { db } from '@/lib/firebase';
 import { 
   collection, 
   getDocs, 
@@ -13,7 +13,8 @@ import {
   writeBatch, 
   addDoc,
   orderBy,
-  Timestamp
+  Timestamp,
+  deleteDoc
 } from 'firebase/firestore';
 
 const isBrowser = typeof window !== 'undefined';
@@ -23,29 +24,20 @@ const SEARCH_LOGS_COLLECTION = 'searchLogs';
 const AUDIT_LOGS_COLLECTION = 'auditLogs';
 const NOTIFICATIONS_COLLECTION = 'notifications';
 
-// In-memory store for development to bypass Firestore write-rule issues
-let tempReports: Report[] = [];
+// --- Helper ---
 
-// --- User Management (Firestore) ---
-
-export async function seedInitialUsers() {
-    if (!isBrowser) return;
-
-    for (const mockUser of MOCK_ALL_USERS) {
-        try {
-            const userDocRef = doc(db, USERS_COLLECTION, mockUser.id);
-            const docSnap = await getDoc(userDocRef);
-
-            if (!docSnap.exists()) {
-                await setDoc(userDocRef, mockUser);
-                console.log(`Mock user ${mockUser.email} seeded into Firestore.`);
-            }
-        } catch (error) {
-            console.error("Error seeding user:", mockUser.email, error);
+const convertFirestoreTimestampToDate = (data: any) => {
+    if (!data) return data;
+    const convertedData = { ...data };
+    for (const key in convertedData) {
+        if (convertedData[key] instanceof Timestamp) {
+            convertedData[key] = convertedData[key].toDate();
         }
     }
-}
+    return convertedData;
+};
 
+// --- User Management ---
 
 export async function getAllUsers(): Promise<UserProfile[]> {
   if (!isBrowser) return [];
@@ -70,13 +62,15 @@ export async function addUserProfile(user: UserProfile): Promise<void> {
     }
 }
 
-
 export async function addUsersBatch(users: UserProfile[]): Promise<void> {
   if (!isBrowser) return;
   const batch = writeBatch(db);
   users.forEach(user => {
-      const userDocRef = doc(db, USERS_COLLECTION, user.id);
-      batch.set(userDocRef, user);
+      // Create a new document reference with a unique ID for each user in the batch
+      const userDocRef = doc(collection(db, USERS_COLLECTION));
+      // Use the newly generated ID in the user object
+      const userWithId = { ...user, id: userDocRef.id };
+      batch.set(userDocRef, userWithId);
   });
   await batch.commit();
 }
@@ -117,68 +111,41 @@ export async function getUserById(userId: string): Promise<UserProfile | null> {
     }
 }
 
-// --- Report Management (Firestore) ---
-
-const convertFirestoreTimestampToDate = (data: any) => {
-    const convertedData = { ...data };
-    for (const key in convertedData) {
-        if (convertedData[key] instanceof Timestamp) {
-            convertedData[key] = convertedData[key].toDate();
-        }
-    }
-    return convertedData;
-};
+// --- Report Management ---
 
 export async function getAllReports(): Promise<Report[]> {
     if (!isBrowser) return [];
     try {
         const q = query(collection(db, REPORTS_COLLECTION), orderBy("createdAt", "desc"));
         const snapshot = await getDocs(q);
-        const dbReports = snapshot.docs.map(doc => convertFirestoreTimestampToDate({ id: doc.id, ...doc.data() }) as Report);
-        
-        // Combine database reports with temporary in-memory reports
-        const allReports = [...tempReports, ...dbReports];
-        // Sort all combined reports by date
-        return allReports.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        return snapshot.docs.map(doc => convertFirestoreTimestampToDate({ id: doc.id, ...doc.data() }) as Report);
     } catch (error) {
         console.error("Error getting all reports:", error);
-        // If DB fails, return at least the temp reports
-        return tempReports;
+        return [];
     }
 }
 
 export async function addReport(reportData: Omit<Report, 'id'>): Promise<void> {
     if (!isBrowser) return;
     try {
-        // This will likely fail due to security rules, which is expected.
-        await addDoc(collection(db, REPORTS_COLLECTION), {
+        // The createdAt field should be a Firestore Timestamp for proper server-side ordering.
+        const dataWithTimestamp = {
             ...reportData,
-        });
-    } catch (error) {
-        console.warn("Firestore write failed (likely due to security rules). Saving report to temporary in-memory storage.", error);
-        
-        // WORKAROUND: Save to a temporary in-memory array to allow the UI to function.
-        const tempId = `temp-${Date.now()}`;
-        const newReport: Report = {
-            id: tempId,
-            ...reportData,
-            // Ensure createdAt is a Date object if it's not already
-            createdAt: reportData.createdAt instanceof Date ? reportData.createdAt : new Date(),
+            createdAt: Timestamp.fromDate(new Date()),
         };
-        tempReports.unshift(newReport); // Add to the beginning of the array
+        await addDoc(collection(db, REPORTS_COLLECTION), dataWithTimestamp);
+    } catch (error) {
+        console.error("Error adding report:", error);
+        // Provide a more specific error for permission issues
+        if (error instanceof Error && 'code' in error && (error as any).code === 'permission-denied') {
+             throw new Error("Permission denied. Check Firestore security rules for the 'reports' collection.");
+        }
+        throw new Error("Failed to add report to the database.");
     }
 }
 
 export async function softDeleteReport(reportId: string): Promise<void> {
     if (!isBrowser) return;
-    
-    // Check if the report is in the temporary store
-    const tempIndex = tempReports.findIndex(r => r.id === reportId);
-    if (tempIndex > -1) {
-        tempReports.splice(tempIndex, 1);
-        return;
-    }
-
     try {
         const reportDocRef = doc(db, REPORTS_COLLECTION, reportId);
         await updateDoc(reportDocRef, {
@@ -193,8 +160,7 @@ export async function softDeleteReport(reportId: string): Promise<void> {
 export async function softDeleteAllReports(): Promise<number> {
     if (!isBrowser) return 0;
     try {
-        tempReports = []; // Clear temp reports
-        const reportsSnapshot = await getDocs(query(collection(db, REPORTS_COLLECTION), where("deletedAt", "==", undefined)));
+        const reportsSnapshot = await getDocs(query(collection(db, REPORTS_COLLECTION), where("deletedAt", "==", null)));
         const batch = writeBatch(db);
         reportsSnapshot.docs.forEach(doc => {
             batch.update(doc.ref, { deletedAt: new Date().toISOString() });
@@ -210,15 +176,9 @@ export async function softDeleteAllReports(): Promise<number> {
 export async function getUserReports(userId: string): Promise<{ active: Report[], deleted: Report[] }> {
     if (!isBrowser) return { active: [], deleted: [] };
     try {
-        // Get from DB
         const q = query(collection(db, REPORTS_COLLECTION), where("reporterId", "==", userId));
         const snapshot = await getDocs(q);
-        const dbReports = snapshot.docs.map(doc => convertFirestoreTimestampToDate({ id: doc.id, ...doc.data() }) as Report);
-
-        // Get from temp store
-        const tempUserReports = tempReports.filter(r => r.reporterId === userId);
-
-        const allUserReports = [...tempUserReports, ...dbReports];
+        const allUserReports = snapshot.docs.map(doc => convertFirestoreTimestampToDate({ id: doc.id, ...doc.data() }) as Report);
 
         const active = allUserReports.filter(r => !r.deletedAt).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
         const deleted = allUserReports.filter(r => !!r.deletedAt).sort((a, b) => new Date(b.deletedAt!).getTime() - new Date(a.deletedAt!).getTime());
@@ -226,13 +186,11 @@ export async function getUserReports(userId: string): Promise<{ active: Report[]
         return { active, deleted };
     } catch (error) {
         console.error("Error getting user reports:", error);
-        // Fallback to only temp reports if DB fails
-        const tempActive = tempReports.filter(r => r.reporterId === userId && !r.deletedAt);
-        return { active: tempActive, deleted: [] };
+        return { active: [], deleted: [] };
     }
 }
 
-// --- Log Management (Firestore) ---
+// --- Log Management ---
 
 export async function getSearchLogs(userId?: string): Promise<SearchLog[]> {
     if (!isBrowser) return [];
@@ -250,11 +208,12 @@ export async function getSearchLogs(userId?: string): Promise<SearchLog[]> {
     }
 }
 
-export async function addSearchLog(logData: Omit<SearchLog, 'id'>): Promise<void> {
+export async function addSearchLog(logData: Omit<SearchLog, 'id' | 'timestamp'>): Promise<void> {
     if (!isBrowser) return;
     try {
         await addDoc(collection(db, SEARCH_LOGS_COLLECTION), {
             ...logData,
+            timestamp: Timestamp.fromDate(new Date()),
         });
     } catch (error) {
         console.error("Error adding search log:", error);
@@ -273,18 +232,19 @@ export async function getAuditLogs(): Promise<AuditLogEntry[]> {
     }
 }
 
-export async function addAuditLogEntry(entryData: Omit<AuditLogEntry, 'id'>): Promise<void> {
+export async function addAuditLogEntry(entryData: Omit<AuditLogEntry, 'id' | 'timestamp'>): Promise<void> {
     if (!isBrowser) return;
     try {
         await addDoc(collection(db, AUDIT_LOGS_COLLECTION), {
             ...entryData,
+            timestamp: Timestamp.fromDate(new Date()),
         });
     } catch (error) {
         console.error("Error adding audit log entry:", error);
     }
 }
 
-// --- Notification Management (Firestore) ---
+// --- Notification Management ---
 
 export async function getUserNotifications(userId: string): Promise<UserNotification[]> {
     if (!isBrowser) return [];

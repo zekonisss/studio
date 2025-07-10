@@ -32,9 +32,14 @@ export default function SearchHistoryPage() {
       }
 
       setIsLoading(true);
-      const userLogs = await storage.getSearchLogs(user.id);
-      setSearchLogs(userLogs);
-      setIsLoading(false);
+      try {
+        const userLogs = await storage.getSearchLogs(user.id);
+        setSearchLogs(userLogs);
+      } catch(error) {
+        console.error("Failed to fetch search logs:", error);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
     if (!authLoading) {
@@ -42,7 +47,7 @@ export default function SearchHistoryPage() {
     }
   }, [user, authLoading]);
 
-  if (authLoading || (isLoading && !searchLogs.length)) {
+  if (authLoading || isLoading) {
     return (
       <div className="flex justify-center items-center h-[calc(100vh-10rem)]">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />

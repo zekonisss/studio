@@ -53,50 +53,53 @@ export default function SearchPage() {
     setSearchResults([]);
     setSearchPerformed(true);
     
-    const allReports = await storage.getAllReports();
+    try {
+      const allReports = await storage.getAllReports();
 
-    const combinedDataSource = allReports.map(report => ({
-      ...report,
-      tags: Array.isArray(report.tags) ? report.tags.map(migrateTagIfNeeded) : [],
-    }));
+      const combinedDataSource = allReports.map(report => ({
+        ...report,
+        tags: Array.isArray(report.tags) ? report.tags.map(migrateTagIfNeeded) : [],
+      }));
 
-    const query = values.query.toLowerCase().trim();
-    let results: Report[] = [];
+      const query = values.query.toLowerCase().trim();
+      let results: Report[] = [];
 
-    if (query) {
-      results = combinedDataSource.filter(report => {
-          const mainCategoryName = getCategoryNameSearch(report.category).toLowerCase();
-          const nationalityLabel = report.nationality ? getNationalityLabel(report.nationality).toLowerCase() : "";
+      if (query) {
+        results = combinedDataSource.filter(report => {
+            const mainCategoryName = getCategoryNameSearch(report.category).toLowerCase();
+            const nationalityLabel = report.nationality ? getNationalityLabel(report.nationality).toLowerCase() : "";
 
-          return (
-            report.fullName.toLowerCase().includes(query) ||
-            report.id.toLowerCase().includes(query) ||
-            (nationalityLabel && nationalityLabel.includes(query)) ||
-            (report.birthYear && report.birthYear.toString().includes(query)) ||
-            mainCategoryName.includes(query) ||
-            report.tags.some(tagKey => t('tags.' + tagKey).toLowerCase().includes(query)) || 
-            report.comment.toLowerCase().includes(query) ||
-            (report.reporterCompanyName && report.reporterCompanyName.toLowerCase().includes(query))
-          );
-        }
-      ).sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    }
+            return (
+              report.fullName.toLowerCase().includes(query) ||
+              report.id.toLowerCase().includes(query) ||
+              (nationalityLabel && nationalityLabel.includes(query)) ||
+              (report.birthYear && report.birthYear.toString().includes(query)) ||
+              mainCategoryName.includes(query) ||
+              report.tags.some(tagKey => t('tags.' + tagKey).toLowerCase().includes(query)) || 
+              report.comment.toLowerCase().includes(query) ||
+              (report.reporterCompanyName && report.reporterCompanyName.toLowerCase().includes(query))
+            );
+          }
+        ).sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      }
 
+      setSearchResults(results);
+      if (results.length === 0 && query) {
+        setNoResults(true);
+      }
 
-    setSearchResults(results);
-    if (results.length === 0 && query) {
-      setNoResults(true);
-    }
-    setIsLoading(false);
-
-    if (user && query) {
-      const newSearchLog: Omit<SearchLog, 'id'> = {
-        userId: user.id,
-        searchText: values.query,
-        timestamp: new Date(),
-        resultsCount: results.length,
-      };
-      await storage.addSearchLog(newSearchLog);
+      if (user && query) {
+        const newSearchLog: Omit<SearchLog, 'id' | 'timestamp'> = {
+          userId: user.id,
+          searchText: values.query,
+          resultsCount: results.length,
+        };
+        await storage.addSearchLog(newSearchLog);
+      }
+    } catch (error) {
+      console.error("Failed to perform search:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 

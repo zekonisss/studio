@@ -66,16 +66,19 @@ export default function AdminPage() {
 
   const logAdminAction = useCallback(async (actionKey: string, details: Record<string, any> = {}) => {
     if (!adminUser) return;
-    const newLogEntry: Omit<AuditLogEntry, 'id'> = {
-      timestamp: new Date(),
-      adminId: adminUser.id,
-      adminName: adminUser.contactPerson || adminUser.email,
-      actionKey,
-      details,
-    };
-    await storage.addAuditLogEntry(newLogEntry);
-    const updatedLogs = await storage.getAuditLogs();
-    setAuditLogs(updatedLogs);
+    try {
+      const newLogEntry: Omit<AuditLogEntry, 'id' | 'timestamp'> = {
+        adminId: adminUser.id,
+        adminName: adminUser.contactPerson || adminUser.email,
+        actionKey,
+        details,
+      };
+      await storage.addAuditLogEntry(newLogEntry);
+      const updatedLogs = await storage.getAuditLogs();
+      setAuditLogs(updatedLogs);
+    } catch(error) {
+        console.error("Failed to log admin action:", error);
+    }
   },[adminUser]);
 
   useEffect(() => {
@@ -85,19 +88,25 @@ export default function AdminPage() {
     if (adminUser && adminUser.isAdmin) {
         const fetchData = async () => {
             setIsLoadingData(true);
-            const [users, reports, logs] = await Promise.all([
-                storage.getAllUsers(),
-                storage.getAllReports(),
-                storage.getAuditLogs()
-            ]);
-            setAllUsersState(users);
-            setAllReports(reports.filter(r => !r.deletedAt));
-            setAuditLogs(logs);
-            setIsLoadingData(false);
+            try {
+                const [users, reports, logs] = await Promise.all([
+                    storage.getAllUsers(),
+                    storage.getAllReports(),
+                    storage.getAuditLogs()
+                ]);
+                setAllUsersState(users);
+                setAllReports(reports.filter(r => !r.deletedAt));
+                setAuditLogs(logs);
+            } catch(error) {
+                console.error("Failed to fetch admin data:", error);
+                toast({ variant: "destructive", title: "Klaida", description: "Nepavyko gauti administracinės informacijos." });
+            } finally {
+                setIsLoadingData(false);
+            }
         };
         fetchData();
     }
-  }, [adminUser, authLoading, router]);
+  }, [adminUser, authLoading, router, toast]);
 
   const categoryReportCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -166,6 +175,8 @@ export default function AdminPage() {
   };
 
   const handleUserStatusChange = async (userId: string, newStatus: UserProfile['paymentStatus']) => {
+    if(!adminUser) return;
+
     const targetUser = allUsersState.find(u => u.id === userId);
     if (!targetUser) return;
 
@@ -198,7 +209,7 @@ export default function AdminPage() {
       messageParams: {
         oldStatus: getStatusText(oldStatus),
         newStatus: getStatusText(newStatus),
-        adminName: adminUser?.contactPerson || adminUser?.email || 'Administrator'
+        adminName: adminUser.contactPerson || adminUser.email || 'Administrator'
       },
       link: '/account?tab=details'
     });

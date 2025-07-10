@@ -52,32 +52,38 @@ export default function ReportHistoryPage() {
     if (!authLoading && user) {
       const fetchReports = async () => {
         setIsLoading(true);
-        await new Promise(resolve => setTimeout(resolve, 500));
-        const { active } = storage.getUserReports(user.id);
-        setReports(active);
-        setIsLoading(false);
+        try {
+            const { active } = await storage.getUserReports(user.id);
+            setReports(active);
+        } catch(error) {
+            console.error("Failed to fetch user reports:", error);
+            toast({ variant: "destructive", title: "Klaida", description: "Nepavyko gauti jūsų įrašų." });
+        } finally {
+            setIsLoading(false);
+        }
       };
       fetchReports();
     } else if (!authLoading && !user) {
       setIsLoading(false);
       setReports([]);
     }
-  }, [user, authLoading]);
+  }, [user, authLoading, toast]);
 
   const handleDeleteReport = async (reportId: string) => {
     setDeletingId(reportId);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    storage.softDeleteReport(reportId);
-
-    // Remove from the current view
-    setReports(prevReports => prevReports.filter(report => report.id !== reportId));
-
-    toast({
-      title: t('reports.history.toast.deleted.title'),
-      description: t('reports.history.toast.deleted.description'),
-    });
-    setDeletingId(null);
+    try {
+        await storage.softDeleteReport(reportId);
+        setReports(prevReports => prevReports.filter(report => report.id !== reportId));
+        toast({
+            title: t('reports.history.toast.deleted.title'),
+            description: t('reports.history.toast.deleted.description'),
+        });
+    } catch(error) {
+        console.error("Failed to delete report:", error);
+        toast({ variant: "destructive", title: "Klaida", description: "Nepavyko ištrinti įrašo." });
+    } finally {
+        setDeletingId(null);
+    }
   };
 
   const handleViewDetails = (report: Report) => {
