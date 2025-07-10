@@ -1,8 +1,7 @@
-
 import type { Report, UserProfile, SearchLog, AuditLogEntry, UserNotification } from '@/types';
 import { MOCK_ALL_USERS, MOCK_GENERAL_REPORTS, MOCK_USER_REPORTS, MOCK_USER_SEARCH_LOGS } from './mock-data';
 import { db } from './firebase';
-import { collection, getDocs, doc, setDoc, query, where, getDoc, updateDoc, writeBatch, documentId } from 'firebase/firestore';
+import { collection, getDocs, doc, setDoc, query, where, getDoc, updateDoc, writeBatch } from 'firebase/firestore';
 
 
 const LOCAL_STORAGE_REPORTS_KEY = 'driverCheckReports';

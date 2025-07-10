@@ -61,48 +61,49 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const login = async (values: LoginFormValues): Promise<boolean> => {
-    // Hardcoded admin login check
-    if (values.email.toLowerCase() === MOCK_ADMIN_USER.email && values.password === MOCK_ADMIN_USER.password) {
-        setUser(MOCK_ADMIN_USER);
-        localStorage.setItem(USER_ID_STORAGE_KEY, MOCK_ADMIN_USER.id);
-        toast({
-            title: t('toast.login.success.title'),
-            description: t('toast.login.success.description'),
-        });
-        router.push('/admin');
-        return true;
-    }
-
     try {
-        const userFromDb = await storage.findUserByEmail(values.email);
+      await storage.seedInitialUsers(); 
+      // Hardcoded admin login check
+      if (values.email.toLowerCase() === MOCK_ADMIN_USER.email && values.password === MOCK_ADMIN_USER.password) {
+          setUser(MOCK_ADMIN_USER);
+          localStorage.setItem(USER_ID_STORAGE_KEY, MOCK_ADMIN_USER.id);
+          toast({
+              title: t('toast.login.success.title'),
+              description: t('toast.login.success.description'),
+          });
+          router.push('/admin');
+          return true;
+      }
 
-        if (userFromDb && userFromDb.password === values.password) {
-            if (userFromDb.paymentStatus === 'active' || userFromDb.isAdmin) {
-                setUser(userFromDb);
-                localStorage.setItem(USER_ID_STORAGE_KEY, userFromDb.id);
-                toast({
-                    title: t('toast.login.success.title'),
-                    description: t('toast.login.success.description'),
-                });
-                router.push(userFromDb.isAdmin ? '/admin' : '/dashboard');
-                return true;
-            } else {
-                let errorMessage = t('toast.login.error.accessDenied');
-                if (userFromDb.paymentStatus === 'pending_verification') errorMessage = t('toast.login.error.pendingVerification');
-                else if (userFromDb.paymentStatus === 'pending_payment') errorMessage = t('toast.login.error.pendingPayment');
-                else if (userFromDb.paymentStatus === 'inactive') errorMessage = t('toast.login.error.inactive');
-                throw new Error(errorMessage);
-            }
-        } else {
-            throw new Error(t('toast.login.error.invalidCredentials'));
-        }
+      const userFromDb = await storage.findUserByEmail(values.email);
+
+      if (userFromDb && userFromDb.password === values.password) {
+          if (userFromDb.paymentStatus === 'active' || userFromDb.isAdmin) {
+              setUser(userFromDb);
+              localStorage.setItem(USER_ID_STORAGE_KEY, userFromDb.id);
+              toast({
+                  title: t('toast.login.success.title'),
+                  description: t('toast.login.success.description'),
+              });
+              router.push(userFromDb.isAdmin ? '/admin' : '/dashboard');
+              return true;
+          } else {
+              let errorMessage = t('toast.login.error.accessDenied');
+              if (userFromDb.paymentStatus === 'pending_verification') errorMessage = t('toast.login.error.pendingVerification');
+              else if (userFromDb.paymentStatus === 'pending_payment') errorMessage = t('toast.login.error.pendingPayment');
+              else if (userFromDb.paymentStatus === 'inactive') errorMessage = t('toast.login.error.inactive');
+              throw new Error(errorMessage);
+          }
+      } else {
+          throw new Error(t('toast.login.error.invalidCredentials'));
+      }
     } catch (error: any) {
-        toast({
-            variant: 'destructive',
-            title: t('toast.login.error.title'),
-            description: error.message,
-        });
-        return false;
+      toast({
+          variant: 'destructive',
+          title: t('toast.login.error.title'),
+          description: error.message,
+      });
+      return false;
     }
   };
 
