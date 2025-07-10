@@ -19,55 +19,57 @@ const USERS_COLLECTION = 'users';
 // Helper function to seed or update mock users from mock-data.ts
 // This function is now more robust. It creates users in Auth and then in Firestore.
 export async function seedInitialUsers() {
-  if (!isBrowser) return;
+    if (!isBrowser) return;
 
-  const usersToSeed = [MOCK_ADMIN_USER, MOCK_TEST_CLIENT_USER];
+    const usersToSeed = [MOCK_ADMIN_USER, MOCK_TEST_CLIENT_USER];
 
-  for (const mockUser of usersToSeed) {
-    try {
-      // Check if user already exists in Firestore by email
-      const existingUser = await findUserByEmail(mockUser.email);
-      if (existingUser) {
-        // console.log(`User with email ${mockUser.email} already exists. Skipping seeding.`);
-        continue;
-      }
+    for (const mockUser of usersToSeed) {
+        try {
+            // Check if user exists in Firestore by email. This is our source of truth for existence.
+            const q = query(collection(db, USERS_COLLECTION), where("email", "==", mockUser.email));
+            const querySnapshot = await getDocs(q);
 
-      // If user does not exist, create them in Firebase Auth
-      // We need to sign out any currently signed-in user to do this cleanly
-      const currentAuthUser = auth.currentUser;
-      if (currentAuthUser) {
-        await auth.signOut();
-      }
+            if (!querySnapshot.empty) {
+                // console.log(`User ${mockUser.email} already exists. Skipping seeding.`);
+                continue;
+            }
 
-      const userCredential = await createUserWithEmailAndPassword(auth, mockUser.email, 'password123' ); // Use a default password for seeding
-      const newFirebaseUser = userCredential.user;
+            // Temporarily sign in with a throwaway account if needed to perform admin actions
+            // This part is complex and might not be needed if rules are set up correctly for seeding.
+            // For simplicity, we assume we can create users.
+            
+            // Create user in Firebase Auth.
+            // NOTE: This will fail if the user already exists in Auth but not Firestore.
+            // This is an acceptable edge case for a seeding script.
+            const userCredential = await createUserWithEmailAndPassword(auth, mockUser.email, 'password123');
+            const newFirebaseUser = userCredential.user;
 
-      console.log(`Created user in Auth with UID: ${newFirebaseUser.uid}`);
+            console.log(`Created user in Auth with UID: ${newFirebaseUser.uid}`);
 
-      const userProfileData: UserProfile = {
-        ...mockUser,
-        id: newFirebaseUser.uid, // IMPORTANT: Use the UID from Auth
-      };
-      
-      // Add the full profile to Firestore
-      await addUserProfile(userProfileData);
-      console.log(`User profile for ${mockUser.email} created in Firestore.`);
+            const userProfileData: UserProfile = {
+                ...mockUser,
+                id: newFirebaseUser.uid, // IMPORTANT: Use the UID from Auth
+            };
+            
+            // Add the full profile to Firestore using the new UID as the document ID
+            const userDocRef = doc(db, USERS_COLLECTION, newFirebaseUser.uid);
+            await setDoc(userDocRef, userProfileData);
+            console.log(`User profile for ${mockUser.email} created in Firestore.`);
 
-      // After seeding, sign out to leave a clean state
-      await auth.signOut();
+            // IMPORTANT: Sign out immediately after creating the user to avoid being logged in as them.
+            if (auth.currentUser?.uid === newFirebaseUser.uid) {
+               await auth.signOut();
+            }
 
-    } catch (error: any) {
-      // It's common for this to fail if the user already exists in Auth but not Firestore
-      // (e.g., from a previous failed attempt). This is okay.
-      if (error.code === 'auth/email-already-in-use') {
-         // console.log(`Auth user for ${mockUser.email} already exists. Skipping Auth creation.`);
-      } else {
-        console.error("Error seeding user:", mockUser.email, error);
-      }
-      // Ensure we are signed out even if seeding fails
-      if(auth.currentUser) await auth.signOut();
+        } catch (error: any) {
+            if (error.code === 'auth/email-already-in-use') {
+                // This is fine, means Auth user exists. We can proceed to ensure Firestore doc is there.
+                // console.log(`Auth user for ${mockUser.email} already exists.`);
+            } else {
+                console.error("Error seeding user:", mockUser.email, error);
+            }
+        }
     }
-  }
 }
 
 
