@@ -2,7 +2,7 @@
 import type { Report, UserProfile, SearchLog, AuditLogEntry, UserNotification } from '@/types';
 import { MOCK_ALL_USERS, MOCK_GENERAL_REPORTS, MOCK_USER_REPORTS, MOCK_USER_SEARCH_LOGS } from './mock-data';
 import { db } from './firebase';
-import { collection, getDocs, doc, setDoc, query, where, getDoc, updateDoc, writeBatch, documentId, enableNetwork } from 'firebase/firestore';
+import { collection, getDocs, doc, setDoc, query, where, getDoc, updateDoc, writeBatch, documentId } from 'firebase/firestore';
 
 
 const LOCAL_STORAGE_REPORTS_KEY = 'driverCheckReports';
@@ -52,7 +52,7 @@ export async function getAllUsers(): Promise<UserProfile[]> {
   return users;
 }
 
-export async function addUserProfileWithId(userId: string, user: Omit<UserProfile, 'id'>): Promise<void> {
+export async function addUserProfileWithId(userId: string, user: Omit<UserProfile, 'id' | 'password'>): Promise<void> {
   if (!isBrowser) return;
   const userDocRef = doc(db, USERS_COLLECTION, userId);
   await setDoc(userDocRef, user);
