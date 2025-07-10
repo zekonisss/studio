@@ -34,7 +34,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const storedUserId = localStorage.getItem(USER_ID_STORAGE_KEY); 
     if (storedUserId) {
       try {
-        await storage.seedInitialUsers(); 
         const currentUserData = await storage.getUserById(storedUserId);
         if (currentUserData) {
            setUser(currentUserData);
@@ -62,7 +61,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (values: LoginFormValues): Promise<boolean> => {
     try {
-      await storage.seedInitialUsers(); 
       // Hardcoded admin login check
       if (values.email.toLowerCase() === MOCK_ADMIN_USER.email && values.password === MOCK_ADMIN_USER.password) {
           setUser(MOCK_ADMIN_USER);
