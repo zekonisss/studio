@@ -3,16 +3,15 @@ import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 
-// NOTE: This object will be populated with the correct Firebase configuration
-// by the Firebase Studio environment during the build process.
-// Do not manually enter credentials here.
+// NOTE: This object is now populated with the correct Firebase configuration
+// from your project settings.
 const FIREBASE_CLIENT_CONFIG = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID",
+  apiKey: "AIzaSyBusk1Rtrpm-gfnwCdm12yj5vTumqLte3c",
+  authDomain: "drivershield.firebaseapp.com",
+  projectId: "drivershield",
+  storageBucket: "drivershield.firebasestorage.app",
+  messagingSenderId: "688007961476",
+  appId: "1:688007961476:web:d6d663ef7430182d781bd1"
 };
 
 
