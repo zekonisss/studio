@@ -31,12 +31,15 @@ export async function seedInitialUsers() {
         // console.log(`User with email ${mockUser.email} already exists. Skipping seeding.`);
         continue;
       }
-      
+
       // If user does not exist, create them in Firebase Auth
       // We need to sign out any currently signed-in user to do this cleanly
       const currentAuthUser = auth.currentUser;
+      if (currentAuthUser) {
+        await auth.signOut();
+      }
 
-      const userCredential = await createUserWithEmailAndPassword(auth, mockUser.email, 'password123');
+      const userCredential = await createUserWithEmailAndPassword(auth, mockUser.email, mockUser.password || 'password123' );
       const newFirebaseUser = userCredential.user;
 
       console.log(`Created user in Auth with UID: ${newFirebaseUser.uid}`);
@@ -50,16 +53,8 @@ export async function seedInitialUsers() {
       await addUserProfile(userProfileData);
       console.log(`User profile for ${mockUser.email} created in Firestore.`);
 
-      // If there was a user signed in before, sign them back in
-      if (currentAuthUser) {
-          await signInWithEmailAndPassword(auth, currentAuthUser.email!, 'password123').catch(() => {
-              // This might fail if the password is not 'password123', which is fine.
-              // The main goal is to re-authenticate the original user if they were logged in.
-          });
-      } else {
-        // If no one was signed in, sign out the newly created user
-         await auth.signOut();
-      }
+      // After seeding, sign out to leave a clean state
+      await auth.signOut();
 
     } catch (error: any) {
       // It's common for this to fail if the user already exists in Auth but not Firestore
@@ -69,6 +64,8 @@ export async function seedInitialUsers() {
       } else {
         console.error("Error seeding user:", mockUser.email, error);
       }
+      // Ensure we are signed out even if seeding fails
+      if(auth.currentUser) await auth.signOut();
     }
   }
 }

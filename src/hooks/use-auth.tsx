@@ -36,41 +36,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const router = useRouter();
 
   useEffect(() => {
-    const initializeAuth = async () => {
-      // Ensure mock users are created in Auth and Firestore if they don't exist.
-      await storage.seedInitialUsers();
+    storage.seedInitialUsers();
 
-      const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
-        if (firebaseUser) {
-          try {
-            const currentUserData = await storage.getUserById(firebaseUser.uid);
-            if (currentUserData) {
-              setUser(currentUserData);
-            } else {
-              // This can happen if a user exists in Auth but not in Firestore.
-              // For this app's logic, we log them out.
-              setUser(null);
-              await signOut(auth);
-            }
-          } catch (e) {
-            console.error("Failed to fetch user profile", e);
-            setUser(null);
-            await signOut(auth);
-          }
-        } else {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
+      if (firebaseUser) {
+        try {
+          const userProfile = await storage.getUserById(firebaseUser.uid);
+          setUser(userProfile);
+        } catch (error) {
+          console.error("Failed to fetch user profile", error);
           setUser(null);
         }
-        setLoading(false);
-      });
-      return unsubscribe;
-    };
+      } else {
+        setUser(null);
+      }
+      setLoading(false);
+    });
 
-    const unsubscribePromise = initializeAuth();
-
-    return () => {
-      unsubscribePromise.then(unsubscribe => unsubscribe && unsubscribe());
-    };
+    return () => unsubscribe();
   }, []);
+  
 
   const updateUserInContext = async (updatedUser: UserProfile) => {
     setUser(updatedUser);
