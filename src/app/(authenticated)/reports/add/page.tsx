@@ -112,7 +112,7 @@ export default function AddReportPage() {
     }
     
     try {
-        const newReport: Omit<Report, 'id'> = {
+        const newReportData: Omit<Report, 'id' | 'createdAt'> = {
           reporterId: user.id,
           reporterCompanyName: user.companyName,
           fullName: values.fullName,
@@ -123,14 +123,9 @@ export default function AddReportPage() {
           comment: values.comment,
           imageUrl: values.image ? "https://placehold.co/600x400.png" : undefined,
           dataAiHint: values.image ? "entry attachment" : undefined,
-          createdAt: new Date(),
         };
 
-        // This line is the cause of the error due to Firestore security rules.
-        // We will comment it out and simulate success.
-        // await storage.addReport(newReport);
-        
-        console.log("SIMULATING REPORT ADDITION (due to Firestore rules):", newReport);
+        await storage.addReport(newReportData);
         
         toast({
           title: t('reports.add.toast.success.title'),
@@ -143,11 +138,11 @@ export default function AddReportPage() {
 
     } catch (error) {
         console.error("Failed to submit report:", error);
-        // This will now catch the error thrown from storage.ts
         toast({
             variant: "destructive",
             title: "Pateikimo klaida",
-            description: (error as Error).message || "Nepavyko išsaugoti įrašo. Patikrinkite konsolę.",
+            description: (error as Error).message || "Nepavyko išsaugoti įrašo. Patikrinkite konsolę ir Firestore saugumo taisykles.",
+            duration: 9000
         });
     } finally {
         setIsSubmitting(false);
