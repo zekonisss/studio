@@ -53,9 +53,17 @@ export async function getAllUsers(): Promise<UserProfile[]> {
 
 export async function addUserProfile(user: UserProfile): Promise<void> {
     if (!isBrowser) return;
-    const userDocRef = doc(db, USERS_COLLECTION, user.id);
-    await setDoc(userDocRef, user);
+    try {
+        const userDocRef = doc(db, USERS_COLLECTION, user.id);
+        console.log("Attempting to add user to Firestore:", user); // Debugging log
+        await setDoc(userDocRef, user);
+        console.log("User added successfully to Firestore:", user.id); // Success log
+    } catch (error) {
+        console.error("Failed to add user to Firestore:", error); // Detailed error log
+        throw new Error("Failed to save user profile to the database.");
+    }
 }
+
 
 export async function addUsersBatch(users: UserProfile[]): Promise<void> {
   if (!isBrowser) return;

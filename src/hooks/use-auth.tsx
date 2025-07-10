@@ -118,7 +118,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .toString(36)
         .substring(2, 7)}`;
       
-      const userToCreate: UserProfile = {
+      const userToCreate: Partial<UserProfile> = {
         id: newUserId,
         companyName: values.companyName,
         companyCode: values.companyCode,
@@ -130,7 +130,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         paymentStatus: 'pending_verification',
         isAdmin: false,
         registeredAt: new Date().toISOString(),
-        accountActivatedAt: '', // Initialize as empty string
         agreeToTerms: values.agreeToTerms,
         subUsers: [],
       };
@@ -157,7 +156,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         ];
       }
       
-      await storage.addUserProfile(userToCreate);
+      await storage.addUserProfile(userToCreate as UserProfile);
 
       toast({
         title: t('toast.signup.success.title'),
