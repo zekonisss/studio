@@ -58,7 +58,8 @@ export default function AddReportPage() {
     if (watchedCategory) {
       const categoryDetails = detailedReportCategories.find(cat => cat.id === watchedCategory);
       setSelectedMainCategory(categoryDetails || null);
-      if (form.getValues('tags').length > 0) {
+      // Safely check if tags array exists and has items before resetting
+      if (form.getValues('tags')?.length > 0) {
         form.setValue('tags', []); 
       }
     } else {

@@ -14,7 +14,7 @@ import { useLanguage } from "@/contexts/language-context";
 import type { Report, DetailedCategory } from '@/types';
 import { categorizeReport } from '@/ai/flows/categorize-report-flow';
 import { detailedReportCategories } from '@/types';
-import { getAllReports, saveAllReports } from '@/lib/storage';
+import * as storage from '@/lib/storage';
 import { useRouter } from "next/navigation";
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -22,7 +22,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 interface ParsedRow {
   id: number; // Unique ID for React key
   originalRow: Record<string, any>;
-  reportPreview: Partial<Report>;
+  reportPreview: Partial<Omit<Report, 'id'>>;
   aiStatus: 'pending' | 'processing' | 'completed' | 'error' | 'skipped_quota';
   aiResult?: { categoryId: string; suggestedTags: string[] };
   error?: string;
@@ -209,7 +209,7 @@ export default function ImportReportsPage() {
             reportPreview: {
               fullName,
               comment,
-              createdAt,
+              createdAt: createdAt || new Date(), // Use parsed date or default to now
               nationality,
               birthYear,
               reporterId: user.id,
@@ -294,27 +294,29 @@ export default function ImportReportsPage() {
     }
 
     setIsImporting(true);
+    let successCount = 0;
     try {
-      const existingReports = getAllReports();
-      const newReports: Report[] = completedRows.map(row => ({
-        id: `imported-${Date.now()}-${Math.random().toString(36).substring(2, 9)}-${row.id}`,
-        reporterId: user.id,
-        reporterCompanyName: user.companyName,
-        fullName: row.reportPreview.fullName!,
-        nationality: row.reportPreview.nationality,
-        birthYear: row.reportPreview.birthYear,
-        category: row.aiResult!.categoryId,
-        tags: row.aiResult!.suggestedTags,
-        comment: row.reportPreview.comment!,
-        imageUrl: row.reportPreview.imageUrl, // Could be mapped from Excel if a column exists
-        dataAiHint: row.reportPreview.dataAiHint,
-        createdAt: row.reportPreview.createdAt || new Date(),
-      }));
+      for (const row of completedRows) {
+        const newReport: Omit<Report, 'id'> = {
+          reporterId: user.id,
+          reporterCompanyName: user.companyName,
+          fullName: row.reportPreview.fullName!,
+          nationality: row.reportPreview.nationality,
+          birthYear: row.reportPreview.birthYear,
+          category: row.aiResult!.categoryId,
+          tags: row.aiResult!.suggestedTags,
+          comment: row.reportPreview.comment!,
+          imageUrl: row.reportPreview.imageUrl,
+          dataAiHint: row.reportPreview.dataAiHint,
+          createdAt: row.reportPreview.createdAt || new Date(),
+        };
+        await storage.addReport(newReport);
+        successCount++;
+      }
 
-      saveAllReports([...existingReports, ...newReports]);
       toast({
         title: t('reports.import.toast.importSuccess.title'),
-        description: t('reports.import.toast.importSuccess.description', { count: newReports.length }),
+        description: t('reports.import.toast.importSuccess.description', { count: successCount }),
       });
       setParsedData([]);
       setFile(null);
@@ -442,4 +444,3 @@ export default function ImportReportsPage() {
     </div>
   );
 }
-
