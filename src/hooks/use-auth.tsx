@@ -37,35 +37,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
-      setLoading(true);
       if (firebaseUser) {
         try {
             const userProfile = await storage.getUserById(firebaseUser.uid);
             if (userProfile) {
                 setUser(userProfile);
             } else {
-                 // This case can happen briefly during registration before the Firestore doc is created.
-                 // We will set a temporary user object, but the profile will be updated shortly.
                  console.warn(`User with UID ${firebaseUser.uid} found in Auth, but not in Firestore. This is expected during signup flow.`);
-                 setUser(null); // Set to null to avoid showing partial data
+                 setUser(null);
             }
         } catch (error) {
             console.error("Error fetching user profile:", error);
             setUser(null);
-            toast({
-                variant: 'destructive',
-                title: t('toast.login.error.title'),
-                description: t('toast.login.error.descriptionGeneric'),
-            });
+        } finally {
+            setLoading(false);
         }
       } else {
         setUser(null);
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     return () => unsubscribe();
-  }, [toast, t]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
 
   const updateUserInContext = async (updatedUser: UserProfile) => {
@@ -84,14 +79,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         throw new Error("User profile not found in database.");
       }
       
-      setUser(userProfile); // Manually set user state to ensure it's up to date
+      setUser(userProfile); 
 
       toast({
         title: t('toast.login.success.title'),
         description: t('toast.login.success.description'),
       });
       
-      // Redirect based on role
       if (userProfile.isAdmin) {
           router.push('/admin');
       } else {
@@ -138,17 +132,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       };
 
       await storage.addUserProfile(userToCreate);
-      
-      // CRITICAL FIX: DO NOT sign out the user immediately.
-      // Firebase needs the user to be logged in to establish the session correctly.
-      // await signOut(auth);
 
       toast({
         title: t('toast.signup.success.title'),
         description: t('toast.signup.success.description'),
       });
       
-      // Redirect to a page that explains the next steps, without logging them out.
       router.push('/auth/pending-approval');
       
       return true;
