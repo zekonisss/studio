@@ -28,46 +28,6 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Helper function to create a default admin user if one doesn't exist.
-// This is for development convenience.
-const ensureAdminUserExists = async () => {
-    const adminEmail = 'admin@drivercheck.lt';
-    const adminExists = await storage.findUserByEmail(adminEmail);
-    if (!adminExists) {
-        console.log("Admin user not found. Creating a default admin user...");
-        try {
-            // Step 1: Create user in Firebase Auth
-            const userCredential = await createUserWithEmailAndPassword(auth, adminEmail, 'password');
-            const newFirebaseUser = userCredential.user;
-
-            // Step 2: Create user profile in Firestore
-            const adminProfile: UserProfile = {
-                id: newFirebaseUser.uid,
-                email: adminEmail,
-                companyName: 'DriverCheck Admin',
-                companyCode: '000000000',
-                address: 'Admin Headquarters',
-                contactPerson: 'Administrator',
-                phone: '+37000000000',
-                paymentStatus: 'active',
-                isAdmin: true,
-                agreeToTerms: true,
-                registeredAt: new Date().toISOString(),
-            };
-            await storage.addUserProfile(adminProfile);
-            console.log("Default admin user created successfully. Email: admin@drivercheck.lt, Password: password");
-            // IMPORTANT: We sign out immediately so the new user isn't automatically logged in.
-            await signOut(auth);
-        } catch (error: any) {
-            // This might fail if the user exists in Auth but not Firestore, or other issues.
-            // We log it but don't crash the app.
-            if (error.code !== 'auth/email-already-in-use') {
-                console.error("Failed to create default admin user:", error);
-            }
-        }
-    }
-};
-
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -77,37 +37,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const router = useRouter();
 
   useEffect(() => {
-    const initializeAuth = async () => {
-        // First, ensure the admin user exists for development.
-        await ensureAdminUserExists();
-
-        // Then, set up the listener for auth state changes.
-        const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
-          if (firebaseUser) {
-            try {
-                const userProfile = await storage.getUserById(firebaseUser.uid);
-                if (userProfile) {
-                    setUser(userProfile);
-                } else {
-                     setUser(null);
-                }
-            } catch (error) {
-                console.error("Error fetching user profile:", error);
-                setUser(null);
+     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
+        if (firebaseUser) {
+        try {
+            const userProfile = await storage.getUserById(firebaseUser.uid);
+            if (userProfile) {
+                setUser(userProfile);
+            } else {
+                 // This case might happen if a user exists in Auth but not in Firestore.
+                 // For this app's logic, we treat them as not logged in.
+                 setUser(null);
+                 await signOut(auth); // Log them out of firebase auth as well
             }
-          } else {
+        } catch (error) {
+            console.error("Error fetching user profile:", error);
             setUser(null);
-          }
-          setLoading(false);
-        });
-        return unsubscribe;
-    };
+        }
+        } else {
+        setUser(null);
+        }
+        setLoading(false);
+    });
 
-    const unsubscribePromise = initializeAuth();
-
-    return () => {
-        unsubscribePromise.then(unsubscribe => unsubscribe && unsubscribe());
-    };
+    return () => unsubscribe();
   }, []);
 
 
@@ -162,8 +114,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
  const signup = async (values: SignUpFormValues): Promise<boolean> => {
+    const isAdminRegistration = values.email.toLowerCase() === 'admin@drivercheck.lt';
+    
     try {
-      // Check if email already exists before attempting to create user
+      // Check if email already exists in Firestore first
       const existingUser = await storage.findUserByEmail(values.email);
       if (existingUser) {
           throw { code: 'auth/email-already-in-use' };
@@ -180,8 +134,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         contactPerson: values.contactPerson,
         email: values.email.toLowerCase(),
         phone: values.phone,
-        paymentStatus: 'pending_verification',
-        isAdmin: false,
+        paymentStatus: isAdminRegistration ? 'active' : 'pending_verification',
+        isAdmin: isAdminRegistration,
         registeredAt: new Date().toISOString(),
         agreeToTerms: values.agreeToTerms,
         subUsers: [],
@@ -190,7 +144,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       await storage.addUserProfile(userToCreate);
       
-      router.push('/auth/pending-approval');
+      // Do not sign out, let the user proceed.
+      // The onAuthStateChanged listener will pick up the new user and profile.
+      
+      if (isAdminRegistration) {
+          setUser(userToCreate); // Immediately set admin user in context
+          router.push('/admin');
+      } else {
+          router.push('/auth/pending-approval');
+      }
       
       return true;
 
