@@ -59,10 +59,8 @@ export function SignupForm() {
     if (isSubmitting) return;
     setIsSubmitting(true);
     try {
-      const success = await signup(values);
-      if (success) {
-        router.push('/auth/pending-approval');
-      }
+      await signup(values);
+      // No need for a success router.push here, it's handled inside useAuth's signup function
     } catch (error) {
       // Toast is already handled inside useAuth's signup function
       console.error("Signup submission failed in form:", error);
@@ -284,7 +282,7 @@ export function SignupForm() {
               <div className="space-y-1 leading-none">
                 <FormLabel>
                   {t('signup.form.agreeToTerms.labelPart1')}
-                  <Link href="/terms" className="text-primary hover:underline">
+                  <Link href="/terms" className="text-primary hover:underline" target="_blank">
                     {t('signup.form.agreeToTerms.linkText')}
                   </Link>
                 </FormLabel>
@@ -300,7 +298,7 @@ export function SignupForm() {
         <p className="text-center text-sm text-muted-foreground">
           {t('signup.form.alreadyHaveAccount')}
           <Link href="/auth/login" className="font-medium text-primary hover:underline">
-            {t('signup.form.loginLink')}
+            {t('login.loginButton')}
           </Link>
         </p>
       </form>

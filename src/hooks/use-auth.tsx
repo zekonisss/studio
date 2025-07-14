@@ -44,8 +44,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             if (userProfile) {
                 setUser(userProfile);
             } else {
-                 // This might happen if a user exists in Auth but not in Firestore.
-                 // For this app's logic, we treat them as not logged in.
                  setUser(null);
             }
         } catch (error) {
@@ -113,10 +111,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
  const signup = async (values: SignUpFormValues): Promise<boolean> => {
-    const isAdminRegistration = values.email.toLowerCase() === 'sarunas.zekonis@gmail.com';
-    
     try {
-      // Check if email already exists in Firestore first
       const existingUser = await storage.findUserByEmail(values.email);
       if (existingUser) {
           throw { code: 'auth/email-already-in-use' };
@@ -125,30 +120,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       const newFirebaseUser = userCredential.user;
 
-      const userToCreate: UserProfile = {
-        id: newFirebaseUser.uid,
+      const userToCreate: Omit<UserProfile, 'id'> = {
         companyName: values.companyName,
         companyCode: values.companyCode,
         address: values.address,
         contactPerson: values.contactPerson,
         email: values.email.toLowerCase(),
         phone: values.phone,
-        paymentStatus: isAdminRegistration ? 'active' : 'pending_verification',
-        isAdmin: isAdminRegistration,
+        paymentStatus: 'pending_verification',
+        isAdmin: false,
         registeredAt: new Date().toISOString(),
         agreeToTerms: values.agreeToTerms,
         subUsers: [],
         vatCode: values.vatCode || '',
       };
       
+      const isAdminRegistration = values.email.toLowerCase() === 'sarunas.zekonis@gmail.com';
       if (isAdminRegistration) {
+          userToCreate.isAdmin = true;
+          userToCreate.paymentStatus = 'active';
           userToCreate.accountActivatedAt = new Date().toISOString();
       }
 
-      await storage.addUserProfile(userToCreate);
+      const finalUser: UserProfile = {
+          id: newFirebaseUser.uid,
+          ...userToCreate,
+      }
+
+      await storage.addUserProfile(finalUser);
+      setUser(finalUser);
       
       if (isAdminRegistration) {
-          setUser(userToCreate);
           router.push('/admin');
       } else {
           router.push('/auth/pending-approval');
