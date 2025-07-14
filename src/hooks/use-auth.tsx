@@ -44,17 +44,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             if (userProfile) {
                 setUser(userProfile);
             } else {
-                 // This case might happen if a user exists in Auth but not in Firestore.
+                 // This might happen if a user exists in Auth but not in Firestore.
                  // For this app's logic, we treat them as not logged in.
                  setUser(null);
-                 await signOut(auth); // Log them out of firebase auth as well
             }
         } catch (error) {
             console.error("Error fetching user profile:", error);
             setUser(null);
         }
         } else {
-        setUser(null);
+          setUser(null);
         }
         setLoading(false);
     });
@@ -114,7 +113,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
  const signup = async (values: SignUpFormValues): Promise<boolean> => {
-    const isAdminRegistration = values.email.toLowerCase() === 'admin@drivercheck.lt';
+    const isAdminRegistration = values.email.toLowerCase() === 'sarunas.zekonis@gmail.com';
     
     try {
       // Check if email already exists in Firestore first
@@ -141,11 +140,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         subUsers: [],
         vatCode: values.vatCode || '',
       };
+      
+      if (isAdminRegistration) {
+          userToCreate.accountActivatedAt = new Date().toISOString();
+      }
 
       await storage.addUserProfile(userToCreate);
       
       if (isAdminRegistration) {
-          setUser(userToCreate); // Immediately set admin user in context
+          setUser(userToCreate);
           router.push('/admin');
       } else {
           router.push('/auth/pending-approval');
