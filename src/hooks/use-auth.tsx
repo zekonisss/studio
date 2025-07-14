@@ -144,9 +144,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       await storage.addUserProfile(userToCreate);
       
-      // Do not sign out, let the user proceed.
-      // The onAuthStateChanged listener will pick up the new user and profile.
-      
       if (isAdminRegistration) {
           setUser(userToCreate); // Immediately set admin user in context
           router.push('/admin');
