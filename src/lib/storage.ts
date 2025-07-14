@@ -104,10 +104,13 @@ export async function getUserById(userId: string): Promise<UserProfile | null> {
         if (docSnap.exists()) {
             return { id: docSnap.id, ...docSnap.data() } as UserProfile;
         }
+        // If the document does not exist, it's a clear "not found" case.
         return null;
     } catch (error) {
-        console.error("Error getting user by ID:", error);
-        return null;
+        console.error("Error in getUserById:", error);
+        // Rethrow the error so it can be caught by the calling function (e.g., in useAuth)
+        // This provides more specific error messages than just "profile not found".
+        throw error;
     }
 }
 

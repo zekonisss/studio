@@ -40,19 +40,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
      const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
         if (firebaseUser) {
           // If a user is logged in but we don't have their profile in the state yet, fetch it.
-          // This handles cases like page refresh or just after signup.
+          // This handles cases like page refresh.
           if (!user || user.id !== firebaseUser.uid) {
             try {
                 const userProfile = await storage.getUserById(firebaseUser.uid);
                 if (userProfile) {
                     setUser(userProfile);
                 } else {
-                     // This case might happen if the Firestore doc wasn't created yet (race condition)
-                     // or if it was deleted. We will not log them out immediately, but wait for a moment.
-                     console.warn("User exists in Auth, but profile not found in Firestore yet. This can happen after registration.");
+                     // This can happen briefly after registration before the Firestore doc is created.
+                     // It can also happen if the user was deleted from Firestore but not Auth.
+                     // We log them out to be safe.
+                     console.warn(`User ${firebaseUser.uid} exists in Auth, but not in Firestore. Logging out.`);
+                     await signOut(auth);
+                     setUser(null);
                 }
             } catch (error) {
-                console.error("Error fetching user profile:", error);
+                console.error("Error fetching user profile on auth state change:", error);
+                await signOut(auth);
                 setUser(null);
             }
           }
@@ -63,7 +67,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     return () => unsubscribe();
-  // The dependency array is intentionally empty to run this effect only once on mount.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -82,10 +85,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const userProfile = await storage.getUserById(firebaseUser.uid);
 
       if (!userProfile) {
+        // This case should be rare if signup is working correctly, but it's a good safeguard.
         throw new Error("User profile not found in database.");
       }
       
-      // Check user status only if they are not an admin
       if (!userProfile.isAdmin) {
         if (userProfile.paymentStatus === 'pending_verification') {
             throw new Error(t('toast.login.error.pendingVerification'));
@@ -95,9 +98,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
         if (userProfile.paymentStatus === 'inactive') {
             throw new Error(t('toast.login.error.inactive'));
-        }
-        if (userProfile.paymentStatus !== 'active') {
-            throw new Error(t('toast.login.error.accessDenied'));
         }
       }
       
@@ -113,13 +113,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return true;
     } catch (error: any) {
       console.error("Login failed:", error);
-      let description = t('toast.login.error.descriptionGeneric'); // Default message
+      let description = t('toast.login.error.descriptionGeneric');
+      
       if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
           description = t('toast.login.error.invalidCredentials');
+      } else if (error.code === 'permission-denied') {
+          description = "Database access denied. Check Firestore security rules.";
       } else if (error.message) {
-          // If we threw a custom error message, use it.
           description = error.message;
       }
+
       toast({
         variant: 'destructive',
         title: t('toast.login.error.title'),
@@ -157,7 +160,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         vatCode: values.vatCode || '',
       };
       
-      // Check for your specific email to grant admin rights
       const isAdminRegistration = values.email.toLowerCase() === 'sarunas.zekonis@gmail.com';
       if (isAdminRegistration) {
           userToCreate.isAdmin = true;
@@ -170,10 +172,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           ...userToCreate,
       };
       
-      // Save the profile to Firestore
       await storage.addUserProfile(finalUser);
       
-      // **CRITICAL FIX**: Set user in state immediately after successful creation and DB write
+      // Manually set the user in state immediately to prevent race conditions
+      // with the onAuthStateChanged listener.
       setUser(finalUser);
 
       toast({
