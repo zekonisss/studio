@@ -1,7 +1,11 @@
 
 // This file is safe to be imported on the server or client.
 import { initializeApp, getApps, getApp, type FirebaseOptions } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
+import { 
+  getFirestore, 
+  initializeFirestore, 
+  persistentLocalCache 
+} from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 
 const FIREBASE_CLIENT_CONFIG: FirebaseOptions = {
@@ -15,7 +19,12 @@ const FIREBASE_CLIENT_CONFIG: FirebaseOptions = {
 };
 
 const app = !getApps().length ? initializeApp(FIREBASE_CLIENT_CONFIG) : getApp();
-const db = getFirestore(app);
+
+// Initialize Firestore with persistent local cache to prevent "Client is offline" issues.
+const db = initializeFirestore(app, {
+  localCache: persistentLocalCache(),
+});
+
 const auth = getAuth(app);
 
 export { db, auth };
