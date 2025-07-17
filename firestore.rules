@@ -2,11 +2,51 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow any authenticated user to read and write to any document.
-    // WARNING: This is for debugging purposes ONLY. These rules should be
-    // secured before launching to production.
-    match /{document=**} {
-      allow read, write: if request.auth != null;
+
+    // Vartotojai gali skaityti ir rašyti TIK savo profilio duomenis.
+    match /users/{userId} {
+      allow read, write: if request.auth.uid == userId;
+    }
+
+    // Administratoriai gali skaityti bet kurio vartotojo profilį.
+    match /users/{userId} {
+        allow get: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+
+    // Įrašų (reports) kolekcijos taisyklės
+    match /reports/{reportId} {
+      // Skaityti gali bet kuris prisijungęs vartotojas
+      allow read: if request.auth != null;
+      
+      // Kurti gali bet kuris prisijungęs vartotojas
+      allow create: if request.auth != null;
+
+      // Atnaujinti ir trinti gali tik įrašo autorius arba administratorius
+      allow update, delete: if request.auth.uid == resource.data.reporterId 
+                          || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+    
+    // Paieškų žurnalo (searchLogs) taisyklės
+    match /searchLogs/{logId} {
+        // Kurti gali bet kuris prisijungęs vartotojas
+        allow create: if request.auth != null;
+        // Skaityti gali tik įrašo autorius arba administratorius
+        allow read: if request.auth.uid == resource.data.userId
+                 || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+    
+    // Pranešimų (notifications) taisyklės
+    match /notifications/{notificationId} {
+        // Kurti gali tik administratorius (arba sistema per admino teises)
+        allow create: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+        // Skaityti ir keisti (pažymėti perskaitytu) gali tik pranešimo gavėjas
+        allow read, update: if request.auth.uid == resource.data.userId;
+    }
+    
+    // Audito žurnalo (auditLogs) taisyklės
+    match /auditLogs/{logId} {
+        // Kurti ir skaityti gali tik administratorius
+        allow read, create: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
   }
 }
