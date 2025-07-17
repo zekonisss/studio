@@ -40,7 +40,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (firebaseUser) {
         try {
           const userProfile = await storage.getUserById(firebaseUser.uid);
-          setUser(userProfile);
+          // If user exists in Auth, but not in Firestore, they need to create a profile.
+          if (userProfile) {
+            setUser(userProfile);
+          } else {
+             // This case is handled by the login page redirecting to /auth/create-profile
+             setUser({ id: firebaseUser.uid, email: firebaseUser.email } as UserProfile); // Temporary user object
+          }
         } catch (error) {
           console.error("Error fetching user profile on auth state change:", error);
           await signOut(auth);
@@ -66,23 +72,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const userProfile = await storage.getUserById(userCredential.user.uid);
 
       if (!userProfile) {
-        await signOut(auth);
-        throw new Error("Failed to find user profile for the authenticated user.");
+        // This case will now be handled by the effect on the login page
+        router.push('/auth/create-profile');
+        toast({ title: t('toast.login.success.title'), description: t('toast.login.error.noProfile') });
+        return;
       }
+      
+      setUser(userProfile);
 
       if (userProfile.isAdmin) {
-        setUser(userProfile);
         router.replace('/admin');
         toast({ title: t('toast.login.success.title') });
         return;
       }
 
       if (userProfile.paymentStatus === 'active') {
-        setUser(userProfile);
         router.replace('/dashboard');
         toast({ title: t('toast.login.success.title') });
       } else {
-        await signOut(auth);
+        await signOut(auth); // Sign out if they can't access the dashboard
         let errorMsg;
         switch (userProfile.paymentStatus) {
             case 'pending_verification':
@@ -108,6 +116,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         title: t('toast.login.error.title'),
         description: description,
       });
+      setUser(null);
     } finally {
       setLoading(false);
     }
@@ -115,50 +124,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
  const signup = async (values: SignUpFormValues): Promise<void> => {
     setLoading(true);
-    let newFirebaseUser: FirebaseUser | null = null;
     try {
       const existingUser = await storage.findUserByEmail(values.email);
       if (existingUser) {
         throw new Error(t('toast.signup.error.emailExists'));
       }
       
-      const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
-      newFirebaseUser = userCredential.user;
+      // Step 1: Create user in Firebase Authentication ONLY.
+      await createUserWithEmailAndPassword(auth, values.email, values.password);
 
-      const isAdminRegistration = newFirebaseUser.email?.toLowerCase() === 'sarunas.zekonis@gmail.com';
-      
-      const newUserProfile: Omit<UserProfile, 'registeredAt' | 'id'> = {
-          companyName: values.companyName,
-          companyCode: values.companyCode,
-          address: values.address,
-          contactPerson: values.contactPerson,
-          email: values.email.toLowerCase(),
-          phone: values.phone,
-          paymentStatus: isAdminRegistration ? 'active' : 'pending_verification',
-          isAdmin: isAdminRegistration,
-          agreeToTerms: values.agreeToTerms,
-          subUsers: [],
-          vatCode: values.vatCode || '',
-          accountActivatedAt: isAdminRegistration ? new Date().toISOString() : undefined,
-      };
-
-      await storage.addUserProfileWithId(newFirebaseUser.uid, newUserProfile);
-      
+      // Step 2: Redirect to the create-profile page. The onAuthStateChanged will handle the user state.
+      // The profile will be created there by the authenticated user.
       toast({
           title: t('toast.signup.success.title'),
-          description: t('toast.signup.success.description'),
+          description: t('toast.signup.success.description_create_profile'),
       });
-      
-      // IMPORTANT FIX: Do not sign out here. Let onAuthStateChanged handle the new user state.
-      // The router will redirect based on the new user's profile.
-      // Let's redirect manually to make it clear.
-      router.replace(isAdminRegistration ? '/admin' : '/auth/pending-approval');
+
+      router.push('/auth/create-profile');
 
     } catch(error: any) {
-        if (newFirebaseUser) {
-            // Attempt to clean up orphaned auth user if firestore write failed
-            await newFirebaseUser.delete().catch(e => console.error("Failed to delete orphaned auth user:", e));
-        }
         let errorMessage = error.message;
         if (error.code === 'auth/email-already-in-use') {
             errorMessage = t('toast.signup.error.emailExists');

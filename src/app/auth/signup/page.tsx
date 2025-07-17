@@ -1,15 +1,8 @@
 
-"use client"; // Make it a client component to use hooks
+"use client"; 
 
 import { SignupForm } from "@/components/auth/signup-form";
-// import type { Metadata } from 'next'; // Metadata export removed as it's a client component now
 import { useLanguage } from "@/contexts/language-context";
-
-// Metadata should be handled in a parent server component (layout) or via useEffect for client components
-// export const metadata: Metadata = {
-// title: 'Registracija - DriverCheck',
-// description: 'Sukurkite naują DriverCheck paskyrą.',
-// };
 
 export default function SignupPage() {
   const { t } = useLanguage();

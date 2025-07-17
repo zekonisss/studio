@@ -2,50 +2,27 @@
 import { z } from 'zod';
 
 export const SignUpSchema = z.object({
+  email: z.string().email({ message: "Neteisingas el. pašto formatas." }),
+  password: z.string().min(8, { message: "Slaptažodis turi būti bent 8 simbolių ilgio." }),
+  confirmPassword: z.string().min(8, { message: "Slaptažodis turi būti bent 8 simbolių ilgio." }),
+  agreeToTerms: z.boolean().refine(val => val === true, { message: "Privalote sutikti su taisyklėmis." }),
+}).refine(data => data.password === data.confirmPassword, {
+  message: "Slaptažodžiai nesutampa.",
+  path: ["confirmPassword"],
+});
+
+export type SignUpFormValues = z.infer<typeof SignUpSchema>;
+
+export const CreateProfileSchema = z.object({
   companyName: z.string().min(2, { message: "Įmonės pavadinimas turi būti bent 2 simbolių ilgio." }),
   companyCode: z.string().regex(/^\d{9}$/, { message: "Įmonės kodas turi būti 9 skaitmenys." }),
   vatCode: z.string().optional(),
   address: z.string().min(5, { message: "Adresas turi būti bent 5 simbolių ilgio." }),
   contactPerson: z.string().min(3, { message: "Kontaktinis asmuo turi būti bent 3 simbolių ilgio." }),
-  email: z.string().email({ message: "Neteisingas el. pašto formatas." }),
   phone: z.string().regex(/^\+?\d{7,15}$/, { message: "Neteisingas telefono numerio formatas." }),
-  password: z.string().min(8, { message: "Slaptažodis turi būti bent 8 simbolių ilgio." }),
-  confirmPassword: z.string().min(8, { message: "Slaptažodis turi būti bent 8 simbolių ilgio." }),
-  agreeToTerms: z.boolean().refine(val => val === true, { message: "Privalote sutikti su taisyklėmis." }),
-  addOneSubUser: z.boolean().optional(),
-  subUserName: z.string().optional(),
-  subUserEmail: z.string().optional(), // Email validation will be conditional
-  subUserPassword: z.string().optional(), // Min length validation will be conditional
-}).refine(data => data.password === data.confirmPassword, {
-  message: "Slaptažodžiai nesutampa.",
-  path: ["confirmPassword"],
-}).superRefine((data, ctx) => {
-  if (data.addOneSubUser) {
-    if (!data.subUserName || data.subUserName.length < 3) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Papildomo vartotojo vardas ir pavardė turi būti bent 3 simbolių ilgio.",
-        path: ["subUserName"],
-      });
-    }
-    if (!data.subUserEmail || !z.string().email().safeParse(data.subUserEmail).success) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Neteisingas papildomo vartotojo el. pašto formatas.",
-        path: ["subUserEmail"],
-      });
-    }
-    if (!data.subUserPassword || data.subUserPassword.length < 8) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Papildomo vartotojo slaptažodis turi būti bent 8 simbolių ilgio.",
-        path: ["subUserPassword"],
-      });
-    }
-  }
 });
 
-export type SignUpFormValues = z.infer<typeof SignUpSchema>;
+export type CreateProfileFormValues = z.infer<typeof CreateProfileSchema>;
 
 export const LoginSchema = z.object({
   email: z.string().email({ message: "Neteisingas el. pašto formatas." }),

@@ -67,6 +67,12 @@
   "signup.form.subUserPassword.label": "Papildomo vartotojo slaptažodis",
   "signup.form.subUserPassword.placeholder": "••••••••",
   "signup.form.subUserPassword.description": "Šį slaptažodį vėliau galės pasikeisti pats vartotojas.",
+  "createProfile.title": "Užbaikite Savo Profilį",
+  "createProfile.description": "Jūs sėkmingai sukūrėte paskyrą. Prašome pateikti savo įmonės duomenis, kad galėtumėte tęsti.",
+  "createProfile.submitButton": "Išsaugoti Profilį ir Tęsti",
+  "createProfile.toast.success.title": "Profilis Sukurtas",
+  "createProfile.toast.success.description": "Jūsų įmonės profilis buvo išsaugotas.",
+  "createProfile.toast.error.title": "Profilio Kūrimo Klaida",
   "forgotPassword.title": "Pamiršote slaptažodį?",
   "forgotPassword.description": "Įveskite savo el. pašto adresą ir mes (simuliuosime) išsiųsime jums slaptažodžio atkūrimo nuorodą.",
   "forgotPassword.form.emailLabel": "El. paštas",
@@ -283,8 +289,10 @@
   "toast.login.error.inactive": "Jūsų paskyra yra neaktyvi. Susisiekite su administratoriumi.",
   "toast.login.error.accessDenied": "Paskyra nėra aktyvi arba neturite prieigos.",
   "toast.login.error.invalidCredentials": "Neteisingas el. paštas arba slaptažodis.",
-  "toast.signup.success.title": "Registracija inicijuota",
-  "toast.signup.success.description": "Jūsų paskyra laukia administratoriaus patvirtinimo. Kai tapatybė bus patvirtinta, gausite mokėjimo instrukcijas.",
+  "toast.login.error.noProfile": "Prašome užpildyti savo profilį, kad galėtumėte tęsti.",
+  "toast.signup.success.title": "Registracija Sėkminga!",
+  "toast.signup.success.description": "Jūsų paskyra sukurta. Dabar užpildykite įmonės duomenis.",
+  "toast.signup.success.description_create_profile": "Paskyra sukurta! Prašome užbaigti savo profilį, kad galėtumėte tęsti.",
   "toast.signup.error.title": "Registracijos klaida",
   "toast.signup.error.descriptionGeneric": "Įvyko klaida bandant registruotis.",
   "toast.signup.error.emailExists": "Vartotojas su tokiu el. paštu jau egzistuoja.",
@@ -725,5 +733,3 @@
   "support.contact.emailButton": "Susisiekti El. Paštu",
   "support.contact.emailLink": "mailto:pagalba@drivercheck.eu"
 }
-
-    

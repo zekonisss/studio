@@ -7,6 +7,7 @@ import { LoginForm } from "@/components/auth/login-form";
 import { useLanguage } from "@/contexts/language-context";
 import { useAuth } from '@/hooks/use-auth';
 import { Loader2 } from 'lucide-react';
+import * as storage from '@/lib/storage';
 
 export default function LoginPage() {
   const { t } = useLanguage();
@@ -14,16 +15,23 @@ export default function LoginPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // If auth state is not loading and a user object exists, redirect.
     if (!loading && user) {
-      // Admins go to the admin panel, regular users go to the dashboard.
-      const targetPath = user.isAdmin ? '/admin' : '/dashboard';
-      router.replace(targetPath);
+      const checkUserProfile = async () => {
+        const userProfile = await storage.getUserById(user.id);
+        if (userProfile) {
+          const targetPath = user.isAdmin ? '/admin' : '/dashboard';
+          router.replace(targetPath);
+        } else {
+          // If user exists in Auth but not in Firestore, they need to create their profile.
+          router.replace('/auth/create-profile');
+        }
+      };
+      checkUserProfile();
     }
   }, [user, loading, router]);
 
   // While loading, we can show a loader to prevent flashes of content
-  if (loading) {
+  if (loading || (!loading && user)) { // Also show loader while redirecting
      return (
       <div className="flex h-full w-full items-center justify-center">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />

@@ -67,6 +67,12 @@
   "signup.form.subUserPassword.label": "Additional User's Password",
   "signup.form.subUserPassword.placeholder": "••••••••",
   "signup.form.subUserPassword.description": "This password can be changed later by the user.",
+  "createProfile.title": "Complete Your Profile",
+  "createProfile.description": "You have successfully created an account. Please provide your company details to continue.",
+  "createProfile.submitButton": "Save Profile and Continue",
+  "createProfile.toast.success.title": "Profile Created",
+  "createProfile.toast.success.description": "Your company profile has been saved.",
+  "createProfile.toast.error.title": "Profile Creation Error",
   "forgotPassword.title": "Forgot Your Password?",
   "forgotPassword.description": "Enter your email address and we will (simulate) sending you a password reset link.",
   "forgotPassword.form.emailLabel": "Email",
@@ -283,8 +289,10 @@
   "toast.login.error.inactive": "Your account is inactive. Please contact the administrator.",
   "toast.login.error.accessDenied": "Account is not active or you do not have access.",
   "toast.login.error.invalidCredentials": "Incorrect email or password.",
+  "toast.login.error.noProfile": "Please complete your profile to continue.",
   "toast.signup.success.title": "Registration Initiated",
   "toast.signup.success.description": "Your account is awaiting administrator approval. Once your identity is verified, you will receive payment instructions.",
+  "toast.signup.success.description_create_profile": "Account created! Please complete your profile to continue.",
   "toast.signup.error.title": "Registration Error",
   "toast.signup.error.descriptionGeneric": "An error occurred while trying to register.",
   "toast.signup.error.emailExists": "A user with this email already exists.",
@@ -723,5 +731,3 @@
   "support.contact.emailButton": "Contact via Email",
   "support.contact.emailLink": "mailto:support@drivercheck.eu"
 }
-
-    

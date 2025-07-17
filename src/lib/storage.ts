@@ -1,7 +1,7 @@
 
 "use client";
 
-import type { Report, UserProfile, SearchLog, AuditLogEntry, UserNotification } from '@/types';
+import type { Report, UserProfile, SearchLog, AuditLogEntry, UserNotification, CreateProfileFormValues } from '@/types';
 import { db } from '@/lib/firebase';
 import { 
   collection, 
@@ -27,6 +27,26 @@ const NOTIFICATIONS_COLLECTION = 'notifications';
 
 // --- User Management ---
 
+export async function createProfileForUser(userId: string, email: string, profileData: CreateProfileFormValues): Promise<void> {
+    const userDocRef = doc(db, USERS_COLLECTION, userId);
+    const isAdmin = email.toLowerCase() === 'sarunas.zekonis@gmail.com';
+
+    const newUserProfile: UserProfile = {
+      id: userId,
+      email: email,
+      ...profileData,
+      paymentStatus: isAdmin ? 'active' : 'pending_verification',
+      isAdmin: isAdmin,
+      agreeToTerms: true,
+      registeredAt: Timestamp.now(),
+      accountActivatedAt: isAdmin ? Timestamp.now() : undefined,
+      subUsers: [],
+    };
+
+    await setDoc(userDocRef, newUserProfile);
+}
+
+
 export async function getAllUsers(): Promise<UserProfile[]> {
   try {
     const usersCollectionRef = collection(db, USERS_COLLECTION);
@@ -37,22 +57,6 @@ export async function getAllUsers(): Promise<UserProfile[]> {
     return [];
   }
 }
-
-export async function addUserProfileWithId(userId: string, userData: Omit<UserProfile, 'id' | 'registeredAt'>): Promise<void> {
-    try {
-        const userDocRef = doc(db, USERS_COLLECTION, userId);
-        const dataToSave = {
-            ...userData,
-            id: userId,
-            registeredAt: Timestamp.now(),
-        };
-        await setDoc(userDocRef, dataToSave);
-    } catch (error) {
-        console.error("Failed to add user to Firestore:", error);
-        throw new Error("Failed to save user profile to the database.");
-    }
-}
-
 
 export async function addUsersBatch(users: UserProfile[]): Promise<void> {
   const batch = writeBatch(db);
