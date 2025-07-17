@@ -2,11 +2,13 @@
 import type { ReactNode } from 'react';
 import Image from 'next/image';
 import { LanguageSwitcher } from '@/components/navigation/language-switcher';
+import { ThemeToggle } from '@/components/navigation/theme-toggle';
 
 export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
-       <div className="absolute top-4 right-4">
+       <div className="absolute top-4 right-4 flex items-center gap-2">
+        <ThemeToggle />
         <LanguageSwitcher />
       </div>
        <div className="mb-8 flex items-center space-x-3">
