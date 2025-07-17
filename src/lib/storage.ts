@@ -1,7 +1,7 @@
 
 "use client";
 
-import type { Report, UserProfile, SearchLog, AuditLogEntry, UserNotification, CreateProfileFormValues } from '@/types';
+import type { Report, UserProfile, SearchLog, AuditLogEntry, UserNotification } from '@/types';
 import { db } from '@/lib/firebase';
 import { 
   collection, 
@@ -15,8 +15,7 @@ import {
   writeBatch, 
   addDoc,
   orderBy,
-  deleteDoc,
-  Timestamp
+  Timestamp // Import Timestamp directly from firestore
 } from 'firebase/firestore';
 
 const USERS_COLLECTION = 'users';
@@ -26,26 +25,6 @@ const AUDIT_LOGS_COLLECTION = 'auditLogs';
 const NOTIFICATIONS_COLLECTION = 'notifications';
 
 // --- User Management ---
-
-export async function createProfileForUser(userId: string, email: string, profileData: CreateProfileFormValues): Promise<void> {
-    const userDocRef = doc(db, USERS_COLLECTION, userId);
-    const isAdmin = email.toLowerCase() === 'sarunas.zekonis@gmail.com';
-
-    const newUserProfile: UserProfile = {
-      id: userId,
-      email: email,
-      ...profileData,
-      paymentStatus: isAdmin ? 'active' : 'pending_verification',
-      isAdmin: isAdmin,
-      agreeToTerms: true,
-      registeredAt: Timestamp.now(),
-      accountActivatedAt: isAdmin ? Timestamp.now() : undefined,
-      subUsers: [],
-    };
-
-    await setDoc(userDocRef, newUserProfile);
-}
-
 
 export async function getAllUsers(): Promise<UserProfile[]> {
   try {
@@ -85,16 +64,22 @@ export async function addUsersBatch(users: UserProfile[]): Promise<void> {
   await batch.commit();
 }
 
-
 export async function updateUserProfile(userId: string, userData: Partial<UserProfile>): Promise<void> {
   try {
     const userDocRef = doc(db, USERS_COLLECTION, userId);
     await updateDoc(userDocRef, userData);
   } catch (error) {
     console.error("Error updating user profile:", error);
+    throw error;
   }
 }
 
+/**
+ * Finds a user by email by querying the Firestore database directly.
+ * This is the reliable way to check for existing users during signup.
+ * @param email The email to search for.
+ * @returns A UserProfile object or null if not found.
+ */
 export async function findUserByEmail(email: string): Promise<UserProfile | null> {
   try {
     const q = query(collection(db, USERS_COLLECTION), where("email", "==", email.toLowerCase()));
@@ -103,11 +88,10 @@ export async function findUserByEmail(email: string): Promise<UserProfile | null
       return null;
     }
     const userDoc = querySnapshot.docs[0];
-    const userData = userDoc.data();
-    return { id: userDoc.id, ...userData } as UserProfile;
+    return { id: userDoc.id, ...userDoc.data() } as UserProfile;
   } catch(error) {
       console.error("Error finding user by email:", error);
-      return null;
+      throw error;
   }
 }
 
@@ -118,6 +102,7 @@ export async function getUserById(userId: string): Promise<UserProfile | null> {
         if (docSnap.exists()) {
             return { id: docSnap.id, ...docSnap.data() } as UserProfile;
         }
+        console.warn(`No user profile found in Firestore for UID: ${userId}`);
         return null;
     } catch (error) {
         console.error("Error in getUserById:", error);
@@ -148,10 +133,7 @@ export async function addReport(reportData: Omit<Report, 'id' | 'createdAt' | 'd
         await addDoc(collection(db, REPORTS_COLLECTION), reportWithTimestamp);
     } catch (error) {
         console.error("Error adding report:", error);
-        if (error instanceof Error && 'code' in error && (error as any).code === 'permission-denied') {
-             throw new Error("Permission denied. Check Firestore security rules for the 'reports' collection.");
-        }
-        throw new Error("Failed to add report to the database.");
+        throw error;
     }
 }
 
