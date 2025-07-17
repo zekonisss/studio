@@ -128,7 +128,7 @@ export async function getAllReports(): Promise<Report[]> {
     }
 }
 
-export async function addReport(reportData: Omit<Report, 'id'>): Promise<void> {
+export async function addReport(reportData: Omit<Report, 'id' | 'createdAt'>): Promise<void> {
     if (!isBrowser) return;
     try {
         // The createdAt field should be a Firestore Timestamp for proper server-side ordering.
