@@ -2,7 +2,7 @@
 "use client";
 
 import type { Report, UserProfile, SearchLog, AuditLogEntry, UserNotification } from '@/types';
-import { db, Timestamp } from '@/lib/firebase';
+import { db } from '@/lib/firebase';
 import { 
   collection, 
   getDocs, 
@@ -15,7 +15,8 @@ import {
   writeBatch, 
   addDoc,
   orderBy,
-  deleteDoc
+  deleteDoc,
+  Timestamp
 } from 'firebase/firestore';
 
 const USERS_COLLECTION = 'users';
