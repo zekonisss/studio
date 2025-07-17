@@ -8,7 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/language-context';
 import * as storage from '@/lib/storage';
 import { useRouter } from 'next/navigation';
-import { auth } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -16,9 +16,7 @@ import {
   onAuthStateChanged,
   type User as FirebaseUser,
 } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
-import { Timestamp } from 'firebase/firestore';
+import { doc, setDoc, Timestamp } from 'firebase/firestore';
 
 
 interface AuthContextType {
@@ -47,8 +45,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           if (userProfile) {
             setUser(userProfile);
           } else {
-             // This case can happen briefly during signup or if profile creation failed.
-             // The login page logic will handle redirecting to create-profile if needed.
              setUser(null); 
           }
         } catch (error) {
@@ -78,7 +74,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (!userProfile) {
         await signOut(auth);
         toast({ title: t('toast.login.error.title'), description: t('toast.login.error.noProfile') });
-        router.push('/auth/signup'); // Redirect to sign up if no profile
+        router.push('/auth/signup'); 
         return;
       }
       
@@ -90,21 +86,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
-      if (userProfile.paymentStatus === 'active' || userProfile.paymentStatus === 'pending_verification') {
+      if (userProfile.paymentStatus === 'active') {
         router.replace('/dashboard');
         toast({ title: t('toast.login.success.title') });
+      } else if (userProfile.paymentStatus === 'pending_verification' || userProfile.paymentStatus === 'pending_payment'){
+         router.replace('/auth/pending-approval');
       } else {
         let errorMsgKey: string;
         switch (userProfile.paymentStatus) {
-            case 'pending_payment':
-                errorMsgKey = 'toast.login.error.pendingPayment';
-                break;
             case 'inactive':
             default:
                 errorMsgKey = 'toast.login.error.inactive';
                 break;
         }
-        await signOut(auth); // Sign out if they can't access the dashboard
+        await signOut(auth); 
         throw new Error(t(errorMsgKey));
       }
     } catch (error: any) {
@@ -135,8 +130,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const { user: firebaseUser } = userCredential;
       const isAdmin = firebaseUser.email?.toLowerCase() === 'sarunas.zekonis@gmail.com';
       
-      const userProfileData: UserProfile = {
-          id: firebaseUser.uid,
+      const userProfileData: Omit<UserProfile, 'id'> = {
           email: values.email,
           companyName: values.companyName,
           companyCode: values.companyCode,
@@ -152,11 +146,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           subUsers: [],
       };
       
-      // Use the user's UID as the document ID in the 'users' collection
       await setDoc(doc(db, "users", firebaseUser.uid), userProfileData);
 
-      setUser(userProfileData); // Set user in context immediately
-      
       toast({
           title: t('toast.signup.success.title'),
           description: t('toast.signup.success.description'),

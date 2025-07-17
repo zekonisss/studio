@@ -21,8 +21,7 @@ export default function LoginPage() {
     }
   }, [user, loading, router]);
 
-  // While loading, we can show a loader to prevent flashes of content
-  if (loading || (!loading && user)) { // Also show loader while redirecting
+  if (loading || (!loading && user)) {
      return (
       <div className="flex h-full w-full items-center justify-center">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -30,7 +29,6 @@ export default function LoginPage() {
     );
   }
   
-  // If we are not loading and there's no user, show the login form
   return (
     <>
       <h2 className="mb-6 text-center text-2xl font-semibold tracking-tight text-foreground">
