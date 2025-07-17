@@ -8,7 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/language-context';
 import * as storage from '@/lib/storage';
 import { useRouter } from 'next/navigation';
-import { auth } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -77,9 +77,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (!userProfile) {
         await signOut(auth);
-        throw new Error("Vartotojo profilis nerastas duomenų bazėje. Susisiekite su palaikymo komanda.");
+        throw new Error(t('toast.login.error.descriptionGeneric'));
       }
       
+      // Corrected Login Logic:
+      // Allow admin unconditionally.
+      // For regular users, check for 'active' status.
       if (!userProfile.isAdmin && userProfile.paymentStatus !== 'active') {
           let errorMsg = t('toast.login.error.accessDenied');
           if (userProfile.paymentStatus === 'pending_verification') {
@@ -89,19 +92,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           } else if (userProfile.paymentStatus === 'inactive') {
               errorMsg = t('toast.login.error.inactive');
           }
-          await signOut(auth);
+          await signOut(auth); // Sign out the user from Firebase Auth
           throw new Error(errorMsg);
       }
       
-      setUser(userProfile); 
+      // The onAuthStateChanged listener will handle setting the user state.
+      // This avoids race conditions.
 
       toast({
         title: t('toast.login.success.title'),
         description: t('toast.login.success.description'),
       });
-      
-      // No explicit router.push here, useEffect will handle it when user state changes.
-      // This prevents race conditions. The main redirect logic is in page.tsx and login/page.tsx
 
     } catch (error: any) {
       let description = t('toast.login.error.descriptionGeneric');
@@ -115,7 +116,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         title: t('toast.login.error.title'),
         description: description,
       });
-      setUser(null);
     } finally {
         setLoading(false);
     }
@@ -125,18 +125,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     let newFirebaseUser: FirebaseUser | null = null;
     try {
-      // 1. Check if user with this email already exists in Firestore
       const existingUser = await storage.findUserByEmail(values.email);
       if (existingUser) {
         throw new Error(t('toast.signup.error.emailExists'));
       }
       
-      // 2. Create user in Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       newFirebaseUser = userCredential.user;
 
-      // 3. Prepare user profile data
       const isAdminRegistration = newFirebaseUser.email?.toLowerCase() === 'sarunas.zekonis@gmail.com';
+      
       const newUserProfile: UserProfile = {
           id: newFirebaseUser.uid,
           companyName: values.companyName,
@@ -154,23 +152,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           accountActivatedAt: isAdminRegistration ? new Date().toISOString() : undefined,
       };
 
-      // 4. Save user profile to Firestore
       await storage.addUserProfile(newUserProfile);
       
-      // 5. Set user in local state
-      setUser(newUserProfile);
+      // Don't set user here. Let onAuthStateChanged handle it to ensure consistency.
 
       toast({
           title: t('toast.signup.success.title'),
           description: t('toast.signup.success.description'),
       });
       
-      // 6. Redirect to the correct page
       router.replace(isAdminRegistration ? '/admin' : '/auth/pending-approval');
 
     } catch(error: any) {
         if (newFirebaseUser) {
-            // If user was created in Auth but something failed after, delete the Auth user
             await newFirebaseUser.delete().catch(e => console.error("Failed to delete orphaned auth user:", e));
         }
         let errorMessage = error.message;
@@ -180,7 +174,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             errorMessage = 'Slaptažodis yra per silpnas. Jis turi būti bent 8 simbolių ilgio.';
         }
         toast({ variant: 'destructive', title: t('toast.signup.error.title'), description: errorMessage });
-        setUser(null);
     } finally {
       setLoading(false);
     }
@@ -189,7 +182,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = async () => {
     try {
       await signOut(auth);
-      setUser(null); 
+      // onAuthStateChanged will clear the user state.
       router.push('/auth/login');
       toast({ title: t('toast.logout.success.title') });
     } catch (error: any) {
