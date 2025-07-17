@@ -35,32 +35,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { t } = useLanguage();
   const router = useRouter();
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      setLoading(true);
-      if (firebaseUser) {
-        try {
-          const userProfile = await storage.getUserById(firebaseUser.uid);
-          if (userProfile) {
-            setUser(userProfile);
-          } else {
-            console.warn(`User ${firebaseUser.uid} exists in Auth, but not in Firestore. Logging out.`);
-            await signOut(auth);
-            setUser(null);
-          }
-        } catch (error) {
-          console.error("Error fetching user profile on auth state change:", error);
+  const handleUserAuth = useCallback(async (firebaseUser: FirebaseUser | null) => {
+    if (firebaseUser) {
+      try {
+        const userProfile = await storage.getUserById(firebaseUser.uid);
+        if (userProfile) {
+          setUser(userProfile);
+        } else {
+          // This case might happen if a user is created in Auth but Firestore doc fails
+          console.warn(`User ${firebaseUser.uid} exists in Auth, but not in Firestore. Logging out.`);
           await signOut(auth);
           setUser(null);
         }
-      } else {
+      } catch (error) {
+        console.error("Error fetching user profile:", error);
+        await signOut(auth);
         setUser(null);
       }
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
+    } else {
+      setUser(null);
+    }
+    setLoading(false);
   }, []);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, handleUserAuth);
+    return () => unsubscribe();
+  }, [handleUserAuth]);
 
   const updateUserInContext = async (updatedUser: UserProfile) => {
     setUser(updatedUser);
@@ -80,16 +81,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         throw new Error(t('toast.login.error.descriptionGeneric'));
       }
       
-      // Corrected Login Logic: Check for admin OR active status
       if (userProfile.isAdmin || userProfile.paymentStatus === 'active') {
-        // The onAuthStateChanged listener will handle setting the user state and redirecting.
-        // We set the user state here manually as well to ensure a faster UI update.
-        setUser(userProfile);
+        setUser(userProfile); // Manually set user for faster UI update
         toast({
           title: t('toast.login.success.title'),
           description: t('toast.login.success.description'),
         });
-        // The redirect logic is now handled in the login page's useEffect
+        const targetPath = userProfile.isAdmin ? '/admin' : '/dashboard';
+        router.replace(targetPath);
       } else {
           let errorMsg = t('toast.login.error.accessDenied');
           if (userProfile.paymentStatus === 'pending_verification') {
@@ -99,7 +98,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           } else if (userProfile.paymentStatus === 'inactive') {
               errorMsg = t('toast.login.error.inactive');
           }
-          await signOut(auth); // Sign out the user from Firebase Auth
+          await signOut(auth);
           setUser(null);
           throw new Error(errorMsg);
       }
@@ -145,24 +144,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           phone: values.phone,
           paymentStatus: isAdminRegistration ? 'active' : 'pending_verification',
           isAdmin: isAdminRegistration,
-          registeredAt: new Date().toISOString(),
           agreeToTerms: values.agreeToTerms,
           subUsers: [],
           vatCode: values.vatCode || '',
           accountActivatedAt: isAdminRegistration ? new Date().toISOString() : undefined,
+          // registeredAt is handled by Firestore server timestamp in addUserProfile
       };
 
       await storage.addUserProfile(newUserProfile);
       
-      // Do not set user here. Let onAuthStateChanged handle it to ensure consistency.
-      // But we will navigate away.
-
       toast({
           title: t('toast.signup.success.title'),
           description: t('toast.signup.success.description'),
       });
       
-      // Sign out the new user so they have to log in, which confirms their status
       await signOut(auth);
       router.replace(isAdminRegistration ? '/auth/login' : '/auth/pending-approval');
 
@@ -185,7 +180,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = async () => {
     try {
       await signOut(auth);
-      setUser(null); // Explicitly clear user state
+      setUser(null); 
       router.push('/auth/login');
       toast({ title: t('toast.logout.success.title') });
     } catch (error: any) {

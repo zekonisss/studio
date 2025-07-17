@@ -42,8 +42,8 @@ export interface Report {
   comment: string;
   imageUrl?: string;
   dataAiHint?: string;
-  createdAt: Date | Timestamp;
-  deletedAt?: string | Date | Timestamp;
+  createdAt: Timestamp; // Changed to always be a Timestamp for consistency from Firestore
+  deletedAt?: Timestamp;
 }
 
 
@@ -51,13 +51,13 @@ export interface SearchLog {
   id: string;
   userId: string;
   searchText: string;
-  timestamp: Date | Timestamp;
+  timestamp: Timestamp;
   resultsCount: number;
 }
 
 export interface AuditLogEntry {
   id: string;
-  timestamp: Date | Timestamp;
+  timestamp: Timestamp;
   adminId: string;
   adminName: string; 
   actionKey: string;
@@ -71,7 +71,7 @@ export interface UserNotification {
   titleKey: string;
   messageKey: string;
   messageParams?: Record<string, string | number>;
-  createdAt: string | Date | Timestamp;
+  createdAt: Timestamp;
   read: boolean;
   link?: string;
   senderId?: string;

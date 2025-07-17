@@ -1,4 +1,3 @@
-
 "use client";
 
 import type { Report, UserProfile, SearchLog, AuditLogEntry, UserNotification } from '@/types';
@@ -24,34 +23,13 @@ const SEARCH_LOGS_COLLECTION = 'searchLogs';
 const AUDIT_LOGS_COLLECTION = 'auditLogs';
 const NOTIFICATIONS_COLLECTION = 'notifications';
 
-// --- Helper ---
-
-const convertFirestoreTimestampToDate = (data: any): any => {
-    if (!data) return data;
-    if (Array.isArray(data)) {
-        return data.map(item => convertFirestoreTimestampToDate(item));
-    }
-    // Check if it is a Firestore Timestamp
-    if (data.toDate && typeof data.toDate === 'function') {
-        return data.toDate();
-    }
-    if (typeof data === 'object' && data !== null) {
-        const convertedData: {[key: string]: any} = {};
-        for (const key in data) {
-            convertedData[key] = convertFirestoreTimestampToDate(data[key]);
-        }
-        return convertedData;
-    }
-    return data;
-};
-
 // --- User Management ---
 
 export async function getAllUsers(): Promise<UserProfile[]> {
   try {
     const usersCollectionRef = collection(db, USERS_COLLECTION);
     const snapshot = await getDocs(usersCollectionRef);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...convertFirestoreTimestampToDate(doc.data()) } as UserProfile));
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserProfile));
   } catch (error) {
     console.error("Error getting all users:", error);
     return [];
@@ -63,7 +41,7 @@ export async function addUserProfile(user: UserProfile): Promise<void> {
         const userDocRef = doc(db, USERS_COLLECTION, user.id);
         const userDataForFirestore = {
             ...user,
-            registeredAt: user.registeredAt ? Timestamp.fromDate(new Date(user.registeredAt)) : Timestamp.now(),
+            registeredAt: Timestamp.now(),
             accountActivatedAt: user.accountActivatedAt ? Timestamp.fromDate(new Date(user.accountActivatedAt)) : undefined
         };
         await setDoc(userDocRef, userDataForFirestore);
@@ -77,21 +55,19 @@ export async function addUsersBatch(users: UserProfile[]): Promise<void> {
   const batch = writeBatch(db);
   const usersCollectionRef = collection(db, USERS_COLLECTION);
   
-  // First, get all existing emails and company codes to avoid duplicates within the batch and with existing data
   const allUsers = await getAllUsers();
   const existingEmails = new Set(allUsers.map(u => u.email.toLowerCase()));
   const existingCompanyCodes = new Set(allUsers.map(u => u.companyCode));
 
   users.forEach(user => {
     if (!existingEmails.has(user.email.toLowerCase()) && !existingCompanyCodes.has(user.companyCode)) {
-      const userDocRef = doc(usersCollectionRef); // Auto-generate ID
+      const userDocRef = doc(usersCollectionRef); 
       const userWithTimestamp = { 
         ...user, 
         id: userDocRef.id, 
         registeredAt: Timestamp.now() 
       };
       batch.set(userDocRef, userWithTimestamp);
-      // Add to sets to prevent duplicates within the same batch
       existingEmails.add(user.email.toLowerCase());
       existingCompanyCodes.add(user.companyCode);
     } else {
@@ -120,7 +96,7 @@ export async function findUserByEmail(email: string): Promise<UserProfile | null
   }
   const userDoc = querySnapshot.docs[0];
   const userData = userDoc.data();
-  return { id: userDoc.id, ...convertFirestoreTimestampToDate(userData) } as UserProfile;
+  return { id: userDoc.id, ...userData } as UserProfile;
 }
 
 export async function getUserById(userId: string): Promise<UserProfile | null> {
@@ -128,7 +104,7 @@ export async function getUserById(userId: string): Promise<UserProfile | null> {
         const userDocRef = doc(db, USERS_COLLECTION, userId);
         const docSnap = await getDoc(userDocRef);
         if (docSnap.exists()) {
-            return { id: docSnap.id, ...convertFirestoreTimestampToDate(docSnap.data()) } as UserProfile;
+            return { id: docSnap.id, ...docSnap.data() } as UserProfile;
         }
         return null;
     } catch (error) {
@@ -143,7 +119,7 @@ export async function getAllReports(): Promise<Report[]> {
     try {
         const q = query(collection(db, REPORTS_COLLECTION), orderBy("createdAt", "desc"));
         const snapshot = await getDocs(q);
-        return snapshot.docs.map(doc => convertFirestoreTimestampToDate({ id: doc.id, ...doc.data() }) as Report);
+        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as Report);
     } catch (error) {
         console.error("Error getting all reports:", error);
         return [];
@@ -205,10 +181,10 @@ export async function getUserReports(userId: string): Promise<{ active: Report[]
     try {
         const q = query(collection(db, REPORTS_COLLECTION), where("reporterId", "==", userId));
         const snapshot = await getDocs(q);
-        const allUserReports = snapshot.docs.map(doc => convertFirestoreTimestampToDate({ id: doc.id, ...doc.data() }) as Report);
+        const allUserReports = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as Report);
 
-        const active = allUserReports.filter(r => !r.deletedAt).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-        const deleted = allUserReports.filter(r => !!r.deletedAt).sort((a, b) => new Date(b.deletedAt!).getTime() - new Date(a.deletedAt!).getTime());
+        const active = allUserReports.filter(r => !r.deletedAt).sort((a, b) => (b.createdAt as Timestamp).toMillis() - (a.createdAt as Timestamp).toMillis());
+        const deleted = allUserReports.filter(r => !!r.deletedAt).sort((a, b) => (b.deletedAt as Timestamp).toMillis() - (a.deletedAt as Timestamp).toMillis());
         
         return { active, deleted };
     } catch (error) {
@@ -227,7 +203,7 @@ export async function getSearchLogs(userId?: string): Promise<SearchLog[]> {
             : query(logsCollectionRef, orderBy("timestamp", "desc"));
         
         const snapshot = await getDocs(q);
-        return snapshot.docs.map(doc => convertFirestoreTimestampToDate({ id: doc.id, ...doc.data() }) as SearchLog);
+        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as SearchLog);
     } catch (error) {
         console.error("Error getting search logs:", error);
         return [];
@@ -249,7 +225,7 @@ export async function getAuditLogs(): Promise<AuditLogEntry[]> {
     try {
         const q = query(collection(db, AUDIT_LOGS_COLLECTION), orderBy("timestamp", "desc"));
         const snapshot = await getDocs(q);
-        return snapshot.docs.map(doc => convertFirestoreTimestampToDate({ id: doc.id, ...doc.data() }) as AuditLogEntry);
+        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as AuditLogEntry);
     } catch (error) {
         console.error("Error getting audit logs:", error);
         return [];
@@ -273,7 +249,7 @@ export async function getUserNotifications(userId: string): Promise<UserNotifica
     try {
         const q = query(collection(db, NOTIFICATIONS_COLLECTION), where("userId", "==", userId), orderBy("createdAt", "desc"));
         const snapshot = await getDocs(q);
-        return snapshot.docs.map(doc => convertFirestoreTimestampToDate({ id: doc.id, ...doc.data() }) as UserNotification);
+        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as UserNotification);
     } catch (error) {
         console.error("Error getting user notifications:", error);
         return [];
