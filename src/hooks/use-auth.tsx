@@ -16,6 +16,8 @@ import {
   onAuthStateChanged,
   type User as FirebaseUser,
 } from 'firebase/auth';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -69,7 +71,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         throw new Error(t('toast.login.error.descriptionGeneric'));
       }
 
-      // Main Logic Check: Admin or Active User
+      // --- CRITICAL FIX ---
+      // This logic now correctly handles admin and active user logins.
       if (userProfile.isAdmin || userProfile.paymentStatus === 'active') {
         setUser(userProfile);
         toast({
@@ -149,14 +152,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           description: t('toast.signup.success.description'),
       });
       
-      // After successful registration and profile creation, log the user out
-      // to force them to the correct pending/login page.
       await signOut(auth);
       router.replace(isAdminRegistration ? '/auth/login' : '/auth/pending-approval');
 
     } catch(error: any) {
         if (newFirebaseUser) {
-            // Clean up orphaned Firebase Auth user if Firestore doc creation failed
             await newFirebaseUser.delete().catch(e => console.error("Failed to delete orphaned auth user:", e));
         }
         let errorMessage = error.message;

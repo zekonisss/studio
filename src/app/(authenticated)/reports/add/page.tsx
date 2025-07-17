@@ -21,6 +21,8 @@ import { useRouter } from "next/navigation";
 import { useLanguage } from "@/contexts/language-context"; 
 import * as storage from '@/lib/storage';
 import { categorizeReport } from '@/ai/flows/categorize-report-flow';
+import { Timestamp } from "firebase/firestore";
+
 
 export default function AddReportPage() {
   const { user } = useAuth();
