@@ -1,3 +1,6 @@
+
+import type { Timestamp } from 'firebase/firestore';
+
 export interface SubUserProfile {
   id: string;
   fullName: string;
@@ -15,49 +18,50 @@ export interface UserProfile {
   phone: string;
   paymentStatus: 'active' | 'inactive' | 'pending_verification' | 'pending_payment';
   isAdmin?: boolean;
-  registeredAt?: string; // ISO date string for registration
-  accountActivatedAt?: string; // Date ISO string when the account was last set to 'active'
+  registeredAt?: string | Date | Timestamp;
+  accountActivatedAt?: string | Date | Timestamp;
   agreeToTerms?: boolean;
   subUsers?: SubUserProfile[];
 }
 
 export interface DetailedCategory {
   id: string;
-  nameKey: string; // Changed from name to nameKey for translation
-  tags: string[]; // Now stores tag keys
+  nameKey: string; 
+  tags: string[];
 }
 
 export interface Report {
-  id:string;
+  id: string;
   reporterId: string;
   reporterCompanyName?: string;
   fullName: string;
   nationality?: string;
   birthYear?: number;
-  category: string; // Main category ID e.g., "fuel_theft"
-  tags: string[]; // Selected tag keys relevant to the main category
+  category: string;
+  tags: string[];
   comment: string;
   imageUrl?: string;
   dataAiHint?: string;
-  createdAt: Date;
-  deletedAt?: string; // ISO date string when the report was soft-deleted
+  createdAt: Date | Timestamp;
+  deletedAt?: string | Date | Timestamp;
 }
+
 
 export interface SearchLog {
   id: string;
   userId: string;
   searchText: string;
-  timestamp: Date;
+  timestamp: Date | Timestamp;
   resultsCount: number;
 }
 
 export interface AuditLogEntry {
   id: string;
-  timestamp: Date;
+  timestamp: Date | Timestamp;
   adminId: string;
-  adminName: string; // Could be contactPerson or email
-  actionKey: string; // Translation key for the action, e.g., "auditLog.action.userStatusChanged"
-  details: Record<string, any>; // Additional details about the action
+  adminName: string; 
+  actionKey: string;
+  details: Record<string, any>;
 }
 
 export interface UserNotification {
@@ -67,11 +71,11 @@ export interface UserNotification {
   titleKey: string;
   messageKey: string;
   messageParams?: Record<string, string | number>;
-  createdAt: string; // ISO Date string
+  createdAt: string | Date | Timestamp;
   read: boolean;
   link?: string;
-  senderId?: string; // For user-to-user messages
-  senderCompanyName?: string; // For user-to-user messages
+  senderId?: string;
+  senderCompanyName?: string;
 }
 
 const unsortedCountries: { value: string, label: string }[] = [

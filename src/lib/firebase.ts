@@ -1,9 +1,10 @@
+
 // This file is safe to be imported on the server or client.
 import { initializeApp, getApps, getApp, type FirebaseOptions } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
+import { getFirestore, Timestamp } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 
-const FIREBASE_CLIENT_CONFIG = {
+const FIREBASE_CLIENT_CONFIG: FirebaseOptions = {
   apiKey: "AIzaSyBusklRtrpm-gfnwCdmi2yj5vTumqLte3c",
   authDomain: "drivershield.firebaseapp.com",
   projectId: "drivershield",
@@ -19,7 +20,6 @@ function getClientApp(config: FirebaseOptions) {
     if (getApps().length) {
         return getApp();
     }
-
     return initializeApp(config);
 }
 
@@ -27,4 +27,4 @@ const app = getClientApp(FIREBASE_CLIENT_CONFIG);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-export { db, auth };
+export { db, auth, Timestamp };

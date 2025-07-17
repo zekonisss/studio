@@ -14,11 +14,12 @@ import { useAuth } from "@/hooks/use-auth";
 import { Loader2, Search as SearchIcon, User, CalendarDays, Tag, MessageSquare, AlertCircle, FileText, Image as ImageIcon, Globe, Layers } from "lucide-react";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
-import { format } from 'date-fns';
+import { format as formatDateFn } from 'date-fns';
 import { lt, enUS } from 'date-fns/locale'; 
 import { countries, detailedReportCategories, DESTRUCTIVE_REPORT_MAIN_CATEGORIES, migrateTagIfNeeded } from "@/types";
 import * as storage from '@/lib/storage';
 import { useLanguage } from "@/contexts/language-context"; 
+import type { Timestamp } from "firebase/firestore";
 
 export default function SearchPage() {
   const { user } = useAuth();
@@ -80,7 +81,7 @@ export default function SearchPage() {
               (report.reporterCompanyName && report.reporterCompanyName.toLowerCase().includes(query))
             );
           }
-        ).sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        ).sort((a,b) => (b.createdAt as any).seconds - (a.createdAt as any).seconds);
       }
 
       setSearchResults(results);
@@ -102,6 +103,11 @@ export default function SearchPage() {
       setIsLoading(false);
     }
   };
+  
+  const formatDateSafe = (date: Date | Timestamp) => {
+      const dateObj = (date as Timestamp).toDate ? (date as Timestamp).toDate() : (date as Date);
+      return formatDateFn(dateObj, "yyyy-MM-dd HH:mm", { locale: dateLocale });
+  }
 
   return (
     <div className="container mx-auto py-8">
@@ -268,7 +274,7 @@ export default function SearchPage() {
                 <CardFooter className="bg-muted/30 p-3 text-xs text-muted-foreground border-t">
                   <div className="flex justify-between w-full items-center">
                     <span>{t('search.results.submittedBy')}: {report.reporterCompanyName ? report.reporterCompanyName : t('common.notSpecified')} (ID: {report.reporterId.substring(0,12)}...)</span>
-                    <span>{t('search.results.date')}: {format(new Date(report.createdAt), "yyyy-MM-dd HH:mm", { locale: dateLocale })}</span>
+                    <span>{t('search.results.date')}: {formatDateSafe(report.createdAt)}</span>
                   </div>
                 </CardFooter>
               </Card>

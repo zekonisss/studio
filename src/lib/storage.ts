@@ -2,7 +2,7 @@
 "use client";
 
 import type { Report, UserProfile, SearchLog, AuditLogEntry, UserNotification } from '@/types';
-import { db } from '@/lib/firebase';
+import { db, Timestamp } from '@/lib/firebase';
 import { 
   collection, 
   getDocs, 
@@ -15,7 +15,6 @@ import {
   writeBatch, 
   addDoc,
   orderBy,
-  Timestamp,
   deleteDoc
 } from 'firebase/firestore';
 
@@ -28,15 +27,23 @@ const NOTIFICATIONS_COLLECTION = 'notifications';
 
 // --- Helper ---
 
-const convertFirestoreTimestampToDate = (data: any) => {
+const convertFirestoreTimestampToDate = (data: any): any => {
     if (!data) return data;
-    const convertedData = { ...data };
-    for (const key in convertedData) {
-        if (convertedData[key] instanceof Timestamp) {
-            convertedData[key] = convertedData[key].toDate();
-        }
+    if (Array.isArray(data)) {
+        return data.map(item => convertFirestoreTimestampToDate(item));
     }
-    return convertedData;
+    if (typeof data === 'object') {
+        const convertedData: {[key: string]: any} = {};
+        for (const key in data) {
+            if (data[key] instanceof Timestamp) {
+                convertedData[key] = data[key].toDate();
+            } else {
+                convertedData[key] = convertFirestoreTimestampToDate(data[key]);
+            }
+        }
+        return convertedData;
+    }
+    return data;
 };
 
 // --- User Management ---
@@ -57,7 +64,12 @@ export async function addUserProfile(user: UserProfile): Promise<void> {
     if (!isBrowser) return;
     try {
         const userDocRef = doc(db, USERS_COLLECTION, user.id);
-        await setDoc(userDocRef, user);
+        const userDataForFirestore = {
+            ...user,
+            registeredAt: user.registeredAt ? Timestamp.fromDate(new Date(user.registeredAt)) : Timestamp.now(),
+            accountActivatedAt: user.accountActivatedAt ? Timestamp.fromDate(new Date(user.accountActivatedAt)) : undefined
+        };
+        await setDoc(userDocRef, userDataForFirestore);
     } catch (error) {
         console.error("Failed to add user to Firestore:", error);
         throw new Error("Failed to save user profile to the database.");
@@ -68,10 +80,8 @@ export async function addUsersBatch(users: UserProfile[]): Promise<void> {
   if (!isBrowser) return;
   const batch = writeBatch(db);
   users.forEach(user => {
-      // Create a new document reference with a unique ID for each user in the batch
       const userDocRef = doc(collection(db, USERS_COLLECTION));
-      // Use the newly generated ID in the user object
-      const userWithId = { ...user, id: userDocRef.id };
+      const userWithId = { ...user, id: userDocRef.id, registeredAt: Timestamp.now() };
       batch.set(userDocRef, userWithId);
   });
   await batch.commit();
@@ -95,7 +105,8 @@ export async function findUserByEmail(email: string): Promise<UserProfile | null
     return null;
   }
   const userDoc = querySnapshot.docs[0];
-  return { id: userDoc.id, ...userDoc.data() } as UserProfile;
+  const userData = userDoc.data();
+  return { id: userDoc.id, ...convertFirestoreTimestampToDate(userData) } as UserProfile;
 }
 
 export async function getUserById(userId: string): Promise<UserProfile | null> {
@@ -104,14 +115,11 @@ export async function getUserById(userId: string): Promise<UserProfile | null> {
         const userDocRef = doc(db, USERS_COLLECTION, userId);
         const docSnap = await getDoc(userDocRef);
         if (docSnap.exists()) {
-            return { id: docSnap.id, ...docSnap.data() } as UserProfile;
+            return { id: docSnap.id, ...convertFirestoreTimestampToDate(docSnap.data()) } as UserProfile;
         }
-        // If the document does not exist, it's a clear "not found" case.
         return null;
     } catch (error) {
         console.error("Error in getUserById:", error);
-        // Rethrow the error so it can be caught by the calling function (e.g., in useAuth)
-        // This provides more specific error messages than just "profile not found".
         throw error;
     }
 }
@@ -130,10 +138,14 @@ export async function getAllReports(): Promise<Report[]> {
     }
 }
 
-export async function addReport(reportData: Omit<Report, 'id'>): Promise<void> {
+export async function addReport(reportData: Omit<Report, 'id' | 'createdAt'>): Promise<void> {
     if (!isBrowser) return;
     try {
-        await addDoc(collection(db, REPORTS_COLLECTION), reportData);
+        const reportWithTimestamp = {
+            ...reportData,
+            createdAt: Timestamp.now()
+        };
+        await addDoc(collection(db, REPORTS_COLLECTION), reportWithTimestamp);
     } catch (error) {
         console.error("Error adding report:", error);
         if (error instanceof Error && 'code' in error && (error as any).code === 'permission-denied') {
@@ -143,12 +155,13 @@ export async function addReport(reportData: Omit<Report, 'id'>): Promise<void> {
     }
 }
 
+
 export async function softDeleteReport(reportId: string): Promise<void> {
     if (!isBrowser) return;
     try {
         const reportDocRef = doc(db, REPORTS_COLLECTION, reportId);
         await updateDoc(reportDocRef, {
-            deletedAt: new Date().toISOString(),
+            deletedAt: Timestamp.now(),
         });
     } catch (error) {
         console.error("Error soft-deleting report:", error);
@@ -162,7 +175,7 @@ export async function softDeleteAllReports(): Promise<number> {
         const reportsSnapshot = await getDocs(query(collection(db, REPORTS_COLLECTION), where("deletedAt", "==", null)));
         const batch = writeBatch(db);
         reportsSnapshot.docs.forEach(doc => {
-            batch.update(doc.ref, { deletedAt: new Date().toISOString() });
+            batch.update(doc.ref, { deletedAt: Timestamp.now() });
         });
         await batch.commit();
         return reportsSnapshot.size;
@@ -212,7 +225,7 @@ export async function addSearchLog(logData: Omit<SearchLog, 'id' | 'timestamp'>)
     try {
         await addDoc(collection(db, SEARCH_LOGS_COLLECTION), {
             ...logData,
-            timestamp: Timestamp.fromDate(new Date()),
+            timestamp: Timestamp.now(),
         });
     } catch (error) {
         console.error("Error adding search log:", error);
@@ -236,7 +249,7 @@ export async function addAuditLogEntry(entryData: Omit<AuditLogEntry, 'id' | 'ti
     try {
         await addDoc(collection(db, AUDIT_LOGS_COLLECTION), {
             ...entryData,
-            timestamp: Timestamp.fromDate(new Date()),
+            timestamp: Timestamp.now(),
         });
     } catch (error) {
         console.error("Error adding audit log entry:", error);
@@ -250,7 +263,7 @@ export async function getUserNotifications(userId: string): Promise<UserNotifica
     try {
         const q = query(collection(db, NOTIFICATIONS_COLLECTION), where("userId", "==", userId), orderBy("createdAt", "desc"));
         const snapshot = await getDocs(q);
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserNotification));
+        return snapshot.docs.map(doc => convertFirestoreTimestampToDate({ id: doc.id, ...doc.data() }) as UserNotification);
     } catch (error) {
         console.error("Error getting user notifications:", error);
         return [];
@@ -263,7 +276,7 @@ export async function addUserNotification(userId: string, notificationData: Omit
         await addDoc(collection(db, NOTIFICATIONS_COLLECTION), {
             userId,
             ...notificationData,
-            createdAt: new Date().toISOString(),
+            createdAt: Timestamp.now(),
             read: false,
         });
     } catch (error) {

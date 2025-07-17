@@ -26,6 +26,7 @@ import { useLanguage } from '@/contexts/language-context';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 import { ChartContainer, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import type { Timestamp } from "firebase/firestore";
 
 const USERS_PER_PAGE = 10; 
 
@@ -52,6 +53,12 @@ export default function AdminPage() {
   const [userDisplayOption, setUserDisplayOption] = useState<'byCompanyName' | 'byRegistrationDate'>('byCompanyName');
 
   const dateLocale = locale === 'en' ? enUS : lt;
+  
+  const formatDateSafe = (date: Date | Timestamp | string | undefined, formatString: string = "yyyy-MM-dd HH:mm") => {
+      if (!date) return t('common.notSpecified');
+      const dateObj = typeof date === 'string' ? new Date(date) : ((date as Timestamp).toDate ? (date as Timestamp).toDate() : (date as Date));
+      return formatDateFn(dateObj, formatString, { locale: dateLocale });
+  }
 
   const getCategoryNameAdmin = useCallback((categoryId: string) => {
     const category = detailedReportCategories.find(c => c.id === categoryId);
@@ -148,8 +155,8 @@ export default function AdminPage() {
       users.sort((a, b) => (a.companyName || "").localeCompare(b.companyName || "", locale));
     } else if (userDisplayOption === 'byRegistrationDate') {
       users.sort((a, b) => {
-        const dateA = a.registeredAt ? new Date(a.registeredAt).getTime() : 0;
-        const dateB = b.registeredAt ? new Date(b.registeredAt).getTime() : 0;
+        const dateA = a.registeredAt ? new Date(a.registeredAt as string).getTime() : 0;
+        const dateB = b.registeredAt ? new Date(b.registeredAt as string).getTime() : 0;
         return dateB - dateA; 
       });
     }
@@ -468,7 +475,7 @@ export default function AdminPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>{paginatedUsers.map((u) => {
-                      const currentMonthYearGroup = u.registeredAt ? formatDateFn(new Date(u.registeredAt), t('admin.users.groupHeaderMonthFormat'), { locale: dateLocale }) : t('common.notSpecified');
+                      const currentMonthYearGroup = u.registeredAt ? formatDateSafe(u.registeredAt, t('admin.users.groupHeaderMonthFormat')) : t('common.notSpecified');
                       const showGroupHeader = userDisplayOption === 'byRegistrationDate' && currentMonthYearGroup !== lastGroupHeader;
                       if (showGroupHeader) {
                         lastGroupHeader = currentMonthYearGroup;
@@ -487,7 +494,7 @@ export default function AdminPage() {
                             <TableCell className="hidden md:table-cell">{u.contactPerson}</TableCell>
                             <TableCell className="hidden lg:table-cell">{u.email}</TableCell>
                             <TableCell className="hidden md:table-cell text-center text-xs">
-                              {u.registeredAt ? formatDateFn(new Date(u.registeredAt), 'yyyy-MM-dd', { locale: dateLocale }) : '-'}
+                              {u.registeredAt ? formatDateSafe(u.registeredAt, 'yyyy-MM-dd') : '-'}
                             </TableCell>
                             <TableCell className="text-center">
                               <Badge variant={getStatusBadgeVariant(u.paymentStatus)}>
@@ -630,7 +637,7 @@ export default function AdminPage() {
                         </TableCell>
                         <TableCell className="hidden md:table-cell">{report.reporterCompanyName || t('common.notSpecified')}</TableCell>
                         <TableCell className="text-center hidden lg:table-cell text-muted-foreground">
-                          {formatDateFn(new Date(report.createdAt), "yyyy-MM-dd HH:mm", { locale: dateLocale })}
+                          {formatDateSafe(report.createdAt)}
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex gap-1 justify-end">
@@ -697,7 +704,7 @@ export default function AdminPage() {
                     {auditLogs.map((log) => (
                       <TableRow key={log.id}>
                         <TableCell className="text-xs text-muted-foreground">
-                          {formatDateFn(new Date(log.timestamp), "yyyy-MM-dd HH:mm:ss", { locale: dateLocale })}
+                          {formatDateSafe(log.timestamp, "yyyy-MM-dd HH:mm:ss")}
                         </TableCell>
                         <TableCell className="text-sm">{log.adminName}</TableCell>
                         <TableCell className="text-sm">{t(log.actionKey, log.details)}</TableCell>
@@ -838,7 +845,7 @@ export default function AdminPage() {
               </div>
               <div className="space-y-1">
                 <h4 className="text-sm font-medium text-muted-foreground flex items-center"><CalendarDays className="mr-2 h-4 w-4" />{t('admin.entryDetailsModal.submissionDate')}</h4>
-                <p className="text-base text-foreground">{formatDateFn(new Date(selectedReportForDetails.createdAt), "yyyy-MM-dd HH:mm:ss", { locale: dateLocale })}</p>
+                <p className="text-base text-foreground">{formatDateSafe(selectedReportForDetails.createdAt, "yyyy-MM-dd HH:mm:ss")}</p>
               </div>
             </div>
             <DialogFooter>
@@ -870,7 +877,7 @@ export default function AdminPage() {
               <UserInfoField label={t('admin.userDetailsModal.email')} value={isEditingUserDetails ? editingUserDetailsFormData.email || "" : selectedUserForDetails.email} icon={Mail} name="email" isEditing={isEditingUserDetails} onChange={handleUserDetailsInputChange} />
               <UserInfoField label={t('admin.userDetailsModal.phone')} value={isEditingUserDetails ? editingUserDetailsFormData.phone || "" : selectedUserForDetails.phone} icon={Phone} name="phone" isEditing={isEditingUserDetails} onChange={handleUserDetailsInputChange} />
               <div className="md:col-span-2">
-                 <UserInfoField label={t('admin.users.table.registrationDate')} value={selectedUserForDetails.registeredAt ? formatDateFn(new Date(selectedUserForDetails.registeredAt), "yyyy-MM-dd HH:mm", { locale: dateLocale }) : t('common.notSpecified')} icon={CalendarDays} />
+                 <UserInfoField label={t('admin.users.table.registrationDate')} value={formatDateSafe(selectedUserForDetails.registeredAt, "yyyy-MM-dd HH:mm")} icon={CalendarDays} />
               </div>
               <div className="md:col-span-2">
                 <UserInfoField label={t('admin.userDetailsModal.status')} value={getStatusText(selectedUserForDetails.paymentStatus)} icon={CheckCircle2} />
@@ -879,7 +886,7 @@ export default function AdminPage() {
                 <div className="md:col-span-2">
                   <UserInfoField
                     label={t('admin.userDetailsModal.accountActiveUntil')}
-                    value={formatDateFn(addYears(new Date(selectedUserForDetails.accountActivatedAt), 1), "yyyy-MM-dd", { locale: dateLocale })}
+                    value={formatDateFn(addYears(new Date(formatDateSafe(selectedUserForDetails.accountActivatedAt)), 1), "yyyy-MM-dd", { locale: dateLocale })}
                     icon={CalendarDays}
                   />
                 </div>

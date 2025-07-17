@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import type { Report } from "@/types";
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2, History as HistoryIcon, User, CalendarDays, Tag, MessageSquare, AlertTriangle, Trash2, Eye, PlusCircle, Building2, Image as ImageIcon, FileText, Globe, Layers } from "lucide-react";
-import { format } from 'date-fns';
+import { format as formatDateFn } from 'date-fns';
 import { lt, enUS } from 'date-fns/locale';
 import {
   AlertDialog,
@@ -36,6 +36,7 @@ import { useToast } from "@/hooks/use-toast";
 import { countries, detailedReportCategories, DESTRUCTIVE_REPORT_MAIN_CATEGORIES } from "@/types";
 import * as storage from '@/lib/storage';
 import { useLanguage } from "@/contexts/language-context";
+import type { Timestamp } from "firebase/firestore";
 
 export default function ReportHistoryPage() {
   const { user, loading: authLoading } = useAuth();
@@ -47,6 +48,11 @@ export default function ReportHistoryPage() {
   const [selectedReportForDetails, setSelectedReportForDetails] = useState<Report | null>(null);
 
   const dateLocale = locale === 'en' ? enUS : lt;
+  
+  const formatDateSafe = (date: Date | Timestamp, formatString = "yyyy-MM-dd HH:mm") => {
+      const dateObj = (date as Timestamp).toDate ? (date as Timestamp).toDate() : (date as Date);
+      return formatDateFn(dateObj, formatString, { locale: dateLocale });
+  }
 
   useEffect(() => {
     if (!authLoading && user) {
@@ -181,7 +187,7 @@ export default function ReportHistoryPage() {
                       {report.fullName}
                     </CardTitle>
                     <CardDescription className="text-sm">
-                      {t('reports.history.entry.submittedOn')}: {format(new Date(report.createdAt), "yyyy-MM-dd HH:mm", { locale: dateLocale })}
+                      {t('reports.history.entry.submittedOn')}: {formatDateSafe(report.createdAt)}
                     </CardDescription>
                   </div>
                   <Badge variant={DESTRUCTIVE_REPORT_MAIN_CATEGORIES.includes(report.category) ? 'destructive' : 'secondary'}>
@@ -313,7 +319,7 @@ export default function ReportHistoryPage() {
               </div>
                <div className="space-y-1">
                 <h4 className="text-sm font-medium text-muted-foreground flex items-center"><CalendarDays className="mr-2 h-4 w-4" />{t('reports.history.detailsModal.submissionDate')}</h4>
-                <p className="text-base text-foreground">{format(new Date(selectedReportForDetails.createdAt), "yyyy-MM-dd HH:mm:ss", { locale: dateLocale })}</p>
+                <p className="text-base text-foreground">{formatDateSafe(selectedReportForDetails.createdAt, "yyyy-MM-dd HH:mm:ss")}</p>
               </div>
             </div>
             <DialogFooter>

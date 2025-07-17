@@ -14,6 +14,7 @@ import { useLanguage } from '@/contexts/language-context';
 import { Badge } from '@/components/ui/badge';
 import * as storage from '@/lib/storage';
 import { getCategoryNameForDisplay } from '@/types';
+import type { Timestamp } from "firebase/firestore";
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -27,6 +28,11 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   const dateLocale = locale === 'en' ? enUS : lt;
+  
+  const formatDateSafe = (date: Date | Timestamp, formatString = "yyyy-MM-dd") => {
+      const dateObj = (date as Timestamp).toDate ? (date as Timestamp).toDate() : (date as Date);
+      return formatDateFn(dateObj, formatString, { locale: dateLocale });
+  }
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -58,7 +64,8 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (user && user.paymentStatus === 'active' && user.accountActivatedAt) {
-      const subEndDate = addYears(new Date(user.accountActivatedAt), 1);
+      const activationDate = (user.accountActivatedAt as Timestamp).toDate ? (user.accountActivatedAt as Timestamp).toDate() : new Date(user.accountActivatedAt as string);
+      const subEndDate = addYears(activationDate, 1);
       const shouldWarn = isBefore(subEndDate, addMonths(new Date(), 1));
       setShowExpirationWarning(shouldWarn);
       setExpirationEndDate(formatDateFn(subEndDate, "yyyy-MM-dd", { locale: dateLocale }));
@@ -95,7 +102,9 @@ export default function DashboardPage() {
   }, [user, dateLocale, t]);
 
 
-  const subscriptionEndDateForDisplay = user?.accountActivatedAt ? addYears(new Date(user.accountActivatedAt), 1) : null;
+  const subscriptionEndDateForDisplay = user?.accountActivatedAt 
+      ? addYears((user.accountActivatedAt as Timestamp).toDate ? (user.accountActivatedAt as Timestamp).toDate() : new Date(user.accountActivatedAt as string), 1)
+      : null;
   
    if (isLoading) {
     return (
@@ -218,7 +227,7 @@ export default function DashboardPage() {
                                 {getCategoryNameForDisplay(report.category, t)}
                             </Badge>
                             <p className="text-xs text-muted-foreground mt-1">
-                                {formatDateFn(report.createdAt, "yyyy-MM-dd", { locale: dateLocale })}
+                                {formatDateSafe(report.createdAt)}
                             </p>
                         </div>
                     </li>
