@@ -38,20 +38,21 @@ export async function getAllUsers(): Promise<UserProfile[]> {
   }
 }
 
-export async function addUserProfile(user: UserProfile): Promise<void> {
+export async function addUserProfileWithId(userId: string, userData: Omit<UserProfile, 'id' | 'registeredAt'>): Promise<void> {
     try {
-        const userDocRef = doc(db, USERS_COLLECTION, user.id);
-        const userDataForFirestore = {
-            ...user,
+        const userDocRef = doc(db, USERS_COLLECTION, userId);
+        const dataToSave = {
+            ...userData,
+            id: userId,
             registeredAt: Timestamp.now(),
-            accountActivatedAt: user.accountActivatedAt ? Timestamp.fromDate(new Date(user.accountActivatedAt)) : undefined
         };
-        await setDoc(userDocRef, userDataForFirestore);
+        await setDoc(userDocRef, dataToSave);
     } catch (error) {
         console.error("Failed to add user to Firestore:", error);
         throw new Error("Failed to save user profile to the database.");
     }
 }
+
 
 export async function addUsersBatch(users: UserProfile[]): Promise<void> {
   const batch = writeBatch(db);
@@ -91,14 +92,19 @@ export async function updateUserProfile(userId: string, userData: Partial<UserPr
 }
 
 export async function findUserByEmail(email: string): Promise<UserProfile | null> {
-  const q = query(collection(db, USERS_COLLECTION), where("email", "==", email.toLowerCase()));
-  const querySnapshot = await getDocs(q);
-  if (querySnapshot.empty) {
-    return null;
+  try {
+    const q = query(collection(db, USERS_COLLECTION), where("email", "==", email.toLowerCase()));
+    const querySnapshot = await getDocs(q);
+    if (querySnapshot.empty) {
+      return null;
+    }
+    const userDoc = querySnapshot.docs[0];
+    const userData = userDoc.data();
+    return { id: userDoc.id, ...userData } as UserProfile;
+  } catch(error) {
+      console.error("Error finding user by email:", error);
+      return null;
   }
-  const userDoc = querySnapshot.docs[0];
-  const userData = userDoc.data();
-  return { id: userDoc.id, ...userData } as UserProfile;
 }
 
 export async function getUserById(userId: string): Promise<UserProfile | null> {

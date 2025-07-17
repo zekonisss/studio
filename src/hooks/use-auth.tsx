@@ -8,7 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/language-context';
 import * as storage from '@/lib/storage';
 import { useRouter } from 'next/navigation';
-import { auth, db } from '@/lib/firebase';
+import { auth } from '@/lib/firebase';
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -16,8 +16,6 @@ import {
   onAuthStateChanged,
   type User as FirebaseUser,
 } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -45,6 +43,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setUser(userProfile);
         } catch (error) {
           console.error("Error fetching user profile on auth state change:", error);
+          await signOut(auth);
           setUser(null);
         }
       } else {
@@ -68,22 +67,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (!userProfile) {
         await signOut(auth);
-        throw new Error(t('toast.login.error.descriptionGeneric'));
+        throw new Error("Failed to find user profile for the authenticated user.");
       }
 
-      // --- CRITICAL FIX ---
-      // This logic now correctly handles admin and active user logins.
-      if (userProfile.isAdmin || userProfile.paymentStatus === 'active') {
+      if (userProfile.isAdmin) {
         setUser(userProfile);
-        toast({
-          title: t('toast.login.success.title'),
-          description: t('toast.login.success.description'),
-        });
-        const targetPath = userProfile.isAdmin ? '/admin' : '/dashboard';
-        router.replace(targetPath);
+        router.replace('/admin');
+        toast({ title: t('toast.login.success.title') });
+        return;
+      }
+
+      if (userProfile.paymentStatus === 'active') {
+        setUser(userProfile);
+        router.replace('/dashboard');
+        toast({ title: t('toast.login.success.title') });
       } else {
-        // Handle specific non-active statuses
-        await signOut(auth); // Log out user as they don't have access
+        await signOut(auth);
         let errorMsg;
         switch (userProfile.paymentStatus) {
             case 'pending_verification':
@@ -93,16 +92,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 errorMsg = t('toast.login.error.pendingPayment');
                 break;
             case 'inactive':
+            default:
                 errorMsg = t('toast.login.error.inactive');
                 break;
-            default:
-                errorMsg = t('toast.login.error.accessDenied');
         }
         throw new Error(errorMsg);
       }
     } catch (error: any) {
       let description = error.message;
-      if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+       if (error.code === 'auth/invalid-credential' || error.message.includes('Failed to find user profile')) {
         description = t('toast.login.error.invalidCredentials');
       }
       toast({
@@ -129,8 +127,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       const isAdminRegistration = newFirebaseUser.email?.toLowerCase() === 'sarunas.zekonis@gmail.com';
       
-      const newUserProfile: Omit<UserProfile, 'registeredAt'> = {
-          id: newFirebaseUser.uid,
+      const newUserProfile: Omit<UserProfile, 'registeredAt' | 'id'> = {
           companyName: values.companyName,
           companyCode: values.companyCode,
           address: values.address,
@@ -145,25 +142,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           accountActivatedAt: isAdminRegistration ? new Date().toISOString() : undefined,
       };
 
-      await storage.addUserProfile(newUserProfile as UserProfile);
+      await storage.addUserProfileWithId(newFirebaseUser.uid, newUserProfile);
       
       toast({
           title: t('toast.signup.success.title'),
           description: t('toast.signup.success.description'),
       });
       
-      await signOut(auth);
-      router.replace(isAdminRegistration ? '/auth/login' : '/auth/pending-approval');
+      // IMPORTANT FIX: Do not sign out here. Let onAuthStateChanged handle the new user state.
+      // The router will redirect based on the new user's profile.
+      // Let's redirect manually to make it clear.
+      router.replace(isAdminRegistration ? '/admin' : '/auth/pending-approval');
 
     } catch(error: any) {
         if (newFirebaseUser) {
+            // Attempt to clean up orphaned auth user if firestore write failed
             await newFirebaseUser.delete().catch(e => console.error("Failed to delete orphaned auth user:", e));
         }
         let errorMessage = error.message;
         if (error.code === 'auth/email-already-in-use') {
             errorMessage = t('toast.signup.error.emailExists');
         } else if (error.code === 'auth/weak-password') {
-            errorMessage = 'Slaptažodis yra per silpnas. Jis turi būti bent 8 simbolių ilgio.';
+            errorMessage = t('signup.form.password.label') + ' must be at least 8 characters long.';
         }
         toast({ variant: 'destructive', title: t('toast.signup.error.title'), description: errorMessage });
     } finally {
