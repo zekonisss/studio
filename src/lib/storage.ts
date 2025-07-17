@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { Report, UserProfile, SearchLog, AuditLogEntry, UserNotification } from '@/types';
@@ -126,11 +127,12 @@ export async function getAllReports(): Promise<Report[]> {
     }
 }
 
-export async function addReport(reportData: Omit<Report, 'id' | 'createdAt'>): Promise<void> {
+export async function addReport(reportData: Omit<Report, 'id' | 'createdAt' | 'deletedAt'>): Promise<void> {
     try {
         const reportWithTimestamp = {
             ...reportData,
-            createdAt: Timestamp.now()
+            createdAt: Timestamp.now(),
+            deletedAt: null,
         };
         await addDoc(collection(db, REPORTS_COLLECTION), reportWithTimestamp);
     } catch (error) {
@@ -184,7 +186,7 @@ export async function getUserReports(userId: string): Promise<{ active: Report[]
         const allUserReports = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as Report);
 
         const active = allUserReports.filter(r => !r.deletedAt).sort((a, b) => (b.createdAt as Timestamp).toMillis() - (a.createdAt as Timestamp).toMillis());
-        const deleted = allUserReports.filter(r => !!r.deletedAt).sort((a, b) => (b.deletedAt as Timestamp).toMillis() - (a.deletedAt as Timestamp).toMillis());
+        const deleted = allUserReports.filter(r => !!r.deletedAt && r.deletedAt instanceof Timestamp).sort((a, b) => (b.deletedAt as Timestamp).toMillis() - (a.deletedAt as Timestamp).toMillis());
         
         return { active, deleted };
     } catch (error) {

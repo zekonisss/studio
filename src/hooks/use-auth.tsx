@@ -35,33 +35,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { t } = useLanguage();
   const router = useRouter();
 
-  const handleUserAuth = useCallback(async (firebaseUser: FirebaseUser | null) => {
-    if (firebaseUser) {
-      try {
-        const userProfile = await storage.getUserById(firebaseUser.uid);
-        if (userProfile) {
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        try {
+          const userProfile = await storage.getUserById(firebaseUser.uid);
           setUser(userProfile);
-        } else {
-          // This case might happen if a user is created in Auth but Firestore doc fails
-          console.warn(`User ${firebaseUser.uid} exists in Auth, but not in Firestore. Logging out.`);
-          await signOut(auth);
+        } catch (error) {
+          console.error("Error fetching user profile on auth state change:", error);
           setUser(null);
         }
-      } catch (error) {
-        console.error("Error fetching user profile:", error);
-        await signOut(auth);
+      } else {
         setUser(null);
       }
-    } else {
-      setUser(null);
-    }
-    setLoading(false);
-  }, []);
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, handleUserAuth);
+      setLoading(false);
+    });
     return () => unsubscribe();
-  }, [handleUserAuth]);
+  }, []);
 
   const updateUserInContext = async (updatedUser: UserProfile) => {
     setUser(updatedUser);
@@ -72,17 +62,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     try {
       const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
-      const firebaseUser = userCredential.user;
-      
-      const userProfile = await storage.getUserById(firebaseUser.uid);
+      const userProfile = await storage.getUserById(userCredential.user.uid);
 
       if (!userProfile) {
         await signOut(auth);
         throw new Error(t('toast.login.error.descriptionGeneric'));
       }
-      
+
+      // Main Logic Check: Admin or Active User
       if (userProfile.isAdmin || userProfile.paymentStatus === 'active') {
-        setUser(userProfile); // Manually set user for faster UI update
+        setUser(userProfile);
         toast({
           title: t('toast.login.success.title'),
           description: t('toast.login.success.description'),
@@ -90,25 +79,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const targetPath = userProfile.isAdmin ? '/admin' : '/dashboard';
         router.replace(targetPath);
       } else {
-          let errorMsg = t('toast.login.error.accessDenied');
-          if (userProfile.paymentStatus === 'pending_verification') {
-              errorMsg = t('toast.login.error.pendingVerification');
-          } else if (userProfile.paymentStatus === 'pending_payment') {
-              errorMsg = t('toast.login.error.pendingPayment');
-          } else if (userProfile.paymentStatus === 'inactive') {
-              errorMsg = t('toast.login.error.inactive');
-          }
-          await signOut(auth);
-          setUser(null);
-          throw new Error(errorMsg);
+        // Handle specific non-active statuses
+        await signOut(auth); // Log out user as they don't have access
+        let errorMsg;
+        switch (userProfile.paymentStatus) {
+            case 'pending_verification':
+                errorMsg = t('toast.login.error.pendingVerification');
+                break;
+            case 'pending_payment':
+                errorMsg = t('toast.login.error.pendingPayment');
+                break;
+            case 'inactive':
+                errorMsg = t('toast.login.error.inactive');
+                break;
+            default:
+                errorMsg = t('toast.login.error.accessDenied');
+        }
+        throw new Error(errorMsg);
       }
     } catch (error: any) {
-      setUser(null);
-      let description = t('toast.login.error.descriptionGeneric');
+      let description = error.message;
       if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-          description = t('toast.login.error.invalidCredentials');
-      } else if (error.message) {
-          description = error.message;
+        description = t('toast.login.error.invalidCredentials');
       }
       toast({
         variant: 'destructive',
@@ -134,7 +126,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       const isAdminRegistration = newFirebaseUser.email?.toLowerCase() === 'sarunas.zekonis@gmail.com';
       
-      const newUserProfile: UserProfile = {
+      const newUserProfile: Omit<UserProfile, 'registeredAt'> = {
           id: newFirebaseUser.uid,
           companyName: values.companyName,
           companyCode: values.companyCode,
@@ -148,21 +140,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           subUsers: [],
           vatCode: values.vatCode || '',
           accountActivatedAt: isAdminRegistration ? new Date().toISOString() : undefined,
-          // registeredAt is handled by Firestore server timestamp in addUserProfile
       };
 
-      await storage.addUserProfile(newUserProfile);
+      await storage.addUserProfile(newUserProfile as UserProfile);
       
       toast({
           title: t('toast.signup.success.title'),
           description: t('toast.signup.success.description'),
       });
       
+      // After successful registration and profile creation, log the user out
+      // to force them to the correct pending/login page.
       await signOut(auth);
       router.replace(isAdminRegistration ? '/auth/login' : '/auth/pending-approval');
 
     } catch(error: any) {
         if (newFirebaseUser) {
+            // Clean up orphaned Firebase Auth user if Firestore doc creation failed
             await newFirebaseUser.delete().catch(e => console.error("Failed to delete orphaned auth user:", e));
         }
         let errorMessage = error.message;

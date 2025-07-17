@@ -113,7 +113,7 @@ export default function AddReportPage() {
     }
     
     try {
-        const newReportData: Omit<Report, 'id' | 'createdAt'> = {
+        const newReportData: Omit<Report, 'id' | 'createdAt' | 'deletedAt'> = {
           reporterId: user.id,
           reporterCompanyName: user.companyName,
           fullName: values.fullName,

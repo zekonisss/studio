@@ -42,8 +42,8 @@ export interface Report {
   comment: string;
   imageUrl?: string;
   dataAiHint?: string;
-  createdAt: Timestamp; // Changed to always be a Timestamp for consistency from Firestore
-  deletedAt?: Timestamp;
+  createdAt: Timestamp;
+  deletedAt: Timestamp | null;
 }
 
 
