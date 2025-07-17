@@ -83,10 +83,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (userProfile.isAdmin) {
         router.replace('/admin');
         toast({ title: t('toast.login.success.title') });
-        return;
-      }
-
-      if (userProfile.paymentStatus === 'active') {
+      } else if (userProfile.paymentStatus === 'active') {
         router.replace('/dashboard');
         toast({ title: t('toast.login.success.title') });
       } else if (userProfile.paymentStatus === 'pending_verification' || userProfile.paymentStatus === 'pending_payment'){
@@ -119,6 +116,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
  const signup = async (values: SignUpFormValues): Promise<void> => {
+    if (loading) return;
     setLoading(true);
     try {
       const existingUser = await storage.findUserByEmail(values.email);
@@ -142,11 +140,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           isAdmin: isAdmin,
           agreeToTerms: values.agreeToTerms,
           registeredAt: Timestamp.now(),
-          accountActivatedAt: isAdmin ? Timestamp.now() : undefined,
+          accountActivatedAt: isAdmin ? Timestamp.now() : null,
           subUsers: [],
       };
       
-      await setDoc(doc(db, "users", firebaseUser.uid), userProfileData);
+      await setDoc(doc(db, "users", firebaseUser.uid), userProfileData as UserProfile);
 
       toast({
           title: t('toast.signup.success.title'),
