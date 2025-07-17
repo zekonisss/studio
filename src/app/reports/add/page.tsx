@@ -21,7 +21,8 @@ import { useRouter } from "next/navigation";
 import { useLanguage } from "@/contexts/language-context"; 
 import * as storage from '@/lib/storage';
 import { categorizeReport } from '@/ai/flows/categorize-report-flow';
-import type { Timestamp } from "firebase/firestore";
+import { Timestamp } from "firebase/firestore";
+
 
 export default function AddReportPage() {
   const { user } = useAuth();
@@ -127,7 +128,7 @@ export default function AddReportPage() {
           dataAiHint: values.image ? "entry attachment" : undefined,
         };
 
-        await storage.addReport(newReportData as Omit<Report, 'id' | 'createdAt'>);
+        await storage.addReport(newReportData);
         
         toast({
           title: t('reports.add.toast.success.title'),

@@ -1,0 +1,335 @@
+
+"use client";
+
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import type { Report } from "@/types";
+import { useAuth } from "@/hooks/use-auth";
+import { Loader2, History as HistoryIcon, User, CalendarDays, Tag, MessageSquare, AlertTriangle, Trash2, Eye, PlusCircle, Building2, Image as ImageIcon, FileText, Globe, Layers } from "lucide-react";
+import { format as formatDateFn } from 'date-fns';
+import { lt, enUS } from 'date-fns/locale';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
+import { countries, detailedReportCategories, DESTRUCTIVE_REPORT_MAIN_CATEGORIES } from "@/types";
+import * as storage from '@/lib/storage';
+import { useLanguage } from "@/contexts/language-context";
+import type { Timestamp } from "firebase/firestore";
+
+export default function ReportHistoryPage() {
+  const { user, loading: authLoading } = useAuth();
+  const { toast } = useToast();
+  const { t, locale } = useLanguage();
+  const [reports, setReports] = useState<Report[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [selectedReportForDetails, setSelectedReportForDetails] = useState<Report | null>(null);
+
+  const dateLocale = locale === 'en' ? enUS : lt;
+  
+  const formatDateSafe = (date: Date | Timestamp, formatString = "yyyy-MM-dd HH:mm") => {
+      const dateObj = (date as Timestamp).toDate ? (date as Timestamp).toDate() : (date as Date);
+      return formatDateFn(dateObj, formatString, { locale: dateLocale });
+  }
+
+  useEffect(() => {
+    if (!authLoading && user) {
+      const fetchReports = async () => {
+        setIsLoading(true);
+        try {
+            const { active } = await storage.getUserReports(user.id);
+            setReports(active);
+        } catch(error) {
+            console.error("Failed to fetch user reports:", error);
+            toast({ variant: "destructive", title: "Klaida", description: "Nepavyko gauti jūsų įrašų." });
+        } finally {
+            setIsLoading(false);
+        }
+      };
+      fetchReports();
+    } else if (!authLoading && !user) {
+      setIsLoading(false);
+      setReports([]);
+    }
+  }, [user, authLoading, toast]);
+
+  const handleDeleteReport = async (reportId: string) => {
+    setDeletingId(reportId);
+    try {
+        await storage.softDeleteReport(reportId);
+        setReports(prevReports => prevReports.filter(report => report.id !== reportId));
+        toast({
+            title: t('reports.history.toast.deleted.title'),
+            description: t('reports.history.toast.deleted.description'),
+        });
+    } catch(error) {
+        console.error("Failed to delete report:", error);
+        toast({ variant: "destructive", title: "Klaida", description: "Nepavyko ištrinti įrašo." });
+    } finally {
+        setDeletingId(null);
+    }
+  };
+
+  const handleViewDetails = (report: Report) => {
+    setSelectedReportForDetails(report);
+  };
+
+  const closeDetailsModal = () => {
+    setSelectedReportForDetails(null);
+  };
+
+  const getNationalityLabel = (nationalityCode?: string): string => {
+    if (!nationalityCode) return t('common.notSpecified');
+    const country = countries.find(c => c.value === nationalityCode);
+    return country ? t('countries.' + country.value) : nationalityCode;
+  };
+
+  const getCategoryName = (categoryId: string): string => {
+    const category = detailedReportCategories.find(c => c.id === categoryId);
+    return category ? t(category.nameKey) : categoryId;
+  };
+
+  if (authLoading) {
+    return (
+      <div className="flex justify-center items-center h-[calc(100vh-10rem)]">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!user) {
+     return (
+        <div className="container mx-auto py-8 text-center">
+            <AlertTriangle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h1 className="text-xl font-semibold">{t('reports.history.notLoggedIn.title')}</h1>
+            <p className="text-muted-foreground">{t('reports.history.notLoggedIn.message')}</p>
+            <Button asChild className="mt-4">
+                <Link href="/auth/login">{t('login.loginButton')}</Link>
+            </Button>
+        </div>
+    );
+  }
+
+   if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-[calc(100vh-10rem)]">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto py-8">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground flex items-center">
+            <HistoryIcon className="mr-3 h-8 w-8 text-primary" />
+            {t('reports.history.pageTitle')}
+          </h1>
+          <p className="text-muted-foreground mt-1">{t('reports.history.pageDescription')}</p>
+        </div>
+        <Button asChild>
+          <Link href="/reports/add">
+            <PlusCircle className="mr-2 h-5 w-5" />
+            {t('reports.history.addNewButton')}
+          </Link>
+        </Button>
+      </div>
+
+      {reports.length === 0 ? (
+        <Card className="shadow-md text-center">
+          <CardHeader>
+            <AlertTriangle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <CardTitle className="text-xl">{t('reports.history.noEntries.title')}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground">
+              {t('reports.history.noEntries.message')}
+            </p>
+          </CardContent>
+          <CardFooter className="justify-center">
+            <Button asChild>
+              <Link href="/reports/add">{t('reports.history.noEntries.createFirstButton')}</Link>
+            </Button>
+          </CardFooter>
+        </Card>
+      ) : (
+        <div className="space-y-6">
+          {reports.map((report) => (
+            <Card key={report.id} className="shadow-lg hover:shadow-xl transition-shadow">
+              <CardHeader className="pb-4">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle className="text-xl flex items-center mb-1">
+                      <User className="mr-2 h-5 w-5 text-primary" />
+                      {report.fullName}
+                    </CardTitle>
+                    <CardDescription className="text-sm">
+                      {t('reports.history.entry.submittedOn')}: {formatDateSafe(report.createdAt)}
+                    </CardDescription>
+                  </div>
+                  <Badge variant={DESTRUCTIVE_REPORT_MAIN_CATEGORIES.includes(report.category) ? 'destructive' : 'secondary'}>
+                    {getCategoryName(report.category)}
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="py-2 space-y-3">
+                <p className="text-muted-foreground line-clamp-3"><MessageSquare className="inline h-4 w-4 mr-1.5 relative -top-0.5" />{report.comment}</p>
+                {report.tags && report.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {report.tags.map(tagKey => (
+                       <Badge key={tagKey} variant="outline"><Tag className="inline h-3 w-3 mr-1" />{t(`tags.${tagKey}`)}</Badge>
+                    ))}
+                  </div>
+                )}
+                 {report.imageUrl && (
+                    <div className="mt-2">
+                        <p className="text-xs text-muted-foreground">{t('reports.history.entry.attachedFileDemo')}:</p>
+                        <Link href={report.imageUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline truncate block max-w-xs">
+                           {report.imageUrl}
+                        </Link>
+                    </div>
+                  )}
+              </CardContent>
+              <CardFooter className="flex justify-end gap-2 pt-4">
+                 <Button variant="ghost" size="sm" onClick={() => handleViewDetails(report)}>
+                    <Eye className="mr-2 h-4 w-4" />
+                    {t('reports.history.entry.viewDetailsButton')}
+                  </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" size="sm" disabled={deletingId === report.id || report.reporterId !== user?.id}>
+                      {deletingId === report.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
+                      {t('reports.history.entry.deleteButton')}
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>{t('reports.history.deleteDialog.title')}</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        {t('reports.history.deleteDialog.description', { fullName: report.fullName })}
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => handleDeleteReport(report.id)} className="bg-destructive hover:bg-destructive/90">
+                        {t('reports.history.deleteDialog.confirmButton')}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {selectedReportForDetails && (
+        <Dialog open={!!selectedReportForDetails} onOpenChange={(isOpen) => { if (!isOpen) closeDetailsModal(); }}>
+          <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="flex items-center text-xl">
+                <FileText className="mr-2 h-5 w-5 text-primary" /> {t('reports.history.detailsModal.title')}
+              </DialogTitle>
+              <DialogDescription>
+                {t('reports.history.detailsModal.description')}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4 space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+              <div className="space-y-1">
+                <h4 className="text-sm font-medium text-muted-foreground flex items-center"><User className="mr-2 h-4 w-4" />{t('reports.history.detailsModal.driver')}</h4>
+                <p className="text-base text-foreground">{selectedReportForDetails.fullName}</p>
+              </div>
+              {selectedReportForDetails.nationality && (
+                <div className="space-y-1">
+                  <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Globe className="mr-2 h-4 w-4" />{t('reports.history.detailsModal.nationality')}</h4>
+                  <p className="text-base text-foreground">{getNationalityLabel(selectedReportForDetails.nationality)}</p>
+                </div>
+              )}
+              {selectedReportForDetails.birthYear && (
+                <div className="space-y-1">
+                  <h4 className="text-sm font-medium text-muted-foreground flex items-center"><CalendarDays className="mr-2 h-4 w-4" />{t('reports.history.detailsModal.birthYear')}</h4>
+                  <p className="text-base text-foreground">{selectedReportForDetails.birthYear}</p>
+                </div>
+              )}
+              <div className="space-y-1">
+                <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Layers className="mr-2 h-4 w-4" />{t('reports.history.detailsModal.mainCategory')}</h4>
+                <Badge
+                  variant={DESTRUCTIVE_REPORT_MAIN_CATEGORIES.includes(selectedReportForDetails.category) ? 'destructive' : 'secondary'}
+                  className="text-sm"
+                >
+                  {getCategoryName(selectedReportForDetails.category)}
+                </Badge>
+              </div>
+              {selectedReportForDetails.tags && selectedReportForDetails.tags.length > 0 && (
+                <div className="space-y-1">
+                  <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Tag className="mr-2 h-4 w-4" />{t('reports.history.detailsModal.tags')}</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedReportForDetails.tags.map(tagKey => (
+                      <Badge key={tagKey} variant="outline" className="text-sm">{t(`tags.${tagKey}`)}</Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div className="space-y-1">
+                <h4 className="text-sm font-medium text-muted-foreground flex items-center"><MessageSquare className="mr-2 h-4 w-4" />{t('reports.history.detailsModal.comment')}</h4>
+                <p className="text-base text-foreground whitespace-pre-wrap bg-secondary/30 p-3 rounded-md">{selectedReportForDetails.comment}</p>
+              </div>
+              {selectedReportForDetails.imageUrl && (
+                <div className="space-y-1">
+                  <h4 className="text-sm font-medium text-muted-foreground flex items-center"><ImageIcon className="mr-2 h-4 w-4" />{t('reports.history.detailsModal.attachedFile')}</h4>
+                  <div className="w-full overflow-hidden rounded-md border">
+                    <Image
+                        src={selectedReportForDetails.imageUrl}
+                        alt={t('reports.history.detailsModal.imageAlt', { fullName: selectedReportForDetails.fullName })}
+                        width={600}
+                        height={400}
+                        layout="responsive"
+                        objectFit="contain"
+                        data-ai-hint={selectedReportForDetails.dataAiHint || "entry image"}
+                    />
+                  </div>
+                </div>
+              )}
+               <div className="space-y-1">
+                <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Building2 className="mr-2 h-4 w-4" />{t('reports.history.detailsModal.submittedByCompany')}</h4>
+                <p className="text-base text-foreground">{selectedReportForDetails.reporterCompanyName || t('common.notSpecified')}</p>
+              </div>
+               <div className="space-y-1">
+                <h4 className="text-sm font-medium text-muted-foreground flex items-center"><CalendarDays className="mr-2 h-4 w-4" />{t('reports.history.detailsModal.submissionDate')}</h4>
+                <p className="text-base text-foreground">{formatDateSafe(selectedReportForDetails.createdAt, "yyyy-MM-dd HH:mm:ss")}</p>
+              </div>
+            </div>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button type="button" variant="outline">{t('common.close')}</Button>
+              </DialogClose>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+    </div>
+  );
+}
