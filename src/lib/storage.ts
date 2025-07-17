@@ -1,4 +1,6 @@
 
+"use client";
+
 import type { Report, UserProfile, SearchLog, AuditLogEntry, UserNotification } from '@/types';
 import { db } from '@/lib/firebase';
 import { 
@@ -128,18 +130,12 @@ export async function getAllReports(): Promise<Report[]> {
     }
 }
 
-export async function addReport(reportData: Omit<Report, 'id' | 'createdAt'>): Promise<void> {
+export async function addReport(reportData: Omit<Report, 'id'>): Promise<void> {
     if (!isBrowser) return;
     try {
-        // The createdAt field should be a Firestore Timestamp for proper server-side ordering.
-        const dataWithTimestamp = {
-            ...reportData,
-            createdAt: Timestamp.fromDate(new Date()),
-        };
-        await addDoc(collection(db, REPORTS_COLLECTION), dataWithTimestamp);
+        await addDoc(collection(db, REPORTS_COLLECTION), reportData);
     } catch (error) {
         console.error("Error adding report:", error);
-        // Provide a more specific error for permission issues
         if (error instanceof Error && 'code' in error && (error as any).code === 'permission-denied') {
              throw new Error("Permission denied. Check Firestore security rules for the 'reports' collection.");
         }

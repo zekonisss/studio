@@ -18,6 +18,7 @@ import * as storage from '@/lib/storage';
 import { useRouter } from "next/navigation";
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Timestamp } from 'firebase/firestore';
 
 interface ParsedRow {
   id: number; // Unique ID for React key
@@ -308,7 +309,7 @@ export default function ImportReportsPage() {
           comment: row.reportPreview.comment!,
           imageUrl: row.reportPreview.imageUrl,
           dataAiHint: row.reportPreview.dataAiHint,
-          createdAt: row.reportPreview.createdAt || new Date(),
+          createdAt: row.reportPreview.createdAt ? Timestamp.fromDate(new Date(row.reportPreview.createdAt)) : Timestamp.now(),
         };
         await storage.addReport(newReport);
         successCount++;
