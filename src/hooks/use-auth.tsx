@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { UserProfile } from '@/types';
@@ -122,11 +123,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signup = async (values: SignUpFormValues): Promise<void> => {
-    setLoading(true);
+    setIsSubmitting(true);
     console.log("Signup: Starting registration for email:", values.email);
 
     try {
-      // Step 1: Check if user already exists in Firestore (reliable way)
       console.log("Signup: Checking for existing user by email...");
       const existingUser = await storage.findUserByEmail(values.email);
       if (existingUser) {
@@ -134,12 +134,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
       console.log("Signup: No existing user found. Proceeding with auth creation.");
 
-      // Step 2: Create user in Firebase Authentication
+      console.log("Creating user...");
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       const { user: firebaseUser } = userCredential;
-      console.log("Signup: Auth user created, UID:", firebaseUser.uid);
+      console.log("Created user, UID:", firebaseUser.uid);
 
-      // Step 3: Create user profile document in Firestore
       const isAdmin = firebaseUser.email?.toLowerCase() === 'sarunas.zekonis@gmail.com';
       const userProfileData: Omit<UserProfile, 'id'> = {
           email: values.email.toLowerCase(),
@@ -157,11 +156,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           subUsers: [],
       };
       
-      console.log("Signup: Attempting to save profile to Firestore...");
+      console.log("Saving profile...");
       await setDoc(doc(db, "users", firebaseUser.uid), userProfileData as UserProfile);
-      console.log("Signup: Profile saved to Firestore successfully!");
+      console.log("Profile saved!");
 
-      // Step 4: Show success and redirect
       toast({
           title: t('toast.signup.success.title'),
           description: t('toast.signup.success.description'),
@@ -173,12 +171,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } catch(error: any) {
         console.error("Signup: An error occurred.", error);
         let errorMessage = error.message || t('toast.signup.error.descriptionGeneric');
-        if (error.code === 'auth/email-already-in-use') {
+        if (error.code === 'auth/email-already-in-use' || errorMessage === t('toast.signup.error.emailExists')) {
             errorMessage = t('toast.signup.error.emailExists');
         }
         toast({ variant: 'destructive', title: t('toast.signup.error.title'), description: errorMessage });
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
       console.log("Signup: Process finished, loading set to false.");
     }
   };
