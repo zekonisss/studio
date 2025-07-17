@@ -21,7 +21,7 @@ interface AuthContextType {
   user: UserProfile | null;
   loading: boolean;
   login: (values: LoginFormValues) => Promise<boolean>;
-  signup: (values: SignUpFormValues) => Promise<boolean>;
+  signup: (values: SignUpFormValues) => Promise<void>;
   logout: () => Promise<void>;
   updateUserInContext: (updatedUser: UserProfile) => Promise<void>;
 }
@@ -39,26 +39,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
      const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
         if (firebaseUser) {
-          // If a user is logged in but we don't have their profile in the state yet, fetch it.
-          // This handles cases like page refresh.
-          if (!user || user.id !== firebaseUser.uid) {
-            try {
-                const userProfile = await storage.getUserById(firebaseUser.uid);
-                if (userProfile) {
-                    setUser(userProfile);
-                } else {
-                     // This can happen briefly after registration before the Firestore doc is created.
-                     // It can also happen if the user was deleted from Firestore but not Auth.
-                     // We log them out to be safe.
-                     console.warn(`User ${firebaseUser.uid} exists in Auth, but not in Firestore. Logging out.`);
-                     await signOut(auth);
-                     setUser(null);
-                }
-            } catch (error) {
-                console.error("Error fetching user profile on auth state change:", error);
-                await signOut(auth);
-                setUser(null);
-            }
+          try {
+              const userProfile = await storage.getUserById(firebaseUser.uid);
+              if (userProfile) {
+                  setUser(userProfile);
+              } else {
+                   console.warn(`User ${firebaseUser.uid} exists in Auth, but not in Firestore. Logging out.`);
+                   await signOut(auth);
+                   setUser(null);
+              }
+          } catch (error) {
+              console.error("Error fetching user profile on auth state change:", error);
+              toast({
+                variant: 'destructive',
+                title: 'Klaida gaunant profilį',
+                description: 'Nepavyko gauti vartotojo profilio. Bandykite prisijungti iš naujo.',
+              });
+              await signOut(auth);
+              setUser(null);
           }
         } else {
           setUser(null);
@@ -85,20 +83,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const userProfile = await storage.getUserById(firebaseUser.uid);
 
       if (!userProfile) {
-        // This case should be rare if signup is working correctly, but it's a good safeguard.
-        throw new Error("User profile not found in database.");
+        throw new Error("Vartotojo profilis nerastas duomenų bazėje.");
       }
       
-      if (!userProfile.isAdmin) {
-        if (userProfile.paymentStatus === 'pending_verification') {
-            throw new Error(t('toast.login.error.pendingVerification'));
-        }
-        if (userProfile.paymentStatus === 'pending_payment') {
-            throw new Error(t('toast.login.error.pendingPayment'));
-        }
-        if (userProfile.paymentStatus === 'inactive') {
-            throw new Error(t('toast.login.error.inactive'));
-        }
+      // Admin can always log in. Regular users must have an active status.
+      if (!userProfile.isAdmin && userProfile.paymentStatus !== 'active') {
+          if (userProfile.paymentStatus === 'pending_verification') {
+              throw new Error(t('toast.login.error.pendingVerification'));
+          }
+          if (userProfile.paymentStatus === 'pending_payment') {
+              throw new Error(t('toast.login.error.pendingPayment'));
+          }
+          if (userProfile.paymentStatus === 'inactive') {
+              throw new Error(t('toast.login.error.inactive'));
+          }
       }
       
       setUser(userProfile); 
@@ -117,8 +115,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
           description = t('toast.login.error.invalidCredentials');
-      } else if (error.code === 'permission-denied') {
-          description = "Database access denied. Check Firestore security rules.";
       } else if (error.message) {
           description = error.message;
       }
@@ -134,59 +130,51 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
- const signup = async (values: SignUpFormValues): Promise<boolean> => {
-    setLoading(true);
+ const signup = async (values: SignUpFormValues): Promise<void> => {
+    setIsSubmitting(true);
     try {
+      // 1. Check if user already exists in Firestore by email
       const existingUser = await storage.findUserByEmail(values.email);
       if (existingUser) {
           throw { code: 'auth/email-already-in-use' };
       }
         
+      // 2. Create user in Firebase Authentication
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       const newFirebaseUser = userCredential.user;
 
-      const userToCreate: Omit<UserProfile, 'id'> = {
-        companyName: values.companyName,
-        companyCode: values.companyCode,
-        address: values.address,
-        contactPerson: values.contactPerson,
-        email: values.email.toLowerCase(),
-        phone: values.phone,
-        paymentStatus: 'pending_verification',
-        isAdmin: false,
-        registeredAt: new Date().toISOString(),
-        agreeToTerms: values.agreeToTerms,
-        subUsers: [],
-        vatCode: values.vatCode || '',
-      };
-      
-      const isAdminRegistration = values.email.toLowerCase() === 'sarunas.zekonis@gmail.com';
-      if (isAdminRegistration) {
-          userToCreate.isAdmin = true;
-          userToCreate.paymentStatus = 'active';
-          userToCreate.accountActivatedAt = new Date().toISOString();
-      }
-
+      // 3. Prepare user profile data for Firestore
+      const isAdminRegistration = newFirebaseUser.email?.toLowerCase() === 'sarunas.zekonis@gmail.com';
       const finalUser: UserProfile = {
           id: newFirebaseUser.uid,
-          ...userToCreate,
+          companyName: values.companyName,
+          companyCode: values.companyCode,
+          address: values.address,
+          contactPerson: values.contactPerson,
+          email: values.email.toLowerCase(),
+          phone: values.phone,
+          paymentStatus: isAdminRegistration ? 'active' : 'pending_verification',
+          isAdmin: isAdminRegistration,
+          registeredAt: new Date().toISOString(),
+          agreeToTerms: values.agreeToTerms,
+          subUsers: [],
+          vatCode: values.vatCode || '',
+          accountActivatedAt: isAdminRegistration ? new Date().toISOString() : undefined,
       };
       
+      // 4. Save the complete profile to Firestore
       await storage.addUserProfile(finalUser);
       
-      // Manually set the user in state immediately to prevent race conditions
-      // with the onAuthStateChanged listener.
+      // 5. IMPORTANT: Manually set user state and redirect
+      // This avoids the race condition with onAuthStateChanged
       setUser(finalUser);
-
+      
       toast({
           title: t('toast.signup.success.title'),
           description: t('toast.signup.success.description'),
       });
       
-      // Redirect after successful registration
       router.push(finalUser.isAdmin ? '/admin' : '/auth/pending-approval');
-      
-      return true;
 
     } catch (error: any) {
       console.error('Signup error in useAuth:', error);
@@ -207,9 +195,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         title: t('toast.signup.error.title'),
         description: errorMessage,
       });
-      return false;
     } finally {
-        setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -227,6 +214,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
     }
   };
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const value = { user, loading, login, signup, logout, updateUserInContext };
 
