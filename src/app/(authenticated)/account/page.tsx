@@ -19,6 +19,7 @@ import { getCategoryNameForDisplay } from '@/types';
 import * as storage from '@/lib/storage';
 import { InfoField } from "@/components/account/InfoField";
 import { useToast } from "@/hooks/use-toast";
+import type { Timestamp } from "firebase/firestore";
 
 
 export default function AccountPage() {
@@ -137,6 +138,23 @@ export default function AccountPage() {
     setActiveTab(value);
     router.push(`/account?tab=${value}`, { scroll: false });
   };
+  
+  const getSafeDate = (dateValue: UserProfile['accountActivatedAt']) => {
+    if (!dateValue) return null;
+    if (typeof (dateValue as Timestamp)?.toDate === 'function') {
+      return (dateValue as Timestamp).toDate();
+    }
+    if (typeof dateValue === 'string' || typeof dateValue === 'number' || dateValue instanceof Date) {
+        const date = new Date(dateValue);
+        if (!isNaN(date.getTime())) {
+            return date;
+        }
+    }
+    return null;
+  }
+  
+  const activationDate = getSafeDate(user?.accountActivatedAt);
+
 
   if (authLoading || !user) {
     return (
@@ -221,7 +239,7 @@ export default function AccountPage() {
                         <Badge variant="secondary">{getCategoryNameForDisplay(report.category, t)}</Badge> 
                       </div>
                       <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{report.comment}</p>
-                      <p className="text-xs text-muted-foreground mt-2">{t('account.entries.submittedOn')}: {formatDateFn(report.createdAt, "yyyy-MM-dd HH:mm", { locale: dateLocale })}</p>
+                      <p className="text-xs text-muted-foreground mt-2">{t('account.entries.submittedOn')}: {formatDateFn(report.createdAt.toDate(), "yyyy-MM-dd HH:mm", { locale: dateLocale })}</p>
                     </li>
                   ))}
                 </ul>
@@ -249,7 +267,7 @@ export default function AccountPage() {
                       <div className="flex justify-between items-start">
                         <div>
                           <h4 className="font-semibold text-foreground">{report.fullName}</h4>
-                          <p className="text-xs text-muted-foreground mt-1">{t('account.entries.deletedOn')}: {formatDateFn(new Date(report.deletedAt!), "yyyy-MM-dd HH:mm", { locale: dateLocale })}</p>
+                          <p className="text-xs text-muted-foreground mt-1">{t('account.entries.deletedOn')}: {formatDateFn(report.deletedAt!.toDate(), "yyyy-MM-dd HH:mm", { locale: dateLocale })}</p>
                         </div>
                         <Badge variant="destructive">{getCategoryNameForDisplay(report.category, t)}</Badge> 
                       </div>
@@ -289,7 +307,7 @@ export default function AccountPage() {
                     <CardDescription>{t('account.payments.description')}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                    {user.paymentStatus === 'active' && user.accountActivatedAt ? (
+                    {user.paymentStatus === 'active' && activationDate ? (
                         <div className="p-6 border rounded-lg bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-700">
                             <div className="flex items-center">
                                 <ShieldCheck className="h-8 w-8 text-green-600 mr-4"/>
@@ -299,7 +317,7 @@ export default function AccountPage() {
                                 </div>
                             </div>
                             <p className="mt-3 text-sm text-green-600 dark:text-green-400">
-                                {t('account.payments.status.active.validUntil')}: <span className="font-medium">{formatDateFn(addYears(new Date(user.accountActivatedAt), 1), "yyyy 'm.' MMMM dd 'd.'", { locale: dateLocale })}</span>
+                                {t('account.payments.status.active.validUntil')}: <span className="font-medium">{formatDateFn(addYears(activationDate, 1), "yyyy 'm.' MMMM dd 'd.'", { locale: dateLocale })}</span>
                             </p>
                              <p className="text-sm text-green-600 dark:text-green-400">{t('account.payments.status.active.priceInfo', { monthlyPrice: '29.99', annualPrice: '359.99' })}</p>
                         </div>
@@ -396,7 +414,7 @@ export default function AccountPage() {
                       </p>
                       <div className="flex justify-between items-center mt-2">
                         <p className="text-xs text-muted-foreground">
-                          {formatDateFn(new Date(notif.createdAt), "yyyy-MM-dd HH:mm", { locale: dateLocale })}
+                          {formatDateFn(notif.createdAt.toDate(), "yyyy-MM-dd HH:mm", { locale: dateLocale })}
                         </p>
                         {notif.link && (
                           <Button variant="link" size="sm" asChild className="p-0 h-auto">

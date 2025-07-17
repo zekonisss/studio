@@ -54,9 +54,23 @@ export default function AdminPage() {
 
   const dateLocale = locale === 'en' ? enUS : lt;
   
-  const formatDateSafe = (date: Date | Timestamp | string | undefined, formatString: string = "yyyy-MM-dd HH:mm") => {
-      if (!date) return t('common.notSpecified');
-      const dateObj = typeof date === 'string' ? new Date(date) : ((date as Timestamp).toDate ? (date as Timestamp).toDate() : (date as Date));
+  const getSafeDate = (dateValue?: string | Date | Timestamp) => {
+    if (!dateValue) return null;
+    if (typeof (dateValue as Timestamp)?.toDate === 'function') {
+      return (dateValue as Timestamp).toDate();
+    }
+    if (typeof dateValue === 'string' || typeof dateValue === 'number' || dateValue instanceof Date) {
+        const date = new Date(dateValue);
+        if (!isNaN(date.getTime())) {
+            return date;
+        }
+    }
+    return null;
+  }
+  
+  const formatDateSafe = (dateValue: Date | Timestamp | string | undefined, formatString: string = "yyyy-MM-dd HH:mm") => {
+      const dateObj = getSafeDate(dateValue);
+      if (!dateObj) return t('common.notSpecified');
       return formatDateFn(dateObj, formatString, { locale: dateLocale });
   }
 
@@ -155,8 +169,8 @@ export default function AdminPage() {
       users.sort((a, b) => (a.companyName || "").localeCompare(b.companyName || "", locale));
     } else if (userDisplayOption === 'byRegistrationDate') {
       users.sort((a, b) => {
-        const dateA = a.registeredAt ? new Date(a.registeredAt as string).getTime() : 0;
-        const dateB = b.registeredAt ? new Date(b.registeredAt as string).getTime() : 0;
+        const dateA = getSafeDate(a.registeredAt)?.getTime() ?? 0;
+        const dateB = getSafeDate(b.registeredAt)?.getTime() ?? 0;
         return dateB - dateA; 
       });
     }
@@ -637,7 +651,7 @@ export default function AdminPage() {
                         </TableCell>
                         <TableCell className="hidden md:table-cell">{report.reporterCompanyName || t('common.notSpecified')}</TableCell>
                         <TableCell className="text-center hidden lg:table-cell text-muted-foreground">
-                          {formatDateSafe(report.createdAt)}
+                          {formatDateSafe(report.createdAt.toDate())}
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex gap-1 justify-end">
@@ -704,7 +718,7 @@ export default function AdminPage() {
                     {auditLogs.map((log) => (
                       <TableRow key={log.id}>
                         <TableCell className="text-xs text-muted-foreground">
-                          {formatDateSafe(log.timestamp, "yyyy-MM-dd HH:mm:ss")}
+                          {formatDateSafe(log.timestamp.toDate(), "yyyy-MM-dd HH:mm:ss")}
                         </TableCell>
                         <TableCell className="text-sm">{log.adminName}</TableCell>
                         <TableCell className="text-sm">{t(log.actionKey, log.details)}</TableCell>
@@ -845,7 +859,7 @@ export default function AdminPage() {
               </div>
               <div className="space-y-1">
                 <h4 className="text-sm font-medium text-muted-foreground flex items-center"><CalendarDays className="mr-2 h-4 w-4" />{t('admin.entryDetailsModal.submissionDate')}</h4>
-                <p className="text-base text-foreground">{formatDateSafe(selectedReportForDetails.createdAt, "yyyy-MM-dd HH:mm:ss")}</p>
+                <p className="text-base text-foreground">{formatDateSafe(selectedReportForDetails.createdAt.toDate(), "yyyy-MM-dd HH:mm:ss")}</p>
               </div>
             </div>
             <DialogFooter>
@@ -886,7 +900,7 @@ export default function AdminPage() {
                 <div className="md:col-span-2">
                   <UserInfoField
                     label={t('admin.userDetailsModal.accountActiveUntil')}
-                    value={formatDateFn(addYears(new Date(formatDateSafe(selectedUserForDetails.accountActivatedAt)), 1), "yyyy-MM-dd", { locale: dateLocale })}
+                    value={formatDateSafe(addYears(getSafeDate(selectedUserForDetails.accountActivatedAt)!, 1), "yyyy-MM-dd")}
                     icon={CalendarDays}
                   />
                 </div>
