@@ -43,8 +43,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               if (userProfile) {
                   setUser(userProfile);
               } else {
-                   // This case might happen if a user is deleted from Firestore but not Auth.
-                   // It's a cleanup measure.
                    console.warn(`User ${firebaseUser.uid} exists in Auth, but not in Firestore. Logging out.`);
                    await signOut(auth);
                    setUser(null);
@@ -61,7 +59,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     return () => unsubscribe();
-  // We disable exhaust-deps here because we truly only want this to run once on mount.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -82,8 +79,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         throw new Error("Vartotojo profilis nerastas duomenų bazėje. Susisiekite su palaikymo komanda.");
       }
       
-      // The crucial fix: An admin can ALWAYS log in.
-      // Other users MUST have an 'active' status.
+      // CRITICAL FIX: Admins should always be able to log in.
+      // Other users must have an 'active' status.
       if (!userProfile.isAdmin && userProfile.paymentStatus !== 'active') {
           if (userProfile.paymentStatus === 'pending_verification') {
               throw new Error(t('toast.login.error.pendingVerification'));
@@ -94,12 +91,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           if (userProfile.paymentStatus === 'inactive') {
               throw new Error(t('toast.login.error.inactive'));
           }
-          // Generic fallback
           throw new Error(t('toast.login.error.accessDenied'));
       }
       
-      // We set the user state here explicitly. onAuthStateChanged will also fire,
-      // but this ensures the UI updates immediately without race conditions.
       setUser(userProfile); 
 
       toast({
@@ -107,14 +101,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         description: t('toast.login.success.description'),
       });
       
-      // Redirect after successful login
       router.push(userProfile.isAdmin ? '/admin' : '/dashboard');
 
     } catch (error: any) {
       console.error("Login failed:", error);
       let description = t('toast.login.error.descriptionGeneric');
       
-      // Provide more specific feedback based on the error
       if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
           description = t('toast.login.error.invalidCredentials');
       } else if (error.message) {
@@ -132,7 +124,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
  const signup = async (values: SignUpFormValues): Promise<void> => {
-    // Check if user already exists in Firestore by email *before* trying to create in Auth
     try {
       const existingUser = await storage.findUserByEmail(values.email);
       if (existingUser) {
@@ -144,10 +135,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             title: t('toast.signup.error.title'),
             description: error.message || t('toast.signup.error.descriptionGeneric'),
         });
-        return; // Stop the process
+        return;
     }
       
-    // Create user in Firebase Authentication
     let newFirebaseUser: FirebaseUser;
     try {
         const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
@@ -162,10 +152,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             errorMessage = t('toast.signup.error.descriptionGeneric');
         }
         toast({ variant: 'destructive', title: t('toast.signup.error.title'), description: errorMessage });
-        return; // Stop the process
+        return;
     }
 
-    // Prepare user profile data for Firestore
     const isAdminRegistration = newFirebaseUser.email?.toLowerCase() === 'sarunas.zekonis@gmail.com';
     const finalUser: UserProfile = {
         id: newFirebaseUser.uid,
@@ -184,7 +173,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         accountActivatedAt: isAdminRegistration ? new Date().toISOString() : undefined,
     };
     
-    // Save the complete profile to Firestore
     try {
         await storage.addUserProfile(finalUser);
     } catch(error: any) {
@@ -193,11 +181,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             title: 'Duomenų bazės klaida',
             description: `Nepavyko išsaugoti vartotojo profilio: ${error.message}`
         });
-        // Optional: Consider deleting the auth user here for cleanup, but it's complex.
-        return; // Stop the process
+        return;
     }
     
-    // Set user state MANUALLY to avoid race conditions. This is crucial.
     setUser(finalUser);
     
     toast({
@@ -205,14 +191,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         description: t('toast.signup.success.description'),
     });
     
-    // Finally, redirect the user.
     router.push(isAdminRegistration ? '/admin' : '/auth/pending-approval');
   };
 
   const logout = async () => {
     try {
       await signOut(auth);
-      setUser(null); // Clear user state immediately
+      setUser(null); 
       router.push('/auth/login');
       toast({ title: t('toast.logout.success.title') });
     } catch (error: any) {
