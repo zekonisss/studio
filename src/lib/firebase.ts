@@ -1,4 +1,3 @@
-
 // This file is safe to be imported on the server or client.
 import { initializeApp, getApps, getApp, type FirebaseOptions } from "firebase/app";
 import { getFirestore, Timestamp } from "firebase/firestore";
@@ -15,15 +14,8 @@ const FIREBASE_CLIENT_CONFIG: FirebaseOptions = {
 };
 
 // Initialize Firebase for client-side
-// This function ensures that we only initialize the app once.
-function getClientApp(config: FirebaseOptions) {
-    if (getApps().length) {
-        return getApp();
-    }
-    return initializeApp(config);
-}
-
-const app = getClientApp(FIREBASE_CLIENT_CONFIG);
+// This function ensures that we only initialize the app once, which is crucial in Next.js environments.
+const app = !getApps().length ? initializeApp(FIREBASE_CLIENT_CONFIG) : getApp();
 const db = getFirestore(app);
 const auth = getAuth(app);
 

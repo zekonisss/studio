@@ -18,7 +18,6 @@ import {
   deleteDoc
 } from 'firebase/firestore';
 
-const isBrowser = typeof window !== 'undefined';
 const USERS_COLLECTION = 'users';
 const REPORTS_COLLECTION = 'reports';
 const SEARCH_LOGS_COLLECTION = 'searchLogs';
@@ -32,14 +31,14 @@ const convertFirestoreTimestampToDate = (data: any): any => {
     if (Array.isArray(data)) {
         return data.map(item => convertFirestoreTimestampToDate(item));
     }
-    if (typeof data === 'object') {
+    // Check if it is a Firestore Timestamp
+    if (data.toDate && typeof data.toDate === 'function') {
+        return data.toDate();
+    }
+    if (typeof data === 'object' && data !== null) {
         const convertedData: {[key: string]: any} = {};
         for (const key in data) {
-            if (data[key] instanceof Timestamp) {
-                convertedData[key] = data[key].toDate();
-            } else {
-                convertedData[key] = convertFirestoreTimestampToDate(data[key]);
-            }
+            convertedData[key] = convertFirestoreTimestampToDate(data[key]);
         }
         return convertedData;
     }
@@ -49,11 +48,10 @@ const convertFirestoreTimestampToDate = (data: any): any => {
 // --- User Management ---
 
 export async function getAllUsers(): Promise<UserProfile[]> {
-  if (!isBrowser) return [];
   try {
     const usersCollectionRef = collection(db, USERS_COLLECTION);
     const snapshot = await getDocs(usersCollectionRef);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserProfile));
+    return snapshot.docs.map(doc => ({ id: doc.id, ...convertFirestoreTimestampToDate(doc.data()) } as UserProfile));
   } catch (error) {
     console.error("Error getting all users:", error);
     return [];
@@ -61,7 +59,6 @@ export async function getAllUsers(): Promise<UserProfile[]> {
 }
 
 export async function addUserProfile(user: UserProfile): Promise<void> {
-    if (!isBrowser) return;
     try {
         const userDocRef = doc(db, USERS_COLLECTION, user.id);
         const userDataForFirestore = {
@@ -77,18 +74,36 @@ export async function addUserProfile(user: UserProfile): Promise<void> {
 }
 
 export async function addUsersBatch(users: UserProfile[]): Promise<void> {
-  if (!isBrowser) return;
   const batch = writeBatch(db);
+  const usersCollectionRef = collection(db, USERS_COLLECTION);
+  
+  // First, get all existing emails and company codes to avoid duplicates within the batch and with existing data
+  const allUsers = await getAllUsers();
+  const existingEmails = new Set(allUsers.map(u => u.email.toLowerCase()));
+  const existingCompanyCodes = new Set(allUsers.map(u => u.companyCode));
+
   users.forEach(user => {
-      const userDocRef = doc(collection(db, USERS_COLLECTION));
-      const userWithId = { ...user, id: userDocRef.id, registeredAt: Timestamp.now() };
-      batch.set(userDocRef, userWithId);
+    if (!existingEmails.has(user.email.toLowerCase()) && !existingCompanyCodes.has(user.companyCode)) {
+      const userDocRef = doc(usersCollectionRef); // Auto-generate ID
+      const userWithTimestamp = { 
+        ...user, 
+        id: userDocRef.id, 
+        registeredAt: Timestamp.now() 
+      };
+      batch.set(userDocRef, userWithTimestamp);
+      // Add to sets to prevent duplicates within the same batch
+      existingEmails.add(user.email.toLowerCase());
+      existingCompanyCodes.add(user.companyCode);
+    } else {
+        console.warn(`Skipping user due to duplicate email or company code: ${user.email} / ${user.companyCode}`);
+    }
   });
+
   await batch.commit();
 }
 
+
 export async function updateUserProfile(userId: string, userData: Partial<UserProfile>): Promise<void> {
-  if (!isBrowser) return;
   try {
     const userDocRef = doc(db, USERS_COLLECTION, userId);
     await updateDoc(userDocRef, userData);
@@ -98,7 +113,6 @@ export async function updateUserProfile(userId: string, userData: Partial<UserPr
 }
 
 export async function findUserByEmail(email: string): Promise<UserProfile | null> {
-  if (!isBrowser) return null;
   const q = query(collection(db, USERS_COLLECTION), where("email", "==", email.toLowerCase()));
   const querySnapshot = await getDocs(q);
   if (querySnapshot.empty) {
@@ -110,7 +124,6 @@ export async function findUserByEmail(email: string): Promise<UserProfile | null
 }
 
 export async function getUserById(userId: string): Promise<UserProfile | null> {
-    if (!isBrowser) return null;
     try {
         const userDocRef = doc(db, USERS_COLLECTION, userId);
         const docSnap = await getDoc(userDocRef);
@@ -127,7 +140,6 @@ export async function getUserById(userId: string): Promise<UserProfile | null> {
 // --- Report Management ---
 
 export async function getAllReports(): Promise<Report[]> {
-    if (!isBrowser) return [];
     try {
         const q = query(collection(db, REPORTS_COLLECTION), orderBy("createdAt", "desc"));
         const snapshot = await getDocs(q);
@@ -139,7 +151,6 @@ export async function getAllReports(): Promise<Report[]> {
 }
 
 export async function addReport(reportData: Omit<Report, 'id' | 'createdAt'>): Promise<void> {
-    if (!isBrowser) return;
     try {
         const reportWithTimestamp = {
             ...reportData,
@@ -157,7 +168,6 @@ export async function addReport(reportData: Omit<Report, 'id' | 'createdAt'>): P
 
 
 export async function softDeleteReport(reportId: string): Promise<void> {
-    if (!isBrowser) return;
     try {
         const reportDocRef = doc(db, REPORTS_COLLECTION, reportId);
         await updateDoc(reportDocRef, {
@@ -170,9 +180,15 @@ export async function softDeleteReport(reportId: string): Promise<void> {
 }
 
 export async function softDeleteAllReports(): Promise<number> {
-    if (!isBrowser) return 0;
     try {
-        const reportsSnapshot = await getDocs(query(collection(db, REPORTS_COLLECTION), where("deletedAt", "==", null)));
+        const reportsCollectionRef = collection(db, REPORTS_COLLECTION);
+        const q = query(reportsCollectionRef, where("deletedAt", "==", null));
+        const reportsSnapshot = await getDocs(q);
+        
+        if (reportsSnapshot.empty) {
+            return 0;
+        }
+
         const batch = writeBatch(db);
         reportsSnapshot.docs.forEach(doc => {
             batch.update(doc.ref, { deletedAt: Timestamp.now() });
@@ -186,7 +202,6 @@ export async function softDeleteAllReports(): Promise<number> {
 }
 
 export async function getUserReports(userId: string): Promise<{ active: Report[], deleted: Report[] }> {
-    if (!isBrowser) return { active: [], deleted: [] };
     try {
         const q = query(collection(db, REPORTS_COLLECTION), where("reporterId", "==", userId));
         const snapshot = await getDocs(q);
@@ -205,7 +220,6 @@ export async function getUserReports(userId: string): Promise<{ active: Report[]
 // --- Log Management ---
 
 export async function getSearchLogs(userId?: string): Promise<SearchLog[]> {
-    if (!isBrowser) return [];
     try {
         const logsCollectionRef = collection(db, SEARCH_LOGS_COLLECTION);
         const q = userId 
@@ -221,7 +235,6 @@ export async function getSearchLogs(userId?: string): Promise<SearchLog[]> {
 }
 
 export async function addSearchLog(logData: Omit<SearchLog, 'id' | 'timestamp'>): Promise<void> {
-    if (!isBrowser) return;
     try {
         await addDoc(collection(db, SEARCH_LOGS_COLLECTION), {
             ...logData,
@@ -233,7 +246,6 @@ export async function addSearchLog(logData: Omit<SearchLog, 'id' | 'timestamp'>)
 }
 
 export async function getAuditLogs(): Promise<AuditLogEntry[]> {
-    if (!isBrowser) return [];
     try {
         const q = query(collection(db, AUDIT_LOGS_COLLECTION), orderBy("timestamp", "desc"));
         const snapshot = await getDocs(q);
@@ -245,7 +257,6 @@ export async function getAuditLogs(): Promise<AuditLogEntry[]> {
 }
 
 export async function addAuditLogEntry(entryData: Omit<AuditLogEntry, 'id' | 'timestamp'>): Promise<void> {
-    if (!isBrowser) return;
     try {
         await addDoc(collection(db, AUDIT_LOGS_COLLECTION), {
             ...entryData,
@@ -259,7 +270,6 @@ export async function addAuditLogEntry(entryData: Omit<AuditLogEntry, 'id' | 'ti
 // --- Notification Management ---
 
 export async function getUserNotifications(userId: string): Promise<UserNotification[]> {
-    if (!isBrowser) return [];
     try {
         const q = query(collection(db, NOTIFICATIONS_COLLECTION), where("userId", "==", userId), orderBy("createdAt", "desc"));
         const snapshot = await getDocs(q);
@@ -271,7 +281,6 @@ export async function getUserNotifications(userId: string): Promise<UserNotifica
 }
 
 export async function addUserNotification(userId: string, notificationData: Omit<UserNotification, 'id' | 'createdAt' | 'read' | 'userId'>): Promise<void> {
-    if (!isBrowser) return;
     try {
         await addDoc(collection(db, NOTIFICATIONS_COLLECTION), {
             userId,
@@ -285,7 +294,6 @@ export async function addUserNotification(userId: string, notificationData: Omit
 }
 
 export async function markNotificationAsRead(notificationId: string): Promise<void> {
-    if (!isBrowser) return;
     try {
         const notifDocRef = doc(db, NOTIFICATIONS_COLLECTION, notificationId);
         await updateDoc(notifDocRef, { read: true });
@@ -295,7 +303,6 @@ export async function markNotificationAsRead(notificationId: string): Promise<vo
 }
 
 export async function markAllNotificationsAsRead(userId: string): Promise<void> {
-    if (!isBrowser) return;
     try {
         const q = query(collection(db, NOTIFICATIONS_COLLECTION), where("userId", "==", userId), where("read", "==", false));
         const snapshot = await getDocs(q);

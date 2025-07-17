@@ -14,15 +14,15 @@ export default function LoginPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // If the auth state is not loading and a user object exists, redirect.
+    // If auth state is not loading and a user object exists, redirect.
     if (!loading && user) {
-      // All users are redirected to the main dashboard.
-      // The admin can then navigate to the admin panel from the sidebar.
-      router.replace('/dashboard');
+      // Admins go to the admin panel, regular users go to the dashboard.
+      const targetPath = user.isAdmin ? '/admin' : '/dashboard';
+      router.replace(targetPath);
     }
   }, [user, loading, router]);
 
-  // While loading, we can show a loader, or nothing, to prevent flashes of content
+  // While loading, we can show a loader to prevent flashes of content
   if (loading) {
      return (
       <div className="flex h-full w-full items-center justify-center">
@@ -30,23 +30,14 @@ export default function LoginPage() {
       </div>
     );
   }
-
-  // If there's no user, show the login form
-  if (!user) {
-    return (
-      <>
-        <h2 className="mb-6 text-center text-2xl font-semibold tracking-tight text-foreground">
-          {t('login.title')}
-        </h2>
-        <LoginForm />
-      </>
-    );
-  }
-
-  // If user exists, we are in the process of redirecting, show loader.
+  
+  // If we are not loading and there's no user, show the login form
   return (
-    <div className="flex h-full w-full items-center justify-center">
-      <Loader2 className="h-12 w-12 animate-spin text-primary" />
-    </div>
+    <>
+      <h2 className="mb-6 text-center text-2xl font-semibold tracking-tight text-foreground">
+        {t('login.title')}
+      </h2>
+      <LoginForm />
+    </>
   );
 }
