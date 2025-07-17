@@ -16,6 +16,10 @@ import {
   onAuthStateChanged,
   type User as FirebaseUser,
 } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { Timestamp } from 'firebase/firestore';
+
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -40,12 +44,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (firebaseUser) {
         try {
           const userProfile = await storage.getUserById(firebaseUser.uid);
-          // If user exists in Auth, but not in Firestore, they need to create a profile.
           if (userProfile) {
             setUser(userProfile);
           } else {
-             // This case is handled by the login page redirecting to /auth/create-profile
-             setUser({ id: firebaseUser.uid, email: firebaseUser.email } as UserProfile); // Temporary user object
+             // This case can happen briefly during signup or if profile creation failed.
+             // The login page logic will handle redirecting to create-profile if needed.
+             setUser(null); 
           }
         } catch (error) {
           console.error("Error fetching user profile on auth state change:", error);
@@ -72,9 +76,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const userProfile = await storage.getUserById(userCredential.user.uid);
 
       if (!userProfile) {
-        // This case will now be handled by the effect on the login page
-        router.push('/auth/create-profile');
-        toast({ title: t('toast.login.success.title'), description: t('toast.login.error.noProfile') });
+        await signOut(auth);
+        toast({ title: t('toast.login.error.title'), description: t('toast.login.error.noProfile') });
+        router.push('/auth/signup'); // Redirect to sign up if no profile
         return;
       }
       
@@ -86,29 +90,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
-      if (userProfile.paymentStatus === 'active') {
+      if (userProfile.paymentStatus === 'active' || userProfile.paymentStatus === 'pending_verification') {
         router.replace('/dashboard');
         toast({ title: t('toast.login.success.title') });
       } else {
-        await signOut(auth); // Sign out if they can't access the dashboard
-        let errorMsg;
+        let errorMsgKey: string;
         switch (userProfile.paymentStatus) {
-            case 'pending_verification':
-                errorMsg = t('toast.login.error.pendingVerification');
-                break;
             case 'pending_payment':
-                errorMsg = t('toast.login.error.pendingPayment');
+                errorMsgKey = 'toast.login.error.pendingPayment';
                 break;
             case 'inactive':
             default:
-                errorMsg = t('toast.login.error.inactive');
+                errorMsgKey = 'toast.login.error.inactive';
                 break;
         }
-        throw new Error(errorMsg);
+        await signOut(auth); // Sign out if they can't access the dashboard
+        throw new Error(t(errorMsgKey));
       }
     } catch (error: any) {
       let description = error.message;
-       if (error.code === 'auth/invalid-credential' || error.message.includes('Failed to find user profile')) {
+       if (error.code === 'auth/invalid-credential') {
         description = t('toast.login.error.invalidCredentials');
       }
       toast({
@@ -130,24 +131,45 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         throw new Error(t('toast.signup.error.emailExists'));
       }
       
-      // Step 1: Create user in Firebase Authentication ONLY.
-      await createUserWithEmailAndPassword(auth, values.email, values.password);
+      const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
+      const { user: firebaseUser } = userCredential;
+      const isAdmin = firebaseUser.email?.toLowerCase() === 'sarunas.zekonis@gmail.com';
+      
+      const userProfileData: UserProfile = {
+          id: firebaseUser.uid,
+          email: values.email,
+          companyName: values.companyName,
+          companyCode: values.companyCode,
+          vatCode: values.vatCode,
+          address: values.address,
+          contactPerson: values.contactPerson,
+          phone: values.phone,
+          paymentStatus: isAdmin ? 'active' : 'pending_verification',
+          isAdmin: isAdmin,
+          agreeToTerms: values.agreeToTerms,
+          registeredAt: Timestamp.now(),
+          accountActivatedAt: isAdmin ? Timestamp.now() : undefined,
+          subUsers: [],
+      };
+      
+      // Use the user's UID as the document ID in the 'users' collection
+      await setDoc(doc(db, "users", firebaseUser.uid), userProfileData);
 
-      // Step 2: Redirect to the create-profile page. The onAuthStateChanged will handle the user state.
-      // The profile will be created there by the authenticated user.
+      setUser(userProfileData); // Set user in context immediately
+      
       toast({
           title: t('toast.signup.success.title'),
-          description: t('toast.signup.success.description_create_profile'),
+          description: t('toast.signup.success.description'),
       });
-
-      router.push('/auth/create-profile');
+      
+      router.push('/auth/pending-approval');
 
     } catch(error: any) {
         let errorMessage = error.message;
         if (error.code === 'auth/email-already-in-use') {
             errorMessage = t('toast.signup.error.emailExists');
         } else if (error.code === 'auth/weak-password') {
-            errorMessage = t('signup.form.password.label') + ' must be at least 8 characters long.';
+            errorMessage = t('signup.form.password.placeholder') + ' must be at least 8 characters long.';
         }
         toast({ variant: 'destructive', title: t('toast.signup.error.title'), description: errorMessage });
     } finally {

@@ -16,17 +16,8 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!loading && user) {
-      const checkUserProfile = async () => {
-        const userProfile = await storage.getUserById(user.id);
-        if (userProfile) {
-          const targetPath = user.isAdmin ? '/admin' : '/dashboard';
-          router.replace(targetPath);
-        } else {
-          // If user exists in Auth but not in Firestore, they need to create their profile.
-          router.replace('/auth/create-profile');
-        }
-      };
-      checkUserProfile();
+        const targetPath = user.isAdmin ? '/admin' : '/dashboard';
+        router.replace(targetPath);
     }
   }, [user, loading, router]);
 

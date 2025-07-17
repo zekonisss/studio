@@ -19,7 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { SignUpSchema, type SignUpFormValues } from "@/lib/schemas";
 import { useAuth } from "@/hooks/use-auth";
-import { Mail, Lock, Loader2 } from "lucide-react";
+import { Mail, Lock, Loader2, Building2, Briefcase, Percent, MapPin, User, Phone } from "lucide-react";
 import { useLanguage } from "@/contexts/language-context";
 import { useState } from 'react';
 
@@ -34,6 +34,12 @@ export function SignupForm() {
       email: "",
       password: "",
       confirmPassword: "",
+      companyName: "",
+      companyCode: "",
+      vatCode: "",
+      address: "",
+      contactPerson: "",
+      phone: "",
       agreeToTerms: false,
     },
   });
@@ -55,6 +61,84 @@ export function SignupForm() {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="companyName"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="flex items-center"><Building2 className="mr-2 h-4 w-4 text-muted-foreground" />{t('signup.form.companyName.label')}</FormLabel>
+              <FormControl>
+                <Input placeholder={t('signup.form.companyName.placeholder')} {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="companyCode"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="flex items-center"><Briefcase className="mr-2 h-4 w-4 text-muted-foreground" />{t('signup.form.companyCode.label')}</FormLabel>
+              <FormControl>
+                <Input placeholder={t('signup.form.companyCode.placeholder')} {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="vatCode"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="flex items-center"><Percent className="mr-2 h-4 w-4 text-muted-foreground" />{t('signup.form.vatCode.label')}</FormLabel>
+              <FormControl>
+                <Input placeholder={t('signup.form.vatCode.placeholder')} {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="address"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="flex items-center"><MapPin className="mr-2 h-4 w-4 text-muted-foreground" />{t('signup.form.address.label')}</FormLabel>
+              <FormControl>
+                <Input placeholder={t('signup.form.address.placeholder')} {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="contactPerson"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="flex items-center"><User className="mr-2 h-4 w-4 text-muted-foreground" />{t('signup.form.contactPerson.label')}</FormLabel>
+              <FormControl>
+                <Input placeholder={t('signup.form.contactPerson.placeholder')} {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+         <FormField
+          control={form.control}
+          name="phone"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="flex items-center"><Phone className="mr-2 h-4 w-4 text-muted-foreground" />{t('signup.form.phone.label')}</FormLabel>
+              <FormControl>
+                <Input placeholder={t('signup.form.phone.placeholder')} {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         <FormField
           control={form.control}
           name="email"

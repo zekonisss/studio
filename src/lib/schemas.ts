@@ -5,6 +5,12 @@ export const SignUpSchema = z.object({
   email: z.string().email({ message: "Neteisingas el. pašto formatas." }),
   password: z.string().min(8, { message: "Slaptažodis turi būti bent 8 simbolių ilgio." }),
   confirmPassword: z.string().min(8, { message: "Slaptažodis turi būti bent 8 simbolių ilgio." }),
+  companyName: z.string().min(2, { message: "Įmonės pavadinimas turi būti bent 2 simbolių ilgio." }),
+  companyCode: z.string().regex(/^\d{9}$/, { message: "Įmonės kodas turi būti 9 skaitmenys." }),
+  vatCode: z.string().optional(),
+  address: z.string().min(5, { message: "Adresas turi būti bent 5 simbolių ilgio." }),
+  contactPerson: z.string().min(3, { message: "Kontaktinis asmuo turi būti bent 3 simbolių ilgio." }),
+  phone: z.string().regex(/^\+?\d{7,15}$/, { message: "Neteisingas telefono numerio formatas." }),
   agreeToTerms: z.boolean().refine(val => val === true, { message: "Privalote sutikti su taisyklėmis." }),
 }).refine(data => data.password === data.confirmPassword, {
   message: "Slaptažodžiai nesutampa.",
@@ -12,17 +18,6 @@ export const SignUpSchema = z.object({
 });
 
 export type SignUpFormValues = z.infer<typeof SignUpSchema>;
-
-export const CreateProfileSchema = z.object({
-  companyName: z.string().min(2, { message: "Įmonės pavadinimas turi būti bent 2 simbolių ilgio." }),
-  companyCode: z.string().regex(/^\d{9}$/, { message: "Įmonės kodas turi būti 9 skaitmenys." }),
-  vatCode: z.string().optional(),
-  address: z.string().min(5, { message: "Adresas turi būti bent 5 simbolių ilgio." }),
-  contactPerson: z.string().min(3, { message: "Kontaktinis asmuo turi būti bent 3 simbolių ilgio." }),
-  phone: z.string().regex(/^\+?\d{7,15}$/, { message: "Neteisingas telefono numerio formatas." }),
-});
-
-export type CreateProfileFormValues = z.infer<typeof CreateProfileSchema>;
 
 export const LoginSchema = z.object({
   email: z.string().email({ message: "Neteisingas el. pašto formatas." }),
