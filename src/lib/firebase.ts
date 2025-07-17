@@ -1,10 +1,10 @@
-
 // This file is safe to be imported on the server or client.
 import { initializeApp, getApps, getApp, type FirebaseOptions } from "firebase/app";
 import { 
   getFirestore, 
   initializeFirestore, 
-  persistentLocalCache 
+  persistentLocalCache,
+  enableNetwork
 } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 
@@ -24,6 +24,15 @@ const app = !getApps().length ? initializeApp(FIREBASE_CLIENT_CONFIG) : getApp()
 const db = initializeFirestore(app, {
   localCache: persistentLocalCache(),
 });
+
+// Force enable network to avoid "Client is offline" issues in some environments.
+// This should only run on the client.
+if (typeof window !== 'undefined') {
+  enableNetwork(db).catch(err => {
+    console.error("Failed to enable Firestore network:", err);
+  });
+}
+
 
 const auth = getAuth(app);
 

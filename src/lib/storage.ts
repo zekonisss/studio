@@ -1,4 +1,3 @@
-
 "use client";
 
 import type { Report, UserProfile, SearchLog, AuditLogEntry, UserNotification } from '@/types';
@@ -15,7 +14,7 @@ import {
   writeBatch, 
   addDoc,
   orderBy,
-  Timestamp // Import Timestamp directly from firestore
+  Timestamp
 } from 'firebase/firestore';
 
 const USERS_COLLECTION = 'users';
@@ -33,7 +32,7 @@ export async function getAllUsers(): Promise<UserProfile[]> {
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserProfile));
   } catch (error) {
     console.error("Error getting all users:", error);
-    return [];
+    throw error;
   }
 }
 
@@ -41,14 +40,14 @@ export async function addUsersBatch(users: UserProfile[]): Promise<void> {
   const batch = writeBatch(db);
   const usersCollectionRef = collection(db, USERS_COLLECTION);
   
-  const allUsers = await getAllUsers();
-  const existingEmails = new Set(allUsers.map(u => u.email.toLowerCase()));
-  const existingCompanyCodes = new Set(allUsers.map(u => u.companyCode));
+  const allCurrentUsers = await getAllUsers();
+  const existingEmails = new Set(allCurrentUsers.map(u => u.email.toLowerCase()));
+  const existingCompanyCodes = new Set(allCurrentUsers.map(u => u.companyCode));
 
-  users.forEach(user => {
+  for (const user of users) {
     if (!existingEmails.has(user.email.toLowerCase()) && !existingCompanyCodes.has(user.companyCode)) {
-      const userDocRef = doc(usersCollectionRef); 
-      const userWithTimestamp = { 
+      const userDocRef = doc(usersCollectionRef); // Create a new doc with a generated ID
+      const userWithTimestamp: UserProfile = { 
         ...user, 
         id: userDocRef.id, 
         registeredAt: Timestamp.now() 
@@ -59,10 +58,11 @@ export async function addUsersBatch(users: UserProfile[]): Promise<void> {
     } else {
         console.warn(`Skipping user due to duplicate email or company code: ${user.email} / ${user.companyCode}`);
     }
-  });
+  }
 
   await batch.commit();
 }
+
 
 export async function updateUserProfile(userId: string, userData: Partial<UserProfile>): Promise<void> {
   try {
@@ -74,12 +74,7 @@ export async function updateUserProfile(userId: string, userData: Partial<UserPr
   }
 }
 
-/**
- * Finds a user by email by querying the Firestore database directly.
- * This is the reliable way to check for existing users during signup.
- * @param email The email to search for.
- * @returns A UserProfile object or null if not found.
- */
+
 export async function findUserByEmail(email: string): Promise<UserProfile | null> {
   try {
     const q = query(collection(db, USERS_COLLECTION), where("email", "==", email.toLowerCase()));
@@ -123,14 +118,9 @@ export async function getAllReports(): Promise<Report[]> {
     }
 }
 
-export async function addReport(reportData: Omit<Report, 'id' | 'createdAt' | 'deletedAt'>): Promise<void> {
+export async function addReport(reportData: Omit<Report, 'id'>): Promise<void> {
     try {
-        const reportWithTimestamp = {
-            ...reportData,
-            createdAt: Timestamp.now(),
-            deletedAt: null,
-        };
-        await addDoc(collection(db, REPORTS_COLLECTION), reportWithTimestamp);
+        await addDoc(collection(db, REPORTS_COLLECTION), reportData);
     } catch (error) {
         console.error("Error adding report:", error);
         throw error;
@@ -178,8 +168,13 @@ export async function getUserReports(userId: string): Promise<{ active: Report[]
         const snapshot = await getDocs(q);
         const allUserReports = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as Report);
 
-        const active = allUserReports.filter(r => !r.deletedAt).sort((a, b) => (b.createdAt as Timestamp).toMillis() - (a.createdAt as Timestamp).toMillis());
-        const deleted = allUserReports.filter(r => !!r.deletedAt && r.deletedAt instanceof Timestamp).sort((a, b) => (b.deletedAt as Timestamp).toMillis() - (a.deletedAt as Timestamp).toMillis());
+        const active = allUserReports
+          .filter(r => !r.deletedAt)
+          .sort((a, b) => (b.createdAt as Timestamp).toMillis() - (a.createdAt as Timestamp).toMillis());
+        
+        const deleted = allUserReports
+          .filter(r => r.deletedAt && r.deletedAt instanceof Timestamp)
+          .sort((a, b) => (b.deletedAt as Timestamp).toMillis() - (a.deletedAt as Timestamp).toMillis());
         
         return { active, deleted };
     } catch (error) {

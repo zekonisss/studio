@@ -1,9 +1,8 @@
-
 "use client";
 
 import type { UserProfile } from '@/types';
 import type { LoginFormValues, SignUpFormValues } from '@/lib/schemas';
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/language-context';
 import * as storage from '@/lib/storage';
@@ -38,22 +37,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const router = useRouter();
 
   useEffect(() => {
+    console.log("AuthProvider: Setting up onAuthStateChanged listener.");
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      console.log("AuthProvider: onAuthStateChanged triggered.", firebaseUser ? `User: ${firebaseUser.uid}` : "No user");
       if (firebaseUser) {
         try {
-          // Await the async function to get the profile
+          console.log("AuthProvider: Fetching user profile for UID:", firebaseUser.uid);
           const userProfile = await storage.getUserById(firebaseUser.uid);
           if (userProfile) {
+            console.log("AuthProvider: User profile found.", userProfile);
             setUser(userProfile);
           } else {
-             // This case can happen if the user exists in Auth but not in Firestore.
-             // For example, if Firestore document creation fails after signup.
-             console.error("Auth user exists, but Firestore profile document not found. Logging out.");
+             console.error("AuthProvider: Auth user exists, but Firestore profile not found. Forcing logout.");
              await signOut(auth);
              setUser(null); 
           }
         } catch (error) {
-          console.error("Error fetching user profile on auth state change:", error);
+          console.error("AuthProvider: Error fetching user profile:", error);
           await signOut(auth);
           setUser(null);
         }
@@ -61,8 +61,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser(null);
       }
       setLoading(false);
+      console.log("AuthProvider: Loading state set to false.");
     });
-    return () => unsubscribe();
+    return () => {
+      console.log("AuthProvider: Cleaning up onAuthStateChanged listener.");
+      unsubscribe();
+    };
   }, []);
 
   const updateUserInContext = async (updatedUser: UserProfile) => {
@@ -72,26 +76,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (values: LoginFormValues): Promise<void> => {
     setLoading(true);
+    console.log("Login: Attempting to sign in with email:", values.email);
     try {
       const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
+      console.log("Login: Firebase auth successful for UID:", userCredential.user.uid);
+      
       const userProfile = await storage.getUserById(userCredential.user.uid);
+      console.log("Login: Fetched profile from Firestore.", userProfile);
 
       if (!userProfile) {
         await signOut(auth);
         toast({ variant: 'destructive', title: t('toast.login.error.title'), description: t('toast.login.error.noProfile') });
+        console.error("Login: Profile not found in Firestore. Logging out.");
         return;
       }
       
       setUser(userProfile);
+      console.log("Login: User state set in context.");
 
       if (userProfile.paymentStatus === 'active') {
         const targetPath = userProfile.isAdmin ? '/admin' : '/dashboard';
+        console.log("Login: Active user. Redirecting to:", targetPath);
         router.replace(targetPath);
         toast({ title: t('toast.login.success.title') });
       } else {
+         console.log("Login: Inactive user. Redirecting to pending approval.");
          router.replace('/auth/pending-approval');
       }
     } catch (error: any) {
+      console.error("Login: An error occurred.", error);
       let description = error.message;
        if (error.code === 'auth/invalid-credential') {
         description = t('toast.login.error.invalidCredentials');
@@ -104,25 +117,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(null);
     } finally {
       setLoading(false);
+      console.log("Login: Process finished, loading set to false.");
     }
   };
 
   const signup = async (values: SignUpFormValues): Promise<void> => {
-    setIsSubmitting(true);
+    setLoading(true);
+    console.log("Signup: Starting registration for email:", values.email);
+
     try {
-      // Step 1: Check if user already exists in Firestore (most reliable way)
-      console.log("Checking for existing user by email...");
+      // Step 1: Check if user already exists in Firestore (reliable way)
+      console.log("Signup: Checking for existing user by email...");
       const existingUser = await storage.findUserByEmail(values.email);
       if (existingUser) {
         throw new Error(t('toast.signup.error.emailExists'));
       }
-      console.log("No existing user found. Proceeding with registration...");
+      console.log("Signup: No existing user found. Proceeding with auth creation.");
 
       // Step 2: Create user in Firebase Authentication
-      console.log("Creating auth user...");
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       const { user: firebaseUser } = userCredential;
-      console.log("Auth user created, UID:", firebaseUser.uid);
+      console.log("Signup: Auth user created, UID:", firebaseUser.uid);
 
       // Step 3: Create user profile document in Firestore
       const isAdmin = firebaseUser.email?.toLowerCase() === 'sarunas.zekonis@gmail.com';
@@ -138,16 +153,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           isAdmin: isAdmin,
           agreeToTerms: values.agreeToTerms,
           registeredAt: Timestamp.now(),
-          accountActivatedAt: isAdmin ? Timestamp.now() : null, // Use null instead of undefined
+          accountActivatedAt: isAdmin ? Timestamp.now() : null,
           subUsers: [],
       };
       
-      console.log("Saving profile to Firestore...");
-      // This part is critical and was failing before.
-      // Firestore rules require the user to be authenticated to write to their own document.
-      // Since we just created the auth user, they are now authenticated for this write.
+      console.log("Signup: Attempting to save profile to Firestore...");
       await setDoc(doc(db, "users", firebaseUser.uid), userProfileData as UserProfile);
-      console.log("Profile saved successfully!");
+      console.log("Signup: Profile saved to Firestore successfully!");
 
       // Step 4: Show success and redirect
       toast({
@@ -156,18 +168,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
       
       router.push('/auth/pending-approval');
+      console.log("Signup: Redirecting to pending-approval page.");
 
     } catch(error: any) {
-        console.error("Signup failed:", error);
-        let errorMessage = error.message;
+        console.error("Signup: An error occurred.", error);
+        let errorMessage = error.message || t('toast.signup.error.descriptionGeneric');
         if (error.code === 'auth/email-already-in-use') {
             errorMessage = t('toast.signup.error.emailExists');
-        } else if (error.code === 'auth/weak-password') {
-            errorMessage = t('signup.form.password.label') + ' must be at least 8 characters long.';
         }
         toast({ variant: 'destructive', title: t('toast.signup.error.title'), description: errorMessage });
     } finally {
-      setIsSubmitting(false);
+      setLoading(false);
+      console.log("Signup: Process finished, loading set to false.");
     }
   };
 
@@ -186,10 +198,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
   
-  // Local state for the signup form specifically
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const value = { user, loading: loading || isSubmitting, login, signup, logout, updateUserInContext };
+  const value = { user, loading, login, signup, logout, updateUserInContext };
 
   return (
     <AuthContext.Provider value={value}>
