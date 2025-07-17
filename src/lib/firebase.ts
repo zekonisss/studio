@@ -1,11 +1,8 @@
-
-import { initializeApp, getApps, getApp } from "firebase/app";
+// This file is safe to be imported on the server or client.
+import { initializeApp, getApps, getApp, type FirebaseOptions } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 
-// =================================================================
-// Konfigūracija atnaujinta su Jūsų projekto duomenimis.
-// =================================================================
 const FIREBASE_CLIENT_CONFIG = {
   apiKey: "AIzaSyBusklRtrpm-gfnwCdmi2yj5vTumqLte3c",
   authDomain: "drivershield.firebaseapp.com",
@@ -16,9 +13,17 @@ const FIREBASE_CLIENT_CONFIG = {
   measurementId: "G-WWHPWT8FGC"
 };
 
+// Initialize Firebase for client-side
+// This function ensures that we only initialize the app once.
+function getClientApp(config: FirebaseOptions) {
+    if (getApps().length) {
+        return getApp();
+    }
 
-// Initialize Firebase
-const app = !getApps().length ? initializeApp(FIREBASE_CLIENT_CONFIG) : getApp();
+    return initializeApp(config);
+}
+
+const app = getClientApp(FIREBASE_CLIENT_CONFIG);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
