@@ -100,20 +100,22 @@ export async function findUserByEmail(email: string): Promise<UserProfile | null
 }
 
 export async function getUserById(userId: string): Promise<UserProfile | null> {
-  console.log('Looking for userId:', userId); 
+  console.log('Looking for userId:', userId);
 
-  if (!userId || typeof userId !== 'string' || userId === 'undefined') {
-    console.error('Invalid userId passed to getUserById:', userId);
-    return null;
+  if (!userId || typeof userId !== 'string' || userId.trim() === '' || userId === 'undefined') {
+    console.error('❌ Invalid userId passed to getUserById:', userId);
+    throw new Error('Invalid userId passed to getUserById');
   }
 
   const db = getFirestoreInstance();
-  const userRef = doc(db, 'users', userId);
+  const userRef = doc(db, USERS_COLLECTION, userId);
   const userSnap = await getDoc(userRef);
+
   if (!userSnap.exists()) {
     console.warn(`No user profile found in Firestore for UID: ${userId}`);
     return null;
   }
+
   return { id: userSnap.id, ...userSnap.data() } as UserProfile;
 };
 
