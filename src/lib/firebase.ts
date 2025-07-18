@@ -1,3 +1,4 @@
+
 // This file is safe to be imported on the server or client.
 import { initializeApp, getApps, getApp, type FirebaseOptions } from "firebase/app";
 import { 
@@ -21,6 +22,7 @@ const getFirebaseApp = () => {
     return !getApps().length ? initializeApp(FIREBASE_CLIENT_CONFIG) : getApp();
 }
 
+// It's safe to call these functions on the server, they will just be initialized on the client when needed.
 const app = getFirebaseApp();
 const db = getFirestore(app);
 const auth = getAuth(app);
