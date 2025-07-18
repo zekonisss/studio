@@ -8,7 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/language-context';
 import * as storage from '@/lib/storage';
 import { useRouter } from 'next/navigation';
-import { getAuthInstance, getFirestoreInstance, Timestamp } from '@/lib/firebase';
+import { getAuthInstance, getDb, Timestamp } from '@/lib/firebase';
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -109,7 +109,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setLoading(true);
     console.log("Signup: Starting registration for email:", values.email);
     const auth = getAuthInstance();
-    const db = getFirestoreInstance();
+    const db = getDb();
 
     try {
       console.log("Creating user...");

@@ -2,7 +2,7 @@
 "use client";
 
 import type { Report, UserProfile, SearchLog, AuditLogEntry, UserNotification } from '@/types';
-import { getFirestoreInstance, Timestamp } from '@/lib/firebase';
+import { getDb, Timestamp } from '@/lib/firebase';
 import { 
   collection, 
   getDocs, 
@@ -26,7 +26,7 @@ const NOTIFICATIONS_COLLECTION = 'notifications';
 // --- User Management ---
 
 export async function getAllUsers(): Promise<UserProfile[]> {
-  const db = getFirestoreInstance();
+  const db = getDb();
   try {
     const usersCollectionRef = collection(db, USERS_COLLECTION);
     const snapshot = await getDocs(usersCollectionRef);
@@ -38,7 +38,7 @@ export async function getAllUsers(): Promise<UserProfile[]> {
 }
 
 export async function addUsersBatch(users: UserProfile[]): Promise<void> {
-  const db = getFirestoreInstance();
+  const db = getDb();
   const batch = writeBatch(db);
   const usersCollectionRef = collection(db, USERS_COLLECTION);
   
@@ -72,7 +72,7 @@ export async function addUsersBatch(users: UserProfile[]): Promise<void> {
 
 
 export async function updateUserProfile(userId: string, userData: Partial<UserProfile>): Promise<void> {
-  const db = getFirestoreInstance();
+  const db = getDb();
   try {
     const userDocRef = doc(db, USERS_COLLECTION, userId);
     await updateDoc(userDocRef, userData);
@@ -84,7 +84,7 @@ export async function updateUserProfile(userId: string, userData: Partial<UserPr
 
 
 export async function findUserByEmail(email: string): Promise<UserProfile | null> {
-  const db = getFirestoreInstance();
+  const db = getDb();
   try {
     const q = query(collection(db, USERS_COLLECTION), where("email", "==", email.toLowerCase()));
     const querySnapshot = await getDocs(q);
@@ -107,7 +107,7 @@ export async function getUserById(userId: string): Promise<UserProfile | null> {
     return null; 
   }
 
-  const db = getFirestoreInstance();
+  const db = getDb();
   const userRef = doc(db, USERS_COLLECTION, userId);
   const userSnap = await getDoc(userRef);
 
@@ -123,7 +123,7 @@ export async function getUserById(userId: string): Promise<UserProfile | null> {
 // --- Report Management ---
 
 export async function getAllReports(): Promise<Report[]> {
-    const db = getFirestoreInstance();
+    const db = getDb();
     try {
         const reportsCollectionRef = collection(db, REPORTS_COLLECTION);
         const q = query(reportsCollectionRef, orderBy("createdAt", "desc"));
@@ -136,7 +136,7 @@ export async function getAllReports(): Promise<Report[]> {
 }
 
 export async function addReport(reportData: Omit<Report, 'id' | 'deletedAt'>): Promise<void> {
-    const db = getFirestoreInstance();
+    const db = getDb();
     try {
         const reportsCollectionRef = collection(db, REPORTS_COLLECTION);
         await addDoc(reportsCollectionRef, reportData);
@@ -148,7 +148,7 @@ export async function addReport(reportData: Omit<Report, 'id' | 'deletedAt'>): P
 
 
 export async function softDeleteReport(reportId: string): Promise<void> {
-    const db = getFirestoreInstance();
+    const db = getDb();
     try {
         const reportDocRef = doc(db, REPORTS_COLLECTION, reportId);
         await updateDoc(reportDocRef, {
@@ -161,7 +161,7 @@ export async function softDeleteReport(reportId: string): Promise<void> {
 }
 
 export async function softDeleteAllReports(): Promise<number> {
-    const db = getFirestoreInstance();
+    const db = getDb();
     try {
         const reportsCollectionRef = collection(db, REPORTS_COLLECTION);
         const q = query(reportsCollectionRef, where("deletedAt", "==", null));
@@ -184,7 +184,7 @@ export async function softDeleteAllReports(): Promise<number> {
 }
 
 export async function getUserReports(userId: string): Promise<{ active: Report[], deleted: Report[] }> {
-    const db = getFirestoreInstance();
+    const db = getDb();
     try {
         const reportsCollectionRef = collection(db, REPORTS_COLLECTION);
         const q = query(reportsCollectionRef, where("reporterId", "==", userId));
@@ -209,7 +209,7 @@ export async function getUserReports(userId: string): Promise<{ active: Report[]
 // --- Log Management ---
 
 export async function getSearchLogs(userId?: string): Promise<SearchLog[]> {
-    const db = getFirestoreInstance();
+    const db = getDb();
     try {
         const logsCollectionRef = collection(db, SEARCH_LOGS_COLLECTION);
         const q = userId 
@@ -225,7 +225,7 @@ export async function getSearchLogs(userId?: string): Promise<SearchLog[]> {
 }
 
 export async function addSearchLog(logData: Omit<SearchLog, 'id' | 'timestamp'>): Promise<void> {
-    const db = getFirestoreInstance();
+    const db = getDb();
     try {
         const logsCollectionRef = collection(db, SEARCH_LOGS_COLLECTION);
         await addDoc(logsCollectionRef, {
@@ -238,7 +238,7 @@ export async function addSearchLog(logData: Omit<SearchLog, 'id' | 'timestamp'>)
 }
 
 export async function getAuditLogs(): Promise<AuditLogEntry[]> {
-    const db = getFirestoreInstance();
+    const db = getDb();
     try {
         const auditLogsCollectionRef = collection(db, AUDIT_LOGS_COLLECTION);
         const q = query(auditLogsCollectionRef, orderBy("timestamp", "desc"));
@@ -251,7 +251,7 @@ export async function getAuditLogs(): Promise<AuditLogEntry[]> {
 }
 
 export async function addAuditLogEntry(entryData: Omit<AuditLogEntry, 'id' | 'timestamp'>): Promise<void> {
-    const db = getFirestoreInstance();
+    const db = getDb();
     try {
         const auditLogsCollectionRef = collection(db, AUDIT_LOGS_COLLECTION);
         await addDoc(auditLogsCollectionRef, {
@@ -266,7 +266,7 @@ export async function addAuditLogEntry(entryData: Omit<AuditLogEntry, 'id' | 'ti
 // --- Notification Management ---
 
 export async function getUserNotifications(userId: string): Promise<UserNotification[]> {
-    const db = getFirestoreInstance();
+    const db = getDb();
     try {
         const notificationsCollectionRef = collection(db, NOTIFICATIONS_COLLECTION);
         const q = query(notificationsCollectionRef, where("userId", "==", userId), orderBy("createdAt", "desc"));
@@ -279,7 +279,7 @@ export async function getUserNotifications(userId: string): Promise<UserNotifica
 }
 
 export async function addUserNotification(userId: string, notificationData: Omit<UserNotification, 'id' | 'createdAt' | 'read' | 'userId'>): Promise<void> {
-    const db = getFirestoreInstance();
+    const db = getDb();
     try {
         const notificationsCollectionRef = collection(db, NOTIFICATIONS_COLLECTION);
         await addDoc(notificationsCollectionRef, {
@@ -294,7 +294,7 @@ export async function addUserNotification(userId: string, notificationData: Omit
 }
 
 export async function markNotificationAsRead(notificationId: string): Promise<void> {
-    const db = getFirestoreInstance();
+    const db = getDb();
     try {
         const notifDocRef = doc(db, NOTIFICATIONS_COLLECTION, notificationId);
         await updateDoc(notifDocRef, { read: true });
@@ -304,7 +304,7 @@ export async function markNotificationAsRead(notificationId: string): Promise<vo
 }
 
 export async function markAllNotificationsAsRead(userId: string): Promise<void> {
-    const db = getFirestoreInstance();
+    const db = getDb();
     try {
         const notificationsCollectionRef = collection(db, NOTIFICATIONS_COLLECTION);
         const q = query(notificationsCollectionRef, where("userId", "==", userId), where("read", "==", false));

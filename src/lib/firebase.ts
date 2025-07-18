@@ -19,16 +19,21 @@ const FIREBASE_CLIENT_CONFIG: FirebaseOptions = {
 };
 
 const getFirebaseApp = () => {
+    if (typeof window === 'undefined') {
+        // This is the server-side rendering, return null or a mock object.
+        return null; 
+    }
     return !getApps().length ? initializeApp(FIREBASE_CLIENT_CONFIG) : getApp();
 }
 
-// It's safe to call these functions on the server, they will just be initialized on the client when needed.
 const app = getFirebaseApp();
-const db = getFirestore(app);
-const auth = getAuth(app);
 
-// Enable Firestore network only in the browser to avoid SSR issues
-if (typeof window !== 'undefined') {
+// Initialize Firestore and Auth only if the app object is valid (i.e., on the client)
+const db = app ? getFirestore(app) : null;
+const auth = app ? getAuth(app) : null;
+
+// Enable Firestore network only in the browser and if db is initialized
+if (db) {
   enableNetwork(db).then(() => {
     console.log("✅ Firestore network enabled.");
   }).catch(err => {
@@ -36,6 +41,16 @@ if (typeof window !== 'undefined') {
   });
 }
 
-export const getFirestoreInstance = () => db;
-export const getAuthInstance = () => auth;
-export { Timestamp };
+// Throw an error if trying to use db or auth on the server.
+const getDb = () => {
+    if (!db) throw new Error("Firestore is not initialized. Ensure you are on the client-side.");
+    return db;
+}
+
+const getAuthInstance = () => {
+    if (!auth) throw new Error("Auth is not initialized. Ensure you are on the client-side.");
+    return auth;
+}
+
+
+export { getDb, getAuthInstance, Timestamp };
