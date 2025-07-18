@@ -38,52 +38,56 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { t } = useLanguage();
   const router = useRouter();
 
+  // Effect to listen for Firebase auth state changes
   useEffect(() => {
     const auth = getAuthInstance();
     if (!auth) {
-        setLoading(false);
-        return;
-    };
-    console.log("AuthProvider: Setting up onAuthStateChanged listener.");
+      console.warn("AuthProvider: Firebase Auth is not available.");
+      setLoading(false);
+      return;
+    }
+
     const unsubscribe = onAuthStateChanged(auth, (fbUser) => {
+      console.log("AuthProvider: onAuthStateChanged triggered. Firebase user:", fbUser?.uid || null);
       setFirebaseUser(fbUser);
+      // Set loading to false only after the first auth state is determined
+      setLoading(false);
     });
+
     return () => {
       console.log("AuthProvider: Cleaning up onAuthStateChanged listener.");
       unsubscribe();
     };
   }, []);
 
+  // Effect to fetch user profile from Firestore when firebaseUser state changes
   useEffect(() => {
-    const handleUserSession = async () => {
-        if (firebaseUser) {
-            console.log("AuthProvider: Firebase user detected (UID: " + firebaseUser.uid + "). Fetching profile...");
-            try {
-                const userProfile = await storage.getUserById(firebaseUser.uid);
-                if (userProfile) {
-                    console.log("AuthProvider: User profile found.", userProfile);
-                    setUser(userProfile);
-                } else {
-                    console.error("AuthProvider: Auth user exists, but Firestore profile not found. Forcing logout.");
-                    const auth = getAuthInstance();
-                    if(auth) await signOut(auth);
-                    setUser(null);
-                }
-            } catch (error) {
-                 console.error("AuthProvider: Error fetching user profile:", error);
-                 const auth = getAuthInstance();
-                 if(auth) await signOut(auth);
-                 setUser(null);
-            }
-        } else {
-            console.log("AuthProvider: No Firebase user. Setting user to null.");
-            setUser(null);
+    const fetchUserProfile = async () => {
+      if (firebaseUser) {
+        // Now we are sure firebaseUser exists and has a uid
+        try {
+          const userProfile = await storage.getUserById(firebaseUser.uid);
+          if (userProfile) {
+            console.log("AuthProvider: User profile found.", userProfile);
+            setUser(userProfile);
+          } else {
+            console.error("AuthProvider: Auth user exists, but Firestore profile not found. Forcing logout.");
+            await logout();
+          }
+        } catch (error) {
+          console.error("AuthProvider: Error fetching user profile:", error);
+          await logout();
         }
-        setLoading(false);
-        console.log("AuthProvider: Loading state set to false.");
+      } else {
+        // When firebaseUser is null (logged out or initially), clear our app's user state
+        setUser(null);
+      }
     };
-    handleUserSession();
-  }, [firebaseUser]);
+
+    if (!loading) { // Only run this logic after initial auth check is complete
+        fetchUserProfile();
+    }
+  }, [firebaseUser, loading]); // This effect depends on firebaseUser and the initial loading state
 
   const updateUserInContext = async (updatedUser: UserProfile) => {
     setUser(updatedUser);
@@ -94,11 +98,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const auth = getAuthInstance();
     if (!auth) return;
 
-    setLoading(true);
-    console.log("Login: Attempting to sign in with email:", values.email);
+    // The login process will trigger onAuthStateChanged, which will then trigger
+    // the useEffect to fetch the profile. No need to fetch profile here.
     try {
       await signInWithEmailAndPassword(auth, values.email, values.password);
-      // onAuthStateChanged and the subsequent useEffect will handle the rest.
     } catch (error: any) {
       console.error("Login: An error occurred.", error);
       let description = error.message;
@@ -110,8 +113,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         title: t('toast.login.error.title'),
         description: description,
       });
-      setUser(null);
-      setLoading(false);
     }
   };
 
@@ -120,21 +121,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const db = getFirestoreInstance();
     if (!auth || !db) return;
 
-    setLoading(true);
-    console.log("Signup: Starting registration for email:", values.email);
-
     try {
-      console.log("Signup: Checking for existing user by email...");
       const existingUser = await storage.findUserByEmail(values.email);
       if (existingUser) {
         throw new Error(t('toast.signup.error.emailExists'));
       }
-      console.log("Signup: No existing user found. Proceeding with auth creation.");
 
-      console.log("Creating user...");
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       const { user: newFirebaseUser } = userCredential;
-      console.log("Created user, UID:", newFirebaseUser.uid);
 
       const isAdmin = newFirebaseUser.email?.toLowerCase() === 'sarunas.zekonis@gmail.com';
       const userProfileData: Omit<UserProfile, 'id'> = {
@@ -153,9 +147,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           subUsers: [],
       };
       
-      console.log("Saving profile...");
       await setDoc(doc(db, "users", newFirebaseUser.uid), userProfileData as UserProfile);
-      console.log("Profile saved!");
 
       toast({
           title: t('toast.signup.success.title'),
@@ -163,18 +155,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
       
       router.push('/auth/pending-approval');
-      console.log("Signup: Redirecting to pending-approval page.");
 
     } catch(error: any) {
-        console.error("Signup: An error occurred.", error);
         let errorMessage = error.message || t('toast.signup.error.descriptionGeneric');
         if (error.code === 'auth/email-already-in-use' || errorMessage === t('toast.signup.error.emailExists')) {
             errorMessage = t('toast.signup.error.emailExists');
         }
         toast({ variant: 'destructive', title: t('toast.signup.error.title'), description: errorMessage });
-    } finally {
-      setLoading(false);
-      console.log("Signup: Process finished, loading set to false.");
     }
   };
 
@@ -183,8 +170,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (!auth) return;
     try {
       await signOut(auth);
-      setUser(null); 
-      setFirebaseUser(null);
+      // setFirebaseUser(null) will be called by the onAuthStateChanged listener,
+      // which will then trigger the other useEffect to clear the user profile.
       router.push('/auth/login');
       toast({ title: t('toast.logout.success.title') });
     } catch (error: any) {
