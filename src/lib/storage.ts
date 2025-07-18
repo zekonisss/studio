@@ -97,10 +97,12 @@ export async function findUserByEmail(email: string): Promise<UserProfile | null
 }
 
 export async function getUserById(userId: string): Promise<UserProfile | null> {
-    console.log('Looking for userId:', userId); // <- įsitikink, kad tai ne null/undefined
+    console.log('Looking for userId:', userId); // Diagnostinis pranešimas
 
     if (!userId || typeof userId !== 'string') {
-        throw new Error('Invalid userId passed to getUserById');
+        // Griežta apsauga, kad nebūtų kreipiamasi su neteisingu ID
+        console.error('Invalid userId passed to getUserById. Received:', userId);
+        return null;
     }
     
     try {
