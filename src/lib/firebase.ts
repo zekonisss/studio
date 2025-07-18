@@ -2,9 +2,8 @@
 import { initializeApp, getApps, getApp, type FirebaseOptions } from "firebase/app";
 import { 
   getFirestore, 
-  initializeFirestore, 
-  persistentLocalCache,
-  enableNetwork
+  enableNetwork,
+  Timestamp
 } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 
@@ -19,21 +18,16 @@ const FIREBASE_CLIENT_CONFIG: FirebaseOptions = {
 };
 
 const app = !getApps().length ? initializeApp(FIREBASE_CLIENT_CONFIG) : getApp();
+const db = getFirestore(app);
+const auth = getAuth(app);
 
-// Initialize Firestore with persistent local cache to prevent "Client is offline" issues.
-const db = initializeFirestore(app, {
-  localCache: persistentLocalCache(),
-});
-
-// Force enable network to avoid "Client is offline" issues in some environments.
-// This should only run on the client.
+// Enable Firestore network only in the browser to avoid SSR issues
 if (typeof window !== 'undefined') {
-  enableNetwork(db).catch(err => {
-    console.error("Failed to enable Firestore network:", err);
+  enableNetwork(db).then(() => {
+    console.log("✅ Firestore network enabled.");
+  }).catch(err => {
+    console.error("❌ Error enabling Firestore network:", err);
   });
 }
 
-
-const auth = getAuth(app);
-
-export { db, auth };
+export { db, auth, Timestamp };
