@@ -3,12 +3,12 @@
 
 import type { UserProfile } from '@/types';
 import type { LoginFormValues, SignUpFormValues } from '@/lib/schemas';
-import React, from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/language-context';
 import * as storage from '@/lib/storage';
 import { useRouter } from 'next/navigation';
-import { auth, db } from '@/lib/firebase';
+import { getAuthInstance, getFirestoreInstance, Timestamp } from '@/lib/firebase';
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -16,7 +16,7 @@ import {
   onAuthStateChanged,
   type User as FirebaseUser,
 } from 'firebase/auth';
-import { doc, setDoc, Timestamp } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
 
 
 interface AuthContextType {
@@ -31,21 +31,22 @@ interface AuthContextType {
 const AuthContext = React.createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = React.useState<UserProfile | null>(null);
-  const [firebaseUser, setFirebaseUser] = React.useState<FirebaseUser | null>(null);
-  const [loading, setLoading] = React.useState(true);
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { t } = useLanguage();
   const router = useRouter();
 
-  React.useEffect(() => {
+  useEffect(() => {
+    const auth = getAuthInstance();
     const unsubscribe = onAuthStateChanged(auth, (fbUser) => {
       setFirebaseUser(fbUser);
     });
     return () => unsubscribe();
   }, []);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const handleUserSession = async () => {
         if (firebaseUser) {
             console.log("AuthProvider: Firebase user detected (UID: " + firebaseUser.uid + "). Fetching profile...");
@@ -56,11 +57,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     setUser(userProfile);
                 } else {
                     console.error("AuthProvider: Auth user exists, but Firestore profile not found. Forcing logout.");
+                    const auth = getAuthInstance();
                     await signOut(auth);
                     setUser(null);
                 }
             } catch (error) {
                  console.error("AuthProvider: Error fetching user profile:", error);
+                 const auth = getAuthInstance();
                  await signOut(auth);
                  setUser(null);
             }
@@ -80,6 +83,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const login = async (values: LoginFormValues): Promise<void> => {
     setLoading(true);
+    const auth = getAuthInstance();
     try {
       await signInWithEmailAndPassword(auth, values.email, values.password);
     } catch (error: any) {
@@ -101,16 +105,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signup = async (values: SignUpFormValues): Promise<void> => {
     setLoading(true);
     console.log("Signup: Starting registration for email:", values.email);
+    const auth = getAuthInstance();
+    const db = getFirestoreInstance();
 
     try {
-      // Temporarily disabled email check as per user's debugging suggestion.
-      // console.log("Signup: Checking for existing user by email...");
-      // const existingUser = await storage.findUserByEmail(values.email);
-      // if (existingUser) {
-      //   throw new Error(t('toast.signup.error.emailExists'));
-      // }
-      // console.log("Signup: No existing user found. Proceeding with auth creation.");
-
       console.log("Creating user...");
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       const { user: newFirebaseUser } = userCredential;
@@ -159,6 +157,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const logout = async () => {
+    const auth = getAuthInstance();
     try {
       await signOut(auth);
       setUser(null); 

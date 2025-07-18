@@ -1,4 +1,3 @@
-
 // This file is safe to be imported on the server or client.
 import { initializeApp, getApps, getApp, type FirebaseOptions } from "firebase/app";
 import { 
@@ -18,7 +17,11 @@ const FIREBASE_CLIENT_CONFIG: FirebaseOptions = {
   measurementId: "G-WWHPWT8FGC"
 };
 
-const app = !getApps().length ? initializeApp(FIREBASE_CLIENT_CONFIG) : getApp();
+const getFirebaseApp = () => {
+    return !getApps().length ? initializeApp(FIREBASE_CLIENT_CONFIG) : getApp();
+}
+
+const app = getFirebaseApp();
 const db = getFirestore(app);
 const auth = getAuth(app);
 
@@ -31,4 +34,6 @@ if (typeof window !== 'undefined') {
   });
 }
 
-export { db, auth, Timestamp };
+export const getFirestoreInstance = () => db;
+export const getAuthInstance = () => auth;
+export { Timestamp };
