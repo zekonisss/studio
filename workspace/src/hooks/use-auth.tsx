@@ -32,42 +32,51 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
+  const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { t } = useLanguage();
   const router = useRouter();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      console.log("AuthProvider: Auth state changed. Firebase user UID:", firebaseUser?.uid || 'none');
-      if (firebaseUser) {
-        // User is signed in.
-        try {
-          const userProfile = await storage.getUserById(firebaseUser.uid);
-          if (userProfile) {
-            console.log("AuthProvider: User profile found.", userProfile);
-            setUser(userProfile);
-          } else {
-            console.error(`AuthProvider: Auth user ${firebaseUser.uid} exists, but Firestore profile not found. Forcing logout.`);
-            await signOut(auth); // This will trigger onAuthStateChanged again with null
-            setUser(null);
-          }
-        } catch (error) {
-           console.error("AuthProvider: Error fetching user profile:", error);
-           await signOut(auth);
-           setUser(null);
-        }
-      } else {
-        // User is signed out.
-        setUser(null);
-      }
-      setLoading(false);
+    console.log("AuthProvider: Setting up onAuthStateChanged listener.");
+    const unsubscribe = onAuthStateChanged(auth, (fbUser) => {
+      setFirebaseUser(fbUser);
     });
-
-    // Cleanup subscription on unmount
-    return () => unsubscribe();
+    return () => {
+      console.log("AuthProvider: Cleaning up onAuthStateChanged listener.");
+      unsubscribe();
+    };
   }, []);
 
+  useEffect(() => {
+    const handleUserSession = async () => {
+        if (firebaseUser) {
+            console.log("AuthProvider: Firebase user detected (UID: " + firebaseUser.uid + "). Fetching profile...");
+            try {
+                const userProfile = await storage.getUserById(firebaseUser.uid);
+                if (userProfile) {
+                    console.log("AuthProvider: User profile found.", userProfile);
+                    setUser(userProfile);
+                } else {
+                    console.error("AuthProvider: Auth user exists, but Firestore profile not found. Forcing logout.");
+                    await signOut(auth);
+                    setUser(null);
+                }
+            } catch (error) {
+                 console.error("AuthProvider: Error fetching user profile:", error);
+                 await signOut(auth);
+                 setUser(null);
+            }
+        } else {
+            console.log("AuthProvider: No Firebase user. Setting user to null.");
+            setUser(null);
+        }
+        setLoading(false);
+        console.log("AuthProvider: Loading state set to false.");
+    };
+    handleUserSession();
+  }, [firebaseUser]);
 
   const updateUserInContext = async (updatedUser: UserProfile) => {
     setUser(updatedUser);
@@ -79,7 +88,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     console.log("Login: Attempting to sign in with email:", values.email);
     try {
       await signInWithEmailAndPassword(auth, values.email, values.password);
-      // onAuthStateChanged will handle fetching the profile and redirecting
+      // onAuthStateChanged and the subsequent useEffect will handle the rest.
     } catch (error: any) {
       console.error("Login: An error occurred.", error);
       let description = error.message;
@@ -91,7 +100,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         title: t('toast.login.error.title'),
         description: description,
       });
-      setLoading(false); // Stop loading on error
+      setUser(null);
+      setLoading(false);
     }
   };
 
@@ -157,7 +167,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = async () => {
     try {
       await signOut(auth);
-      // onAuthStateChanged will handle clearing user state and loading state
+      setUser(null); 
+      setFirebaseUser(null);
       router.push('/auth/login');
       toast({ title: t('toast.logout.success.title') });
     } catch (error: any) {
