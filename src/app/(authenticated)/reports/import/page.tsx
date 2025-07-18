@@ -159,25 +159,18 @@ export default function ImportReportsPage() {
 
     setIsImporting(true);
     try {
-      const reportsToAdd: Omit<Report, 'id'|'deletedAt'|'createdAt'>[] = validRows.map(row => ({
+      const reportsToAdd: Omit<Report, 'id'|'deletedAt'>[] = validRows.map(row => ({
         reporterId: user.id,
         reporterCompanyName: user.companyName,
         fullName: row.fullName,
         comment: row.comment,
         category: row.aiCategory!,
         tags: row.aiTags!,
-        // Note: The date from Excel is used to set the creation time,
-        // but it will be converted to a Firestore Timestamp in the storage function.
-        // We pass the string for now.
+        createdAt: Timestamp.fromDate(new Date(row.date)),
       }));
       
       for(const reportData of reportsToAdd) {
-         // Create a temporary object with a proper Timestamp for the storage function
-        const reportForStorage = {
-            ...reportData,
-            createdAt: Timestamp.fromDate(new Date(validRows.find(vr => vr.fullName === reportData.fullName && vr.comment === reportData.comment)!.date))
-        };
-        await storage.addReport(reportForStorage);
+        await storage.addReport(reportData);
       }
 
       toast({

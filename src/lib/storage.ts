@@ -15,6 +15,7 @@ import {
   writeBatch, 
   addDoc,
   orderBy,
+  serverTimestamp
 } from 'firebase/firestore';
 
 const USERS_COLLECTION = 'users';
@@ -48,10 +49,10 @@ export async function addUsersBatch(users: UserProfile[]): Promise<void> {
     for (const user of users) {
       if (!existingEmails.has(user.email.toLowerCase()) && !existingCompanyCodes.has(user.companyCode)) {
         const userDocRef = doc(usersCollectionRef); 
-        const userWithTimestamp: UserProfile = { 
+        const userWithTimestamp: Omit<UserProfile, 'id' | 'registeredAt'> & { registeredAt: any } = { 
           ...user, 
           id: userDocRef.id, 
-          registeredAt: Timestamp.now() 
+          registeredAt: serverTimestamp() 
         };
         batch.set(userDocRef, userWithTimestamp);
         existingEmails.add(user.email.toLowerCase());
@@ -133,12 +134,12 @@ export async function getAllReports(): Promise<Report[]> {
     }
 }
 
-export async function addReport(reportData: Omit<Report, 'id' | 'deletedAt'>): Promise<void> {
+export async function addReport(reportData: Omit<Report, 'id' | 'deletedAt' | 'createdAt'>): Promise<void> {
     try {
         const reportsCollectionRef = collection(db, REPORTS_COLLECTION);
         await addDoc(reportsCollectionRef, {
             ...reportData,
-            createdAt: Timestamp.now()
+            createdAt: serverTimestamp()
         });
     } catch (error) {
         console.error("Error in addReport:", error);
@@ -151,7 +152,7 @@ export async function softDeleteReport(reportId: string): Promise<void> {
     try {
         const reportDocRef = doc(db, REPORTS_COLLECTION, reportId);
         await updateDoc(reportDocRef, {
-            deletedAt: Timestamp.now(),
+            deletedAt: serverTimestamp(),
         });
     } catch (error) {
         console.error(`Error soft-deleting report ID ${reportId}:`, error);
@@ -171,7 +172,7 @@ export async function softDeleteAllReports(): Promise<number> {
 
         const batch = writeBatch(db);
         reportsSnapshot.docs.forEach(document => {
-            batch.update(document.ref, { deletedAt: Timestamp.now() });
+            batch.update(document.ref, { deletedAt: serverTimestamp() });
         });
         await batch.commit();
         return reportsSnapshot.size;
@@ -225,7 +226,7 @@ export async function addSearchLog(logData: Omit<SearchLog, 'id' | 'timestamp'>)
         const logsCollectionRef = collection(db, SEARCH_LOGS_COLLECTION);
         await addDoc(logsCollectionRef, {
             ...logData,
-            timestamp: Timestamp.now(),
+            timestamp: serverTimestamp(),
         });
     } catch (error) {
         console.error("Error in addSearchLog:", error);
@@ -249,7 +250,7 @@ export async function addAuditLogEntry(entryData: Omit<AuditLogEntry, 'id' | 'ti
         const auditLogsCollectionRef = collection(db, AUDIT_LOGS_COLLECTION);
         await addDoc(auditLogsCollectionRef, {
             ...entryData,
-            timestamp: Timestamp.now(),
+            timestamp: serverTimestamp(),
         });
     } catch (error) {
         console.error("Error in addAuditLogEntry:", error);
@@ -276,7 +277,7 @@ export async function addUserNotification(userId: string, notificationData: Omit
         await addDoc(notificationsCollectionRef, {
             userId,
             ...notificationData,
-            createdAt: Timestamp.now(),
+            createdAt: serverTimestamp(),
             read: false,
         });
     } catch (error) {
