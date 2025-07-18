@@ -1,4 +1,3 @@
-
 // This file is safe to be imported on the client (browser).
 import { initializeApp, getApps, getApp, type FirebaseOptions } from "firebase/app";
 import { getFirestore, enableNetwork, Timestamp } from "firebase/firestore";
@@ -23,9 +22,6 @@ const auth = getAuth(app);
 // Enable Firestore network only in the browser to avoid SSR issues
 if (typeof window !== "undefined") {
   enableNetwork(db)
-    .then(() => {
-      // console.log("✅ Firestore network enabled.");
-    })
     .catch((error) => {
       console.error("❌ Error enabling Firestore network:", error);
     });
