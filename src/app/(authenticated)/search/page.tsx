@@ -57,10 +57,13 @@ export default function SearchPage() {
     try {
       const allReports = await storage.getAllReports();
 
-      const combinedDataSource = allReports.map(report => ({
-        ...report,
-        tags: Array.isArray(report.tags) ? report.tags.map(migrateTagIfNeeded) : [],
-      }));
+      const combinedDataSource = allReports
+          .filter(report => !report.deletedAt) // Filter out soft-deleted reports
+          .map(report => ({
+              ...report,
+              tags: Array.isArray(report.tags) ? report.tags.map(migrateTagIfNeeded) : [],
+          }));
+
 
       const query = values.query.toLowerCase().trim();
       let results: Report[] = [];
@@ -90,7 +93,7 @@ export default function SearchPage() {
       }
 
       if (user && query) {
-        const newSearchLog: Omit<SearchLog, 'id' | 'timestamp'> = {
+        const newSearchLog: Omit<SearchLog, 'id'> = {
           userId: user.id,
           searchText: values.query,
           resultsCount: results.length,

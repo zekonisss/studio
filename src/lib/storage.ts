@@ -96,11 +96,12 @@ export async function findUserByEmail(email: string): Promise<UserProfile | null
 }
 
 export async function getUserById(userId: string): Promise<UserProfile | null> {
-  console.log('Looking for userId:', userId);
+  console.log('Attempting to get user by ID. Received userId:', userId);
 
+  // Robust validation to prevent Firestore errors with invalid paths.
   if (!userId || typeof userId !== 'string' || userId.trim() === '') {
     console.error('❌ Invalid userId passed to getUserById:', userId);
-    return null; 
+    return null; // Return null instead of throwing to avoid crashing the auth flow.
   }
 
   const userRef = doc(db, USERS_COLLECTION, userId);
@@ -132,7 +133,10 @@ export async function getAllReports(): Promise<Report[]> {
 export async function addReport(reportData: Omit<Report, 'id' | 'deletedAt'>): Promise<void> {
     try {
         const reportsCollectionRef = collection(db, REPORTS_COLLECTION);
-        await addDoc(reportsCollectionRef, reportData);
+        await addDoc(reportsCollectionRef, {
+            ...reportData,
+            createdAt: Timestamp.now()
+        });
     } catch (error) {
         console.error("Error in addReport:", error);
         throw error;
@@ -206,7 +210,7 @@ export async function getSearchLogs(userId?: string): Promise<SearchLog[]> {
             : query(logsCollectionRef, orderBy("timestamp", "desc"));
         
         const snapshot = await getDocs(q);
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as SearchLog);
+        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as Report);
     } catch (error) {
         console.error(`Error getting search logs for user ID ${userId || 'all'}:`, error);
         return [];

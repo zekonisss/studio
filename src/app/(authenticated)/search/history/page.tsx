@@ -8,12 +8,13 @@ import { Badge } from "@/components/ui/badge";
 import type { SearchLog } from "@/types";
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2, ListChecks, AlertTriangle, SearchCheck } from "lucide-react";
-import { format } from 'date-fns';
+import { format as formatDateFn } from 'date-fns';
 import { lt, enUS } from 'date-fns/locale'; 
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import * as storage from '@/lib/storage';
 import { useLanguage } from "@/contexts/language-context"; 
+import type { Timestamp } from "firebase/firestore";
 
 
 export default function SearchHistoryPage() {
@@ -46,6 +47,14 @@ export default function SearchHistoryPage() {
         fetchSearchLogs();
     }
   }, [user, authLoading]);
+
+   const formatDateSafe = (date: Date | Timestamp) => {
+      const dateObj = (date as Timestamp)?.toDate ? (date as Timestamp).toDate() : (date as Date);
+      if (dateObj && !isNaN(dateObj.getTime())) {
+        return formatDateFn(dateObj, "yyyy-MM-dd HH:mm:ss", { locale: dateLocale });
+      }
+      return 'N/A';
+  }
 
   if (authLoading || isLoading) {
     return (
@@ -115,7 +124,7 @@ export default function SearchHistoryPage() {
                         {log.resultsCount}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-right text-muted-foreground">{format(new Date(log.timestamp), "yyyy-MM-dd HH:mm:ss", { locale: dateLocale })}</TableCell>
+                    <TableCell className="text-right text-muted-foreground">{formatDateSafe(log.timestamp)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

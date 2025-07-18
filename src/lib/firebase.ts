@@ -1,10 +1,6 @@
 // This file is safe to be imported on the client (browser).
 import { initializeApp, getApps, getApp, type FirebaseOptions } from "firebase/app";
-import { 
-  getFirestore, 
-  enableNetwork, 
-  Timestamp 
-} from "firebase/firestore";
+import { getFirestore, enableNetwork, Timestamp } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 
 // Firebase config from your Firebase project
@@ -20,8 +16,6 @@ const FIREBASE_CLIENT_CONFIG: FirebaseOptions = {
 
 // Initialize Firebase only once
 const app = !getApps().length ? initializeApp(FIREBASE_CLIENT_CONFIG) : getApp();
-
-// Firestore and Auth
 const db = getFirestore(app);
 const auth = getAuth(app);
 

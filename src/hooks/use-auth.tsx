@@ -40,21 +40,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        try {
-            const userProfile = await storage.getUserById(firebaseUser.uid);
-            if (userProfile) {
-                setUser(userProfile);
-            } else {
-                console.warn("AuthProvider: Auth user exists, but Firestore profile not found. Forcing logout.");
-                await signOut(auth);
-                setUser(null);
-            }
-        } catch (error) {
-             console.error("AuthProvider: Error fetching user profile:", error);
-             await signOut(auth);
-             setUser(null);
+        // We have a Firebase user, now fetch the profile.
+        // The robust check is inside getUserById, so we can call it directly.
+        const userProfile = await storage.getUserById(firebaseUser.uid);
+        if (userProfile) {
+            setUser(userProfile);
+        } else {
+            console.warn("AuthProvider: Auth user exists, but Firestore profile not found. Forcing logout.");
+            await signOut(auth);
+            setUser(null);
         }
       } else {
+        // No Firebase user, so no app user.
         setUser(null);
       }
       setLoading(false);

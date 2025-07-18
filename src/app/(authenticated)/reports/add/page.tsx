@@ -21,6 +21,7 @@ import { Loader2, FilePlus2, Wand2, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Timestamp } from "firebase/firestore";
 import { categorizeReport } from "@/ai/flows/categorize-report-flow";
+import type { Report } from '@/types';
 
 export default function AddReportPage() {
   const { user } = useAuth();
@@ -107,7 +108,7 @@ export default function AddReportPage() {
       
       const dataAiHint = values.image && values.image.length > 0 ? "incident document" : undefined;
 
-      const reportData: Omit<Report, 'id' | 'deletedAt'> = {
+      const reportData: Omit<Report, 'id' | 'deletedAt' | 'createdAt'> = {
         reporterId: user.id,
         reporterCompanyName: user.companyName,
         fullName: values.fullName,
@@ -118,7 +119,6 @@ export default function AddReportPage() {
         comment: values.comment,
         imageUrl,
         dataAiHint,
-        createdAt: Timestamp.now(),
       };
       
       await storage.addReport(reportData);
@@ -343,4 +343,3 @@ export default function AddReportPage() {
     </div>
   );
 }
-
