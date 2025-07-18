@@ -3,7 +3,7 @@
 
 import type { UserProfile } from '@/types';
 import type { LoginFormValues, SignUpFormValues } from '@/lib/schemas';
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import React, from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/language-context';
 import * as storage from '@/lib/storage';
@@ -28,28 +28,24 @@ interface AuthContextType {
   updateUserInContext: (updatedUser: UserProfile) => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = React.createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<UserProfile | null>(null);
-  const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
-  const [loading, setLoading] = useState(true);
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+  const [user, setUser] = React.useState<UserProfile | null>(null);
+  const [firebaseUser, setFirebaseUser] = React.useState<FirebaseUser | null>(null);
+  const [loading, setLoading] = React.useState(true);
   const { toast } = useToast();
   const { t } = useLanguage();
   const router = useRouter();
 
-  useEffect(() => {
-    console.log("AuthProvider: Setting up onAuthStateChanged listener.");
+  React.useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (fbUser) => {
       setFirebaseUser(fbUser);
     });
-    return () => {
-      console.log("AuthProvider: Cleaning up onAuthStateChanged listener.");
-      unsubscribe();
-    };
+    return () => unsubscribe();
   }, []);
 
-  useEffect(() => {
+  React.useEffect(() => {
     const handleUserSession = async () => {
         if (firebaseUser) {
             console.log("AuthProvider: Firebase user detected (UID: " + firebaseUser.uid + "). Fetching profile...");
@@ -73,7 +69,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setUser(null);
         }
         setLoading(false);
-        console.log("AuthProvider: Loading state set to false.");
     };
     handleUserSession();
   }, [firebaseUser]);
@@ -85,10 +80,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (values: LoginFormValues): Promise<void> => {
     setLoading(true);
-    console.log("Login: Attempting to sign in with email:", values.email);
     try {
       await signInWithEmailAndPassword(auth, values.email, values.password);
-      // onAuthStateChanged and the subsequent useEffect will handle the rest.
     } catch (error: any) {
       console.error("Login: An error occurred.", error);
       let description = error.message;
@@ -110,12 +103,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     console.log("Signup: Starting registration for email:", values.email);
 
     try {
-      console.log("Signup: Checking for existing user by email...");
-      const existingUser = await storage.findUserByEmail(values.email);
-      if (existingUser) {
-        throw new Error(t('toast.signup.error.emailExists'));
-      }
-      console.log("Signup: No existing user found. Proceeding with auth creation.");
+      // Temporarily disabled email check as per user's debugging suggestion.
+      // console.log("Signup: Checking for existing user by email...");
+      // const existingUser = await storage.findUserByEmail(values.email);
+      // if (existingUser) {
+      //   throw new Error(t('toast.signup.error.emailExists'));
+      // }
+      // console.log("Signup: No existing user found. Proceeding with auth creation.");
 
       console.log("Creating user...");
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
@@ -135,7 +129,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           isAdmin: isAdmin,
           agreeToTerms: values.agreeToTerms,
           registeredAt: Timestamp.now(),
-          accountActivatedAt: isAdmin ? Timestamp.now() : null,
+          accountActivatedAt: isAdmin ? Timestamp.now() : undefined,
           subUsers: [],
       };
       
@@ -154,7 +148,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } catch(error: any) {
         console.error("Signup: An error occurred.", error);
         let errorMessage = error.message || t('toast.signup.error.descriptionGeneric');
-        if (error.code === 'auth/email-already-in-use' || errorMessage === t('toast.signup.error.emailExists')) {
+        if (error.code === 'auth/email-already-in-use') {
             errorMessage = t('toast.signup.error.emailExists');
         }
         toast({ variant: 'destructive', title: t('toast.signup.error.title'), description: errorMessage });
@@ -190,7 +184,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 };
 
 export const useAuth = (): AuthContextType => {
-  const context = useContext(AuthContext);
+  const context = React.useContext(AuthContext);
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
