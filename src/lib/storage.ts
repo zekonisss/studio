@@ -97,27 +97,19 @@ export async function findUserByEmail(email: string): Promise<UserProfile | null
 }
 
 export async function getUserById(userId: string): Promise<UserProfile | null> {
-    console.log('Looking for userId:', userId); // Diagnostinis pranešimas
+  console.log('Looking for userId:', userId); // <- įsitikink, kad tai ne null/undefined
 
-    if (!userId || typeof userId !== 'string') {
-        // Griežta apsauga, kad nebūtų kreipiamasi su neteisingu ID
-        console.error('Invalid userId passed to getUserById. Received:', userId);
-        return null;
-    }
-    
-    try {
-        const userDocRef = doc(db, USERS_COLLECTION, userId);
-        const docSnap = await getDoc(userDocRef);
-        if (docSnap.exists()) {
-            return { id: docSnap.id, ...docSnap.data() } as UserProfile;
-        }
-        console.warn(`No user profile found in Firestore for UID: ${userId}`);
-        return null;
-    } catch (error) {
-        console.error(`Error in getUserById for UID ${userId}:`, error);
-        throw error;
-    }
-}
+  if (!userId || typeof userId !== 'string') throw new Error('Invalid userId passed to getUserById');
+
+  const userRef = doc(db, 'users', userId);
+  const userSnap = await getDoc(userRef);
+  if (!userSnap.exists()) {
+    console.warn(`No user profile found in Firestore for UID: ${userId}`);
+    return null;
+  }
+  return { id: userSnap.id, ...userSnap.data() } as UserProfile;
+};
+
 
 // --- Report Management ---
 
