@@ -8,7 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/language-context';
 import * as storage from '@/lib/storage';
 import { useRouter } from 'next/navigation';
-import { auth, db } from '@/lib/firebase';
+import { getAuthInstance, getFirestoreInstance, Timestamp } from '@/lib/firebase';
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -16,7 +16,7 @@ import {
   onAuthStateChanged,
   type User as FirebaseUser,
 } from 'firebase/auth';
-import { doc, setDoc, Timestamp } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
 
 
 interface AuthContextType {
@@ -39,6 +39,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const router = useRouter();
 
   useEffect(() => {
+    const auth = getAuthInstance();
+    if (!auth) {
+        setLoading(false);
+        return;
+    };
     console.log("AuthProvider: Setting up onAuthStateChanged listener.");
     const unsubscribe = onAuthStateChanged(auth, (fbUser) => {
       setFirebaseUser(fbUser);
@@ -60,12 +65,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                     setUser(userProfile);
                 } else {
                     console.error("AuthProvider: Auth user exists, but Firestore profile not found. Forcing logout.");
-                    await signOut(auth);
+                    const auth = getAuthInstance();
+                    if(auth) await signOut(auth);
                     setUser(null);
                 }
             } catch (error) {
                  console.error("AuthProvider: Error fetching user profile:", error);
-                 await signOut(auth);
+                 const auth = getAuthInstance();
+                 if(auth) await signOut(auth);
                  setUser(null);
             }
         } else {
@@ -84,6 +91,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const login = async (values: LoginFormValues): Promise<void> => {
+    const auth = getAuthInstance();
+    if (!auth) return;
+
     setLoading(true);
     console.log("Login: Attempting to sign in with email:", values.email);
     try {
@@ -106,6 +116,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signup = async (values: SignUpFormValues): Promise<void> => {
+    const auth = getAuthInstance();
+    const db = getFirestoreInstance();
+    if (!auth || !db) return;
+
     setLoading(true);
     console.log("Signup: Starting registration for email:", values.email);
 
@@ -135,12 +149,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           isAdmin: isAdmin,
           agreeToTerms: values.agreeToTerms,
           registeredAt: Timestamp.now(),
-          accountActivatedAt: isAdmin ? Timestamp.now() : null,
+          accountActivatedAt: isAdmin ? Timestamp.now() : undefined,
           subUsers: [],
       };
       
       console.log("Saving profile...");
-      await setDoc(doc(db, "users", newFirebaseUser.uid), userProfileData);
+      await setDoc(doc(db, "users", newFirebaseUser.uid), userProfileData as UserProfile);
       console.log("Profile saved!");
 
       toast({
@@ -165,6 +179,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = async () => {
+    const auth = getAuthInstance();
+    if (!auth) return;
     try {
       await signOut(auth);
       setUser(null); 

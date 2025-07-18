@@ -1,4 +1,3 @@
-
 // This file is safe to be imported on the server or client.
 import { initializeApp, getApps, getApp, type FirebaseOptions } from "firebase/app";
 import { 
@@ -26,25 +25,31 @@ function getFirebaseApp() {
     return getApp();
 }
 
-let db: Firestore;
-let auth: Auth;
+let db: Firestore | null = null;
+let auth: Auth | null = null;
 
-function getDbInstance() {
+function getFirestoreInstance() {
+    if (typeof window === 'undefined') {
+        // Return a dummy or null instance on the server
+        return null;
+    }
     if (!db) {
         const app = getFirebaseApp();
         db = getFirestore(app);
-        if (typeof window !== 'undefined') {
-            enableNetwork(db).then(() => {
-                console.log("✅ Firestore network enabled.");
-            }).catch(err => {
-                console.error("❌ Error enabling Firestore network:", err);
-            });
-        }
+        enableNetwork(db).then(() => {
+            console.log("✅ Firestore network enabled.");
+        }).catch(err => {
+            console.error("❌ Error enabling Firestore network:", err);
+        });
     }
     return db;
 }
 
 function getAuthInstance() {
+    if (typeof window === 'undefined') {
+        // Return a dummy or null instance on the server
+        return null;
+    }
     if (!auth) {
         const app = getFirebaseApp();
         auth = getAuth(app);
@@ -52,4 +57,4 @@ function getAuthInstance() {
     return auth;
 }
 
-export { getDbInstance, getAuthInstance, Timestamp };
+export { getFirestoreInstance, getAuthInstance, Timestamp };
