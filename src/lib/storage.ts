@@ -102,7 +102,7 @@ export async function findUserByEmail(email: string): Promise<UserProfile | null
 export async function getUserById(userId: string): Promise<UserProfile | null> {
   console.log('Looking for userId:', userId);
 
-  if (!userId || typeof userId !== 'string' || userId.trim() === '' || userId === 'undefined') {
+  if (!userId || typeof userId !== 'string' || userId.trim() === '' || userId === undefined) {
     console.error('❌ Invalid userId passed to getUserById:', userId);
     throw new Error('Invalid userId passed to getUserById');
   }
