@@ -3,7 +3,7 @@
 
 import type { UserProfile } from '@/types';
 import type { LoginFormValues, SignUpFormValues } from '@/lib/schemas';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext, createContext } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/language-context';
 import * as storage from '@/lib/storage';
@@ -28,7 +28,7 @@ interface AuthContextType {
   updateUserInContext: (updatedUser: UserProfile) => Promise<void>;
 }
 
-const AuthContext = React.createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -42,13 +42,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const auth = getAuthInstance();
     const unsubscribe = onAuthStateChanged(auth, (fbUser) => {
       setFirebaseUser(fbUser);
+      if (!fbUser) {
+        setLoading(false);
+      }
     });
     return () => unsubscribe();
   }, []);
 
   useEffect(() => {
     const handleUserSession = async () => {
-        setLoading(true);
         if (firebaseUser) {
             console.log("AuthProvider: Firebase user detected (UID: " + firebaseUser.uid + "). Fetching profile...");
             try {
@@ -67,12 +69,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                  const auth = getAuthInstance();
                  await signOut(auth);
                  setUser(null);
+            } finally {
+                setLoading(false);
             }
         } else {
-            console.log("AuthProvider: No Firebase user. Setting user to null.");
             setUser(null);
         }
-        setLoading(false);
     };
     handleUserSession();
   }, [firebaseUser]);
@@ -189,7 +191,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 };
 
 export const useAuth = (): AuthContextType => {
-  const context = React.useContext(AuthContext);
+  const context = useContext(AuthContext);
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
