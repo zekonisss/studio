@@ -112,6 +112,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.log("Creating user...");
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       const { user: newFirebaseUser } = userCredential;
+      
+      if (!newFirebaseUser?.uid) {
+        throw new Error('User UID not available after creation.');
+      }
+      
       console.log("Created user, UID:", newFirebaseUser.uid);
 
       const isAdmin = newFirebaseUser.email?.toLowerCase() === 'sarunas.zekonis@gmail.com';
@@ -189,3 +194,4 @@ export const useAuth = (): AuthContextType => {
   }
   return context;
 };
+
