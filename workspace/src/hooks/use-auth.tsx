@@ -3,7 +3,7 @@
 
 import type { UserProfile } from '@/types';
 import type { LoginFormValues, SignUpFormValues } from '@/lib/schemas';
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import React from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/language-context';
 import * as storage from '@/lib/storage';
@@ -28,55 +28,46 @@ interface AuthContextType {
   updateUserInContext: (updatedUser: UserProfile) => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = React.createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<UserProfile | null>(null);
-  const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
-  const [loading, setLoading] = useState(true);
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+  const [user, setUser] = React.useState<UserProfile | null>(null);
+  const [loading, setLoading] = React.useState(true);
   const { toast } = useToast();
   const { t } = useLanguage();
   const router = useRouter();
 
-  useEffect(() => {
-    console.log("AuthProvider: Setting up onAuthStateChanged listener.");
-    const unsubscribe = onAuthStateChanged(auth, (fbUser) => {
-      setFirebaseUser(fbUser);
-    });
-    return () => {
-      console.log("AuthProvider: Cleaning up onAuthStateChanged listener.");
-      unsubscribe();
-    };
-  }, []);
-
-  useEffect(() => {
-    const handleUserSession = async () => {
-        if (firebaseUser) {
-            console.log("AuthProvider: Firebase user detected (UID: " + firebaseUser.uid + "). Fetching profile...");
-            try {
-                const userProfile = await storage.getUserById(firebaseUser.uid);
-                if (userProfile) {
-                    console.log("AuthProvider: User profile found.", userProfile);
-                    setUser(userProfile);
-                } else {
-                    console.error("AuthProvider: Auth user exists, but Firestore profile not found. Forcing logout.");
-                    await signOut(auth);
-                    setUser(null);
-                }
-            } catch (error) {
-                 console.error("AuthProvider: Error fetching user profile:", error);
-                 await signOut(auth);
-                 setUser(null);
+  React.useEffect(() => {
+    // This effect runs ONLY on the client, after the initial render.
+    // This is the correct place to set up authentication listeners.
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        console.log("AuthProvider: Firebase user detected (UID: " + firebaseUser.uid + "). Fetching profile...");
+        try {
+            const userProfile = await storage.getUserById(firebaseUser.uid);
+            if (userProfile) {
+                console.log("AuthProvider: User profile found.", userProfile);
+                setUser(userProfile);
+            } else {
+                console.error("AuthProvider: Auth user exists, but Firestore profile not found. Forcing logout.");
+                await signOut(auth);
+                setUser(null);
             }
-        } else {
-            console.log("AuthProvider: No Firebase user. Setting user to null.");
-            setUser(null);
+        } catch (error) {
+             console.error("AuthProvider: Error fetching user profile:", error);
+             await signOut(auth);
+             setUser(null);
         }
-        setLoading(false);
-        console.log("AuthProvider: Loading state set to false.");
-    };
-    handleUserSession();
-  }, [firebaseUser]);
+      } else {
+        console.log("AuthProvider: No Firebase user. Setting user to null.");
+        setUser(null);
+      }
+      setLoading(false);
+    });
+
+    // Cleanup subscription on unmount
+    return () => unsubscribe();
+  }, []); // Empty dependency array ensures this runs only once on the client.
 
   const updateUserInContext = async (updatedUser: UserProfile) => {
     setUser(updatedUser);
@@ -85,10 +76,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (values: LoginFormValues): Promise<void> => {
     setLoading(true);
-    console.log("Login: Attempting to sign in with email:", values.email);
     try {
       await signInWithEmailAndPassword(auth, values.email, values.password);
-      // onAuthStateChanged and the subsequent useEffect will handle the rest.
+      // onAuthStateChanged will handle setting the user and loading state
     } catch (error: any) {
       console.error("Login: An error occurred.", error);
       let description = error.message;
@@ -100,7 +90,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         title: t('toast.login.error.title'),
         description: description,
       });
-      setUser(null);
       setLoading(false);
     }
   };
@@ -110,12 +99,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     console.log("Signup: Starting registration for email:", values.email);
 
     try {
-      console.log("Signup: Checking for existing user by email...");
-      const existingUser = await storage.findUserByEmail(values.email);
-      if (existingUser) {
-        throw new Error(t('toast.signup.error.emailExists'));
-      }
-      console.log("Signup: No existing user found. Proceeding with auth creation.");
+      // Temporarily disabled email check as per user's debugging suggestion.
+      // console.log("Signup: Checking for existing user by email...");
+      // const existingUser = await storage.findUserByEmail(values.email);
+      // if (existingUser) {
+      //   throw new Error(t('toast.signup.error.emailExists'));
+      // }
+      // console.log("Signup: No existing user found. Proceeding with auth creation.");
 
       console.log("Creating user...");
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
@@ -154,7 +144,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } catch(error: any) {
         console.error("Signup: An error occurred.", error);
         let errorMessage = error.message || t('toast.signup.error.descriptionGeneric');
-        if (error.code === 'auth/email-already-in-use' || errorMessage === t('toast.signup.error.emailExists')) {
+        if (error.code === 'auth/email-already-in-use') {
             errorMessage = t('toast.signup.error.emailExists');
         }
         toast({ variant: 'destructive', title: t('toast.signup.error.title'), description: errorMessage });
@@ -168,7 +158,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       await signOut(auth);
       setUser(null); 
-      setFirebaseUser(null);
       router.push('/auth/login');
       toast({ title: t('toast.logout.success.title') });
     } catch (error: any) {
@@ -190,7 +179,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 };
 
 export const useAuth = (): AuthContextType => {
-  const context = useContext(AuthContext);
+  const context = React.useContext(AuthContext);
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
