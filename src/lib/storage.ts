@@ -96,23 +96,26 @@ export async function findUserByEmail(email: string): Promise<UserProfile | null
 }
 
 export async function getUserById(userId: string): Promise<UserProfile | null> {
-  console.log('Attempting to get user by ID. Received userId:', userId);
-
   // Robust validation to prevent Firestore errors with invalid paths.
   if (!userId || typeof userId !== 'string' || userId.trim() === '') {
-    console.error('❌ Invalid userId passed to getUserById:', userId);
+    console.error('❌ Invalid userId passed to getUserById. Aborting Firestore call. Received:', userId);
     return null; // Return null instead of throwing to avoid crashing the auth flow.
   }
 
-  const userRef = doc(db, USERS_COLLECTION, userId);
-  const userSnap = await getDoc(userRef);
+  try {
+    const userRef = doc(db, USERS_COLLECTION, userId);
+    const userSnap = await getDoc(userRef);
 
-  if (!userSnap.exists()) {
-    console.warn(`No user profile found in Firestore for UID: ${userId}`);
-    return null;
+    if (!userSnap.exists()) {
+      console.warn(`No user profile found in Firestore for UID: ${userId}`);
+      return null;
+    }
+
+    return { id: userSnap.id, ...userSnap.data() } as UserProfile;
+  } catch(error) {
+     console.error(`Error fetching user by ID ${userId}:`, error);
+     return null;
   }
-
-  return { id: userSnap.id, ...userSnap.data() } as UserProfile;
 };
 
 

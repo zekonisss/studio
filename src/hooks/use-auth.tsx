@@ -41,7 +41,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         // We have a Firebase user, now fetch the profile.
-        // The robust check is inside getUserById, so we can call it directly.
         const userProfile = await storage.getUserById(firebaseUser.uid);
         if (userProfile) {
             setUser(userProfile);
