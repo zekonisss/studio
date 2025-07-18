@@ -40,11 +40,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        console.log("AuthProvider: Firebase user detected (UID: " + firebaseUser.uid + "). Fetching profile...");
         try {
             const userProfile = await storage.getUserById(firebaseUser.uid);
             if (userProfile) {
-                console.log("AuthProvider: User profile found.", userProfile);
                 setUser(userProfile);
             } else {
                 console.warn("AuthProvider: Auth user exists, but Firestore profile not found. Forcing logout.");
@@ -92,10 +90,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signup = async (values: SignUpFormValues): Promise<void> => {
     setLoading(true);
-    console.log("Signup: Starting registration for email:", values.email);
 
     try {
-      console.log("Creating user...");
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       const { user: newFirebaseUser } = userCredential;
       
@@ -103,8 +99,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         throw new Error('User UID not available after creation.');
       }
       
-      console.log("Created user, UID:", newFirebaseUser.uid);
-
       const isAdmin = newFirebaseUser.email?.toLowerCase() === 'sarunas.zekonis@gmail.com';
       const userProfileData: Omit<UserProfile, 'id'> = {
           email: values.email.toLowerCase(),
@@ -122,9 +116,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           subUsers: [],
       };
       
-      console.log("Saving profile...");
       await setDoc(doc(db, "users", newFirebaseUser.uid), userProfileData as UserProfile);
-      console.log("Profile saved!");
 
       toast({
           title: t('toast.signup.success.title'),
@@ -132,7 +124,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
       
       router.push('/auth/pending-approval');
-      console.log("Signup: Redirecting to pending-approval page.");
 
     } catch(error: any) {
         console.error("Signup: An error occurred.", error);
@@ -143,7 +134,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         toast({ variant: 'destructive', title: t('toast.signup.error.title'), description: errorMessage });
     } finally {
       setLoading(false);
-      console.log("Signup: Process finished, loading set to false.");
     }
   };
 
