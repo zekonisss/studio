@@ -8,7 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/language-context';
 import * as storage from '@/lib/storage';
 import { useRouter } from 'next/navigation';
-import { getAuthInstance, getDb, Timestamp } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -16,7 +16,7 @@ import {
   onAuthStateChanged,
   type User as FirebaseUser,
 } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, Timestamp } from 'firebase/firestore';
 
 
 interface AuthContextType {
@@ -32,52 +32,38 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { t } = useLanguage();
   const router = useRouter();
 
   useEffect(() => {
-    const auth = getAuthInstance();
-    const unsubscribe = onAuthStateChanged(auth, (fbUser) => {
-      setFirebaseUser(fbUser);
-      if (!fbUser) {
-        setLoading(false);
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        console.log("AuthProvider: Firebase user detected (UID: " + firebaseUser.uid + "). Fetching profile...");
+        try {
+            const userProfile = await storage.getUserById(firebaseUser.uid);
+            if (userProfile) {
+                console.log("AuthProvider: User profile found.", userProfile);
+                setUser(userProfile);
+            } else {
+                console.warn("AuthProvider: Auth user exists, but Firestore profile not found. Forcing logout.");
+                await signOut(auth);
+                setUser(null);
+            }
+        } catch (error) {
+             console.error("AuthProvider: Error fetching user profile:", error);
+             await signOut(auth);
+             setUser(null);
+        }
+      } else {
+        setUser(null);
       }
+      setLoading(false);
     });
+
     return () => unsubscribe();
   }, []);
-
-  useEffect(() => {
-    const handleUserSession = async () => {
-        if (firebaseUser) {
-            console.log("AuthProvider: Firebase user detected (UID: " + firebaseUser.uid + "). Fetching profile...");
-            try {
-                const userProfile = await storage.getUserById(firebaseUser.uid);
-                if (userProfile) {
-                    console.log("AuthProvider: User profile found.", userProfile);
-                    setUser(userProfile);
-                } else {
-                    console.error("AuthProvider: Auth user exists, but Firestore profile not found. Forcing logout.");
-                    const auth = getAuthInstance();
-                    await signOut(auth);
-                    setUser(null);
-                }
-            } catch (error) {
-                 console.error("AuthProvider: Error fetching user profile:", error);
-                 const auth = getAuthInstance();
-                 await signOut(auth);
-                 setUser(null);
-            } finally {
-                setLoading(false);
-            }
-        } else {
-            setUser(null);
-        }
-    };
-    handleUserSession();
-  }, [firebaseUser]);
 
   const updateUserInContext = async (updatedUser: UserProfile) => {
     setUser(updatedUser);
@@ -86,7 +72,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const login = async (values: LoginFormValues): Promise<void> => {
     setLoading(true);
-    const auth = getAuthInstance();
     try {
       await signInWithEmailAndPassword(auth, values.email, values.password);
     } catch (error: any) {
@@ -108,8 +93,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signup = async (values: SignUpFormValues): Promise<void> => {
     setLoading(true);
     console.log("Signup: Starting registration for email:", values.email);
-    const auth = getAuthInstance();
-    const db = getDb();
 
     try {
       console.log("Creating user...");
@@ -165,11 +148,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const logout = async () => {
-    const auth = getAuthInstance();
     try {
       await signOut(auth);
       setUser(null); 
-      setFirebaseUser(null);
       router.push('/auth/login');
       toast({ title: t('toast.logout.success.title') });
     } catch (error: any) {
