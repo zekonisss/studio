@@ -1,5 +1,5 @@
 
-import type { Timestamp } from 'firebase/firestore';
+import type { Timestamp, FieldValue } from 'firebase/firestore';
 
 export interface SubUserProfile {
   id: string;
@@ -18,8 +18,8 @@ export interface UserProfile {
   phone: string;
   paymentStatus: 'active' | 'inactive' | 'pending_verification' | 'pending_payment';
   isAdmin?: boolean;
-  registeredAt?: string | Date | Timestamp;
-  accountActivatedAt?: string | Date | Timestamp;
+  registeredAt?: Timestamp | FieldValue;
+  accountActivatedAt?: Timestamp | FieldValue;
   agreeToTerms?: boolean;
   subUsers?: SubUserProfile[];
 }

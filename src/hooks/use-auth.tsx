@@ -16,7 +16,7 @@ import {
   onAuthStateChanged,
   type User as FirebaseUser,
 } from 'firebase/auth';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp, type FieldValue } from 'firebase/firestore';
 
 
 interface AuthContextType {
@@ -95,7 +95,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       const isAdmin = newFirebaseUser.email?.toLowerCase() === 'sarunas.zekonis@gmail.com';
       
-      const userProfileData = {
+      const userProfileData: Omit<UserProfile, 'id' | 'registeredAt' | 'accountActivatedAt'> & { registeredAt: FieldValue, accountActivatedAt?: FieldValue } = {
           email: values.email.toLowerCase(),
           companyName: values.companyName,
           companyCode: values.companyCode,
@@ -107,9 +107,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           isAdmin: isAdmin,
           agreeToTerms: values.agreeToTerms,
           registeredAt: serverTimestamp(),
-          accountActivatedAt: isAdmin ? serverTimestamp() : null,
           subUsers: [],
       };
+
+      if (isAdmin) {
+        userProfileData.accountActivatedAt = serverTimestamp();
+      }
       
       await setDoc(doc(db, "users", newFirebaseUser.uid), userProfileData);
 
