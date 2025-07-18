@@ -119,7 +119,7 @@ export async function getAllReports(): Promise<Report[]> {
     }
 }
 
-export async function addReport(reportData: Omit<Report, 'id'>): Promise<void> {
+export async function addReport(reportData: Omit<Report, 'id' | 'deletedAt'>): Promise<void> {
     try {
         await addDoc(collection(db, REPORTS_COLLECTION), reportData);
     } catch (error) {
