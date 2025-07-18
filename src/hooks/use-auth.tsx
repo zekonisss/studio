@@ -40,7 +40,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        // We have a Firebase user, now fetch the profile.
         const userProfile = await storage.getUserById(firebaseUser.uid);
         if (userProfile) {
             setUser(userProfile);
@@ -50,7 +49,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             setUser(null);
         }
       } else {
-        // No Firebase user, so no app user.
         setUser(null);
       }
       setLoading(false);
@@ -96,7 +94,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
       
       const isAdmin = newFirebaseUser.email?.toLowerCase() === 'sarunas.zekonis@gmail.com';
-      const userProfileData: Omit<UserProfile, 'id' | 'registeredAt' | 'accountActivatedAt'> = {
+      
+      const userProfileData = {
           email: values.email.toLowerCase(),
           companyName: values.companyName,
           companyCode: values.companyCode,
@@ -107,16 +106,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           paymentStatus: isAdmin ? 'active' : 'pending_verification',
           isAdmin: isAdmin,
           agreeToTerms: values.agreeToTerms,
+          registeredAt: serverTimestamp(),
+          accountActivatedAt: isAdmin ? serverTimestamp() : null,
           subUsers: [],
       };
-
-      const userDocData = {
-          ...userProfileData,
-          registeredAt: serverTimestamp(),
-          accountActivatedAt: isAdmin ? serverTimestamp() : null
-      }
       
-      await setDoc(doc(db, "users", newFirebaseUser.uid), userDocData);
+      await setDoc(doc(db, "users", newFirebaseUser.uid), userProfileData);
 
       toast({
           title: t('toast.signup.success.title'),
