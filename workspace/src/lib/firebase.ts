@@ -1,13 +1,9 @@
-// This file is safe to be imported on the server or client.
+// This file is safe to be imported on the client (browser).
 import { initializeApp, getApps, getApp, type FirebaseOptions } from "firebase/app";
-import { 
-  getFirestore, 
-  enableNetwork,
-  Timestamp,
-  type Firestore
-} from "firebase/firestore";
-import { getAuth, type Auth } from "firebase/auth";
+import { getFirestore, enableNetwork, Timestamp } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
 
+// Firebase config from your Firebase project
 const FIREBASE_CLIENT_CONFIG: FirebaseOptions = {
   apiKey: "AIzaSyBusklRtrpm-gfnwCdmi2yj5vTumqLte3c",
   authDomain: "drivershield.firebaseapp.com",
@@ -18,43 +14,22 @@ const FIREBASE_CLIENT_CONFIG: FirebaseOptions = {
   measurementId: "G-WWHPWT8FGC"
 };
 
-function getFirebaseApp() {
-    if (getApps().length === 0) {
-        return initializeApp(FIREBASE_CLIENT_CONFIG);
-    }
-    return getApp();
+// Initialize Firebase only once
+const app = !getApps().length ? initializeApp(FIREBASE_CLIENT_CONFIG) : getApp();
+
+// Firestore and Auth
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+// Enable Firestore network only in the browser to avoid SSR issues
+if (typeof window !== "undefined") {
+  enableNetwork(db)
+    .then(() => {
+      console.log("✅ Firestore network enabled.");
+    })
+    .catch((error) => {
+      console.error("❌ Error enabling Firestore network:", error);
+    });
 }
 
-let db: Firestore | null = null;
-let auth: Auth | null = null;
-
-function getFirestoreInstance() {
-    if (typeof window === 'undefined') {
-        // Return a dummy or null instance on the server
-        return null;
-    }
-    if (!db) {
-        const app = getFirebaseApp();
-        db = getFirestore(app);
-        enableNetwork(db).then(() => {
-            console.log("✅ Firestore network enabled.");
-        }).catch(err => {
-            console.error("❌ Error enabling Firestore network:", err);
-        });
-    }
-    return db;
-}
-
-function getAuthInstance() {
-    if (typeof window === 'undefined') {
-        // Return a dummy or null instance on the server
-        return null;
-    }
-    if (!auth) {
-        const app = getFirebaseApp();
-        auth = getAuth(app);
-    }
-    return auth;
-}
-
-export { getFirestoreInstance, getAuthInstance, Timestamp };
+export { db, auth, Timestamp };

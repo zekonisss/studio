@@ -1,7 +1,7 @@
 "use client";
 
 import type { Report, UserProfile, SearchLog, AuditLogEntry, UserNotification } from '@/types';
-import { getFirestoreInstance } from '@/lib/firebase';
+import { db } from '@/lib/firebase';
 import { 
   collection, 
   getDocs, 
@@ -26,64 +26,61 @@ const NOTIFICATIONS_COLLECTION = 'notifications';
 // --- User Management ---
 
 export async function getAllUsers(): Promise<UserProfile[]> {
-  const db = getFirestoreInstance();
-  if (!db) return [];
   try {
     const usersCollectionRef = collection(db, USERS_COLLECTION);
     const snapshot = await getDocs(usersCollectionRef);
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserProfile));
   } catch (error) {
-    console.error("Error getting all users:", error);
+    console.error("Error in getAllUsers:", error);
     throw error;
   }
 }
 
 export async function addUsersBatch(users: UserProfile[]): Promise<void> {
-  const db = getFirestoreInstance();
-  if (!db) return;
   const batch = writeBatch(db);
   const usersCollectionRef = collection(db, USERS_COLLECTION);
   
-  const allCurrentUsers = await getAllUsers();
-  const existingEmails = new Set(allCurrentUsers.map(u => u.email.toLowerCase()));
-  const existingCompanyCodes = new Set(allCurrentUsers.map(u => u.companyCode));
+  try {
+    const allCurrentUsers = await getAllUsers();
+    const existingEmails = new Set(allCurrentUsers.map(u => u.email.toLowerCase()));
+    const existingCompanyCodes = new Set(allCurrentUsers.map(u => u.companyCode));
 
-  for (const user of users) {
-    if (!existingEmails.has(user.email.toLowerCase()) && !existingCompanyCodes.has(user.companyCode)) {
-      const userDocRef = doc(usersCollectionRef); // Create a new doc with a generated ID
-      const userWithTimestamp: UserProfile = { 
-        ...user, 
-        id: userDocRef.id, 
-        registeredAt: Timestamp.now() 
-      };
-      batch.set(userDocRef, userWithTimestamp);
-      existingEmails.add(user.email.toLowerCase());
-      existingCompanyCodes.add(user.companyCode);
-    } else {
-        console.warn(`Skipping user due to duplicate email or company code: ${user.email} / ${user.companyCode}`);
+    for (const user of users) {
+      if (!existingEmails.has(user.email.toLowerCase()) && !existingCompanyCodes.has(user.companyCode)) {
+        const userDocRef = doc(usersCollectionRef); 
+        const userWithTimestamp: UserProfile = { 
+          ...user, 
+          id: userDocRef.id, 
+          registeredAt: Timestamp.now() 
+        };
+        batch.set(userDocRef, userWithTimestamp);
+        existingEmails.add(user.email.toLowerCase());
+        existingCompanyCodes.add(user.companyCode);
+      } else {
+          console.warn(`Skipping user due to duplicate email or company code: ${user.email} / ${user.companyCode}`);
+      }
     }
-  }
 
-  await batch.commit();
+    await batch.commit();
+  } catch (error) {
+    console.error("Error in addUsersBatch:", error);
+    throw error;
+  }
 }
 
 
 export async function updateUserProfile(userId: string, userData: Partial<UserProfile>): Promise<void> {
-  const db = getFirestoreInstance();
-  if (!db) return;
   try {
     const userDocRef = doc(db, USERS_COLLECTION, userId);
     await updateDoc(userDocRef, userData);
   } catch (error) {
-    console.error("Error updating user profile:", error);
+    console.error(`Error updating user profile for user ID ${userId}:`, error);
     throw error;
   }
 }
 
 
 export async function findUserByEmail(email: string): Promise<UserProfile | null> {
-  const db = getFirestoreInstance();
-  if (!db) return null;
   try {
     const q = query(collection(db, USERS_COLLECTION), where("email", "==", email.toLowerCase()));
     const querySnapshot = await getDocs(q);
@@ -93,18 +90,15 @@ export async function findUserByEmail(email: string): Promise<UserProfile | null
     const userDoc = querySnapshot.docs[0];
     return { id: userDoc.id, ...userDoc.data() } as UserProfile;
   } catch(error) {
-      console.error("Error finding user by email:", error);
+      console.error(`Error finding user by email ${email}:`, error);
       throw error;
   }
 }
 
 export async function getUserById(userId: string): Promise<UserProfile | null> {
-    console.log("storage.ts: Getting user profile for UID:", userId);
-    const db = getFirestoreInstance();
-    if (!db) return null;
     if (!userId || userId === "undefined") {
-        console.warn("storage.ts: getUserById was called with an invalid UID!", userId);
-        return null;
+      console.warn("storage.ts: getUserById was called with an invalid UID!", userId);
+      return null;
     }
     try {
         const userDocRef = doc(db, USERS_COLLECTION, userId);
@@ -112,58 +106,52 @@ export async function getUserById(userId: string): Promise<UserProfile | null> {
         if (docSnap.exists()) {
             return { id: docSnap.id, ...docSnap.data() } as UserProfile;
         }
-        console.warn(`storage.ts: No user profile found in Firestore for UID: ${userId}`);
+        console.warn(`No user profile found in Firestore for UID: ${userId}`);
         return null;
     } catch (error) {
-        console.error("storage.ts: Error in getUserById:", error);
-        throw error; // Rethrow the error to be caught by the caller
+        console.error(`Error in getUserById for UID ${userId}:`, error);
+        throw error;
     }
 }
 
 // --- Report Management ---
 
 export async function getAllReports(): Promise<Report[]> {
-    const db = getFirestoreInstance();
-    if (!db) return [];
     try {
-        const q = query(collection(db, REPORTS_COLLECTION), orderBy("createdAt", "desc"));
+        const reportsCollectionRef = collection(db, REPORTS_COLLECTION);
+        const q = query(reportsCollectionRef, orderBy("createdAt", "desc"));
         const snapshot = await getDocs(q);
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as Report);
     } catch (error) {
-        console.error("Error getting all reports:", error);
+        console.error("Error in getAllReports:", error);
         return [];
     }
 }
 
-export async function addReport(reportData: Omit<Report, 'id'>): Promise<void> {
-    const db = getFirestoreInstance();
-    if (!db) return;
+export async function addReport(reportData: Omit<Report, 'id' | 'deletedAt'>): Promise<void> {
     try {
-        await addDoc(collection(db, REPORTS_COLLECTION), reportData);
+        const reportsCollectionRef = collection(db, REPORTS_COLLECTION);
+        await addDoc(reportsCollectionRef, reportData);
     } catch (error) {
-        console.error("Error adding report:", error);
+        console.error("Error in addReport:", error);
         throw error;
     }
 }
 
 
 export async function softDeleteReport(reportId: string): Promise<void> {
-    const db = getFirestoreInstance();
-    if (!db) return;
     try {
         const reportDocRef = doc(db, REPORTS_COLLECTION, reportId);
         await updateDoc(reportDocRef, {
             deletedAt: Timestamp.now(),
         });
     } catch (error) {
-        console.error("Error soft-deleting report:", error);
+        console.error(`Error soft-deleting report ID ${reportId}:`, error);
         throw new Error("Failed to update report for deletion.");
     }
 }
 
 export async function softDeleteAllReports(): Promise<number> {
-    const db = getFirestoreInstance();
-    if (!db) return 0;
     try {
         const reportsCollectionRef = collection(db, REPORTS_COLLECTION);
         const q = query(reportsCollectionRef, where("deletedAt", "==", null));
@@ -180,16 +168,15 @@ export async function softDeleteAllReports(): Promise<number> {
         await batch.commit();
         return reportsSnapshot.size;
     } catch (error) {
-        console.error("Error soft-deleting all reports:", error);
-        return 0;
+        console.error("Error in softDeleteAllReports:", error);
+        throw error;
     }
 }
 
 export async function getUserReports(userId: string): Promise<{ active: Report[], deleted: Report[] }> {
-    const db = getFirestoreInstance();
-    if (!db) return { active: [], deleted: [] };
     try {
-        const q = query(collection(db, REPORTS_COLLECTION), where("reporterId", "==", userId));
+        const reportsCollectionRef = collection(db, REPORTS_COLLECTION);
+        const q = query(reportsCollectionRef, where("reporterId", "==", userId));
         const snapshot = await getDocs(q);
         const allUserReports = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as Report);
 
@@ -203,7 +190,7 @@ export async function getUserReports(userId: string): Promise<{ active: Report[]
         
         return { active, deleted };
     } catch (error) {
-        console.error("Error getting user reports:", error);
+        console.error(`Error getting user reports for user ID ${userId}:`, error);
         return { active: [], deleted: [] };
     }
 }
@@ -211,8 +198,6 @@ export async function getUserReports(userId: string): Promise<{ active: Report[]
 // --- Log Management ---
 
 export async function getSearchLogs(userId?: string): Promise<SearchLog[]> {
-    const db = getFirestoreInstance();
-    if (!db) return [];
     try {
         const logsCollectionRef = collection(db, SEARCH_LOGS_COLLECTION);
         const q = userId 
@@ -222,96 +207,88 @@ export async function getSearchLogs(userId?: string): Promise<SearchLog[]> {
         const snapshot = await getDocs(q);
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as SearchLog);
     } catch (error) {
-        console.error("Error getting search logs:", error);
+        console.error(`Error getting search logs for user ID ${userId || 'all'}:`, error);
         return [];
     }
 }
 
 export async function addSearchLog(logData: Omit<SearchLog, 'id' | 'timestamp'>): Promise<void> {
-    const db = getFirestoreInstance();
-    if (!db) return;
     try {
-        await addDoc(collection(db, SEARCH_LOGS_COLLECTION), {
+        const logsCollectionRef = collection(db, SEARCH_LOGS_COLLECTION);
+        await addDoc(logsCollectionRef, {
             ...logData,
             timestamp: Timestamp.now(),
         });
     } catch (error) {
-        console.error("Error adding search log:", error);
+        console.error("Error in addSearchLog:", error);
     }
 }
 
 export async function getAuditLogs(): Promise<AuditLogEntry[]> {
-    const db = getFirestoreInstance();
-    if (!db) return [];
     try {
-        const q = query(collection(db, AUDIT_LOGS_COLLECTION), orderBy("timestamp", "desc"));
+        const auditLogsCollectionRef = collection(db, AUDIT_LOGS_COLLECTION);
+        const q = query(auditLogsCollectionRef, orderBy("timestamp", "desc"));
         const snapshot = await getDocs(q);
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as AuditLogEntry);
     } catch (error) {
-        console.error("Error getting audit logs:", error);
+        console.error("Error in getAuditLogs:", error);
         return [];
     }
 }
 
 export async function addAuditLogEntry(entryData: Omit<AuditLogEntry, 'id' | 'timestamp'>): Promise<void> {
-    const db = getFirestoreInstance();
-    if (!db) return;
     try {
-        await addDoc(collection(db, AUDIT_LOGS_COLLECTION), {
+        const auditLogsCollectionRef = collection(db, AUDIT_LOGS_COLLECTION);
+        await addDoc(auditLogsCollectionRef, {
             ...entryData,
             timestamp: Timestamp.now(),
         });
     } catch (error) {
-        console.error("Error adding audit log entry:", error);
+        console.error("Error in addAuditLogEntry:", error);
     }
 }
 
 // --- Notification Management ---
 
 export async function getUserNotifications(userId: string): Promise<UserNotification[]> {
-    const db = getFirestoreInstance();
-    if (!db) return [];
     try {
-        const q = query(collection(db, NOTIFICATIONS_COLLECTION), where("userId", "==", userId), orderBy("createdAt", "desc"));
+        const notificationsCollectionRef = collection(db, NOTIFICATIONS_COLLECTION);
+        const q = query(notificationsCollectionRef, where("userId", "==", userId), orderBy("createdAt", "desc"));
         const snapshot = await getDocs(q);
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as UserNotification);
     } catch (error) {
-        console.error("Error getting user notifications:", error);
+        console.error(`Error getting notifications for user ID ${userId}:`, error);
         return [];
     }
 }
 
 export async function addUserNotification(userId: string, notificationData: Omit<UserNotification, 'id' | 'createdAt' | 'read' | 'userId'>): Promise<void> {
-    const db = getFirestoreInstance();
-    if (!db) return;
     try {
-        await addDoc(collection(db, NOTIFICATIONS_COLLECTION), {
+        const notificationsCollectionRef = collection(db, NOTIFICATIONS_COLLECTION);
+        await addDoc(notificationsCollectionRef, {
             userId,
             ...notificationData,
             createdAt: Timestamp.now(),
             read: false,
         });
     } catch (error) {
-        console.error("Error adding user notification:", error);
+        console.error(`Error adding notification for user ID ${userId}:`, error);
     }
 }
 
 export async function markNotificationAsRead(notificationId: string): Promise<void> {
-    const db = getFirestoreInstance();
-    if (!db) return;
     try {
         const notifDocRef = doc(db, NOTIFICATIONS_COLLECTION, notificationId);
         await updateDoc(notifDocRef, { read: true });
     } catch (error) {
-        console.error("Error marking notification as read:", error);
+        console.error(`Error marking notification ID ${notificationId} as read:`, error);
     }
 }
 
 export async function markAllNotificationsAsRead(userId: string): Promise<void> {
-    const db = getFirestoreInstance();
-    if (!db) return;
     try {
-        const q = query(collection(db, NOTIFICATIONS_COLLECTION), where("userId", "==", userId), where("read", "==", false));
+        const notificationsCollectionRef = collection(db, NOTIFICATIONS_COLLECTION);
+        const q = query(notificationsCollectionRef, where("userId", "==", userId), where("read", "==", false));
         const snapshot = await getDocs(q);
         
         if (snapshot.empty) return;
@@ -322,6 +299,6 @@ export async function markAllNotificationsAsRead(userId: string): Promise<void> 
         });
         await batch.commit();
     } catch (error) {
-        console.error("Error marking all notifications as read:", error);
+        console.error(`Error marking all notifications as read for user ID ${userId}:`, error);
     }
 }
