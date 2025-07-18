@@ -93,8 +93,8 @@ export async function findUserByEmail(email: string): Promise<UserProfile | null
 
 export async function getUserById(userId: string): Promise<UserProfile | null> {
     console.log("storage.ts: Getting user profile for UID:", userId);
-    if (!userId) {
-        console.error("storage.ts: getUserById was called with an invalid UID (null or undefined)!");
+    if (!userId || userId === "undefined") {
+        console.warn("storage.ts: getUserById was called with an invalid UID!", userId);
         return null;
     }
     try {
@@ -124,7 +124,7 @@ export async function getAllReports(): Promise<Report[]> {
     }
 }
 
-export async function addReport(reportData: Omit<Report, 'id'>): Promise<void> {
+export async function addReport(reportData: Omit<Report, 'id' | 'deletedAt'>): Promise<void> {
     try {
         await addDoc(collection(db, REPORTS_COLLECTION), reportData);
     } catch (error) {

@@ -8,7 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/language-context';
 import * as storage from '@/lib/storage';
 import { useRouter } from 'next/navigation';
-import { auth, db, Timestamp } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -16,7 +16,7 @@ import {
   onAuthStateChanged,
   type User as FirebaseUser,
 } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, Timestamp } from 'firebase/firestore';
 
 
 interface AuthContextType {
@@ -32,61 +32,42 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { t } = useLanguage();
   const router = useRouter();
 
   useEffect(() => {
-    console.log("AuthProvider: Setting up onAuthStateChanged listener.");
-    const unsubscribe = onAuthStateChanged(auth, (fbUser) => {
-      console.log("AuthProvider: Auth state changed. Firebase user UID:", fbUser?.uid || 'none');
-      setFirebaseUser(fbUser);
-      if (!fbUser) {
-        // If user is logged out, stop loading and clear profile
-        setUser(null);
-        setLoading(false);
-      }
-    });
-    return () => {
-      console.log("AuthProvider: Cleaning up onAuthStateChanged listener.");
-      unsubscribe();
-    };
-  }, []);
-
-  useEffect(() => {
-    const fetchUserProfile = async () => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      console.log("AuthProvider: Auth state changed. Firebase user UID:", firebaseUser?.uid || 'none');
       if (firebaseUser) {
-        console.log("AuthProvider (useEffect): Firebase user detected. Fetching profile for UID:", firebaseUser.uid);
+        // User is signed in.
         try {
           const userProfile = await storage.getUserById(firebaseUser.uid);
           if (userProfile) {
             console.log("AuthProvider: User profile found.", userProfile);
             setUser(userProfile);
           } else {
-            console.error("AuthProvider: Auth user exists, but Firestore profile not found. Forcing logout.");
-            await signOut(auth);
-            setUser(null); // Explicitly clear local user state
+            console.error(`AuthProvider: Auth user ${firebaseUser.uid} exists, but Firestore profile not found. Forcing logout.`);
+            await signOut(auth); // This will trigger onAuthStateChanged again with null
+            setUser(null);
           }
         } catch (error) {
            console.error("AuthProvider: Error fetching user profile:", error);
            await signOut(auth);
            setUser(null);
-        } finally {
-            setLoading(false);
-            console.log("AuthProvider: Loading state set to false after profile fetch attempt.");
         }
       } else {
-        // This case is handled by the onAuthStateChanged listener, but as a safeguard:
-        console.log("AuthProvider (useEffect): No Firebase user. Ensuring local state is clear.");
+        // User is signed out.
         setUser(null);
-        setLoading(false);
       }
-    };
-    
-    fetchUserProfile();
-  }, [firebaseUser]); // This effect runs ONLY when firebaseUser state changes
+      setLoading(false);
+    });
+
+    // Cleanup subscription on unmount
+    return () => unsubscribe();
+  }, []);
+
 
   const updateUserInContext = async (updatedUser: UserProfile) => {
     setUser(updatedUser);
@@ -98,7 +79,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     console.log("Login: Attempting to sign in with email:", values.email);
     try {
       await signInWithEmailAndPassword(auth, values.email, values.password);
-      // onAuthStateChanged and the subsequent useEffect will handle fetching the profile
+      // onAuthStateChanged will handle fetching the profile and redirecting
     } catch (error: any) {
       console.error("Login: An error occurred.", error);
       let description = error.message;
@@ -176,7 +157,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = async () => {
     try {
       await signOut(auth);
-      // onAuthStateChanged will handle clearing user state
+      // onAuthStateChanged will handle clearing user state and loading state
       router.push('/auth/login');
       toast({ title: t('toast.logout.success.title') });
     } catch (error: any) {
