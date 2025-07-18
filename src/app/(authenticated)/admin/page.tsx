@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Loader2, ShieldAlert, Users, FileText, AlertTriangle, Trash2, Eye, MoreHorizontal, BarChart3, UserCheck, UserX, UserCog, CalendarDays, Building2, Tag, MessageSquare, Image as ImageIcon, CheckCircle2, CreditCard, Send, Briefcase, MapPin, Phone, Mail, ShieldCheck as ShieldCheckIcon, User as UserIcon, Globe, Edit3, Save, XCircle, Percent, Layers, ChevronLeft, ChevronRight, Activity, ListFilter, Trash } from "lucide-react";
 import type { UserProfile, Report, AuditLogEntry } from "@/types";
-import { countries, detailedReportCategories, DESTRUCTIVE_REPORT_MAIN_CATEGORIES } from "@/types";
+import { countries, detailedReportCategories, DESTRUCTIVE_REPORT_MAIN_CATEGORIES } from "@/lib/constants";
 import * as storage from '@/lib/storage';
 import { format as formatDateFn, addYears } from 'date-fns';
 import { lt, enUS } from 'date-fns/locale';

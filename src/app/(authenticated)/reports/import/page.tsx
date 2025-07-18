@@ -12,7 +12,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/language-context";
 import type { Report } from '@/types';
-import { getCategoryNameForDisplay } from '@/types';
+import { getCategoryNameForDisplay } from '@/lib/utils';
 import * as storage from '@/lib/storage';
 import { useRouter } from "next/navigation";
 import { Badge } from '@/components/ui/badge';

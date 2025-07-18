@@ -15,7 +15,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/hooks/use-auth";
 import { useLanguage } from "@/contexts/language-context";
 import { useToast } from "@/hooks/use-toast";
-import { countries, detailedReportCategories } from "@/types";
+import { countries, detailedReportCategories } from "@/lib/constants";
 import * as storage from '@/lib/storage';
 import { Loader2, FilePlus2, Wand2, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";

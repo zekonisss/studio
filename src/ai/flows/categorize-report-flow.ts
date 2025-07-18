@@ -9,7 +9,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { detailedReportCategories } from '@/types';
+import { detailedReportCategories } from '@/lib/constants';
 
 const allCategoryObjects = detailedReportCategories.map(cat => ({ id: cat.id, nameKey: cat.nameKey, tags: cat.tags }));
 const allCategoryIds = allCategoryObjects.map(cat => cat.id);
@@ -110,5 +110,3 @@ const categorizeReportFlow = ai.defineFlow(
     return { categoryId: finalCategoryId, suggestedTags: finalTags };
   }
 );
-
-    

@@ -15,7 +15,7 @@ import { lt, enUS } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { useLanguage } from '@/contexts/language-context';
-import { getCategoryNameForDisplay } from '@/types';
+import { getCategoryNameForDisplay } from '@/lib/utils';
 import * as storage from '@/lib/storage';
 import { InfoField } from "@/components/account/InfoField";
 import { useToast } from "@/hooks/use-toast";

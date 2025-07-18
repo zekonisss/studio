@@ -13,7 +13,7 @@ import type { Report } from '@/types';
 import { useLanguage } from '@/contexts/language-context';
 import { Badge } from '@/components/ui/badge';
 import * as storage from '@/lib/storage';
-import { getCategoryNameForDisplay } from '@/types';
+import { getCategoryNameForDisplay } from '@/lib/utils';
 import type { Timestamp } from "firebase/firestore";
 
 export default function DashboardPage() {
