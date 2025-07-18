@@ -97,10 +97,12 @@ export async function findUserByEmail(email: string): Promise<UserProfile | null
 }
 
 export async function getUserById(userId: string): Promise<UserProfile | null> {
-    if (!userId || userId === "undefined") {
-      console.warn("storage.ts: getUserById was called with an invalid UID!", userId);
-      return null;
+    console.log('Looking for userId:', userId); // <- įsitikink, kad tai ne null/undefined
+
+    if (!userId || typeof userId !== 'string') {
+        throw new Error('Invalid userId passed to getUserById');
     }
+    
     try {
         const userDocRef = doc(db, USERS_COLLECTION, userId);
         const docSnap = await getDoc(userDocRef);
@@ -129,7 +131,7 @@ export async function getAllReports(): Promise<Report[]> {
     }
 }
 
-export async function addReport(reportData: Omit<Report, 'id'>): Promise<void> {
+export async function addReport(reportData: Omit<Report, 'id' | 'deletedAt'>): Promise<void> {
     try {
         const reportsCollectionRef = collection(db, REPORTS_COLLECTION);
         await addDoc(reportsCollectionRef, reportData);
@@ -163,8 +165,8 @@ export async function softDeleteAllReports(): Promise<number> {
         }
 
         const batch = writeBatch(db);
-        reportsSnapshot.docs.forEach(doc => {
-            batch.update(doc.ref, { deletedAt: Timestamp.now() });
+        reportsSnapshot.docs.forEach(document => {
+            batch.update(document.ref, { deletedAt: Timestamp.now() });
         });
         await batch.commit();
         return reportsSnapshot.size;
@@ -303,5 +305,3 @@ export async function markAllNotificationsAsRead(userId: string): Promise<void> 
         console.error(`Error marking all notifications as read for user ID ${userId}:`, error);
     }
 }
-
-    
