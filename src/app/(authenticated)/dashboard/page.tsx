@@ -29,8 +29,18 @@ export default function DashboardPage() {
 
   const dateLocale = locale === 'en' ? enUS : lt;
   
-  const formatDateSafe = (date: Date | Timestamp, formatString = "yyyy-MM-dd") => {
-      const dateObj = (date as Timestamp).toDate ? (date as Timestamp).toDate() : (date as Date);
+  const getSafeDate = (dateValue: any) => {
+    if (!dateValue) return null;
+    if (typeof dateValue.toDate === 'function') {
+      return dateValue.toDate();
+    }
+    const date = new Date(dateValue);
+    return isNaN(date.getTime()) ? null : date;
+  };
+  
+  const formatDateSafe = (date: any, formatString = "yyyy-MM-dd") => {
+      const dateObj = getSafeDate(date);
+      if (!dateObj) return 'N/A';
       return formatDateFn(dateObj, formatString, { locale: dateLocale });
   }
 
@@ -64,36 +74,41 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (user && user.paymentStatus === 'active' && user.accountActivatedAt) {
-      const activationDate = (user.accountActivatedAt as Timestamp).toDate ? (user.accountActivatedAt as Timestamp).toDate() : new Date(user.accountActivatedAt as string);
-      const subEndDate = addYears(activationDate, 1);
-      const shouldWarn = isBefore(subEndDate, addMonths(new Date(), 1));
-      setShowExpirationWarning(shouldWarn);
-      setExpirationEndDate(formatDateFn(subEndDate, "yyyy-MM-dd", { locale: dateLocale }));
+      const activationDate = getSafeDate(user.accountActivatedAt);
+      if (activationDate) {
+        const subEndDate = addYears(activationDate, 1);
+        const shouldWarn = isBefore(subEndDate, addMonths(new Date(), 1));
+        setShowExpirationWarning(shouldWarn);
+        setExpirationEndDate(formatDateFn(subEndDate, "yyyy-MM-dd", { locale: dateLocale }));
 
-      if (shouldWarn) {
-        const fetchAndSetNotifications = async () => {
-          if (!user) return;
-          const existingNotifications = await storage.getUserNotifications(user.id);
-          const hasExistingWarning = existingNotifications.some(
-            n => n.type === 'subscription_warning' && 
-                 n.messageParams?.endDate === formatDateFn(subEndDate, "yyyy-MM-dd") &&
-                 !n.read
-          );
+        if (shouldWarn) {
+          const fetchAndSetNotifications = async () => {
+            if (!user) return;
+            const existingNotifications = await storage.getUserNotifications(user.id);
+            const hasExistingWarning = existingNotifications.some(
+              n => n.type === 'subscription_warning' && 
+                   n.messageParams?.endDate === formatDateFn(subEndDate, "yyyy-MM-dd") &&
+                   !n.read
+            );
 
-          if (!hasExistingWarning) {
-            await storage.addUserNotification(user.id, {
-              type: 'subscription_warning',
-              titleKey: 'notifications.subscriptionWarning.title',
-              messageKey: 'notifications.subscriptionWarning.message',
-              messageParams: { 
-                endDate: formatDateFn(subEndDate, "yyyy-MM-dd", { locale: dateLocale }),
-                daysLeft: differenceInDays(subEndDate, new Date())
-              },
-              link: '/account?tab=payment'
-            });
-          }
-        };
-        fetchAndSetNotifications();
+            if (!hasExistingWarning) {
+              await storage.addUserNotification(user.id, {
+                type: 'subscription_warning',
+                titleKey: 'notifications.subscriptionWarning.title',
+                messageKey: 'notifications.subscriptionWarning.message',
+                messageParams: { 
+                  endDate: formatDateFn(subEndDate, "yyyy-MM-dd", { locale: dateLocale }),
+                  daysLeft: differenceInDays(subEndDate, new Date())
+                },
+                link: '/account?tab=payment'
+              });
+            }
+          };
+          fetchAndSetNotifications();
+        }
+      } else {
+         setShowExpirationWarning(false);
+         setExpirationEndDate(null);
       }
     } else {
       setShowExpirationWarning(false);
@@ -102,8 +117,8 @@ export default function DashboardPage() {
   }, [user, dateLocale, t]);
 
 
-  const subscriptionEndDateForDisplay = user?.accountActivatedAt 
-      ? addYears((user.accountActivatedAt as Timestamp).toDate ? (user.accountActivatedAt as Timestamp).toDate() : new Date(user.accountActivatedAt as string), 1)
+  const subscriptionEndDateForDisplay = getSafeDate(user?.accountActivatedAt) 
+      ? addYears(getSafeDate(user.accountActivatedAt)!, 1)
       : null;
   
    if (isLoading) {

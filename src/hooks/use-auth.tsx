@@ -16,7 +16,7 @@ import {
   onAuthStateChanged,
   type User as FirebaseUser,
 } from 'firebase/auth';
-import { doc, setDoc, serverTimestamp, type FieldValue } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp, type FieldValue, Timestamp } from 'firebase/firestore';
 
 
 interface AuthContextType {
@@ -39,10 +39,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
+      if (firebaseUser && firebaseUser.uid) {
         const userProfile = await storage.getUserById(firebaseUser.uid);
         if (userProfile) {
-            setUser(userProfile);
+            // CRITICAL CHECK: Ensure accountActivatedAt exists if status is active
+            if (userProfile.paymentStatus === 'active' && !userProfile.accountActivatedAt) {
+                 console.warn("AuthProvider: User status is active but accountActivatedAt is missing. Forcing logout.");
+                 toast({ variant: 'destructive', title: t('toast.login.error.title'), description: t('toast.login.error.inactive') });
+                 await signOut(auth);
+                 setUser(null);
+            } else {
+              setUser(userProfile);
+            }
         } else {
             console.warn("AuthProvider: Auth user exists, but Firestore profile not found. Forcing logout.");
             await signOut(auth);
@@ -55,7 +63,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [t]);
 
   const updateUserInContext = async (updatedUser: UserProfile) => {
     setUser(updatedUser);
@@ -95,7 +103,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       const isAdmin = newFirebaseUser.email?.toLowerCase() === 'sarunas.zekonis@gmail.com';
       
-      const userProfileData: Omit<UserProfile, 'id' | 'registeredAt' | 'accountActivatedAt'> & { registeredAt: FieldValue, accountActivatedAt?: FieldValue } = {
+      const userProfileData: Omit<UserProfile, 'id'> = {
           email: values.email.toLowerCase(),
           companyName: values.companyName,
           companyCode: values.companyCode,
@@ -107,12 +115,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           isAdmin: isAdmin,
           agreeToTerms: values.agreeToTerms,
           registeredAt: serverTimestamp(),
+          accountActivatedAt: isAdmin ? serverTimestamp() : undefined,
           subUsers: [],
       };
-
-      if (isAdmin) {
-        userProfileData.accountActivatedAt = serverTimestamp();
-      }
       
       await setDoc(doc(db, "users", newFirebaseUser.uid), userProfileData);
 
