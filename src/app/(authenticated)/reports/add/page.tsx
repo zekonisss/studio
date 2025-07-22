@@ -32,6 +32,7 @@ export default function AddReportPage() {
   const [isCategorizing, startCategorizing] = useTransition();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
+  const [fileToUpload, setFileToUpload] = useState<File | null>(null);
 
   const form = useForm<ReportFormValues>({
     resolver: zodResolver(ReportSchema),
@@ -99,15 +100,7 @@ export default function AddReportPage() {
     setIsSubmitting(true);
 
     try {
-      // In a real app, you would upload the image to a storage service (e.g., Firebase Storage)
-      // and get a URL. Here, we'll just use a placeholder.
-      const imageUrl = values.image && values.image.length > 0
-        ? 'https://placehold.co/600x400.png'
-        : undefined;
-      
-      const dataAiHint = values.image && values.image.length > 0 ? "incident document" : undefined;
-
-      const reportData: Omit<Report, 'id' | 'deletedAt' | 'createdAt'> = {
+      const reportData: Omit<Report, 'id' | 'deletedAt' | 'createdAt' | 'imageUrl' | 'dataAiHint'> = {
         reporterId: user.id,
         reporterCompanyName: user.companyName,
         fullName: values.fullName,
@@ -116,11 +109,15 @@ export default function AddReportPage() {
         category: values.category,
         tags: values.tags || [],
         comment: values.comment,
-        imageUrl,
-        dataAiHint,
       };
-      
-      await storage.addReport(reportData);
+
+      const reportId = await storage.addReport(reportData);
+
+      let imageUrl: string | undefined;
+      if (fileToUpload) {
+        imageUrl = await storage.uploadFile(fileToUpload, reportId);
+        await storage.updateReport(reportId, { imageUrl, dataAiHint: "incident document" });
+      }
 
       toast({
         title: t('reports.add.toast.success.title'),
@@ -309,9 +306,11 @@ export default function AddReportPage() {
                                     type="file" 
                                     accept="image/jpeg,image/png,application/pdf"
                                     onChange={(e) => {
-                                        if (e.target.files && e.target.files.length > 0) {
-                                           onChange(e.target.files);
-                                           setFileName(e.target.files[0].name);
+                                        const file = e.target.files?.[0];
+                                        if (file) {
+                                            setFileToUpload(file);
+                                            setFileName(file.name);
+                                            onChange(file);
                                         }
                                     }}
                                     className="block w-full text-sm text-slate-500

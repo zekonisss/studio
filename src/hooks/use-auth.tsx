@@ -8,6 +8,16 @@ import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/language-context';
 import * as storage from '@/lib/storage';
 import { useRouter } from 'next/navigation';
+import { auth, db } from '@/lib/firebase';
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+  type User as FirebaseUser,
+} from 'firebase/auth';
+import { doc, setDoc, serverTimestamp, getDoc } from 'firebase/firestore';
+
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -28,78 +38,148 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
 
   useEffect(() => {
-    // Simulate checking for a logged-in user in localStorage
-    try {
-      const storedUser = localStorage.getItem('drivercheck-user');
-      if (storedUser) {
-        setUser(JSON.parse(storedUser));
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        try {
+            const userProfile = await storage.getUserById(firebaseUser.uid);
+            if (userProfile) {
+                setUser(userProfile);
+            } else {
+                console.error(`Auth user ${firebaseUser.uid} exists, but Firestore profile not found. Forcing logout.`);
+                await signOut(auth);
+            }
+        } catch (error) {
+             console.error("Error fetching user profile:", error);
+             await signOut(auth);
+        }
+      } else {
+        setUser(null);
       }
-    } catch (error) {
-      console.error("Failed to parse user from localStorage", error);
-      localStorage.removeItem('drivercheck-user');
-    }
-    setLoading(false);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const updateUserInContext = async (updatedUser: UserProfile) => {
     setUser(updatedUser);
-    localStorage.setItem('drivercheck-user', JSON.stringify(updatedUser));
-    await storage.updateUserProfile(updatedUser.id, updatedUser); // This will update the mock data array
+    await storage.updateUserProfile(updatedUser.id, updatedUser);
   };
 
-  const login = async (values: LoginFormValues): Promise<void> => {
+ const login = async (values: LoginFormValues): Promise<void> => {
     setLoading(true);
-    const loggedInUser = await storage.findUserByEmail(values.email);
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
+      const userProfile = await storage.getUserById(userCredential.user.uid);
+      
+      if (!userProfile) {
+         throw new Error("User profile does not exist.");
+      }
 
-    if (loggedInUser) {
-       // In a real scenario, you'd check the password. Here, we just log in.
-      setUser(loggedInUser);
-      localStorage.setItem('drivercheck-user', JSON.stringify(loggedInUser));
+      if (userProfile.paymentStatus === 'inactive') {
+        throw new Error(t('toast.login.error.inactive'));
+      }
+       if (userProfile.paymentStatus === 'pending_verification') {
+        throw new Error(t('toast.login.error.pendingVerification'));
+      }
+       if (userProfile.paymentStatus === 'pending_payment') {
+        throw new Error(t('toast.login.error.pendingPayment'));
+      }
+
+
       toast({
           title: t('toast.login.success.title'),
           description: t('toast.login.success.description'),
       });
-      const targetPath = loggedInUser.isAdmin ? '/admin' : '/dashboard';
+      
+      const targetPath = userProfile.isAdmin ? '/admin' : '/dashboard';
       router.push(targetPath);
-    } else {
+
+    } catch (error: any) {
+      console.error("Login failed:", error);
+      let description = t('toast.login.error.descriptionGeneric');
+      if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+        description = t('toast.login.error.invalidCredentials');
+      } else if (error.message) {
+        description = error.message;
+      }
       toast({
         variant: 'destructive',
         title: t('toast.login.error.title'),
-        description: t('toast.login.error.invalidCredentials'),
+        description,
       });
+    } finally {
+        setLoading(false);
     }
-    setLoading(false);
   };
 
   const signup = async (values: SignUpFormValues): Promise<void> => {
-    setLoading(true);
-    const existingUser = await storage.findUserByEmail(values.email);
-    if (existingUser) {
-      toast({ variant: 'destructive', title: t('toast.signup.error.title'), description: t('toast.signup.error.emailExists') });
-      setLoading(false);
-      return;
+    setIsSubmitting(true);
+    try {
+      const existingUser = await storage.findUserByEmail(values.email);
+      if (existingUser) {
+        throw new Error(t('toast.signup.error.emailExists'));
+      }
+      
+      const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
+      const newFirebaseUser = userCredential.user;
+
+      const isAdmin = newFirebaseUser.email?.toLowerCase() === 'sarunas.zekonis@gmail.com';
+      
+      const userProfileData: Omit<UserProfile, 'id'> = {
+          email: values.email.toLowerCase(),
+          companyName: values.companyName,
+          companyCode: values.companyCode,
+          vatCode: values.vatCode || '',
+          address: values.address,
+          contactPerson: values.contactPerson,
+          phone: values.phone,
+          paymentStatus: isAdmin ? 'active' : 'pending_verification',
+          isAdmin: isAdmin,
+          agreeToTerms: values.agreeToTerms,
+          registeredAt: serverTimestamp(),
+          accountActivatedAt: isAdmin ? serverTimestamp() : undefined,
+          subUsers: [],
+      };
+      
+      await setDoc(doc(db, "users", newFirebaseUser.uid), userProfileData);
+
+      toast({
+          title: t('toast.signup.success.title'),
+          description: t('toast.signup.success.description'),
+      });
+      
+      router.push('/auth/pending-approval');
+
+    } catch(error: any) {
+        console.error("Signup failed:", error);
+        let errorMessage = error.message || t('toast.signup.error.descriptionGeneric');
+        if (error.code === 'auth/email-already-in-use') {
+            errorMessage = t('toast.signup.error.emailExists');
+        }
+        toast({ variant: 'destructive', title: t('toast.signup.error.title'), description: errorMessage });
+    } finally {
+        setIsSubmitting(false);
     }
-
-    const newUser = await storage.createUser(values);
-    
-    toast({
-        title: t('toast.signup.success.title'),
-        description: t('toast.signup.success.description'),
-    });
-
-    // In this mock version, we don't need to log in the user,
-    // they are just redirected to a page informing about approval.
-    router.push('/auth/pending-approval');
-    setLoading(false);
   };
 
   const logout = async () => {
-    setUser(null);
-    localStorage.removeItem('drivercheck-user');
-    router.push('/auth/login');
-    toast({ title: t('toast.logout.success.title') });
+    try {
+      await signOut(auth);
+      setUser(null); 
+      router.push('/auth/login');
+      toast({ title: t('toast.logout.success.title') });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: t('toast.logout.error.title'),
+        description: error.message,
+      });
+    }
   };
   
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const value = { user, loading, login, signup, logout, updateUserInContext };
 
   return (
