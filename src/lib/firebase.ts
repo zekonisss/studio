@@ -1,3 +1,4 @@
+
 // This file is safe to be imported on the client (browser).
 import { initializeApp, getApps, getApp, type FirebaseOptions } from "firebase/app";
 import { getFirestore, enableNetwork, Timestamp, serverTimestamp } from "firebase/firestore";

@@ -135,6 +135,10 @@ export async function addReport(reportData: Omit<Report, 'id'| 'deletedAt' | 'cr
     return docRef.id;
 }
 
+export async function updateReport(reportId: string, reportData: Partial<Report>): Promise<void> {
+    const reportDocRef = doc(db, REPORTS_COLLECTION, reportId);
+    await updateDoc(reportDocRef, reportData);
+}
 
 export async function softDeleteReport(reportId: string): Promise<void> {
     const reportDocRef = doc(db, REPORTS_COLLECTION, reportId);

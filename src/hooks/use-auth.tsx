@@ -43,7 +43,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         try {
             const userProfile = await storage.getUserById(firebaseUser.uid);
             if (userProfile) {
-                setUser(userProfile);
+                if (userProfile.paymentStatus === 'active' && userProfile.accountActivatedAt) {
+                    setUser(userProfile);
+                } else {
+                    await signOut(auth);
+                    let errorMessage = t('toast.login.error.accessDenied');
+                    if (userProfile.paymentStatus === 'pending_verification') {
+                        errorMessage = t('toast.login.error.pendingVerification');
+                    } else if (userProfile.paymentStatus === 'pending_payment') {
+                        errorMessage = t('toast.login.error.pendingPayment');
+                    }
+                    toast({ variant: 'destructive', title: t('toast.login.error.title'), description: errorMessage });
+                }
             } else {
                 console.error(`Auth user ${firebaseUser.uid} exists, but Firestore profile not found. Forcing logout.`);
                 await signOut(auth);
@@ -59,7 +70,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [t, toast]);
 
   const updateUserInContext = async (updatedUser: UserProfile) => {
     setUser(updatedUser);
@@ -70,51 +81,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setLoading(true);
     try {
       const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
-      const userProfile = await storage.getUserById(userCredential.user.uid);
-      
-      if (!userProfile) {
-         throw new Error("User profile does not exist.");
-      }
-
-      if (userProfile.paymentStatus === 'inactive') {
-        throw new Error(t('toast.login.error.inactive'));
-      }
-       if (userProfile.paymentStatus === 'pending_verification') {
-        throw new Error(t('toast.login.error.pendingVerification'));
-      }
-       if (userProfile.paymentStatus === 'pending_payment') {
-        throw new Error(t('toast.login.error.pendingPayment'));
-      }
-
-
-      toast({
-          title: t('toast.login.success.title'),
-          description: t('toast.login.success.description'),
-      });
-      
-      const targetPath = userProfile.isAdmin ? '/admin' : '/dashboard';
-      router.push(targetPath);
-
+      // onAuthStateChanged will handle the rest
     } catch (error: any) {
       console.error("Login failed:", error);
       let description = t('toast.login.error.descriptionGeneric');
       if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
         description = t('toast.login.error.invalidCredentials');
-      } else if (error.message) {
-        description = error.message;
       }
       toast({
         variant: 'destructive',
         title: t('toast.login.error.title'),
         description,
       });
-    } finally {
-        setLoading(false);
+       setLoading(false);
     }
   };
 
   const signup = async (values: SignUpFormValues): Promise<void> => {
-    setIsSubmitting(true);
+    setLoading(true);
     try {
       const existingUser = await storage.findUserByEmail(values.email);
       if (existingUser) {
@@ -126,7 +110,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       const isAdmin = newFirebaseUser.email?.toLowerCase() === 'sarunas.zekonis@gmail.com';
       
-      const userProfileData: Omit<UserProfile, 'id'> = {
+      const userProfileData = {
           email: values.email.toLowerCase(),
           companyName: values.companyName,
           companyCode: values.companyCode,
@@ -159,7 +143,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
         toast({ variant: 'destructive', title: t('toast.signup.error.title'), description: errorMessage });
     } finally {
-        setIsSubmitting(false);
+        setLoading(false);
     }
   };
 
@@ -177,8 +161,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
     }
   };
-  
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const value = { user, loading, login, signup, logout, updateUserInContext };
 
