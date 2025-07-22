@@ -19,7 +19,6 @@ import { countries, detailedReportCategories } from "@/lib/constants";
 import * as storage from '@/lib/storage';
 import { Loader2, FilePlus2, Wand2, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { Timestamp } from "firebase/firestore";
 import { categorizeReport } from "@/ai/flows/categorize-report-flow";
 import type { Report } from '@/types';
 

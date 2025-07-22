@@ -26,7 +26,6 @@ import { useLanguage } from '@/contexts/language-context';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 import { ChartContainer, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { Timestamp } from "firebase/firestore";
 
 const USERS_PER_PAGE = 10; 
 
@@ -54,21 +53,13 @@ export default function AdminPage() {
 
   const dateLocale = locale === 'en' ? enUS : lt;
   
-  const getSafeDate = (dateValue?: string | Date | Timestamp) => {
+  const getSafeDate = (dateValue?: string | Date) => {
     if (!dateValue) return null;
-    if (typeof (dateValue as Timestamp)?.toDate === 'function') {
-      return (dateValue as Timestamp).toDate();
-    }
-    if (typeof dateValue === 'string' || typeof dateValue === 'number' || dateValue instanceof Date) {
-        const date = new Date(dateValue);
-        if (!isNaN(date.getTime())) {
-            return date;
-        }
-    }
-    return null;
+    const date = new Date(dateValue);
+    return isNaN(date.getTime()) ? null : date;
   }
   
-  const formatDateSafe = (dateValue: Date | Timestamp | string | undefined, formatString: string = "yyyy-MM-dd HH:mm") => {
+  const formatDateSafe = (dateValue: Date | string | undefined, formatString: string = "yyyy-MM-dd HH:mm") => {
       const dateObj = getSafeDate(dateValue);
       if (!dateObj) return t('common.notSpecified');
       return formatDateFn(dateObj, formatString, { locale: dateLocale });
@@ -651,7 +642,7 @@ export default function AdminPage() {
                         </TableCell>
                         <TableCell className="hidden md:table-cell">{report.reporterCompanyName || t('common.notSpecified')}</TableCell>
                         <TableCell className="text-center hidden lg:table-cell text-muted-foreground">
-                          {formatDateSafe(report.createdAt.toDate())}
+                          {formatDateSafe(report.createdAt)}
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex gap-1 justify-end">
@@ -718,7 +709,7 @@ export default function AdminPage() {
                     {auditLogs.map((log) => (
                       <TableRow key={log.id}>
                         <TableCell className="text-xs text-muted-foreground">
-                          {formatDateSafe(log.timestamp.toDate(), "yyyy-MM-dd HH:mm:ss")}
+                          {formatDateSafe(log.timestamp, "yyyy-MM-dd HH:mm:ss")}
                         </TableCell>
                         <TableCell className="text-sm">{log.adminName}</TableCell>
                         <TableCell className="text-sm">{t(log.actionKey, log.details)}</TableCell>
@@ -859,7 +850,7 @@ export default function AdminPage() {
               </div>
               <div className="space-y-1">
                 <h4 className="text-sm font-medium text-muted-foreground flex items-center"><CalendarDays className="mr-2 h-4 w-4" />{t('admin.entryDetailsModal.submissionDate')}</h4>
-                <p className="text-base text-foreground">{formatDateSafe(selectedReportForDetails.createdAt.toDate(), "yyyy-MM-dd HH:mm:ss")}</p>
+                <p className="text-base text-foreground">{formatDateSafe(selectedReportForDetails.createdAt, "yyyy-MM-dd HH:mm:ss")}</p>
               </div>
             </div>
             <DialogFooter>

@@ -18,7 +18,6 @@ import { countries, DESTRUCTIVE_REPORT_MAIN_CATEGORIES } from "@/lib/constants";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import NextImage from "next/image";
-import type { Timestamp } from "firebase/firestore";
 
 export default function ReportsHistoryPage() {
   const { user, loading: authLoading } = useAuth();
@@ -68,9 +67,8 @@ export default function ReportsHistoryPage() {
     return country ? t('countries.' + country.value) : nationalityCode;
   };
   
-  const formatDateSafe = (date: Date | Timestamp) => {
-      const dateObj = (date as Timestamp).toDate ? (date as Timestamp).toDate() : (date as Date);
-      return formatDateFn(dateObj, "yyyy-MM-dd HH:mm", { locale: dateLocale });
+  const formatDateSafe = (date: Date) => {
+      return formatDateFn(new Date(date), "yyyy-MM-dd HH:mm", { locale: dateLocale });
   }
 
   if (authLoading || isLoading) {

@@ -14,7 +14,6 @@ import { useLanguage } from '@/contexts/language-context';
 import { Badge } from '@/components/ui/badge';
 import * as storage from '@/lib/storage';
 import { getCategoryNameForDisplay } from '@/lib/utils';
-import type { Timestamp } from "firebase/firestore";
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -31,9 +30,6 @@ export default function DashboardPage() {
   
   const getSafeDate = (dateValue: any) => {
     if (!dateValue) return null;
-    if (typeof dateValue.toDate === 'function') {
-      return dateValue.toDate();
-    }
     const date = new Date(dateValue);
     return isNaN(date.getTime()) ? null : date;
   };

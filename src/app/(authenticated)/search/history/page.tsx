@@ -14,8 +14,6 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import * as storage from '@/lib/storage';
 import { useLanguage } from "@/contexts/language-context"; 
-import type { Timestamp } from "firebase/firestore";
-
 
 export default function SearchHistoryPage() {
   const { user, loading: authLoading } = useAuth();
@@ -48,8 +46,8 @@ export default function SearchHistoryPage() {
     }
   }, [user, authLoading]);
 
-   const formatDateSafe = (date: Date | Timestamp) => {
-      const dateObj = (date as Timestamp)?.toDate ? (date as Timestamp).toDate() : (date as Date);
+   const formatDateSafe = (date: Date) => {
+      const dateObj = new Date(date);
       if (dateObj && !isNaN(dateObj.getTime())) {
         return formatDateFn(dateObj, "yyyy-MM-dd HH:mm:ss", { locale: dateLocale });
       }

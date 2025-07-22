@@ -8,16 +8,6 @@ import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/language-context';
 import * as storage from '@/lib/storage';
 import { useRouter } from 'next/navigation';
-import { auth, db } from '@/lib/firebase';
-import {
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  signOut,
-  onAuthStateChanged,
-  type User as FirebaseUser,
-} from 'firebase/auth';
-import { doc, setDoc, serverTimestamp, type FieldValue, Timestamp } from 'firebase/firestore';
-
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -38,121 +28,76 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser && firebaseUser.uid) {
-        const userProfile = await storage.getUserById(firebaseUser.uid);
-        if (userProfile) {
-            // CRITICAL CHECK: Ensure accountActivatedAt exists if status is active
-            if (userProfile.paymentStatus === 'active' && !userProfile.accountActivatedAt) {
-                 console.warn("AuthProvider: User status is active but accountActivatedAt is missing. Forcing logout.");
-                 toast({ variant: 'destructive', title: t('toast.login.error.title'), description: t('toast.login.error.inactive') });
-                 await signOut(auth);
-                 setUser(null);
-            } else {
-              setUser(userProfile);
-            }
-        } else {
-            console.warn("AuthProvider: Auth user exists, but Firestore profile not found. Forcing logout.");
-            await signOut(auth);
-            setUser(null);
-        }
-      } else {
-        setUser(null);
+    // Simulate checking for a logged-in user in localStorage
+    try {
+      const storedUser = localStorage.getItem('drivercheck-user');
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
       }
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, [t]);
+    } catch (error) {
+      console.error("Failed to parse user from localStorage", error);
+      localStorage.removeItem('drivercheck-user');
+    }
+    setLoading(false);
+  }, []);
 
   const updateUserInContext = async (updatedUser: UserProfile) => {
     setUser(updatedUser);
-    await storage.updateUserProfile(updatedUser.id, updatedUser);
+    localStorage.setItem('drivercheck-user', JSON.stringify(updatedUser));
+    await storage.updateUserProfile(updatedUser.id, updatedUser); // This will update the mock data array
   };
 
   const login = async (values: LoginFormValues): Promise<void> => {
     setLoading(true);
-    try {
-      await signInWithEmailAndPassword(auth, values.email, values.password);
-    } catch (error: any) {
-      console.error("Login: An error occurred.", error);
-      let description = error.message;
-       if (error.code === 'auth/invalid-credential') {
-        description = t('toast.login.error.invalidCredentials');
-      }
+    const loggedInUser = await storage.findUserByEmail(values.email);
+
+    if (loggedInUser) {
+       // In a real scenario, you'd check the password. Here, we just log in.
+      setUser(loggedInUser);
+      localStorage.setItem('drivercheck-user', JSON.stringify(loggedInUser));
+      toast({
+          title: t('toast.login.success.title'),
+          description: t('toast.login.success.description'),
+      });
+      const targetPath = loggedInUser.isAdmin ? '/admin' : '/dashboard';
+      router.push(targetPath);
+    } else {
       toast({
         variant: 'destructive',
         title: t('toast.login.error.title'),
-        description: description,
+        description: t('toast.login.error.invalidCredentials'),
       });
-      setUser(null);
-      setLoading(false);
     }
+    setLoading(false);
   };
 
   const signup = async (values: SignUpFormValues): Promise<void> => {
     setLoading(true);
-
-    try {
-      const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
-      const { user: newFirebaseUser } = userCredential;
-      
-      if (!newFirebaseUser?.uid) {
-        throw new Error('User UID not available after creation.');
-      }
-      
-      const isAdmin = newFirebaseUser.email?.toLowerCase() === 'sarunas.zekonis@gmail.com';
-      
-      const userProfileData: Omit<UserProfile, 'id'> = {
-          email: values.email.toLowerCase(),
-          companyName: values.companyName,
-          companyCode: values.companyCode,
-          vatCode: values.vatCode || '',
-          address: values.address,
-          contactPerson: values.contactPerson,
-          phone: values.phone,
-          paymentStatus: isAdmin ? 'active' : 'pending_verification',
-          isAdmin: isAdmin,
-          agreeToTerms: values.agreeToTerms,
-          registeredAt: serverTimestamp(),
-          accountActivatedAt: isAdmin ? serverTimestamp() : undefined,
-          subUsers: [],
-      };
-      
-      await setDoc(doc(db, "users", newFirebaseUser.uid), userProfileData);
-
-      toast({
-          title: t('toast.signup.success.title'),
-          description: t('toast.signup.success.description'),
-      });
-      
-      router.push('/auth/pending-approval');
-
-    } catch(error: any) {
-        console.error("Signup: An error occurred.", error);
-        let errorMessage = error.message || t('toast.signup.error.descriptionGeneric');
-        if (error.code === 'auth/email-already-in-use') {
-            errorMessage = t('toast.signup.error.emailExists');
-        }
-        toast({ variant: 'destructive', title: t('toast.signup.error.title'), description: errorMessage });
-    } finally {
+    const existingUser = await storage.findUserByEmail(values.email);
+    if (existingUser) {
+      toast({ variant: 'destructive', title: t('toast.signup.error.title'), description: t('toast.signup.error.emailExists') });
       setLoading(false);
+      return;
     }
+
+    const newUser = await storage.createUser(values);
+    
+    toast({
+        title: t('toast.signup.success.title'),
+        description: t('toast.signup.success.description'),
+    });
+
+    // In this mock version, we don't need to log in the user,
+    // they are just redirected to a page informing about approval.
+    router.push('/auth/pending-approval');
+    setLoading(false);
   };
 
   const logout = async () => {
-    try {
-      await signOut(auth);
-      setUser(null); 
-      router.push('/auth/login');
-      toast({ title: t('toast.logout.success.title') });
-    } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: t('toast.logout.error.title'),
-        description: error.message,
-      });
-    }
+    setUser(null);
+    localStorage.removeItem('drivercheck-user');
+    router.push('/auth/login');
+    toast({ title: t('toast.logout.success.title') });
   };
   
   const value = { user, loading, login, signup, logout, updateUserInContext };

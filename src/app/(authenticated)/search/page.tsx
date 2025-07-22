@@ -20,7 +20,6 @@ import { countries, detailedReportCategories, DESTRUCTIVE_REPORT_MAIN_CATEGORIES
 import { migrateTagIfNeeded } from "@/lib/utils";
 import * as storage from '@/lib/storage';
 import { useLanguage } from "@/contexts/language-context"; 
-import type { Timestamp } from "firebase/firestore";
 
 export default function SearchPage() {
   const { user } = useAuth();
@@ -85,7 +84,7 @@ export default function SearchPage() {
               (report.reporterCompanyName && report.reporterCompanyName.toLowerCase().includes(query))
             );
           }
-        ).sort((a,b) => (b.createdAt as any).seconds - (a.createdAt as any).seconds);
+        ).sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       }
 
       setSearchResults(results);
@@ -94,7 +93,7 @@ export default function SearchPage() {
       }
 
       if (user && query) {
-        const newSearchLog: Omit<SearchLog, 'id'> = {
+        const newSearchLog: Omit<SearchLog, 'id' | 'timestamp'> = {
           userId: user.id,
           searchText: values.query,
           resultsCount: results.length,
@@ -108,9 +107,8 @@ export default function SearchPage() {
     }
   };
   
-  const formatDateSafe = (date: Date | Timestamp) => {
-      const dateObj = (date as Timestamp).toDate ? (date as Timestamp).toDate() : (date as Date);
-      return formatDateFn(dateObj, "yyyy-MM-dd HH:mm", { locale: dateLocale });
+  const formatDateSafe = (date: Date) => {
+      return formatDateFn(new Date(date), "yyyy-MM-dd HH:mm", { locale: dateLocale });
   }
 
   return (
