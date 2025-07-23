@@ -19,6 +19,7 @@ import { getCategoryNameForDisplay } from '@/lib/utils';
 import * as storage from '@/lib/storage';
 import { InfoField } from "@/components/account/InfoField";
 import { useToast } from "@/hooks/use-toast";
+import { Timestamp } from "firebase/firestore";
 
 
 export default function AccountPage() {
@@ -138,8 +139,11 @@ export default function AccountPage() {
     router.push(`/account?tab=${value}`, { scroll: false });
   };
   
-  const getSafeDate = (dateValue: UserProfile['accountActivatedAt']) => {
+  const getSafeDate = (dateValue: any): Date | null => {
     if (!dateValue) return null;
+    if (dateValue instanceof Timestamp) {
+      return dateValue.toDate();
+    }
     const date = new Date(dateValue);
     return isNaN(date.getTime()) ? null : date;
   }
@@ -230,7 +234,7 @@ export default function AccountPage() {
                         <Badge variant="secondary">{getCategoryNameForDisplay(report.category, t)}</Badge> 
                       </div>
                       <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{report.comment}</p>
-                      <p className="text-xs text-muted-foreground mt-2">{t('account.entries.submittedOn')}: {formatDateFn(new Date(report.createdAt), "yyyy-MM-dd HH:mm", { locale: dateLocale })}</p>
+                      <p className="text-xs text-muted-foreground mt-2">{t('account.entries.submittedOn')}: {formatDateFn(getSafeDate(report.createdAt)!, "yyyy-MM-dd HH:mm", { locale: dateLocale })}</p>
                     </li>
                   ))}
                 </ul>
@@ -258,7 +262,7 @@ export default function AccountPage() {
                       <div className="flex justify-between items-start">
                         <div>
                           <h4 className="font-semibold text-foreground">{report.fullName}</h4>
-                          <p className="text-xs text-muted-foreground mt-1">{t('account.entries.deletedOn')}: {formatDateFn(new Date(report.deletedAt!), "yyyy-MM-dd HH:mm", { locale: dateLocale })}</p>
+                          <p className="text-xs text-muted-foreground mt-1">{t('account.entries.deletedOn')}: {formatDateFn(getSafeDate(report.deletedAt)!, "yyyy-MM-dd HH:mm", { locale: dateLocale })}</p>
                         </div>
                         <Badge variant="destructive">{getCategoryNameForDisplay(report.category, t)}</Badge> 
                       </div>
@@ -405,7 +409,7 @@ export default function AccountPage() {
                       </p>
                       <div className="flex justify-between items-center mt-2">
                         <p className="text-xs text-muted-foreground">
-                          {formatDateFn(new Date(notif.createdAt), "yyyy-MM-dd HH:mm", { locale: dateLocale })}
+                          {formatDateFn(getSafeDate(notif.createdAt)!, "yyyy-MM-dd HH:mm", { locale: dateLocale })}
                         </p>
                         {notif.link && (
                           <Button variant="link" size="sm" asChild className="p-0 h-auto">
