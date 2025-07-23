@@ -16,8 +16,7 @@ import {
   addDoc,
   orderBy,
   serverTimestamp,
-  Timestamp,
-  deleteDoc
+  Timestamp
 } from 'firebase/firestore';
 
 const USERS_COLLECTION = 'users';
@@ -25,16 +24,6 @@ const REPORTS_COLLECTION = 'reports';
 const SEARCH_LOGS_COLLECTION = 'searchLogs';
 const AUDIT_LOGS_COLLECTION = 'auditLogs';
 const NOTIFICATIONS_COLLECTION = 'notifications';
-
-// --- File Management ---
-// Firebase Storage is not correctly configured, this part is temporarily disabled.
-// export async function uploadFile(file: File, reportId: string): Promise<string> {
-//     const storageRef = ref(firebaseStorage, `reports/${reportId}/${file.name}`);
-//     const snapshot = await uploadBytes(storageRef, file);
-//     const downloadURL = await getDownloadURL(snapshot.ref);
-//     return downloadURL;
-// }
-
 
 // --- User Management ---
 
@@ -95,7 +84,6 @@ export async function getUserById(userId: string): Promise<UserProfile | null> {
     const docSnap = await getDoc(userDocRef);
     if (docSnap.exists()) {
         const data = docSnap.data();
-        // Convert Firestore Timestamps to Date objects
         if (data.registeredAt && data.registeredAt instanceof Timestamp) {
             data.registeredAt = data.registeredAt.toDate();
         }
@@ -118,13 +106,13 @@ export async function getAllReports(): Promise<Report[]> {
         return { 
             id: doc.id, 
             ...data,
-            createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : new Date(),
-            deletedAt: data.deletedAt instanceof Timestamp ? data.deletedAt.toDate() : null,
+            createdAt: data.createdAt, // Keep as Timestamp or Date
+            deletedAt: data.deletedAt || null, // Ensure deletedAt is null if not present
         } as Report;
     });
 }
 
-export async function addReport(reportData: Omit<Report, 'id'| 'deletedAt' | 'createdAt'>): Promise<string> {
+export async function addReport(reportData: Omit<Report, 'id' | 'createdAt' | 'deletedAt'>): Promise<string> {
     const reportsCollectionRef = collection(db, REPORTS_COLLECTION);
     const docRef = await addDoc(reportsCollectionRef, {
         ...reportData,
@@ -134,10 +122,6 @@ export async function addReport(reportData: Omit<Report, 'id'| 'deletedAt' | 'cr
     return docRef.id;
 }
 
-export async function updateReport(reportId: string, reportData: Partial<Report>): Promise<void> {
-    const reportDocRef = doc(db, REPORTS_COLLECTION, reportId);
-    await updateDoc(reportDocRef, reportData);
-}
 
 export async function softDeleteReport(reportId: string): Promise<void> {
     const reportDocRef = doc(db, REPORTS_COLLECTION, reportId);
@@ -168,18 +152,18 @@ export async function getUserReports(userId: string): Promise<{ active: Report[]
         return { 
             id: doc.id, 
             ...data,
-            createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : new Date(),
-            deletedAt: data.deletedAt instanceof Timestamp ? data.deletedAt.toDate() : null,
+            createdAt: data.createdAt,
+            deletedAt: data.deletedAt || null,
         } as Report;
     });
 
     const active = allUserReports
       .filter(r => !r.deletedAt)
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+      .sort((a, b) => ((b.createdAt as Timestamp).toMillis() - (a.createdAt as Timestamp).toMillis()));
     
     const deleted = allUserReports
       .filter(r => r.deletedAt)
-      .sort((a, b) => b.deletedAt!.getTime() - a.deletedAt!.getTime());
+      .sort((a, b) => ((b.deletedAt as Timestamp).toMillis() - (a.deletedAt as Timestamp).toMillis()));
       
     return { active, deleted };
 }
@@ -198,7 +182,7 @@ export async function getSearchLogs(userId?: string): Promise<SearchLog[]> {
         return {
             id: doc.id,
             ...data,
-            timestamp: data.timestamp instanceof Timestamp ? data.timestamp.toDate() : new Date(),
+            timestamp: data.timestamp,
         } as SearchLog
     });
 }
@@ -217,7 +201,7 @@ export async function getAuditLogs(): Promise<AuditLogEntry[]> {
         return {
              id: doc.id,
              ...data,
-             timestamp: data.timestamp instanceof Timestamp ? data.timestamp.toDate() : new Date(),
+             timestamp: data.timestamp,
         } as AuditLogEntry;
     });
 }
@@ -238,7 +222,7 @@ export async function getUserNotifications(userId: string): Promise<UserNotifica
         return {
              id: doc.id, 
              ...data,
-             createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : new Date(),
+             createdAt: data.createdAt,
         } as UserNotification
     });
 }

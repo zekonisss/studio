@@ -43,7 +43,7 @@ export interface Report {
   imageUrl?: string;
   dataAiHint?: string;
   createdAt: Date | Timestamp; 
-  deletedAt: Date | Timestamp | null;
+  deletedAt?: Date | Timestamp | null;
 }
 
 
