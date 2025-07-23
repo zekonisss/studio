@@ -111,13 +111,7 @@ export default function AddReportPage() {
         comment: values.comment,
       };
 
-      const reportId = await storage.addReport(reportData);
-
-      // let imageUrl: string | undefined;
-      // if (fileToUpload) {
-      //   imageUrl = await storage.uploadFile(fileToUpload, reportId);
-      //   await storage.updateReport(reportId, { imageUrl, dataAiHint: "incident document" });
-      // }
+      await storage.addReport(reportData);
 
       toast({
         title: t('reports.add.toast.success.title'),

@@ -16,7 +16,7 @@ import * as storage from '@/lib/storage';
 import { getCategoryNameForDisplay } from '@/lib/utils';
 
 export default function DashboardPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { t, locale } = useLanguage();
   const [totalReportsCount, setTotalReportsCount] = useState(0);
   const [userReportsCount, setUserReportsCount] = useState(0);
@@ -64,8 +64,11 @@ export default function DashboardPage() {
         setIsLoading(false);
       }
     };
-    fetchStats();
-  }, [user]);
+
+    if (!authLoading) {
+      fetchStats();
+    }
+  }, [user, authLoading]);
 
 
   useEffect(() => {
@@ -112,12 +115,11 @@ export default function DashboardPage() {
     }
   }, [user, dateLocale, t]);
 
-
-  const subscriptionEndDateForDisplay = getSafeDate(user?.accountActivatedAt) 
-      ? addYears(getSafeDate(user.accountActivatedAt)!, 1)
-      : null;
+  const subscriptionEndDateForDisplay = user?.accountActivatedAt
+    ? addYears(getSafeDate(user.accountActivatedAt)!, 1)
+    : null;
   
-   if (isLoading) {
+   if (isLoading || authLoading) {
     return (
       <div className="flex justify-center items-center h-[calc(100vh-10rem)]">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
