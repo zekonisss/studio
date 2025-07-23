@@ -2,7 +2,7 @@
 "use client";
 
 import type { Report, UserProfile, SearchLog, AuditLogEntry, UserNotification } from '@/types';
-import { db, storage as firebaseStorage } from '@/lib/firebase';
+import { db } from '@/lib/firebase';
 import { 
   collection, 
   getDocs, 
@@ -19,7 +19,6 @@ import {
   Timestamp,
   deleteDoc
 } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 const USERS_COLLECTION = 'users';
 const REPORTS_COLLECTION = 'reports';
@@ -28,13 +27,13 @@ const AUDIT_LOGS_COLLECTION = 'auditLogs';
 const NOTIFICATIONS_COLLECTION = 'notifications';
 
 // --- File Management ---
-
-export async function uploadFile(file: File, reportId: string): Promise<string> {
-    const storageRef = ref(firebaseStorage, `reports/${reportId}/${file.name}`);
-    const snapshot = await uploadBytes(storageRef, file);
-    const downloadURL = await getDownloadURL(snapshot.ref);
-    return downloadURL;
-}
+// Firebase Storage is not correctly configured, this part is temporarily disabled.
+// export async function uploadFile(file: File, reportId: string): Promise<string> {
+//     const storageRef = ref(firebaseStorage, `reports/${reportId}/${file.name}`);
+//     const snapshot = await uploadBytes(storageRef, file);
+//     const downloadURL = await getDownloadURL(snapshot.ref);
+//     return downloadURL;
+// }
 
 
 // --- User Management ---

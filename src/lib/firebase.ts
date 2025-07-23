@@ -3,7 +3,6 @@
 import { initializeApp, getApps, getApp, type FirebaseOptions } from "firebase/app";
 import { getFirestore, enableNetwork, Timestamp, serverTimestamp } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
-import { getStorage } from "firebase/storage";
 
 // Firebase config from your Firebase project
 const FIREBASE_CLIENT_CONFIG: FirebaseOptions = {
@@ -23,7 +22,6 @@ function getFirebaseApp(options: FirebaseOptions) {
 const app = getFirebaseApp(FIREBASE_CLIENT_CONFIG);
 const db = getFirestore(app);
 const auth = getAuth(app);
-const storage = getStorage(app);
 
 
 // Enable Firestore network only in the browser to avoid SSR issues
@@ -34,4 +32,4 @@ if (typeof window !== "undefined") {
     });
 }
 
-export { db, auth, storage, Timestamp, serverTimestamp };
+export { db, auth, Timestamp, serverTimestamp };

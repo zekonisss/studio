@@ -113,11 +113,11 @@ export default function AddReportPage() {
 
       const reportId = await storage.addReport(reportData);
 
-      let imageUrl: string | undefined;
-      if (fileToUpload) {
-        imageUrl = await storage.uploadFile(fileToUpload, reportId);
-        await storage.updateReport(reportId, { imageUrl, dataAiHint: "incident document" });
-      }
+      // let imageUrl: string | undefined;
+      // if (fileToUpload) {
+      //   imageUrl = await storage.uploadFile(fileToUpload, reportId);
+      //   await storage.updateReport(reportId, { imageUrl, dataAiHint: "incident document" });
+      // }
 
       toast({
         title: t('reports.add.toast.success.title'),
@@ -320,6 +320,7 @@ export default function AddReportPage() {
                                       file:bg-primary/10 file:text-primary
                                       hover:file:bg-primary/20"
                                     {...rest} 
+                                    disabled={true}
                                 />
                              </div>
                         </FormControl>
