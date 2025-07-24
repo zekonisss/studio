@@ -106,8 +106,8 @@ export async function getAllReports(): Promise<Report[]> {
         return { 
             id: doc.id, 
             ...data,
-            createdAt: data.createdAt, // Keep as Timestamp or Date
-            deletedAt: data.deletedAt || null, // Ensure deletedAt is null if not present
+            createdAt: data.createdAt, 
+            deletedAt: data.deletedAt || null, 
         } as Report;
     });
 }
@@ -130,6 +130,7 @@ export async function softDeleteReport(reportId: string): Promise<void> {
 
 export async function softDeleteAllReports(): Promise<number> {
     const reportsCollectionRef = collection(db, REPORTS_COLLECTION);
+    // Correct way to query for documents where a field does not exist or is null
     const q = query(reportsCollectionRef, where("deletedAt", "==", null));
     const reportsSnapshot = await getDocs(q);
     
@@ -172,9 +173,13 @@ export async function getUserReports(userId: string): Promise<{ active: Report[]
 
 export async function getSearchLogs(userId?: string): Promise<SearchLog[]> {
     const logsCollectionRef = collection(db, SEARCH_LOGS_COLLECTION);
-    const q = userId 
-        ? query(logsCollectionRef, where("userId", "==", userId), orderBy("timestamp", "desc"))
-        : query(logsCollectionRef, orderBy("timestamp", "desc"));
+    let q;
+
+    if (userId) {
+       q = query(logsCollectionRef, where("userId", "==", userId), orderBy("timestamp", "desc"));
+    } else {
+       q = query(logsCollectionRef, orderBy("timestamp", "desc"));
+    }
     
     const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => {
@@ -244,7 +249,8 @@ export async function markNotificationAsRead(notificationId: string): Promise<vo
 
 export async function markAllNotificationsAsRead(userId: string): Promise<void> {
     const notificationsCollectionRef = collection(db, NOTIFICATIONS_COLLECTION);
-    const q = query(notificationsCollectionRef, where("userId", "==", userId), where("read", "==", false));
+    // Correct way to query for documents where a field is false or does not exist.
+    const q = query(notificationsCollectionRef, where("userId", "==", userId), where("read", "!=", true));
     const snapshot = await getDocs(q);
     
     if (snapshot.empty) return;
@@ -255,3 +261,5 @@ export async function markAllNotificationsAsRead(userId: string): Promise<void> 
     });
     await batch.commit();
 }
+
+    
