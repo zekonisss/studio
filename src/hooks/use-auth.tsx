@@ -47,11 +47,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             const userProfile = await storage.getUserById(firebaseUser.uid);
             console.log("AuthProvider: User profile fetched from storage:", userProfile);
             if (userProfile) {
-                if (userProfile.paymentStatus === 'active') {
+                if (userProfile.paymentStatus === 'active' && userProfile.accountActivatedAt) {
                     console.log("AuthProvider: User is active. Setting user state.");
                     setUser(userProfile);
                 } else {
-                    console.log(`AuthProvider: User is not active (status: ${userProfile.paymentStatus}). Signing out.`);
+                    console.log(`AuthProvider: User is not active (status: ${userProfile.paymentStatus}) or accountActivatedAt is missing. Signing out.`);
                     await signOut(auth);
                     let errorMessage = t('toast.login.error.accessDenied');
                     if (userProfile.paymentStatus === 'pending_verification') {
@@ -81,7 +81,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.log("AuthProvider: Cleaning up onAuthStateChanged listener.");
         unsubscribe();
     }
-  }, [t, toast]);
+  }, [t, toast, router]);
 
   const updateUserInContext = async (updatedUser: UserProfile) => {
     console.log("AuthProvider.updateUserInContext: Updating user in context and storage. User ID:", updatedUser.id);
@@ -140,7 +140,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           isAdmin: isAdmin,
           agreeToTerms: values.agreeToTerms,
           registeredAt: serverTimestamp(),
-          accountActivatedAt: isAdmin ? serverTimestamp() : undefined,
+          accountActivatedAt: isAdmin ? serverTimestamp() : null,
           subUsers: [],
       };
       
