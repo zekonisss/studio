@@ -49,16 +49,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             if (userProfile) {
                 console.log("AuthProvider: User profile found. Setting user state.");
                 setUser(userProfile);
-                 if (userProfile.paymentStatus !== 'active') {
-                   console.log(`AuthProvider: User status is '${userProfile.paymentStatus}', but allowing login.`);
-                }
             } else {
-                console.error(`AuthProvider: Auth user ${firebaseUser.uid} exists, but Firestore profile not found. Forcing logout.`);
-                await signOut(auth);
-                setUser(null);
+                console.warn(`AuthProvider: Auth user ${firebaseUser.uid} exists, but Firestore profile not found. Creating a basic profile to prevent login lock.`);
+                const newProfile: Omit<UserProfile, 'id'> = {
+                    email: firebaseUser.email || 'unknown',
+                    companyName: 'Naujas Vartotojas',
+                    companyCode: '000000000',
+                    address: 'Nenurodyta',
+                    contactPerson: 'Nenurodyta',
+                    phone: 'Nenurodyta',
+                    paymentStatus: 'pending_verification',
+                    isAdmin: false,
+                    agreeToTerms: false,
+                    registeredAt: serverTimestamp(),
+                    accountActivatedAt: undefined,
+                    subUsers: [],
+                };
+                await setDoc(doc(db, "users", firebaseUser.uid), newProfile);
+                console.log(`AuthProvider: Created basic profile for ${firebaseUser.uid}.`);
+                const createdProfile = await storage.getUserById(firebaseUser.uid);
+                setUser(createdProfile);
             }
         } catch (error) {
-             console.error("AuthProvider: Error fetching user profile:", error);
+             console.error("AuthProvider: Error fetching or creating user profile:", error);
              await signOut(auth);
              setUser(null);
         }
@@ -87,29 +100,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setLoading(true);
     try {
       const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
-      const loggedInUser = await storage.getUserById(userCredential.user.uid);
-      
-      if (!loggedInUser) {
-        throw new Error(t('toast.login.error.noProfile'));
-      }
-      
-      // onAuthStateChanged will set the global user state.
-      // We can check the status here to provide immediate feedback.
-      if (loggedInUser.paymentStatus !== 'active') {
-          let statusKey = `toast.login.error.${loggedInUser.paymentStatus}`;
-          toast({
-              variant: 'destructive',
-              title: t('toast.login.error.title'),
-              description: t(statusKey),
-              duration: 7000,
-          });
-      } else {
-        toast({ title: t('toast.login.success.title'), description: t('toast.login.success.description') });
-      }
-      
-      const targetPath = loggedInUser.isAdmin ? '/admin' : '/dashboard';
-      router.replace(targetPath);
-
+      // onAuthStateChanged will handle setting the user state and routing.
+      // We just need to wait for it to complete.
+      // Let's show a generic success toast here.
+       toast({ title: t('toast.login.success.title'), description: t('toast.login.success.description') });
+       // The redirect will be handled by the effect hooks in login/dashboard pages.
     } catch (error: any) {
       console.error("AuthProvider.login: Login failed:", error);
       let description = t('toast.login.error.descriptionGeneric');
