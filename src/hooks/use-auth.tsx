@@ -53,6 +53,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 } else {
                     console.log(`AuthProvider: User is not active (status: ${userProfile.paymentStatus}) or accountActivatedAt is missing. Signing out.`);
                     await signOut(auth);
+                    setUser(null);
                     let errorMessage = t('toast.login.error.accessDenied');
                     if (userProfile.paymentStatus === 'pending_verification') {
                         errorMessage = t('toast.login.error.pendingVerification');
@@ -64,10 +65,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             } else {
                 console.error(`AuthProvider: Auth user ${firebaseUser.uid} exists, but Firestore profile not found. Forcing logout.`);
                 await signOut(auth);
+                setUser(null);
             }
         } catch (error) {
              console.error("AuthProvider: Error fetching user profile:", error);
              await signOut(auth);
+             setUser(null);
         }
       } else {
         console.log("AuthProvider: No Firebase user. Setting user state to null.");
@@ -95,7 +98,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
       console.log("AuthProvider.login: signInWithEmailAndPassword successful. UserCredential:", userCredential);
-      // onAuthStateChanged will handle the rest
+      // onAuthStateChanged will handle the rest, including setting loading to false.
     } catch (error: any) {
       console.error("AuthProvider.login: Login failed:", error);
       let description = t('toast.login.error.descriptionGeneric');
@@ -107,7 +110,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         title: t('toast.login.error.title'),
         description,
       });
-       setLoading(false);
+       setLoading(false); // Ensure loading is set to false on error.
     }
   };
 
