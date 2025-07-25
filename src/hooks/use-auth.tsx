@@ -49,6 +49,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             if (userProfile) {
                 console.log("AuthProvider: User profile found. Setting user state.");
                 setUser(userProfile);
+                 if (userProfile.paymentStatus !== 'active') {
+                   console.log(`AuthProvider: User status is '${userProfile.paymentStatus}', but allowing login.`);
+                }
             } else {
                 console.error(`AuthProvider: Auth user ${firebaseUser.uid} exists, but Firestore profile not found. Forcing logout.`);
                 await signOut(auth);
@@ -84,21 +87,44 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setLoading(true);
     try {
       const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
-      // onAuthStateChanged will handle the rest of the logic, including fetching profile data
-      // and setting the user state. We can show a simple success toast here.
-      toast({ title: t('toast.login.success.title'), description: t('toast.login.success.description') });
+      const loggedInUser = await storage.getUserById(userCredential.user.uid);
+      
+      if (!loggedInUser) {
+        throw new Error(t('toast.login.error.noProfile'));
+      }
+      
+      // onAuthStateChanged will set the global user state.
+      // We can check the status here to provide immediate feedback.
+      if (loggedInUser.paymentStatus !== 'active') {
+          let statusKey = `toast.login.error.${loggedInUser.paymentStatus}`;
+          toast({
+              variant: 'destructive',
+              title: t('toast.login.error.title'),
+              description: t(statusKey),
+              duration: 7000,
+          });
+      } else {
+        toast({ title: t('toast.login.success.title'), description: t('toast.login.success.description') });
+      }
+      
+      const targetPath = loggedInUser.isAdmin ? '/admin' : '/dashboard';
+      router.replace(targetPath);
+
     } catch (error: any) {
       console.error("AuthProvider.login: Login failed:", error);
       let description = t('toast.login.error.descriptionGeneric');
       if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
         description = t('toast.login.error.invalidCredentials');
+      } else if (error.message) {
+        description = error.message;
       }
       toast({
         variant: 'destructive',
         title: t('toast.login.error.title'),
         description,
       });
-      setLoading(false); // Ensure loading is false on error
+    } finally {
+        setLoading(false);
     }
   };
 
