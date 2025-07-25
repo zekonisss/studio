@@ -42,12 +42,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       console.log("AuthProvider: onAuthStateChanged triggered. Firebase user:", firebaseUser);
       if (firebaseUser) {
+        console.log(`AuthProvider: Firebase user detected (UID: ${firebaseUser.uid}). Fetching profile...`);
         try {
-            console.log(`AuthProvider: Firebase user detected (UID: ${firebaseUser.uid}). Fetching profile...`);
             const userProfile = await storage.getUserById(firebaseUser.uid);
-            console.log("AuthProvider: User profile fetched from storage:", userProfile);
+            console.log("AuthProvider: User profile fetched:", userProfile);
             if (userProfile) {
-                console.log("AuthProvider: User profile found. Setting user state regardless of status.");
+                console.log("AuthProvider: User profile found. Setting user state.");
                 setUser(userProfile);
             } else {
                 console.error(`AuthProvider: Auth user ${firebaseUser.uid} exists, but Firestore profile not found. Forcing logout.`);
@@ -58,16 +58,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
              console.error("AuthProvider: Error fetching user profile:", error);
              await signOut(auth);
              setUser(null);
-        } finally {
-            console.log("AuthProvider: Setting loading to false in 'if (firebaseUser)' block.");
-            setLoading(false);
         }
       } else {
         console.log("AuthProvider: No Firebase user. Setting user state to null.");
         setUser(null);
-        console.log("AuthProvider: Setting loading to false in 'else' block.");
-        setLoading(false);
       }
+       console.log("AuthProvider: Setting loading to false.");
+       setLoading(false);
     });
 
     return () => {
@@ -87,22 +84,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setLoading(true);
     try {
       const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
-      const firebaseUser = userCredential.user;
-      console.log("AuthProvider.login: signInWithEmailAndPassword successful. User UID:", firebaseUser.uid);
-      
-      const userProfile = await storage.getUserById(firebaseUser.uid);
-      if (userProfile?.paymentStatus !== 'active') {
-          let errorMessage = t('toast.login.error.inactive');
-          if (userProfile?.paymentStatus === 'pending_verification') {
-              errorMessage = t('toast.login.error.pendingVerification');
-          } else if (userProfile?.paymentStatus === 'pending_payment') {
-              errorMessage = t('toast.login.error.pendingPayment');
-          }
-          toast({ variant: 'destructive', title: t('toast.login.error.title'), description: errorMessage, duration: 7000 });
-      } else {
-          toast({ title: t('toast.login.success.title'), description: t('toast.login.success.description') });
-      }
-      // onAuthStateChanged will handle setting the user and redirecting
+      // onAuthStateChanged will handle the rest of the logic, including fetching profile data
+      // and setting the user state. We can show a simple success toast here.
+      toast({ title: t('toast.login.success.title'), description: t('toast.login.success.description') });
     } catch (error: any) {
       console.error("AuthProvider.login: Login failed:", error);
       let description = t('toast.login.error.descriptionGeneric');
@@ -114,8 +98,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         title: t('toast.login.error.title'),
         description,
       });
-    } finally {
-       setLoading(false);
+      setLoading(false); // Ensure loading is false on error
     }
   };
 

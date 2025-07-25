@@ -94,12 +94,15 @@ export default function SearchPage() {
       }
 
       if (user && query) {
+        console.log("SearchPage: User is logged in, adding search log for ID:", user.id);
         const newSearchLog: Omit<SearchLog, 'id' | 'timestamp'> = {
           userId: user.id,
           searchText: values.query,
           resultsCount: results.length,
         };
         await storage.addSearchLog(newSearchLog);
+      } else {
+        console.log("SearchPage: User not logged in or query is empty, skipping search log.");
       }
     } catch (error) {
       console.error("Failed to perform search:", error);

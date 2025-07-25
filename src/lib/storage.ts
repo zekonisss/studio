@@ -70,7 +70,7 @@ export async function updateUserProfile(userId: string, userData: Partial<UserPr
     console.log("storage.updateUserProfile: Updating profile for userId:", userId, "with data:", userData);
     if (!userId) {
         console.error("storage.updateUserProfile: Error - undefined userId.");
-        return;
+        throw new Error("Cannot update user profile with undefined ID.");
     }
     const userDocRef = doc(db, USERS_COLLECTION, userId);
     await updateDoc(userDocRef, userData);
@@ -196,22 +196,26 @@ export async function getUserReports(userId: string): Promise<{ active: Report[]
 export async function getSearchLogs(userId?: string): Promise<SearchLog[]> {
     console.log("storage.getSearchLogs: Fetching search logs for userId:", userId || "all");
     const logsCollectionRef = collection(db, SEARCH_LOGS_COLLECTION);
-    let q;
-
-    if (userId) {
-       q = query(logsCollectionRef, where("userId", "==", userId), orderBy("timestamp", "desc"));
-    } else {
-       q = query(logsCollectionRef, orderBy("timestamp", "desc"));
+    
+    if (!userId) {
+       console.warn("storage.getSearchLogs: Called without a userId.");
+       return [];
     }
+    
+    const q = query(logsCollectionRef, where("userId", "==", userId), orderBy("timestamp", "desc"));
     
     const snapshot = await getDocs(q);
     const logs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SearchLog));
-    console.log(`storage.getSearchLogs: Found ${logs.length} logs.`);
+    console.log(`storage.getSearchLogs: Found ${logs.length} logs for user ${userId}.`);
     return logs;
 }
 
 export async function addSearchLog(logData: Omit<SearchLog, 'id' | 'timestamp'>): Promise<void> {
     console.log("storage.addSearchLog: Adding search log for userId:", logData.userId);
+    if (!logData.userId) {
+       console.error("storage.addSearchLog: Error - cannot add log without userId.");
+       return;
+    }
     const logsCollectionRef = collection(db, SEARCH_LOGS_COLLECTION);
     await addDoc(logsCollectionRef, { ...logData, timestamp: serverTimestamp() });
 }
@@ -228,6 +232,10 @@ export async function getAuditLogs(): Promise<AuditLogEntry[]> {
 
 export async function addAuditLogEntry(entryData: Omit<AuditLogEntry, 'id' | 'timestamp'>): Promise<void> {
     console.log("storage.addAuditLogEntry: Adding audit log entry for admin:", entryData.adminName);
+     if (!entryData.adminId) {
+       console.error("storage.addAuditLogEntry: Error - cannot add log without adminId.");
+       return;
+    }
     const auditLogsCollectionRef = collection(db, AUDIT_LOGS_COLLECTION);
     await addDoc(auditLogsCollectionRef, { ...entryData, timestamp: serverTimestamp() });
 }

@@ -49,6 +49,7 @@ export default function AccountPage() {
 
   const fetchUserReports = useCallback(async () => {
     if (user) {
+      console.log("AccountPage: fetchUserReports called with user ID:", user.id);
       const { active, deleted } = await storage.getUserReports(user.id);
       setUserReports(active);
       setDeletedUserReports(deleted);
@@ -57,6 +58,7 @@ export default function AccountPage() {
 
   const fetchNotifications = useCallback(async () => {
     if (user) {
+      console.log("AccountPage: fetchNotifications called with user ID:", user.id);
       const userNotifications = await storage.getUserNotifications(user.id);
       setNotifications(userNotifications); 
     }
@@ -64,6 +66,7 @@ export default function AccountPage() {
 
   useEffect(() => {
     if (user) {
+      console.log("AccountPage: useEffect triggered with user.");
       setFormData({
         companyName: user.companyName,
         companyCode: user.companyCode,
@@ -148,7 +151,7 @@ export default function AccountPage() {
     return isNaN(date.getTime()) ? null : date;
   }
   
-  const activationDate = getSafeDate(user?.accountActivatedAt);
+  const activationDate = user ? getSafeDate(user.accountActivatedAt) : null;
 
 
   if (authLoading || !user) {

@@ -26,11 +26,13 @@ export default function SearchHistoryPage() {
   useEffect(() => {
     const fetchSearchLogs = async () => {
       if (!user) {
+        console.log("SearchHistory: No user, skipping fetch.");
         setSearchLogs([]);
         setIsLoading(false);
         return;
       }
 
+      console.log("SearchHistory: User found, fetching logs for ID:", user.id);
       setIsLoading(true);
       try {
         const userLogs = await storage.getSearchLogs(user.id);
@@ -43,6 +45,7 @@ export default function SearchHistoryPage() {
     };
 
     if (!authLoading) {
+        console.log("SearchHistory: Auth not loading, calling fetchSearchLogs.");
         fetchSearchLogs();
     }
   }, [user, authLoading]);

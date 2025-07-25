@@ -48,28 +48,32 @@ export default function DashboardPage() {
     const fetchStats = async () => {
       setIsLoading(true);
       try {
+        console.log("Dashboard: Fetching all platform reports.");
         const allPlatformReports = await storage.getAllReports();
         setTotalReportsCount(allPlatformReports.length);
         setRecentReports(allPlatformReports.slice(0, 4));
 
         if (user) {
+          console.log("Dashboard: User found, fetching user-specific stats for ID:", user.id);
           const { active: activeUserReports } = await storage.getUserReports(user.id);
           setUserReportsCount(activeUserReports.length);
 
           const userSearchLogs = await storage.getSearchLogs(user.id);
           setUserSearchesCount(userSearchLogs.length);
         } else {
+          console.log("Dashboard: No user, setting user stats to 0.");
           setUserReportsCount(0);
           setUserSearchesCount(0);
         }
       } catch (error) {
-        console.error("Failed to fetch dashboard stats:", error);
+        console.error("Dashboard: Failed to fetch stats:", error);
       } finally {
         setIsLoading(false);
       }
     };
 
     if (!authLoading) {
+      console.log("Dashboard: Auth is not loading, calling fetchStats.");
       fetchStats();
     }
   }, [user, authLoading]);
