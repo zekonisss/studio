@@ -16,7 +16,7 @@ import {
   onAuthStateChanged,
   type User as FirebaseUser,
 } from 'firebase/auth';
-import { doc, setDoc, serverTimestamp, getDoc } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 
 interface AuthContextType {
@@ -47,21 +47,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             const userProfile = await storage.getUserById(firebaseUser.uid);
             console.log("AuthProvider: User profile fetched from storage:", userProfile);
             if (userProfile) {
-                if (userProfile.paymentStatus === 'active' && userProfile.accountActivatedAt) {
-                    console.log("AuthProvider: User is active. Setting user state.");
-                    setUser(userProfile);
-                } else {
-                    console.log(`AuthProvider: User is not active (status: ${userProfile.paymentStatus}) or accountActivatedAt is missing. Signing out.`);
-                    await signOut(auth);
-                    setUser(null);
-                    let errorMessage = t('toast.login.error.accessDenied');
-                    if (userProfile.paymentStatus === 'pending_verification') {
-                        errorMessage = t('toast.login.error.pendingVerification');
-                    } else if (userProfile.paymentStatus === 'pending_payment') {
-                        errorMessage = t('toast.login.error.pendingPayment');
-                    }
-                    toast({ variant: 'destructive', title: t('toast.login.error.title'), description: errorMessage });
-                }
+                console.log("AuthProvider: User profile found. Setting user state regardless of status.");
+                setUser(userProfile);
             } else {
                 console.error(`AuthProvider: Auth user ${firebaseUser.uid} exists, but Firestore profile not found. Forcing logout.`);
                 await signOut(auth);
@@ -71,20 +58,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
              console.error("AuthProvider: Error fetching user profile:", error);
              await signOut(auth);
              setUser(null);
+        } finally {
+            console.log("AuthProvider: Setting loading to false in 'if (firebaseUser)' block.");
+            setLoading(false);
         }
       } else {
         console.log("AuthProvider: No Firebase user. Setting user state to null.");
         setUser(null);
+        console.log("AuthProvider: Setting loading to false in 'else' block.");
+        setLoading(false);
       }
-      console.log("AuthProvider: Setting loading to false.");
-      setLoading(false);
     });
 
     return () => {
         console.log("AuthProvider: Cleaning up onAuthStateChanged listener.");
         unsubscribe();
     }
-  }, [t, toast, router]);
+  }, []);
 
   const updateUserInContext = async (updatedUser: UserProfile) => {
     console.log("AuthProvider.updateUserInContext: Updating user in context and storage. User ID:", updatedUser.id);
@@ -97,8 +87,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setLoading(true);
     try {
       const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
-      console.log("AuthProvider.login: signInWithEmailAndPassword successful. UserCredential:", userCredential);
-      // onAuthStateChanged will handle the rest, including setting loading to false.
+      const firebaseUser = userCredential.user;
+      console.log("AuthProvider.login: signInWithEmailAndPassword successful. User UID:", firebaseUser.uid);
+      
+      const userProfile = await storage.getUserById(firebaseUser.uid);
+      if (userProfile?.paymentStatus !== 'active') {
+          let errorMessage = t('toast.login.error.inactive');
+          if (userProfile?.paymentStatus === 'pending_verification') {
+              errorMessage = t('toast.login.error.pendingVerification');
+          } else if (userProfile?.paymentStatus === 'pending_payment') {
+              errorMessage = t('toast.login.error.pendingPayment');
+          }
+          toast({ variant: 'destructive', title: t('toast.login.error.title'), description: errorMessage, duration: 7000 });
+      } else {
+          toast({ title: t('toast.login.success.title'), description: t('toast.login.success.description') });
+      }
+      // onAuthStateChanged will handle setting the user and redirecting
     } catch (error: any) {
       console.error("AuthProvider.login: Login failed:", error);
       let description = t('toast.login.error.descriptionGeneric');
@@ -110,7 +114,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         title: t('toast.login.error.title'),
         description,
       });
-       setLoading(false); // Ensure loading is set to false on error.
+    } finally {
+       setLoading(false);
     }
   };
 

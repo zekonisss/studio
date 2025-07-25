@@ -7,7 +7,6 @@ import { LoginForm } from "@/components/auth/login-form";
 import { useLanguage } from "@/contexts/language-context";
 import { useAuth } from '@/hooks/use-auth';
 import { Loader2 } from 'lucide-react';
-import * as storage from '@/lib/storage';
 
 export default function LoginPage() {
   const { t } = useLanguage();

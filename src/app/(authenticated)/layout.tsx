@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { SidebarNav } from '@/components/navigation/sidebar-nav';
 import { UserNav } from '@/components/navigation/user-nav';
@@ -11,7 +11,7 @@ import { Sheet, SheetContent, SheetTitle, SheetTrigger, SheetClose } from '@/com
 import { Menu, Loader2 } from 'lucide-react';
 import { WelcomeModal } from '@/components/shared/welcome-modal';
 import { LanguageSwitcher } from '@/components/navigation/language-switcher';
-import { ThemeToggle } from '@/components/navigation/theme-toggle'; // Added ThemeToggle import
+import { ThemeToggle } from '@/components/navigation/theme-toggle'; 
 
 export default function AuthenticatedLayout({
   children,
@@ -20,36 +20,45 @@ export default function AuthenticatedLayout({
 }) {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (loading) {
+      return;
+    }
+    if (!user) {
       router.replace('/auth/login');
+      return;
     }
-    if (!loading && user) {
-      const hasSeenWelcomeModal = localStorage.getItem('hasSeenWelcomeModal_drivercheck');
-      if (!hasSeenWelcomeModal) {
+    
+    // Redirect logic
+    const isUserAdminPage = pathname.startsWith('/admin');
+    const isUserImportPage = pathname.startsWith('/reports/import') || pathname.startsWith('/admin/user-import');
+
+    if (user.isAdmin && !isUserAdminPage && !isUserImportPage) {
+        // Allow admin to access import pages
+    } else if (!user.isAdmin && (isUserAdminPage || isUserImportPage)) {
+       router.replace('/dashboard');
+    }
+
+    const hasSeenWelcomeModal = localStorage.getItem('hasSeenWelcomeModal_drivercheck');
+    if (!hasSeenWelcomeModal) {
         setShowWelcomeModal(true);
-      }
     }
-  }, [user, loading, router]);
+  }, [user, loading, router, pathname]);
 
   const handleCloseWelcomeModal = () => {
     setShowWelcomeModal(false);
     localStorage.setItem('hasSeenWelcomeModal_drivercheck', 'true');
   };
 
-
-  if (loading) {
+  if (loading || !user) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
       </div>
     );
-  }
-
-  if (!user) {
-    return null; 
   }
 
   return (
