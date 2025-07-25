@@ -16,7 +16,7 @@ import {
   onAuthStateChanged,
   type User as FirebaseUser,
 } from 'firebase/auth';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
 
 
 interface AuthContextType {
@@ -61,7 +61,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     paymentStatus: 'pending_verification',
                     isAdmin: false,
                     agreeToTerms: false,
-                    registeredAt: serverTimestamp(),
+                    registeredAt: new Date(),
                     accountActivatedAt: undefined,
                     subUsers: [],
                 };
@@ -151,8 +151,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           paymentStatus: isAdmin ? 'active' : 'pending_verification',
           isAdmin: isAdmin,
           agreeToTerms: values.agreeToTerms,
-          registeredAt: serverTimestamp(),
-          accountActivatedAt: isAdmin ? serverTimestamp() : null,
+          registeredAt: new Date(),
+          accountActivatedAt: isAdmin ? new Date() : null,
           subUsers: [],
       };
       
