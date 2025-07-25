@@ -1,6 +1,6 @@
 
 import { NextResponse } from "next/server";
-import { getFirestore, collection, doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { getFirestore, collection, doc, setDoc, serverTimestamp, addDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase"; 
 import type { UserProfile, Report } from "@/types";
 
@@ -22,8 +22,8 @@ export async function GET() {
         paymentStatus: 'active',
         isAdmin: true,
         agreeToTerms: true,
-        registeredAt: serverTimestamp(),
-        accountActivatedAt: serverTimestamp(),
+        registeredAt: new Date(),
+        accountActivatedAt: new Date(),
         subUsers: [],
     };
     await setDoc(doc(db, "users", "admin-user-001"), adminUser);
@@ -39,8 +39,8 @@ export async function GET() {
         phone: '+37060000000',
         paymentStatus: 'active',
         isAdmin: false,
-        registeredAt: serverTimestamp(),
-        accountActivatedAt: serverTimestamp(),
+        registeredAt: new Date(),
+        accountActivatedAt: new Date(),
         agreeToTerms: true,
         subUsers: [],
     };
@@ -64,7 +64,7 @@ export async function GET() {
         dataAiHint: "truck fuel",
         deletedAt: null
     };
-    await addDoc(reportsCollection, { ...report1, createdAt: serverTimestamp() });
+    await addDoc(reportsCollection, { ...report1, createdAt: new Date() });
     
     const report2: Omit<Report, 'id' | 'createdAt'> = {
         reporterId: "admin-user-001",
@@ -76,7 +76,7 @@ export async function GET() {
         comment: "Grįžus iš reiso, pastebėta didelė žala priekabos šonui.",
         deletedAt: null
     };
-    await addDoc(reportsCollection, { ...report2, createdAt: serverTimestamp() });
+    await addDoc(reportsCollection, { ...report2, createdAt: new Date() });
     console.log("Seeded 2 reports.");
 
     // 3. Ensure other collections exist by adding a placeholder document
