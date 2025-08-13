@@ -97,9 +97,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
  const login = async (values: LoginFormValues): Promise<void> => {
     console.log("AuthProvider.login: Attempting to log in for email:", values.email);
-    setLoading(true);
+    // setLoading(true) is removed from here. The main 'loading' state is now only controlled by onAuthStateChanged.
     try {
       await signInWithEmailAndPassword(auth, values.email, values.password);
+      // On success, onAuthStateChanged will fire, update the user, set loading to false, and trigger redirects.
       toast({ title: t('toast.login.success.title'), description: t('toast.login.success.description') });
     } catch (error: any) {
       console.error("AuthProvider.login: Login failed:", error);
@@ -114,7 +115,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         title: t('toast.login.error.title'),
         description,
       });
-      setLoading(false); // Only set loading to false on error, on success onAuthStateChanged will handle it.
+      // setLoading(false) is not needed here because the main 'loading' state was never set to true within this function.
     }
   };
 
