@@ -16,17 +16,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { LoginSchema, type LoginFormValues } from "@/lib/schemas";
 import { useAuth } from "@/hooks/use-auth";
-import { useToast } from "@/hooks/use-toast";
 import { Mail, Lock, Loader2 } from "lucide-react";
 import { useLanguage } from "@/contexts/language-context";
-import { useRouter } from "next/navigation";
 import { useState } from 'react';
 
 
 export function LoginForm() {
   const { login, loading: authLoading } = useAuth();
   const { t } = useLanguage();
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(LoginSchema),
@@ -37,11 +34,9 @@ export function LoginForm() {
   });
 
   async function onSubmit(values: LoginFormValues) {
-    if (isSubmitting) return;
-    setIsSubmitting(true);
     await login(values);
-    form.reset(); // Reset form fields after submission attempt
-    setIsSubmitting(false);
+    // Do not reset form here, allows user to see what they entered if login fails.
+    // Form will effectively "reset" on successful navigation.
   }
 
   return (
@@ -79,8 +74,8 @@ export function LoginForm() {
             {t('login.forgotPasswordLink')}
           </Link>
         </div>
-        <Button type="submit" className="w-full" disabled={isSubmitting || authLoading}>
-          {(isSubmitting || authLoading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+        <Button type="submit" className="w-full" disabled={authLoading}>
+          {authLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           {t('login.loginButton')}
         </Button>
         <p className="text-center text-sm text-muted-foreground">
