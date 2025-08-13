@@ -16,7 +16,7 @@ import {
   onAuthStateChanged,
   type User as FirebaseUser,
 } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 
 interface AuthContextType {
@@ -49,6 +49,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             if (userProfile) {
                 console.log("AuthProvider: User profile found. Setting user state.");
                 setUser(userProfile);
+                 toast({ title: t('toast.login.success.title'), description: t('toast.login.success.description') });
             } else {
                 console.warn(`AuthProvider: Auth user ${firebaseUser.uid} exists, but Firestore profile not found. Creating a basic profile to prevent login lock.`);
                 const newProfile: Omit<UserProfile, 'id'> = {
@@ -87,7 +88,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.log("AuthProvider: Cleaning up onAuthStateChanged listener.");
         unsubscribe();
     }
-  }, []);
+  }, [t, toast]);
 
   const updateUserInContext = async (updatedUser: UserProfile) => {
     console.log("AuthProvider.updateUserInContext: Updating user in context and storage. User ID:", updatedUser.id);
@@ -97,11 +98,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
  const login = async (values: LoginFormValues): Promise<void> => {
     console.log("AuthProvider.login: Attempting to log in for email:", values.email);
-    // setLoading(true) is removed from here. The main 'loading' state is now only controlled by onAuthStateChanged.
     try {
       await signInWithEmailAndPassword(auth, values.email, values.password);
-      // On success, onAuthStateChanged will fire, update the user, set loading to false, and trigger redirects.
-      toast({ title: t('toast.login.success.title'), description: t('toast.login.success.description') });
+      // On success, onAuthStateChanged will fire, update the user, set loading to false, show toast, and trigger redirects.
     } catch (error: any) {
       console.error("AuthProvider.login: Login failed:", error);
       let description = t('toast.login.error.descriptionGeneric');
@@ -115,7 +114,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         title: t('toast.login.error.title'),
         description,
       });
-      // setLoading(false) is not needed here because the main 'loading' state was never set to true within this function.
     }
   };
 

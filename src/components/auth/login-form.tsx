@@ -24,7 +24,7 @@ import { useState } from 'react';
 
 
 export function LoginForm() {
-  const { login, loading: authLoading } = useAuth(); // Renamed loading to authLoading for clarity
+  const { login, loading: authLoading } = useAuth();
   const { t } = useLanguage();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -37,15 +37,11 @@ export function LoginForm() {
   });
 
   async function onSubmit(values: LoginFormValues) {
+    if (isSubmitting) return;
     setIsSubmitting(true);
-    try {
-      await login(values);
-    } catch (error) {
-      // Errors are handled inside the login function with a toast
-      console.error("Login form submission error:", error);
-    } finally {
-       setIsSubmitting(false);
-    }
+    await login(values);
+    form.reset(); // Reset form fields after submission attempt
+    setIsSubmitting(false);
   }
 
   return (
