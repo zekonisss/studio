@@ -11,7 +11,7 @@ const FIREBASE_CLIENT_CONFIG: FirebaseOptions = {
   apiKey: "AIzaSyBusklRtrpm-gfnwCdmi2yj5vTumqLte3c",
   authDomain: "drivershield.firebaseapp.com",
   projectId: "drivershield",
-  storageBucket: "drivershield.firebasestorage.app",
+  storageBucket: "drivershield.appspot.com",
   messagingSenderId: "688007961476",
   appId: "1:688007961476:web:d6d663ef7430182d781bd1",
   measurementId: "G-WWHPWT8FGC"
