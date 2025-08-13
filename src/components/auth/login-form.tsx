@@ -24,7 +24,7 @@ import { useState } from 'react';
 
 
 export function LoginForm() {
-  const { login } = useAuth();
+  const { login, loading } = useAuth();
   const { toast } = useToast();
   const { t } = useLanguage();
   const router = useRouter();
@@ -40,13 +40,8 @@ export function LoginForm() {
 
   async function onSubmit(values: LoginFormValues) {
     setIsSubmitting(true);
-    try {
-      await login(values);
-    } catch (error) {
-      console.error("Login failed in form:", error);
-    } finally {
-      setIsSubmitting(false);
-    }
+    await login(values);
+    // Setting isSubmitting to false is now managed by the component's loading state from useAuth.
   }
 
   return (
@@ -84,8 +79,8 @@ export function LoginForm() {
             {t('login.forgotPasswordLink')}
           </Link>
         </div>
-        <Button type="submit" className="w-full" disabled={isSubmitting}>
-          {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+        <Button type="submit" className="w-full" disabled={isSubmitting || loading}>
+          {(isSubmitting || loading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           {t('login.loginButton')}
         </Button>
         <p className="text-center text-sm text-muted-foreground">

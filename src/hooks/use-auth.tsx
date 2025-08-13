@@ -99,12 +99,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     console.log("AuthProvider.login: Attempting to log in for email:", values.email);
     setLoading(true);
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
-      // onAuthStateChanged will handle setting the user state and routing.
-      // We just need to wait for it to complete.
-      // Let's show a generic success toast here.
-       toast({ title: t('toast.login.success.title'), description: t('toast.login.success.description') });
-       // The redirect will be handled by the effect hooks in login/dashboard pages.
+      await signInWithEmailAndPassword(auth, values.email, values.password);
+      toast({ title: t('toast.login.success.title'), description: t('toast.login.success.description') });
     } catch (error: any) {
       console.error("AuthProvider.login: Login failed:", error);
       let description = t('toast.login.error.descriptionGeneric');
@@ -118,8 +114,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         title: t('toast.login.error.title'),
         description,
       });
-    } finally {
-        setLoading(false);
+      setLoading(false); // Only set loading to false on error, on success onAuthStateChanged will handle it.
     }
   };
 
@@ -152,7 +147,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           isAdmin: isAdmin,
           agreeToTerms: values.agreeToTerms,
           registeredAt: new Date(),
-          accountActivatedAt: isAdmin ? new Date() : null,
+          accountActivatedAt: isAdmin ? new Date() : undefined,
           subUsers: [],
       };
       
