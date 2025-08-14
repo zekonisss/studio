@@ -1,79 +1,38 @@
-
-import { type Timestamp } from "firebase/firestore";
-
-export interface SubUserProfile {
-  id: string;
-  fullName: string;
-  email: string;
-}
-
 export interface UserProfile {
-  id: string;
-  companyName: string;
-  companyCode: string;
-  vatCode?: string;
-  address: string;
-  contactPerson: string;
+  id?: string;
   email: string;
-  phone: string;
-  paymentStatus: 'active' | 'inactive' | 'pending_verification' | 'pending_payment';
-  isAdmin?: boolean;
-  registeredAt?: Date | string | Timestamp; 
-  accountActivatedAt?: Date | string | Timestamp;
-  agreeToTerms?: boolean;
-  subUsers?: SubUserProfile[];
-}
-
-export interface DetailedCategory {
-  id: string;
-  nameKey: string; 
-  tags: string[];
+  companyCode: string;
+  registeredAt?: any;
 }
 
 export interface Report {
-  id: string;
+  id?: string;
   reporterId: string;
-  reporterCompanyName?: string;
-  fullName: string;
-  nationality?: string;
-  birthYear?: number;
-  category: string;
-  tags: string[];
-  comment: string;
-  imageUrl?: string;
-  dataAiHint?: string;
-  createdAt: Date | Timestamp; 
-  deletedAt?: Date | Timestamp | null;
+  description: string;
+  createdAt?: any;
+  deletedAt?: any;
 }
 
-
 export interface SearchLog {
-  id: string;
+  id?: string;
   userId: string;
-  searchText: string;
-  timestamp: Date | Timestamp; 
-  resultsCount: number;
+  searchQuery: string;
+  timestamp?: any;
 }
 
 export interface AuditLogEntry {
-  id: string;
-  timestamp: Date | Timestamp;
+  id?: string;
   adminId: string;
-  adminName: string; 
-  actionKey: string;
-  details: Record<string, any>;
+  adminName: string;
+  action: string;
+  timestamp?: any;
 }
 
 export interface UserNotification {
-  id: string;
+  id?: string;
   userId: string;
-  type: 'account_status_change' | 'subscription_warning' | 'generic_message' | 'inquiry_received';
-  titleKey: string;
-  messageKey: string;
-  messageParams?: Record<string, string | number>;
-  createdAt: Date | Timestamp;
-  read: boolean;
-  link?: string;
-  senderId?: string;
-  senderCompanyName?: string;
+  title: string;
+  message: string;
+  createdAt?: any;
+  read?: boolean;
 }

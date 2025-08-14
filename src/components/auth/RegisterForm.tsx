@@ -1,26 +1,26 @@
 "use client";
 import { useState } from "react";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 
-export default function LoginForm() {
+export default function RegisterForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      alert("Prisijungta sėkmingai!");
+      await createUserWithEmailAndPassword(auth, email, password);
+      alert("Registracija sėkminga!");
     } catch (err: any) {
       setError(err.message);
     }
   };
 
   return (
-    <form onSubmit={handleLogin}>
-      <h2>Prisijungimas</h2>
+    <form onSubmit={handleRegister}>
+      <h2>Registracija</h2>
       {error && <p style={{ color: "red" }}>{error}</p>}
       <input
         type="email"
@@ -36,7 +36,7 @@ export default function LoginForm() {
         onChange={(e) => setPassword(e.target.value)}
         required
       />
-      <button type="submit">Prisijungti</button>
+      <button type="submit">Registruotis</button>
     </form>
   );
 }
