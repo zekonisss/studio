@@ -15,8 +15,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!loading && user) {
-        const targetPath = user.isAdmin ? '/admin' : '/dashboard';
-        router.replace(targetPath);
+        router.replace('/dashboard');
     }
   }, [user, loading, router]);
 

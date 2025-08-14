@@ -13,8 +13,7 @@ export default function HomePage() {
   useEffect(() => {
     if (!loading) {
       if (user) {
-        const targetPath = user.isAdmin ? '/admin' : '/dashboard';
-        router.replace(targetPath);
+        router.replace('/dashboard');
       } else {
         router.replace('/auth/login');
       }
