@@ -2,7 +2,7 @@
 "use client";
 
 import type { Report, UserProfile, SearchLog, AuditLogEntry, UserNotification } from '@/types';
-import { db } from '@/lib/firebase';
+import { db, storage as firebaseStorage } from '@/lib/firebase';
 import { 
   collection, 
   getDocs, 
@@ -18,12 +18,29 @@ import {
   serverTimestamp,
   Timestamp
 } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+
 
 const USERS_COLLECTION = 'users';
 const REPORTS_COLLECTION = 'reports';
 const SEARCH_LOGS_COLLECTION = 'searchLogs';
 const AUDIT_LOGS_COLLECTION = 'auditLogs';
 const NOTIFICATIONS_COLLECTION = 'notifications';
+
+// --- File Management ---
+export async function uploadReportImage(file: File): Promise<{ url: string; dataAiHint: string }> {
+  console.log("storage.uploadReportImage: Uploading file:", file.name);
+  const fileRef = ref(firebaseStorage, `report-images/${Date.now()}-${file.name}`);
+  const snapshot = await uploadBytes(fileRef, file);
+  const downloadURL = await getDownloadURL(snapshot.ref);
+  console.log("storage.uploadReportImage: File uploaded, URL:", downloadURL);
+  
+  // Basic AI hint generation from file name
+  const hint = file.name.split('.')[0].replace(/[^a-zA-Z\s]/g, '').substring(0, 20);
+
+  return { url: downloadURL, dataAiHint: hint };
+}
+
 
 // --- User Management ---
 

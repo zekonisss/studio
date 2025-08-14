@@ -100,7 +100,17 @@ export default function AddReportPage() {
     setIsSubmitting(true);
 
     try {
-      const reportData: Omit<Report, 'id' | 'deletedAt' | 'createdAt' | 'imageUrl' | 'dataAiHint'> = {
+      let imageUrl: string | undefined = undefined;
+      let dataAiHint: string | undefined = undefined;
+
+      if (fileToUpload) {
+        const uploadResult = await storage.uploadReportImage(fileToUpload);
+        imageUrl = uploadResult.url;
+        dataAiHint = uploadResult.dataAiHint;
+      }
+
+
+      const reportData: Omit<Report, 'id' | 'createdAt' | 'deletedAt'> = {
         reporterId: user.id,
         reporterCompanyName: user.companyName,
         fullName: values.fullName,
@@ -109,6 +119,8 @@ export default function AddReportPage() {
         category: values.category,
         tags: values.tags || [],
         comment: values.comment,
+        imageUrl,
+        dataAiHint,
       };
 
       await storage.addReport(reportData);
@@ -313,8 +325,7 @@ export default function AddReportPage() {
                                       file:text-sm file:font-semibold
                                       file:bg-primary/10 file:text-primary
                                       hover:file:bg-primary/20"
-                                    {...rest} 
-                                    disabled={true}
+                                    {...rest}
                                 />
                              </div>
                         </FormControl>
