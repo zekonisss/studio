@@ -50,37 +50,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 console.log("AuthProvider: User profile found. Setting user state.");
                 setUser(userProfile);
             } else {
-                console.warn(`AuthProvider: Auth user ${firebaseUser.uid} exists, but Firestore profile not found. Creating a basic profile to prevent login lock.`);
-                const newProfile: Omit<UserProfile, 'id'> = {
-                    email: firebaseUser.email || 'unknown',
-                    companyName: 'Naujas Vartotojas',
-                    companyCode: '000000000',
-                    address: 'Nenurodyta',
-                    contactPerson: 'Nenurodyta',
-                    phone: 'Nenurodyta',
-                    paymentStatus: 'pending_verification',
-                    isAdmin: false,
-                    agreeToTerms: false,
-                    registeredAt: new Date(),
-                    accountActivatedAt: undefined,
-                    subUsers: [],
-                };
-                await setDoc(doc(db, "users", firebaseUser.uid), newProfile);
-                console.log(`AuthProvider: Created basic profile for ${firebaseUser.uid}.`);
-                const createdProfile = await storage.getUserById(firebaseUser.uid);
-                setUser(createdProfile);
+                console.warn(`AuthProvider: Auth user ${firebaseUser.uid} exists, but Firestore profile not found. Forcing logout.`);
+                await signOut(auth); 
+                setUser(null);
             }
         } catch (error) {
-             console.error("AuthProvider: Error fetching or creating user profile:", error);
+             console.error("AuthProvider: Error fetching user profile:", error);
              await signOut(auth);
              setUser(null);
+        } finally {
+            console.log("AuthProvider: Setting loading to false after user check.");
+            setLoading(false);
         }
       } else {
         console.log("AuthProvider: No Firebase user. Setting user state to null.");
         setUser(null);
+        console.log("AuthProvider: Setting loading to false as user is null.");
+        setLoading(false);
       }
-       console.log("AuthProvider: Setting loading to false.");
-       setLoading(false);
     });
 
     return () => {
@@ -92,7 +79,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const updateUserInContext = async (updatedUser: UserProfile) => {
     console.log("AuthProvider.updateUserInContext: Updating user in context and storage. User ID:", updatedUser.id);
     setUser(updatedUser);
-    await storage.updateUserProfile(updatedUser.id, updatedUser);
+    await storage.updateUserProfile(updatedUser.id!, updatedUser);
   };
 
  const login = async (values: LoginFormValues): Promise<void> => {
@@ -136,7 +123,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       const isAdmin = newFirebaseUser.email?.toLowerCase() === 'sarunas.zekonis@gmail.com';
       
-      const userProfileData = {
+      const userProfileData: Omit<UserProfile, 'id'> = {
           email: values.email.toLowerCase(),
           companyName: values.companyName,
           companyCode: values.companyCode,
@@ -158,7 +145,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       toast({
           title: t('toast.signup.success.title'),
-          description: t('toast.signup.success.description'),
+          description: t('toast.signup.success.description_create_profile'),
       });
       
       router.push('/auth/pending-approval');
