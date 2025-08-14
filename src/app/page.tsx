@@ -11,22 +11,21 @@ export default function HomePage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (loading) {
-      // While loading, do nothing. The loader will be displayed.
-      return;
-    }
-
-    if (user) {
-      // If loading is finished and we have a user, redirect them.
-      const targetPath = user.isAdmin ? '/admin' : '/dashboard';
-      router.replace(targetPath);
-    } else {
-      // If loading is finished and there's no user, redirect to login.
-      router.replace('/auth/login');
+    // We only want to redirect once the loading is finished.
+    if (!loading) {
+      if (user) {
+        // If there's a user, send them to their dashboard.
+        const targetPath = user.isAdmin ? '/admin' : '/dashboard';
+        router.replace(targetPath);
+      } else {
+        // If there's no user, send them to the login page.
+        router.replace('/auth/login');
+      }
     }
   }, [user, loading, router]);
 
-  // Always display a loader while the logic in useEffect runs.
+  // While the auth state is loading, show a spinner.
+  // This covers the initial page load and authentication check.
   return (
     <div className="flex h-screen w-full items-center justify-center">
       <Loader2 className="h-12 w-12 animate-spin text-primary" />

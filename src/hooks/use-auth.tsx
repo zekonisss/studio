@@ -48,7 +48,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 setUser(userProfile);
             } else {
                 console.warn(`AuthProvider: User profile not found for UID ${firebaseUser.uid}. Forcing logout.`);
-                await signOut(auth); 
+                await signOut(auth); // This will trigger onAuthStateChanged again with null user
             }
         } catch (error) {
              console.error("AuthProvider: Error fetching user profile:", error);
@@ -73,10 +73,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
  const login = async (values: LoginFormValues): Promise<void> => {
+    setLoading(true);
     try {
       await signInWithEmailAndPassword(auth, values.email, values.password);
       toast({ title: t('toast.login.success.title'), description: t('toast.login.success.description') });
-      // onAuthStateChanged will handle the user state update and redirect will be handled in page.tsx/layout.tsx
+      // onAuthStateChanged will handle setting the user, and the page/layout will handle redirection.
     } catch (error: any) {
       console.error("AuthProvider.login: Login failed:", error);
       let description = t('toast.login.error.descriptionGeneric');
@@ -88,18 +89,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         title: t('toast.login.error.title'),
         description,
       });
-      throw error; // Re-throw error to be caught in the form if needed
+      setLoading(false); // Make sure to stop loading on error
+      throw error;
     }
   };
 
   const signup = async (values: SignUpFormValues): Promise<void> => {
+    setLoading(true);
     try {
-      // Check if user already exists in Firestore by email
-      const existingUser = await storage.findUserByEmail(values.email);
-      if (existingUser) {
-        throw new Error(t('toast.signup.error.emailExists'));
-      }
-      
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       const newFirebaseUser = userCredential.user;
       
@@ -128,11 +125,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           description: t('toast.signup.success.description'),
       });
       
+      // Do not set user here, let onAuthStateChanged handle it to ensure consistency.
       router.push('/auth/pending-approval');
 
     } catch(error: any) {
-        toast({ variant: 'destructive', title: t('toast.signup.error.title'), description: error.message });
-        throw error; // Re-throw error to be caught in the form if needed
+        let errorMessage = error.message;
+        if (error.code === 'auth/email-already-in-use') {
+            errorMessage = t('toast.signup.error.emailExists');
+        }
+        toast({ variant: 'destructive', title: t('toast.signup.error.title'), description: errorMessage });
+        throw error;
+    } finally {
+        setLoading(false);
     }
   };
 
