@@ -66,10 +66,7 @@ export async function addUsersBatch(users: UserProfile[]): Promise<void> {
     if (!existingEmails.has(user.email.toLowerCase()) && !existingCompanyCodes.has(user.companyCode)) {
       console.log("storage.addUsersBatch: Adding user to batch:", user.email);
       const userDocRef = doc(usersCollectionRef); 
-      const userWithTimestamp: Omit<UserProfile, 'id' | 'registeredAt'> & { registeredAt: any } = { 
-        ...user, 
-        registeredAt: serverTimestamp() 
-      };
+      const userWithTimestamp = { ...user, registeredAt: serverTimestamp() };
       batch.set(userDocRef, userWithTimestamp);
       existingEmails.add(user.email.toLowerCase());
       existingCompanyCodes.add(user.companyCode);
