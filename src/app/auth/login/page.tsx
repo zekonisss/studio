@@ -14,17 +14,18 @@ export default function LoginPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // If the user is already logged in (e.g., they navigate to /login manually),
-    // redirect them away from the login page.
+    // If the user is already logged in, the main page.tsx will handle the redirect.
+    // This effect is to prevent a flash of the login form while that redirect is happening.
     if (!loading && user) {
-        const targetPath = user.isAdmin ? '/admin' : '/dashboard';
-        router.replace(targetPath);
+        // User is logged in, but might be on the login page momentarily.
+        // The root page.tsx will redirect them. We can show a loader here.
+        return;
     }
   }, [user, loading, router]);
 
-  // If auth state is still loading, or if the user exists and we are about to redirect,
-  // show a loader to prevent a flash of the login form.
-  if (loading || user) {
+  // The root layout handles the main loading state.
+  // We only show the login form if we are NOT loading and there is NO user.
+  if (loading) {
      return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -32,7 +33,15 @@ export default function LoginPage() {
     );
   }
 
-  // If not loading and no user, show the login form.
+  // If user is logged in, the root page will redirect. In the meantime, we can show nothing or a loader.
+  if (user) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-background">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
     <>
       <h2 className="mb-6 text-center text-2xl font-semibold tracking-tight text-foreground">
