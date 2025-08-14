@@ -17,6 +17,9 @@ const nextConfig = {
       },
     ],
   },
+  env: {
+    NEXT_PUBLIC_FIREBASE_CONFIG: process.env.FIREBASE_CONFIG,
+  }
 };
 
 module.exports = nextConfig;

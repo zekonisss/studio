@@ -6,16 +6,14 @@ import { initializeApp, getApps, getApp, type FirebaseOptions } from "firebase/a
 import { getFirestore, enableNetwork, Timestamp, serverTimestamp } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 
-// Firebase config from your Firebase project
-const FIREBASE_CLIENT_CONFIG: FirebaseOptions = {
-  apiKey: "AIzaSyBusklRtrpm-gfnwCdmi2yj5vTumqLte3c",
-  authDomain: "drivershield.firebaseapp.com",
-  projectId: "drivershield",
-  storageBucket: "drivershield.appspot.com",
-  messagingSenderId: "688007961476",
-  appId: "1:688007961476:web:d6d663ef7430182d781bd1",
-  measurementId: "G-WWHPWT8FGC"
-};
+// Automatically parse Firebase config from environment variables
+const FIREBASE_CLIENT_CONFIG: FirebaseOptions = JSON.parse(
+  process.env.NEXT_PUBLIC_FIREBASE_CONFIG || "{}"
+);
+
+if (!FIREBASE_CLIENT_CONFIG.apiKey) {
+    console.error("Firebase config not found. Please check your environment variables.");
+}
 
 function getFirebaseApp(options: FirebaseOptions) {
     return !getApps().length ? initializeApp(options) : getApp();
