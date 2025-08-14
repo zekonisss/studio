@@ -2,7 +2,7 @@
 "use client";
 
 import type { Report, UserProfile, SearchLog, AuditLogEntry, UserNotification } from '@/types';
-import { db, storage as firebaseStorage } from '@/lib/firebase';
+import { db, storage as firebaseStorage, serverTimestamp, Timestamp } from '@/lib/firebase';
 import { 
   collection, 
   getDocs, 
@@ -14,9 +14,7 @@ import {
   updateDoc, 
   writeBatch, 
   addDoc,
-  orderBy,
-  serverTimestamp,
-  Timestamp
+  orderBy
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 

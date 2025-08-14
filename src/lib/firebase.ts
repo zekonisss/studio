@@ -1,11 +1,11 @@
 // lib/firebase.ts
-import { initializeApp, getApps, getApp } from "firebase/app";
+import { initializeApp, getApps } from "firebase/app";
 import { getFirestore, Timestamp, serverTimestamp } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBusklRtrpm-gfnwCdmi2yj5vTumqLte3c",
+  apiKey: "AIzaSyBuskIRtmp-gfnwCdmi2yj5vTumqLte3c",
   authDomain: "drivershield.firebaseapp.com",
   projectId: "drivershield",
   storageBucket: "drivershield.appspot.com",
@@ -14,7 +14,7 @@ const firebaseConfig = {
   measurementId: "G-WWHPWT8FGC"
 };
 
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 
 export const db = getFirestore(app);
 export const auth = getAuth(app);
