@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { Report, UserProfile, SearchLog, AuditLogEntry, UserNotification } from '@/types';
@@ -29,6 +30,7 @@ export async function uploadReportImage(file: File): Promise<{ url: string; data
   const snapshot = await uploadBytes(fileRef, file);
   const downloadURL = await getDownloadURL(snapshot.ref);
   
+  // Simple hint generation from filename
   const hint = file.name.split('.')[0].replace(/[^a-zA-Z\s]/g, '').substring(0, 20);
 
   return { url: downloadURL, dataAiHint: hint };
@@ -55,8 +57,10 @@ export async function addUsersBatch(users: Omit<UserProfile, 'id'>[]): Promise<v
   for (const user of users) {
     if (!existingEmails.has(user.email.toLowerCase()) && !existingCompanyCodes.has(user.companyCode)) {
       const userDocRef = doc(usersCollectionRef); 
+      // Add server-side timestamp upon creation
       const userWithTimestamp = { ...user, registeredAt: serverTimestamp() };
       batch.set(userDocRef, userWithTimestamp);
+      // Add to sets to prevent duplicates within the same batch
       existingEmails.add(user.email.toLowerCase());
       existingCompanyCodes.add(user.companyCode);
     } else {
@@ -96,7 +100,6 @@ export async function getUserById(userId: string): Promise<UserProfile | null> {
         const docSnap = await getDoc(userDocRef);
 
         if (docSnap.exists()) {
-            console.log("storage.getUserById: Document found for user:", userId);
             return { id: docSnap.id, ...docSnap.data() } as UserProfile;
         } else {
             console.warn("storage.getUserById: No profile document found for userId:", userId);
@@ -104,7 +107,7 @@ export async function getUserById(userId: string): Promise<UserProfile | null> {
         }
     } catch (error) {
         console.error("storage.getUserById: Firestore error:", error);
-        return null; // Return null on error to prevent application crash
+        return null; 
     }
 }
 
@@ -171,7 +174,7 @@ export async function getUserReports(userId: string): Promise<{ active: Report[]
     const allUserReports = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Report));
 
     const active = allUserReports.filter(r => !r.deletedAt);
-    const deleted = allUserReports.filter(r => r.deletedAt);
+    const deleted = allUserReports.filter(r => !!r.deletedAt);
       
     return { active, deleted };
 }
@@ -255,7 +258,7 @@ export async function markAllNotificationsAsRead(userId: string): Promise<void> 
         return;
     }
     const notificationsCollectionRef = collection(db, NOTIFICATIONS_COLLECTION);
-    const q = query(notificationsCollectionRef, where("userId", "==", userId), where("read", "!=", true));
+    const q = query(notificationsCollectionRef, where("userId", "==", userId), where("read", "==", false));
     const snapshot = await getDocs(q);
     
     if (snapshot.empty) {
