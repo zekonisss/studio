@@ -6,10 +6,10 @@ import { getAuth } from "firebase/auth";
 import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBusk1Rtrpm-gfnwCdmi2yj5vTumqLte3c",
+  apiKey: "AIzaSyBusklRtrpm-gfnwCdmi2yj5vTumqLte3c",
   authDomain: "drivershield.firebaseapp.com",
   projectId: "drivershield",
-  storageBucket: "drivershield.firebasestorage.app",
+  storageBucket: "drivershield.appspot.com",
   messagingSenderId: "688007961476",
   appId: "1:688007961476:web:d6d663ef7430182d781bd1",
   measurementId: "G-WWHPWT8FGC"
