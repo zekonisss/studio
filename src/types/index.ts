@@ -12,8 +12,8 @@ export interface UserProfile {
   paymentStatus: 'active' | 'inactive' | 'pending_verification' | 'pending_payment';
   isAdmin: boolean;
   agreeToTerms: boolean;
-  registeredAt?: any;
-  accountActivatedAt?: any;
+  registeredAt?: Timestamp | Date | string;
+  accountActivatedAt?: Timestamp | Date | string;
   subUsers?: string[];
 }
 
@@ -29,8 +29,8 @@ export interface Report {
   comment: string;
   imageUrl?: string;
   dataAiHint?: string;
-  createdAt: any;
-  deletedAt?: any;
+  createdAt: Timestamp | Date | string;
+  deletedAt?: Timestamp | Date | string;
 }
 
 export interface SearchLog {
@@ -38,7 +38,7 @@ export interface SearchLog {
   userId: string;
   searchText: string;
   resultsCount: number;
-  timestamp: any;
+  timestamp: Timestamp | Date | string;
 }
 
 export interface AuditLogEntry {
@@ -47,7 +47,7 @@ export interface AuditLogEntry {
   adminName: string;
   actionKey: string;
   details: Record<string, any>;
-  timestamp: any;
+  timestamp: Timestamp | Date | string;
 }
 
 export interface UserNotification {
@@ -58,7 +58,7 @@ export interface UserNotification {
   messageKey: string;
   messageParams?: Record<string, any>;
   link?: string;
-  createdAt: any;
+  createdAt: Timestamp | Date | string;
   read: boolean;
 }
 
