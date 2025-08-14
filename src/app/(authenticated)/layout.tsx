@@ -18,7 +18,7 @@ export default function AuthenticatedLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, loading, logout } = useAuth();
+  const { user, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
@@ -33,6 +33,7 @@ export default function AuthenticatedLayout({
       return;
     }
     
+    // This logic remains the same, as it's based on the mock user's properties
     const isUserAdminPage = pathname.startsWith('/admin');
     const isUserImportPage = pathname.startsWith('/reports/import') || pathname.startsWith('/admin/user-import');
 
@@ -69,17 +70,7 @@ export default function AuthenticatedLayout({
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center bg-background">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-      </div>
-    );
-  }
-  
-  if (!user) {
-    // This case should ideally be covered by the useEffect redirect,
-    // but as a fallback, we show a loader to prevent flashing content.
+  if (loading || !user) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
