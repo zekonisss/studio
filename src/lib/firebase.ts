@@ -1,37 +1,22 @@
-
-"use client";
-
-import { initializeApp, getApps, getApp, type FirebaseOptions } from "firebase/app";
-import { getFirestore, enableNetwork, Timestamp, serverTimestamp } from "firebase/firestore";
+// lib/firebase.ts
+import { initializeApp, getApps, getApp } from "firebase/app";
+import { getFirestore, Timestamp, serverTimestamp } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { getStorage } from "firebase/storage";
 
-const firebaseConfig: FirebaseOptions = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY!,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN!,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID!,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET!,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID!,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID!
+const firebaseConfig = {
+  apiKey: "AIzaSyBusklRtrpm-gfnwCdmi2yj5vTumqLte3c",
+  authDomain: "drivershield.firebaseapp.com",
+  projectId: "drivershield",
+  storageBucket: "drivershield.appspot.com",
+  messagingSenderId: "688007961476",
+  appId: "1:688007961476:web:d6d663ef7430182d781bd1",
+  measurementId: "G-WWHPWT8FGC"
 };
 
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
-function getFirebaseApp(options: FirebaseOptions) {
-    return !getApps().length ? initializeApp(options) : getApp();
-}
-
-const app = getFirebaseApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
-const storage = getStorage(app);
-
-
-// Enable Firestore network only in the browser to avoid SSR issues
-if (typeof window !== "undefined") {
-  enableNetwork(db)
-    .catch((error) => {
-      console.error("❌ Error enabling Firestore network:", error);
-    });
-}
-
-export { db, auth, storage, Timestamp, serverTimestamp };
+export const db = getFirestore(app);
+export const auth = getAuth(app);
+export const storage = getStorage(app);
+export { Timestamp, serverTimestamp };
