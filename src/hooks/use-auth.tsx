@@ -49,12 +49,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             } else {
                 console.warn(`AuthProvider: User profile not found for UID ${firebaseUser.uid}. Forcing logout.`);
                 await signOut(auth); // This will trigger onAuthStateChanged again with null
-                setUser(null);
             }
         } catch (error) {
              console.error("AuthProvider: Error fetching user profile:", error);
              await signOut(auth);
-             setUser(null);
         } finally {
             console.log("AuthProvider: Setting loading to false (user branch).");
             setLoading(false);
@@ -77,11 +75,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
  const login = async (values: LoginFormValues): Promise<void> => {
-    // We don't set loading here, as onAuthStateChanged will handle it.
     try {
       await signInWithEmailAndPassword(auth, values.email, values.password);
-      // Let onAuthStateChanged handle setting user, just show toast here.
       toast({ title: t('toast.login.success.title'), description: t('toast.login.success.description') });
+      // onAuthStateChanged will handle the user state and redirection.
     } catch (error: any) {
       console.error("AuthProvider.login: Login failed:", error);
       let description = t('toast.login.error.descriptionGeneric');
@@ -129,8 +126,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     } catch(error: any) {
         let errorMessage = error.message || t('toast.signup.error.descriptionGeneric');
-        if (error.code === 'auth/email-already-in-use' || await storage.findUserByEmail(values.email)) {
-            errorMessage = t('toast.signup.error.emailExists');
+        if (error.code === 'auth/email-already-in-use') {
+             errorMessage = t('toast.signup.error.emailExists');
+        } else {
+             const existingUser = await storage.findUserByEmail(values.email);
+             if (existingUser) {
+                 errorMessage = t('toast.signup.error.emailExists');
+             }
         }
         toast({ variant: 'destructive', title: t('toast.signup.error.title'), description: errorMessage });
     }
@@ -139,7 +141,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const logout = async () => {
     try {
       await signOut(auth);
-      setUser(null); 
+      // onAuthStateChanged will set user to null.
       router.push('/auth/login');
       toast({ title: t('toast.logout.success.title') });
     } catch (error: any) {
