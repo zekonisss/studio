@@ -30,8 +30,8 @@ export interface Report {
   comment: string;
   imageUrl?: string;
   dataAiHint?: string;
-  createdAt: Timestamp | Date | string;
-  deletedAt?: Timestamp | Date | string | null;
+  createdAt: Timestamp | Date;
+  deletedAt?: Timestamp | Date | null;
 }
 
 export interface SearchLog {
@@ -39,7 +39,7 @@ export interface SearchLog {
   userId: string;
   searchText: string;
   resultsCount: number;
-  timestamp: Timestamp | Date | string;
+  timestamp: Timestamp | Date;
 }
 
 export interface AuditLogEntry {
@@ -48,7 +48,7 @@ export interface AuditLogEntry {
   adminName: string;
   actionKey: string;
   details: Record<string, any>;
-  timestamp: Timestamp | Date | string;
+  timestamp: Timestamp | Date;
 }
 
 export interface UserNotification {
@@ -59,6 +59,6 @@ export interface UserNotification {
   messageKey: string;
   messageParams?: Record<string, any>;
   link?: string;
-  createdAt: Timestamp | Date | string;
+  createdAt: Timestamp | Date;
   read: boolean;
 }

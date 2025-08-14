@@ -47,23 +47,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             if (userProfile) {
                 setUser(userProfile);
             } else {
-                console.warn(`AuthProvider: User profile not found for UID ${firebaseUser.uid}. Logging out.`);
-                await signOut(auth); 
+                console.warn(`AuthProvider: User profile not found for UID ${firebaseUser.uid}. Forcing logout.`);
+                await signOut(auth); // Force sign out if profile doesn't exist
                 setUser(null);
             }
         } catch (error) {
              console.error("AuthProvider: Error fetching user profile:", error);
              await signOut(auth);
              setUser(null);
-        } finally {
-            setLoading(false);
-            console.log("AuthProvider: Loading set to false.");
         }
       } else {
         setUser(null);
-        setLoading(false);
-        console.log("AuthProvider: No Firebase user, loading set to false.");
       }
+      // This is crucial: set loading to false after we are done checking for a user.
+      setLoading(false);
+      console.log("AuthProvider: Loading set to false.");
     });
 
     return () => unsubscribe();
@@ -80,8 +78,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setLoading(true);
     try {
       await signInWithEmailAndPassword(auth, values.email, values.password);
+      // Let onAuthStateChanged handle setting user, just show toast here.
       toast({ title: t('toast.login.success.title'), description: t('toast.login.success.description') });
-      // onAuthStateChanged will handle the rest
     } catch (error: any) {
       console.error("AuthProvider.login: Login failed:", error);
       let description = t('toast.login.error.descriptionGeneric');
@@ -93,13 +91,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         title: t('toast.login.error.title'),
         description,
       });
-      setLoading(false);
+      setLoading(false); // Ensure loading is false on error
     }
   };
 
   const signup = async (values: SignUpFormValues): Promise<void> => {
     setLoading(true);
     try {
+      // Check for existing user first to provide a better error message
       const existingUser = await storage.findUserByEmail(values.email);
       if (existingUser) {
         throw new Error(t('toast.signup.error.emailExists'));
@@ -109,6 +108,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const newFirebaseUser = userCredential.user;
       const isAdmin = newFirebaseUser.email?.toLowerCase() === 'sarunas.zekonis@gmail.com';
       
+      // We are creating a new object to be stored in Firestore.
+      // Notice we are NOT including the `id` property here, as Firestore will generate it.
       const userProfileData: Omit<UserProfile, 'id'> = {
           email: values.email.toLowerCase(),
           companyName: values.companyName,
@@ -125,6 +126,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           subUsers: [],
       };
       
+      // Use the UID from the created auth user as the document ID in Firestore
       await setDoc(doc(db, "users", newFirebaseUser.uid), userProfileData);
 
       toast({
@@ -132,10 +134,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           description: t('toast.signup.success.description'),
       });
       
+      // Redirect to a page that informs the user their account is pending approval
       router.push('/auth/pending-approval');
 
     } catch(error: any) {
         let errorMessage = error.message || t('toast.signup.error.descriptionGeneric');
+        // Firebase Auth might also throw this, so we handle it gracefully.
         if (error.code === 'auth/email-already-in-use') {
             errorMessage = t('toast.signup.error.emailExists');
         }
