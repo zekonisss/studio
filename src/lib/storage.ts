@@ -46,7 +46,7 @@ export async function getAllUsers(): Promise<UserProfile[]> {
     return users;
 }
 
-export async function addUsersBatch(users: Omit<UserProfile, 'id' | 'registeredAt'>[]): Promise<void> {
+export async function addUsersBatch(users: UserProfile[]): Promise<void> {
   const batch = writeBatch(db);
   const usersCollectionRef = collection(db, USERS_COLLECTION);
   
@@ -56,8 +56,12 @@ export async function addUsersBatch(users: Omit<UserProfile, 'id' | 'registeredA
 
   for (const user of users) {
     if (!existingEmails.has(user.email.toLowerCase()) && !existingCompanyCodes.has(user.companyCode)) {
-      const userDocRef = doc(usersCollectionRef);
-      const userWithTimestamp = { ...user, registeredAt: serverTimestamp() };
+      const userDocRef = doc(usersCollectionRef); // Auto-generate ID
+      const userWithTimestamp: UserProfile = { 
+          ...user, 
+          id: userDocRef.id, 
+          registeredAt: serverTimestamp() 
+        };
       batch.set(userDocRef, userWithTimestamp);
       existingEmails.add(user.email.toLowerCase());
       existingCompanyCodes.add(user.companyCode);

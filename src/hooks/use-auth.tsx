@@ -48,11 +48,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 setUser(userProfile);
             } else {
                 console.warn(`AuthProvider: User profile not found for UID ${firebaseUser.uid}. Forcing logout.`);
-                await signOut(auth);
+                await signOut(auth); // This ensures the invalid state is cleared
+                setUser(null);
             }
         } catch (error) {
              console.error("AuthProvider: Error fetching user profile:", error);
              await signOut(auth);
+             setUser(null);
         } finally {
             setLoading(false);
         }
@@ -76,7 +78,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setLoading(true);
     try {
       await signInWithEmailAndPassword(auth, values.email, values.password);
-      // onAuthStateChanged handles the rest
+      // onAuthStateChanged will handle the user state update and loading=false.
     } catch (error: any) {
       console.error("AuthProvider.login: Login failed:", error);
       let description = t('toast.login.error.descriptionGeneric');
@@ -88,7 +90,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         title: t('toast.login.error.title'),
         description,
       });
-      setLoading(false); // only set loading false on error
+      setLoading(false); // Manually set loading to false only on error
       throw error;
     }
   };
@@ -101,7 +103,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       const isAdmin = newFirebaseUser.email?.toLowerCase() === 'sarunas.zekonis@gmail.com';
       
-      const userProfileData: Omit<UserProfile, 'id' | 'registeredAt'> = {
+      const userProfileData = {
           email: values.email.toLowerCase(),
           companyName: values.companyName,
           companyCode: values.companyCode,
@@ -112,14 +114,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           paymentStatus: isAdmin ? 'active' : 'pending_verification',
           isAdmin: isAdmin,
           agreeToTerms: values.agreeToTerms,
+          registeredAt: serverTimestamp(),
           accountActivatedAt: isAdmin ? serverTimestamp() : undefined,
           subUsers: [],
       };
       
-      await setDoc(doc(db, "users", newFirebaseUser.uid), {
-        ...userProfileData,
-        registeredAt: serverTimestamp()
-      });
+      await setDoc(doc(db, "users", newFirebaseUser.uid), userProfileData);
 
       toast({
           title: t('toast.signup.success.title'),
@@ -134,8 +134,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             errorMessage = t('toast.signup.error.emailExists');
         }
         toast({ variant: 'destructive', title: t('toast.signup.error.title'), description: errorMessage });
-        setLoading(false); // only set loading false on error
-        throw error;
+        throw error; // Re-throw error to be caught by form if needed
+    } finally {
+      setLoading(false);
     }
   };
 

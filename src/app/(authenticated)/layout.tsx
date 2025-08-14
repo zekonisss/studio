@@ -78,7 +78,9 @@ export default function AuthenticatedLayout({
   }
   
   if (!user) {
-     return (
+    // This case should ideally be covered by the useEffect redirect,
+    // but as a fallback, we show a loader to prevent flashing content.
+    return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
       </div>
