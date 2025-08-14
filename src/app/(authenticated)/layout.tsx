@@ -7,7 +7,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { SidebarNav } from '@/components/navigation/sidebar-nav';
 import { UserNav } from '@/components/navigation/user-nav';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTitle, SheetTrigger, SheetClose } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Menu, Loader2 } from 'lucide-react';
 import { WelcomeModal } from '@/components/shared/welcome-modal';
 import { LanguageSwitcher } from '@/components/navigation/language-switcher';
@@ -18,14 +18,14 @@ export default function AuthenticatedLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, loading } = useAuth();
+  const { user, loading, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
 
   useEffect(() => {
     if (loading) {
-      return; // Do nothing while loading. The loader is shown below.
+      return; 
     }
     
     if (!user) {
@@ -39,6 +39,15 @@ export default function AuthenticatedLayout({
     if (!user.isAdmin && (isUserAdminPage || isUserImportPage)) {
        router.replace('/dashboard');
     }
+    
+    if (user.paymentStatus === 'inactive' || user.paymentStatus === 'pending_verification' || user.paymentStatus === 'pending_payment') {
+        const allowedPaths = ['/account', '/support'];
+        const isAllowed = allowedPaths.some(path => pathname.startsWith(path));
+        if (!isAllowed) {
+            router.replace('/account?tab=payment');
+        }
+    }
+
 
     try {
       const hasSeenWelcomeModal = localStorage.getItem('hasSeenWelcomeModal_drivercheck');
@@ -68,8 +77,6 @@ export default function AuthenticatedLayout({
     );
   }
   
-  // If not loading and there is a user, render the layout.
-  // The useEffect above handles the redirection if there is no user.
   if (user) {
     return (
         <div className="flex min-h-screen w-full bg-background">
@@ -107,8 +114,6 @@ export default function AuthenticatedLayout({
     );
   }
 
-  // If not loading and no user, the useEffect will redirect.
-  // Render a loader in the meantime to avoid a flash of nothing.
   return (
     <div className="flex h-screen w-full items-center justify-center bg-background">
       <Loader2 className="h-12 w-12 animate-spin text-primary" />

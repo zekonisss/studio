@@ -1,3 +1,4 @@
+
 import type { Timestamp } from 'firebase/firestore';
 
 export interface UserProfile {
@@ -12,9 +13,9 @@ export interface UserProfile {
   paymentStatus: 'active' | 'inactive' | 'pending_verification' | 'pending_payment';
   isAdmin: boolean;
   agreeToTerms: boolean;
-  registeredAt?: Timestamp | Date | string;
+  registeredAt: Timestamp | Date | string;
   accountActivatedAt?: Timestamp | Date | string;
-  subUsers?: string[];
+  subUsers: string[];
 }
 
 export interface Report {
@@ -30,7 +31,7 @@ export interface Report {
   imageUrl?: string;
   dataAiHint?: string;
   createdAt: Timestamp | Date | string;
-  deletedAt?: Timestamp | Date | string;
+  deletedAt?: Timestamp | Date | string | null;
 }
 
 export interface SearchLog {
