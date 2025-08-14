@@ -88,20 +88,27 @@ export async function findUserByEmail(email: string): Promise<UserProfile | null
 }
 
 export async function getUserById(userId: string): Promise<UserProfile | null> {
-    if (!userId || typeof userId !== 'string' || userId.trim() === '') {
-      console.error("storage.getUserById: Error - invalid or undefined userId provided:", userId);
+    if (!userId) {
+      console.error("storage.getUserById: Attempted to fetch user with invalid ID.");
       return null;
     }
-    const userDocRef = doc(db, USERS_COLLECTION, userId);
-    const docSnap = await getDoc(userDocRef);
+    try {
+        const userDocRef = doc(db, USERS_COLLECTION, userId);
+        const docSnap = await getDoc(userDocRef);
 
-    if (docSnap.exists()) {
-        return { id: docSnap.id, ...docSnap.data() } as UserProfile;
+        if (docSnap.exists()) {
+            console.log("storage.getUserById: Document found for user:", userId);
+            return { id: docSnap.id, ...docSnap.data() } as UserProfile;
+        } else {
+            console.warn("storage.getUserById: No profile document found for userId:", userId);
+            return null;
+        }
+    } catch (error) {
+        console.error("storage.getUserById: Firestore error:", error);
+        return null; // Return null on error to prevent application crash
     }
-    
-    console.warn("storage.getUserById: No profile document found for userId:", userId);
-    return null;
 }
+
 
 // --- Report Management ---
 
