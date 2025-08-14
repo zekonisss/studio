@@ -1,4 +1,3 @@
-
 import type { Timestamp } from 'firebase/firestore';
 
 export interface UserProfile {
@@ -30,8 +29,8 @@ export interface Report {
   comment: string;
   imageUrl?: string;
   dataAiHint?: string;
-  createdAt: Timestamp | Date;
-  deletedAt?: Timestamp | Date | null;
+  createdAt: any;
+  deletedAt?: any;
 }
 
 export interface SearchLog {
@@ -39,7 +38,7 @@ export interface SearchLog {
   userId: string;
   searchText: string;
   resultsCount: number;
-  timestamp: Timestamp | Date;
+  timestamp: any;
 }
 
 export interface AuditLogEntry {
@@ -48,7 +47,7 @@ export interface AuditLogEntry {
   adminName: string;
   actionKey: string;
   details: Record<string, any>;
-  timestamp: Timestamp | Date;
+  timestamp: any;
 }
 
 export interface UserNotification {
@@ -59,6 +58,6 @@ export interface UserNotification {
   messageKey: string;
   messageParams?: Record<string, any>;
   link?: string;
-  createdAt: Timestamp | Date;
+  createdAt: any;
   read: boolean;
 }
