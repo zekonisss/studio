@@ -61,3 +61,9 @@ export interface UserNotification {
   createdAt: any;
   read: boolean;
 }
+
+export interface DetailedCategory {
+  id: string;
+  nameKey: string;
+  tags: string[];
+}
