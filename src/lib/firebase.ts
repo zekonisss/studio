@@ -1,19 +1,19 @@
 
 "use client";
 
-// This file is safe to be imported on the client (browser).
 import { initializeApp, getApps, getApp, type FirebaseOptions } from "firebase/app";
 import { getFirestore, enableNetwork, Timestamp, serverTimestamp } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 
-// Automatically parse Firebase config from environment variables
-const FIREBASE_CLIENT_CONFIG: FirebaseOptions = JSON.parse(
-  process.env.NEXT_PUBLIC_FIREBASE_CONFIG || "{}"
-);
-
-if (!FIREBASE_CLIENT_CONFIG.apiKey) {
-    console.error("Firebase config not found. Please check your environment variables.");
-}
+const FIREBASE_CLIENT_CONFIG: FirebaseOptions = {
+  "projectId": "drivershield",
+  "appId": "1:688007961476:web:0bf3aa76adba59f7781bd1",
+  "storageBucket": "drivershield.appspot.com",
+  "apiKey": "AIzaSyBusklRtrpm-gfnwCdmi2yj5vTumqLte3c",
+  "authDomain": "drivershield.firebaseapp.com",
+  "measurementId": "G-BKJYEF2X6Y",
+  "messagingSenderId": "688007961476"
+};
 
 function getFirebaseApp(options: FirebaseOptions) {
     return !getApps().length ? initializeApp(options) : getApp();
