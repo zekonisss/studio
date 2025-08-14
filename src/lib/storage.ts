@@ -51,7 +51,7 @@ export async function getAllUsers(): Promise<UserProfile[]> {
     return users;
 }
 
-export async function addUsersBatch(users: UserProfile[]): Promise<void> {
+export async function addUsersBatch(users: Omit<UserProfile, 'id'>[]): Promise<void> {
   console.log("storage.addUsersBatch: Starting batch add for users:", users.length);
   const batch = writeBatch(db);
   const usersCollectionRef = collection(db, USERS_COLLECTION);
@@ -109,11 +109,13 @@ export async function getUserById(userId: string): Promise<UserProfile | null> {
     }
     const userDocRef = doc(db, USERS_COLLECTION, userId);
     const docSnap = await getDoc(userDocRef);
+
     if (docSnap.exists()) {
         const data = docSnap.data();
-        console.log("storage.getUserById: Profile found for userId:", userId, data);
+        console.log("storage.getUserById: Profile found for userId:", userId);
         return { id: docSnap.id, ...data } as UserProfile;
     }
+    
     console.warn("storage.getUserById: No profile document found for userId:", userId);
     return null;
 }
@@ -187,17 +189,12 @@ export async function getUserReports(userId: string): Promise<{ active: Report[]
         return { active: [], deleted: [] };
     }
     const reportsCollectionRef = collection(db, REPORTS_COLLECTION);
-    const q = query(reportsCollectionRef, where("reporterId", "==", userId));
+    const q = query(reportsCollectionRef, where("reporterId", "==", userId), orderBy("createdAt", "desc"));
     const snapshot = await getDocs(q);
     const allUserReports = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Report));
 
-    const active = allUserReports
-      .filter(r => !r.deletedAt)
-      .sort((a, b) => ((b.createdAt as Timestamp).toMillis() - (a.createdAt as Timestamp).toMillis()));
-    
-    const deleted = allUserReports
-      .filter(r => r.deletedAt)
-      .sort((a, b) => ((b.deletedAt as Timestamp).toMillis() - (a.deletedAt as Timestamp).toMillis()));
+    const active = allUserReports.filter(r => !r.deletedAt);
+    const deleted = allUserReports.filter(r => r.deletedAt);
       
     console.log(`storage.getUserReports: Found ${active.length} active and ${deleted.length} deleted reports.`);
     return { active, deleted };
@@ -205,8 +202,8 @@ export async function getUserReports(userId: string): Promise<{ active: Report[]
 
 // --- Log Management ---
 
-export async function getSearchLogs(userId?: string): Promise<SearchLog[]> {
-    console.log("storage.getSearchLogs: Fetching search logs for userId:", userId || "all");
+export async function getSearchLogs(userId: string): Promise<SearchLog[]> {
+    console.log("storage.getSearchLogs: Fetching search logs for userId:", userId);
     const logsCollectionRef = collection(db, SEARCH_LOGS_COLLECTION);
     
     if (!userId) {
