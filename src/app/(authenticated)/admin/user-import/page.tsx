@@ -17,12 +17,11 @@ import * as storage from '@/lib/storage';
 import { useRouter } from "next/navigation";
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { SignUpSchema } from '@/lib/schemas';
 
 interface ParsedUserRow {
   id: number; 
   originalRow: Record<string, any>;
-  userPreview: Partial<UserProfile>; 
+  userPreview: Partial<Omit<UserProfile, 'id'>>; 
   validationStatus: 'valid' | 'invalid';
   errors?: string[];
 }
@@ -30,7 +29,7 @@ interface ParsedUserRow {
 const REQUIRED_USER_HEADERS_LT = ["Įmonės Pavadinimas", "Įmonės Kodas", "Kontaktinis Asmuo", "El. Paštas", "Telefonas"];
 const OPTIONAL_USER_HEADERS_LT = ["PVM Kodas", "Adresas"];
 
-const USER_HEADER_MAPPINGS: Record<string, keyof UserProfile | 'raw_password_excel'> = {
+const USER_HEADER_MAPPINGS: Record<string, keyof Omit<UserProfile, 'id' | 'registeredAt' | 'accountActivatedAt'>> = {
     "Įmonės Pavadinimas": "companyName",
     "Company Name": "companyName",
     "Įmonės Kodas": "companyCode",
@@ -45,8 +44,6 @@ const USER_HEADER_MAPPINGS: Record<string, keyof UserProfile | 'raw_password_exc
     "VAT Code": "vatCode",
     "Adresas": "address",
     "Address": "address",
-    "Slaptažodis": "raw_password_excel", 
-    "Password": "raw_password_excel"
 };
 
 
@@ -73,7 +70,7 @@ export default function ImportUsersPage() {
     }
   }, [adminUser, authLoading, router, toast, t]);
 
-  const findHeaderKey = useCallback((headerRow: string[], targetHeaderLT: string): keyof UserProfile | 'raw_password_excel' | undefined => {
+  const findHeaderKey = useCallback((headerRow: string[], targetHeaderLT: string): keyof Omit<UserProfile, 'id'> | undefined => {
     const lowerTargetHeaderLT = targetHeaderLT.toLowerCase();
     const foundHeader = headerRow.find(header =>
       (typeof header === 'string' && header.toLowerCase() === lowerTargetHeaderLT) ||
@@ -154,19 +151,19 @@ export default function ImportUsersPage() {
         const headerRow = jsonData[0].map(h => String(h).trim());
         const dataRows = jsonData.slice(1);
 
-        const mappedHeaderKeys: Partial<Record<keyof UserProfile, string>> = {};
+        const mappedHeaderKeys: Partial<Record<keyof Omit<UserProfile, 'id'>, string>> = {};
         REQUIRED_USER_HEADERS_LT.forEach(reqHeaderLt => {
             const key = findHeaderKey(headerRow, reqHeaderLt);
             const excelHeaderName = headerRow.find(h => USER_HEADER_MAPPINGS[h] === key || h.toLowerCase() === reqHeaderLt.toLowerCase());
-            if (key && excelHeaderName && key !== 'raw_password_excel') {
-                mappedHeaderKeys[key as keyof UserProfile] = excelHeaderName;
+            if (key && excelHeaderName) {
+                mappedHeaderKeys[key as keyof Omit<UserProfile, 'id'>] = excelHeaderName;
             }
         });
          OPTIONAL_USER_HEADERS_LT.forEach(optHeaderLt => {
             const key = findHeaderKey(headerRow, optHeaderLt);
             const excelHeaderName = headerRow.find(h => USER_HEADER_MAPPINGS[h] === key || h.toLowerCase() === optHeaderLt.toLowerCase());
-            if (key && excelHeaderName && key !== 'raw_password_excel') {
-                 mappedHeaderKeys[key as keyof UserProfile] = excelHeaderName;
+            if (key && excelHeaderName) {
+                 mappedHeaderKeys[key as keyof Omit<UserProfile, 'id'>] = excelHeaderName;
             }
         });
 
@@ -239,8 +236,7 @@ export default function ImportUsersPage() {
 
     setIsImporting(true);
     try {
-      const newUsers: UserProfile[] = validRows.map(row => ({
-        id: `imported-user-${Date.now()}-${Math.random().toString(36).substring(2, 9)}-${row.id}`,
+      const newUsers: Omit<UserProfile, 'id'>[] = validRows.map(row => ({
         companyName: row.userPreview.companyName!,
         companyCode: row.userPreview.companyCode!,
         contactPerson: row.userPreview.contactPerson!,

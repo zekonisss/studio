@@ -2,188 +2,382 @@
 "use client";
 
 import type { Report, UserProfile, SearchLog, AuditLogEntry, UserNotification } from '@/types';
+import { db, storage as firebaseStorage } from '@/lib/firebase';
 import { 
-    MOCK_ALL_USERS, 
-    MOCK_GENERAL_REPORTS, 
-    MOCK_USER_REPORTS,
-    MOCK_USER_SEARCH_LOGS,
-    MOCK_ADMIN_USER
-} from '@/lib/mock-data';
+  collection, 
+  getDocs, 
+  doc, 
+  setDoc, 
+  query, 
+  where, 
+  getDoc, 
+  updateDoc, 
+  writeBatch, 
+  addDoc,
+  orderBy,
+  Timestamp
+} from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { categorizeReport } from '@/ai/flows/categorize-report-flow';
+
 
 // --- File Management ---
 export async function uploadReportImage(file: File): Promise<{ url: string; dataAiHint: string }> {
-  // This is a mock function. In a real app, this would upload to a cloud storage.
-  console.log("Mock uploading file:", file.name);
-  await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
-  const hint = file.name.split('.')[0].replace(/[^a-zA-Z\s]/g, '').substring(0, 20);
-  return { 
-    url: `https://placehold.co/600x400.png?text=Uploaded+${encodeURI(file.name)}`,
-    dataAiHint: hint 
-  };
-}
+  try {
+    const storageRef = ref(firebaseStorage, `report-images/${Date.now()}-${file.name}`);
+    await uploadBytes(storageRef, file);
+    const downloadURL = await getDownloadURL(storageRef);
+    
+    // Simple hint generation
+    const hint = file.name.split('.')[0].replace(/[^a-zA-Z\s]/g, '').substring(0, 20);
 
+    return { url: downloadURL, dataAiHint: hint };
+  } catch (error) {
+    console.error("Error uploading file to Firebase Storage:", error);
+    throw error;
+  }
+}
 
 // --- User Management ---
 
 export async function getAllUsers(): Promise<UserProfile[]> {
-    console.log("storage.ts (mock): getAllUsers called");
-    return Promise.resolve(MOCK_ALL_USERS);
-}
-
-export async function addUsersBatch(users: UserProfile[]): Promise<void> {
-    console.log("storage.ts (mock): addUsersBatch called with", users);
-    users.forEach(user => {
-        if (!MOCK_ALL_USERS.find(u => u.email === user.email)) {
-            MOCK_ALL_USERS.push({ ...user, id: `mock-user-${Date.now()}` });
-        }
+  try {
+    const usersCollectionRef = collection(db, 'users');
+    const snapshot = await getDocs(usersCollectionRef);
+    return snapshot.docs.map(doc => {
+        const data = doc.data();
+        return { 
+            id: doc.id,
+            ...data,
+            registeredAt: (data.registeredAt as Timestamp)?.toDate().toISOString(),
+            accountActivatedAt: (data.accountActivatedAt as Timestamp)?.toDate().toISOString()
+         } as UserProfile
     });
-    return Promise.resolve();
+  } catch (error) {
+    console.error("Error in getAllUsers:", error);
+    throw error;
+  }
 }
 
+export async function addUsersBatch(users: Omit<UserProfile, 'id'>[]): Promise<void> {
+  const batch = writeBatch(db);
+  const usersCollectionRef = collection(db, 'users');
+  
+  try {
+    const allCurrentUsers = await getAllUsers();
+    const existingEmails = new Set(allCurrentUsers.map(u => u.email.toLowerCase()));
+    const existingCompanyCodes = new Set(allCurrentUsers.map(u => u.companyCode));
+
+    for (const user of users) {
+      if (!existingEmails.has(user.email.toLowerCase()) && !existingCompanyCodes.has(user.companyCode)) {
+        const userDocRef = doc(usersCollectionRef); 
+        const userWithTimestamp = { 
+          ...user,
+          registeredAt: Timestamp.now() 
+        };
+        batch.set(userDocRef, userWithTimestamp);
+        existingEmails.add(user.email.toLowerCase());
+        existingCompanyCodes.add(user.companyCode);
+      } else {
+          console.warn(`Skipping user due to duplicate email or company code: ${user.email} / ${user.companyCode}`);
+      }
+    }
+
+    await batch.commit();
+  } catch (error) {
+    console.error("Error in addUsersBatch:", error);
+    throw error;
+  }
+}
 
 export async function updateUserProfile(userId: string, userData: Partial<UserProfile>): Promise<void> {
-    console.log(`storage.ts (mock): updateUserProfile called for ${userId} with`, userData);
-    const userIndex = MOCK_ALL_USERS.findIndex(u => u.id === userId);
-    if (userIndex !== -1) {
-        MOCK_ALL_USERS[userIndex] = { ...MOCK_ALL_USERS[userIndex], ...userData };
+  try {
+    const userDocRef = doc(db, 'users', userId);
+    const dataToUpdate = { ...userData };
+    // Convert ISO strings back to Timestamps if they exist
+    if (dataToUpdate.registeredAt) {
+      dataToUpdate.registeredAt = Timestamp.fromDate(new Date(dataToUpdate.registeredAt));
     }
-    return Promise.resolve();
+     if (dataToUpdate.accountActivatedAt) {
+      dataToUpdate.accountActivatedAt = Timestamp.fromDate(new Date(dataToUpdate.accountActivatedAt));
+    }
+    await updateDoc(userDocRef, dataToUpdate);
+  } catch (error) {
+    console.error(`Error updating user profile for user ID ${userId}:`, error);
+    throw error;
+  }
 }
 
 export async function findUserByEmail(email: string): Promise<UserProfile | null> {
-    console.log(`storage.ts (mock): findUserByEmail called for ${email}`);
-    const foundUser = MOCK_ALL_USERS.find(u => u.email.toLowerCase() === email.toLowerCase());
-    return Promise.resolve(foundUser || null);
+  try {
+    const q = query(collection(db, 'users'), where("email", "==", email.toLowerCase()));
+    const querySnapshot = await getDocs(q);
+    if (querySnapshot.empty) {
+      return null;
+    }
+    const userDoc = querySnapshot.docs[0];
+    const data = userDoc.data();
+    return { 
+        id: userDoc.id, 
+        ...data,
+        registeredAt: (data.registeredAt as Timestamp)?.toDate().toISOString(),
+        accountActivatedAt: (data.accountActivatedAt as Timestamp)?.toDate().toISOString()
+    } as UserProfile;
+  } catch(error) {
+      console.error(`Error finding user by email ${email}:`, error);
+      throw error;
+  }
 }
 
 export async function getUserById(userId: string): Promise<UserProfile | null> {
-    console.log(`storage.ts (mock): getUserById called for ${userId}`);
-    const foundUser = MOCK_ALL_USERS.find(u => u.id === userId);
-    return Promise.resolve(foundUser || null);
+    if (!userId || userId === "undefined") {
+      return null;
+    }
+    try {
+        const userDocRef = doc(db, 'users', userId);
+        const docSnap = await getDoc(userDocRef);
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            return { 
+                id: docSnap.id, 
+                ...data,
+                registeredAt: (data.registeredAt as Timestamp)?.toDate().toISOString(),
+                accountActivatedAt: (data.accountActivatedAt as Timestamp)?.toDate().toISOString()
+            } as UserProfile;
+        }
+        return null;
+    } catch (error) {
+        console.error(`Error in getUserById for UID ${userId}:`, error);
+        throw error;
+    }
 }
-
 
 // --- Report Management ---
 
 export async function getAllReports(): Promise<Report[]> {
-    console.log("storage.ts (mock): getAllReports called");
-    const allReports = [...MOCK_GENERAL_REPORTS, ...MOCK_USER_REPORTS];
-    return Promise.resolve(allReports.sort((a,b) => b.createdAt.getTime() - a.createdAt.getTime()));
+    try {
+        const reportsCollectionRef = collection(db, 'reports');
+        const q = query(reportsCollectionRef, orderBy("createdAt", "desc"));
+        const snapshot = await getDocs(q);
+        return snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                ...data,
+                createdAt: (data.createdAt as Timestamp).toDate(),
+                deletedAt: (data.deletedAt as Timestamp)?.toDate(),
+            } as Report
+        });
+    } catch (error) {
+        console.error("Error in getAllReports:", error);
+        return [];
+    }
 }
 
 export async function addReport(reportData: Omit<Report, 'id' | 'createdAt' | 'deletedAt'>): Promise<string> {
-    console.log("storage.ts (mock): addReport called with", reportData);
-    const newReport: Report = {
-        ...reportData,
-        id: `report-user-${Date.now()}`,
-        createdAt: new Date(),
-    };
-    MOCK_USER_REPORTS.unshift(newReport);
-    return Promise.resolve(newReport.id);
+    try {
+        const reportsCollectionRef = collection(db, 'reports');
+        const docRef = await addDoc(reportsCollectionRef, {
+            ...reportData,
+            createdAt: Timestamp.now()
+        });
+        return docRef.id;
+    } catch (error) {
+        console.error("Error in addReport:", error);
+        throw error;
+    }
 }
 
 
 export async function softDeleteReport(reportId: string): Promise<void> {
-    console.log(`storage.ts (mock): softDeleteReport called for ${reportId}`);
-    let reportIndex = MOCK_USER_REPORTS.findIndex(r => r.id === reportId);
-    if (reportIndex !== -1) {
-        MOCK_USER_REPORTS[reportIndex].deletedAt = new Date();
-    } else {
-        reportIndex = MOCK_GENERAL_REPORTS.findIndex(r => r.id === reportId);
-        if (reportIndex !== -1) {
-            MOCK_GENERAL_REPORTS[reportIndex].deletedAt = new Date();
-        }
+    try {
+        const reportDocRef = doc(db, 'reports', reportId);
+        await updateDoc(reportDocRef, {
+            deletedAt: Timestamp.now(),
+        });
+    } catch (error) {
+        console.error(`Error soft-deleting report ID ${reportId}:`, error);
+        throw new Error("Failed to update report for deletion.");
     }
-    return Promise.resolve();
 }
 
 export async function softDeleteAllReports(): Promise<number> {
-    console.log("storage.ts (mock): softDeleteAllReports called");
-    let count = 0;
-    MOCK_GENERAL_REPORTS.forEach(r => {
-        if (!r.deletedAt) {
-            r.deletedAt = new Date();
-            count++;
+    try {
+        const reportsCollectionRef = collection(db, 'reports');
+        const q = query(reportsCollectionRef, where("deletedAt", "==", null));
+        const reportsSnapshot = await getDocs(q);
+        
+        if (reportsSnapshot.empty) {
+            return 0;
         }
-    });
-    MOCK_USER_REPORTS.forEach(r => {
-        if (!r.deletedAt) {
-            r.deletedAt = new Date();
-            count++;
-        }
-    });
-    return Promise.resolve(count);
+
+        const batch = writeBatch(db);
+        reportsSnapshot.docs.forEach(doc => {
+            batch.update(doc.ref, { deletedAt: Timestamp.now() });
+        });
+        await batch.commit();
+        return reportsSnapshot.size;
+    } catch (error) {
+        console.error("Error in softDeleteAllReports:", error);
+        throw error;
+    }
 }
 
 export async function getUserReports(userId: string): Promise<{ active: Report[], deleted: Report[] }> {
-    console.log(`storage.ts (mock): getUserReports called for ${userId}`);
-    const userReports = userId === MOCK_ADMIN_USER.id ? MOCK_USER_REPORTS : []; // Simplified for mock
-    const active = userReports.filter(r => !r.deletedAt);
-    const deleted = userReports.filter(r => !!r.deletedAt);
-    return Promise.resolve({ active, deleted });
+    try {
+        const reportsCollectionRef = collection(db, 'reports');
+        const q = query(reportsCollectionRef, where("reporterId", "==", userId));
+        const snapshot = await getDocs(q);
+        const allUserReports = snapshot.docs.map(doc => {
+             const data = doc.data();
+             return {
+                id: doc.id,
+                ...data,
+                createdAt: (data.createdAt as Timestamp).toDate(),
+                deletedAt: (data.deletedAt as Timestamp)?.toDate(),
+             } as Report
+        });
+
+        const active = allUserReports
+          .filter(r => !r.deletedAt)
+          .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+        
+        const deleted = allUserReports
+          .filter(r => !!r.deletedAt)
+          .sort((a, b) => (b.deletedAt as Date).getTime() - (a.deletedAt as Date).getTime());
+        
+        return { active, deleted };
+    } catch (error) {
+        console.error(`Error getting user reports for user ID ${userId}:`, error);
+        return { active: [], deleted: [] };
+    }
 }
 
 // --- Log Management ---
 
-export async function getSearchLogs(userId: string): Promise<SearchLog[]> {
-    console.log(`storage.ts (mock): getSearchLogs called for ${userId}`);
-    return Promise.resolve(MOCK_USER_SEARCH_LOGS);
+export async function getSearchLogs(userId?: string): Promise<SearchLog[]> {
+    try {
+        const logsCollectionRef = collection(db, 'searchLogs');
+        const q = userId 
+            ? query(logsCollectionRef, where("userId", "==", userId), orderBy("timestamp", "desc"))
+            : query(logsCollectionRef, orderBy("timestamp", "desc"));
+        
+        const snapshot = await getDocs(q);
+        return snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                ...data,
+                timestamp: (data.timestamp as Timestamp).toDate()
+            } as SearchLog
+        });
+    } catch (error) {
+        console.error(`Error getting search logs for user ID ${userId || 'all'}:`, error);
+        return [];
+    }
 }
 
 export async function addSearchLog(logData: Omit<SearchLog, 'id' | 'timestamp'>): Promise<void> {
-    console.log("storage.ts (mock): addSearchLog called with", logData);
-    const newLog: SearchLog = {
-        ...logData,
-        id: `log-${Date.now()}`,
-        timestamp: new Date()
-    };
-    MOCK_USER_SEARCH_LOGS.unshift(newLog);
-    return Promise.resolve();
+    try {
+        const logsCollectionRef = collection(db, 'searchLogs');
+        await addDoc(logsCollectionRef, {
+            ...logData,
+            timestamp: Timestamp.now(),
+        });
+    } catch (error) {
+        console.error("Error in addSearchLog:", error);
+    }
 }
 
 export async function getAuditLogs(): Promise<AuditLogEntry[]> {
-    console.log("storage.ts (mock): getAuditLogs called");
-    // Mock audit logs if needed
-    return Promise.resolve([]);
+    try {
+        const auditLogsCollectionRef = collection(db, 'auditLogs');
+        const q = query(auditLogsCollectionRef, orderBy("timestamp", "desc"));
+        const snapshot = await getDocs(q);
+        return snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                ...data,
+                timestamp: (data.timestamp as Timestamp).toDate()
+            } as AuditLogEntry;
+        });
+    } catch (error) {
+        console.error("Error in getAuditLogs:", error);
+        return [];
+    }
 }
 
 export async function addAuditLogEntry(entryData: Omit<AuditLogEntry, 'id' | 'timestamp'>): Promise<void> {
-    console.log("storage.ts (mock): addAuditLogEntry called with", entryData);
-    // Mock adding audit logs if needed
-    return Promise.resolve();
+    try {
+        const auditLogsCollectionRef = collection(db, 'auditLogs');
+        await addDoc(auditLogsCollectionRef, {
+            ...entryData,
+            timestamp: Timestamp.now(),
+        });
+    } catch (error) {
+        console.error("Error in addAuditLogEntry:", error);
+    }
 }
 
 // --- Notification Management ---
 
 export async function getUserNotifications(userId: string): Promise<UserNotification[]> {
-    console.log(`storage.ts (mock): getUserNotifications called for ${userId}`);
-    // Mock notifications
-    return Promise.resolve([
-        {
-            id: 'notif-1',
-            userId: userId,
-            type: 'account_status_change',
-            titleKey: 'notifications.accountStatusChanged.title',
-            messageKey: 'notifications.accountStatusChanged.message',
-            messageParams: { oldStatus: 'Pending', newStatus: 'Active', adminName: 'Admin' },
-            link: '/account?tab=details',
-            createdAt: new Date(),
-            read: false,
-        }
-    ]);
+    try {
+        const notificationsCollectionRef = collection(db, 'notifications');
+        const q = query(notificationsCollectionRef, where("userId", "==", userId), orderBy("createdAt", "desc"));
+        const snapshot = await getDocs(q);
+        return snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                ...data,
+                createdAt: (data.createdAt as Timestamp).toDate()
+            } as UserNotification
+        });
+    } catch (error) {
+        console.error(`Error getting notifications for user ID ${userId}:`, error);
+        return [];
+    }
 }
 
 export async function addUserNotification(userId: string, notificationData: Omit<UserNotification, 'id' | 'createdAt' | 'read' | 'userId'>): Promise<void> {
-    console.log(`storage.ts (mock): addUserNotification for ${userId} with`, notificationData);
-    return Promise.resolve();
+    try {
+        const notificationsCollectionRef = collection(db, 'notifications');
+        await addDoc(notificationsCollectionRef, {
+            userId,
+            ...notificationData,
+            createdAt: Timestamp.now(),
+            read: false,
+        });
+    } catch (error) {
+        console.error(`Error adding notification for user ID ${userId}:`, error);
+    }
 }
 
 export async function markNotificationAsRead(notificationId: string): Promise<void> {
-    console.log(`storage.ts (mock): markNotificationAsRead called for ${notificationId}`);
-    return Promise.resolve();
+    try {
+        const notifDocRef = doc(db, 'notifications', notificationId);
+        await updateDoc(notifDocRef, { read: true });
+    } catch (error) {
+        console.error(`Error marking notification ID ${notificationId} as read:`, error);
+    }
 }
 
 export async function markAllNotificationsAsRead(userId: string): Promise<void> {
-     console.log(`storage.ts (mock): markAllNotificationsAsRead called for ${userId}`);
-    return Promise.resolve();
+    try {
+        const notificationsCollectionRef = collection(db, 'notifications');
+        const q = query(notificationsCollectionRef, where("userId", "==", userId), where("read", "==", false));
+        const snapshot = await getDocs(q);
+        
+        if (snapshot.empty) return;
+
+        const batch = writeBatch(db);
+        snapshot.docs.forEach(doc => {
+            batch.update(doc.ref, { read: true });
+        });
+        await batch.commit();
+    } catch (error) {
+        console.error(`Error marking all notifications as read for user ID ${userId}:`, error);
+    }
 }

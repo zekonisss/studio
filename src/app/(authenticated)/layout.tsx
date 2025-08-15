@@ -33,7 +33,6 @@ export default function AuthenticatedLayout({
       return;
     }
     
-    // This logic remains the same, as it's based on the mock user's properties
     const isUserAdminPage = pathname.startsWith('/admin');
     const isUserImportPage = pathname.startsWith('/reports/import') || pathname.startsWith('/admin/user-import');
 
