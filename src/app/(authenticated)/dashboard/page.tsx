@@ -34,6 +34,9 @@ export default function DashboardPage() {
     if (dateValue instanceof Timestamp) {
       return dateValue.toDate();
     }
+    if (dateValue instanceof Date) {
+        return dateValue;
+    }
     const date = new Date(dateValue);
     return isNaN(date.getTime()) ? null : date;
   };
@@ -46,25 +49,28 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const fetchStats = async () => {
+      if (authLoading) return;
       setIsLoading(true);
+      
       try {
-        console.log("Dashboard: Fetching all platform reports.");
-        const allPlatformReports = await storage.getAllReports();
+        const promises: [Promise<Report[]>, Promise<{ active: Report[] } | null>, Promise<any[] | null>] = [
+            storage.getAllReports(),
+            user ? storage.getUserReports(user.id) : Promise.resolve(null),
+            user ? storage.getSearchLogs(user.id) : Promise.resolve(null),
+        ];
+
+        const [allPlatformReports, userReportsResult, userSearchLogs] = await Promise.all(promises);
+
         setTotalReportsCount(allPlatformReports.length);
         setRecentReports(allPlatformReports.slice(0, 4));
 
-        if (user) {
-          console.log("Dashboard: User found, fetching user-specific stats for ID:", user.id);
-          const { active: activeUserReports } = await storage.getUserReports(user.id);
-          setUserReportsCount(activeUserReports.length);
-
-          const userSearchLogs = await storage.getSearchLogs(user.id);
-          setUserSearchesCount(userSearchLogs.length);
-        } else {
-          console.log("Dashboard: No user, setting user stats to 0.");
-          setUserReportsCount(0);
-          setUserSearchesCount(0);
+        if (userReportsResult) {
+            setUserReportsCount(userReportsResult.active.length);
         }
+        if (userSearchLogs) {
+            setUserSearchesCount(userSearchLogs.length);
+        }
+
       } catch (error) {
         console.error("Dashboard: Failed to fetch stats:", error);
       } finally {
@@ -72,10 +78,7 @@ export default function DashboardPage() {
       }
     };
 
-    if (!authLoading) {
-      console.log("Dashboard: Auth is not loading, calling fetchStats.");
-      fetchStats();
-    }
+    fetchStats();
   }, [user, authLoading]);
 
 
@@ -270,3 +273,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    
