@@ -70,7 +70,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const login = async (values: LoginFormValues): Promise<void> => {
     setLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, values.email, values.password);
+      const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
+      const userProfile = await appStorage.getUserById(userCredential.user.uid);
+      if(!userProfile) {
+         toast({
+            variant: 'destructive',
+            title: t('toast.login.error.title'),
+            description: "Nėra vartotojo profilio.",
+          });
+         await signOut(auth);
+         setLoading(false);
+         return;
+      }
     } catch (error: any) {
       let description = t('toast.login.error.descriptionGeneric');
        if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
@@ -81,8 +92,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         title: t('toast.login.error.title'),
         description: description,
       });
-    } finally {
-        setLoading(false);
+      setLoading(false);
     }
   };
 
