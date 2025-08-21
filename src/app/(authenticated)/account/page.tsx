@@ -19,7 +19,6 @@ import { getCategoryNameForDisplay } from '@/lib/utils';
 import * as storage from '@/lib/storage';
 import { InfoField } from "@/components/account/InfoField";
 import { useToast } from "@/hooks/use-toast";
-import { Timestamp } from "firebase/firestore";
 
 
 export default function AccountPage() {
@@ -144,8 +143,8 @@ export default function AccountPage() {
   
   const getSafeDate = (dateValue: any): Date | null => {
     if (!dateValue) return null;
-    if (dateValue instanceof Timestamp) {
-      return dateValue.toDate();
+    if (dateValue instanceof Date) {
+      return dateValue;
     }
     const date = new Date(dateValue);
     return isNaN(date.getTime()) ? null : date;

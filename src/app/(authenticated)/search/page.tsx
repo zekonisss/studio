@@ -20,7 +20,6 @@ import { countries, detailedReportCategories, DESTRUCTIVE_REPORT_MAIN_CATEGORIES
 import { migrateTagIfNeeded } from "@/lib/utils";
 import * as storage from '@/lib/storage';
 import { useLanguage } from "@/contexts/language-context"; 
-import { Timestamp } from "firebase/firestore";
 
 export default function SearchPage() {
   const { user } = useAuth();
@@ -85,7 +84,7 @@ export default function SearchPage() {
               (report.reporterCompanyName && report.reporterCompanyName.toLowerCase().includes(query))
             );
           }
-        ).sort((a,b) => (b.createdAt as Timestamp).toMillis() - (a.createdAt as Timestamp).toMillis());
+        ).sort((a,b) => (b.createdAt as any).toMillis() - (a.createdAt as any).toMillis());
       }
 
       setSearchResults(results);
@@ -113,8 +112,8 @@ export default function SearchPage() {
   
   const getSafeDate = (dateValue: any): Date | null => {
     if (!dateValue) return null;
-    if (dateValue instanceof Timestamp) {
-      return dateValue.toDate();
+    if (dateValue instanceof Date) {
+      return dateValue;
     }
     const date = new Date(dateValue);
     return isNaN(date.getTime()) ? null : date;

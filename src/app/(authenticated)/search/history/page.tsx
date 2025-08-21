@@ -14,7 +14,6 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import * as storage from '@/lib/storage';
 import { useLanguage } from "@/contexts/language-context"; 
-import { Timestamp } from "firebase/firestore";
 
 export default function SearchHistoryPage() {
   const { user, loading: authLoading } = useAuth();
@@ -52,8 +51,8 @@ export default function SearchHistoryPage() {
 
   const getSafeDate = (dateValue: any): Date | null => {
     if (!dateValue) return null;
-    if (dateValue instanceof Timestamp) {
-      return dateValue.toDate();
+    if (dateValue instanceof Date) {
+      return dateValue;
     }
     const date = new Date(dateValue);
     return isNaN(date.getTime()) ? null : date;

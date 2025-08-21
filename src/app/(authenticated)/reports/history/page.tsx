@@ -18,7 +18,6 @@ import { countries, DESTRUCTIVE_REPORT_MAIN_CATEGORIES } from "@/lib/constants";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import NextImage from "next/image";
-import { Timestamp } from "firebase/firestore";
 
 export default function ReportsHistoryPage() {
   const { user, loading: authLoading } = useAuth();
@@ -70,8 +69,8 @@ export default function ReportsHistoryPage() {
 
   const getSafeDate = (dateValue: any): Date | null => {
     if (!dateValue) return null;
-    if (dateValue instanceof Timestamp) {
-      return dateValue.toDate();
+    if (dateValue instanceof Date) {
+      return dateValue;
     }
     const date = new Date(dateValue);
     return isNaN(date.getTime()) ? null : date;

@@ -14,7 +14,6 @@ import { useLanguage } from '@/contexts/language-context';
 import { Badge } from '@/components/ui/badge';
 import * as storage from '@/lib/storage';
 import { getCategoryNameForDisplay } from '@/lib/utils';
-import { Timestamp } from "firebase/firestore";
 
 export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth();
@@ -31,9 +30,6 @@ export default function DashboardPage() {
   
   const getSafeDate = (dateValue: any): Date | null => {
     if (!dateValue) return null;
-    if (dateValue instanceof Timestamp) {
-      return dateValue.toDate();
-    }
     if (dateValue instanceof Date) {
         return dateValue;
     }
@@ -78,7 +74,9 @@ export default function DashboardPage() {
       }
     };
 
-    fetchStats();
+    if (!authLoading) {
+      fetchStats();
+    }
   }, [user, authLoading]);
 
 
@@ -273,5 +271,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-    

@@ -18,7 +18,6 @@ import { useRouter } from "next/navigation";
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Progress } from '@/components/ui/progress';
-import { Timestamp } from 'firebase/firestore';
 import { categorizeReport } from '@/ai/flows/categorize-report-flow';
 
 type RowStatus = 'pending' | 'processing' | 'completed' | 'error' | 'ai-error';
@@ -166,7 +165,7 @@ export default function ImportReportsPage() {
         comment: row.comment,
         category: row.aiCategory!,
         tags: row.aiTags!,
-        createdAt: Timestamp.fromDate(new Date(row.date)),
+        createdAt: new Date(row.date),
       }));
       
       for(const reportData of reportsToAdd) {

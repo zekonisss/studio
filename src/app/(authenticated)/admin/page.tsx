@@ -26,7 +26,6 @@ import { useLanguage } from '@/contexts/language-context';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 import { ChartContainer, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Timestamp } from "firebase/firestore";
 
 const USERS_PER_PAGE = 10; 
 
@@ -56,8 +55,8 @@ export default function AdminPage() {
   
   const getSafeDate = (dateValue: any): Date | null => {
     if (!dateValue) return null;
-    if (dateValue instanceof Timestamp) {
-      return dateValue.toDate();
+    if (dateValue instanceof Date) {
+      return dateValue;
     }
     const date = new Date(dateValue);
     return isNaN(date.getTime()) ? null : date;
