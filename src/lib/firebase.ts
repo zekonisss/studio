@@ -27,13 +27,18 @@ const storage = getStorage(app);
 
 // Enable Firestore network only in the browser to avoid SSR issues
 if (typeof window !== "undefined") {
-  enableNetwork(db)
-    .then(() => {
-      console.log("✅ Firestore network enabled.");
-    })
-    .catch((error) => {
-      console.error("❌ Error enabling Firestore network:", error);
-    });
+  try {
+    enableNetwork(db)
+      .then(() => {
+        console.log("✅ Firestore network enabled.");
+      })
+      .catch((error) => {
+        // This catch will handle initial enabling errors, but might not catch all operational errors.
+        console.error("❌ Error enabling Firestore network initially:", error);
+      });
+  } catch (error) {
+     console.error("❌ Critical error during Firestore network enabling:", error);
+  }
 }
 
 export { db, auth, storage, Timestamp };
