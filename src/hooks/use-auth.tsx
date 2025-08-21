@@ -74,7 +74,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // onAuthStateChanged will handle setting the user, loading state, and redirects
     } catch (error: any) {
       let description = t('toast.login.error.descriptionGeneric');
-       if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
+       if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
         description = t('toast.login.error.invalidCredentials');
       }
       toast({
@@ -88,10 +88,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signup = async (values: SignUpFormValues): Promise<void> => {
     setLoading(true);
-
+    let newFirebaseUser;
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
-      const { user: newFirebaseUser } = userCredential;
+      newFirebaseUser = userCredential.user;
 
       const isAdmin = newFirebaseUser.email?.toLowerCase() === 'admin@drivercheck.lt';
       const userProfileData: Omit<UserProfile, 'id'> = {
@@ -123,8 +123,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         let errorMessage = t('toast.signup.error.descriptionGeneric');
         if (error.code === 'auth/email-already-in-use') {
             errorMessage = t('toast.signup.error.emailExists');
+        } else if (error.message.includes('firestore')) {
+             errorMessage = "Klaida išsaugant profilį. Patikrinkite Firestore duomenų bazės nustatymus ir saugumo taisykles.";
         }
-        toast({ variant: 'destructive', title: t('toast.signup.error.title'), description: errorMessage });
+        
+        toast({ 
+            variant: 'destructive', 
+            title: t('toast.signup.error.title'), 
+            description: errorMessage,
+            duration: 9000,
+        });
+
+        // If user was created in Auth but profile saving failed, we should probably delete the auth user
+        if (newFirebaseUser) {
+            console.warn("Signup: Profile creation failed, but Auth user was created. Deleting auth user to prevent orphaned account.");
+            await newFirebaseUser.delete();
+        }
+
     } finally {
       setLoading(false);
     }
