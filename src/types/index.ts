@@ -1,4 +1,4 @@
-import type { Timestamp } from "firebase/firestore";
+
 
 export interface UserProfile {
   id: string;
@@ -12,8 +12,8 @@ export interface UserProfile {
   paymentStatus: 'active' | 'inactive' | 'pending_verification' | 'pending_payment';
   isAdmin: boolean;
   agreeToTerms: boolean;
-  registeredAt: Timestamp | string;
-  accountActivatedAt?: Timestamp | string;
+  registeredAt: string;
+  accountActivatedAt?: string;
   subUsers: string[];
 }
 
@@ -29,8 +29,8 @@ export interface Report {
   comment: string;
   imageUrl?: string;
   dataAiHint?: string;
-  createdAt: Timestamp | Date;
-  deletedAt?: Timestamp | Date | null;
+  createdAt: Date;
+  deletedAt?: Date | null;
 }
 
 export interface SearchLog {
@@ -38,7 +38,7 @@ export interface SearchLog {
   userId: string;
   searchText: string;
   resultsCount: number;
-  timestamp: Timestamp | Date;
+  timestamp: Date;
 }
 
 export interface AuditLogEntry {
@@ -47,7 +47,7 @@ export interface AuditLogEntry {
   adminName: string;
   actionKey: string;
   details: Record<string, any>;
-  timestamp: Timestamp | Date;
+  timestamp: Date;
 }
 
 export interface UserNotification {
@@ -58,7 +58,7 @@ export interface UserNotification {
   messageKey: string;
   messageParams?: Record<string, any>;
   link?: string;
-  createdAt: Timestamp | Date;
+  createdAt: Date;
   read: boolean;
 }
 
