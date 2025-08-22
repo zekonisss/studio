@@ -1,5 +1,4 @@
 
-
 export interface UserProfile {
   id: string;
   email: string;
@@ -12,8 +11,8 @@ export interface UserProfile {
   paymentStatus: 'active' | 'inactive' | 'pending_verification' | 'pending_payment';
   isAdmin: boolean;
   agreeToTerms: boolean;
-  registeredAt: string;
-  accountActivatedAt?: string;
+  registeredAt: string | Date;
+  accountActivatedAt?: string | Date;
   subUsers: string[];
 }
 

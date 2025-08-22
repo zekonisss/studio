@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import * as storage from '@/lib/storage';
 import { getCategoryNameForDisplay } from '@/lib/utils';
 
+
 export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth();
   const { t, locale } = useLanguage();

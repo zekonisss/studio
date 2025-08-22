@@ -65,7 +65,12 @@ export async function getUserById(userId: string): Promise<UserProfile | null> {
 
 export async function getAllReports(): Promise<Report[]> {
     console.log("storage.ts: getAllReports called, returning mock data.");
-    return Promise.resolve([...MOCK_GENERAL_REPORTS, ...MOCK_USER_REPORTS]);
+    const allReports = [...MOCK_GENERAL_REPORTS, ...MOCK_USER_REPORTS].map(report => ({
+        ...report,
+        createdAt: new Date(report.createdAt), // Ensure createdAt is a Date object
+        deletedAt: report.deletedAt ? new Date(report.deletedAt) : null,
+    }));
+    return Promise.resolve(allReports);
 }
 
 export async function addReport(reportData: Omit<Report, 'id' | 'createdAt' | 'deletedAt'>): Promise<string> {
@@ -113,20 +118,33 @@ export async function softDeleteAllReports(): Promise<number> {
 
 export async function getUserReports(userId: string): Promise<{ active: Report[], deleted: Report[] }> {
     console.log(`storage.ts: getUserReports called for ${userId}`);
-    const userReports = MOCK_USER_REPORTS.filter(r => r.reporterId === userId);
-    const active = userReports.filter(r => !r.deletedAt);
-    const deleted = userReports.filter(r => !!r.deletedAt);
+    const allUserReports = MOCK_USER_REPORTS
+        .filter(r => r.reporterId === userId)
+        .map(report => ({
+            ...report,
+            createdAt: new Date(report.createdAt),
+            deletedAt: report.deletedAt ? new Date(report.deletedAt) : undefined,
+        }));
+        
+    const active = allUserReports.filter(r => !r.deletedAt);
+    const deleted = allUserReports.filter(r => !!r.deletedAt);
     return Promise.resolve({ active, deleted });
 }
 
 // --- Log Management ---
 
+const MOCK_SEARCH_LOGS: SearchLog[] = MOCK_USER_SEARCH_LOGS.map(log => ({
+    ...log,
+    timestamp: new Date(log.timestamp)
+}));
+
+
 export async function getSearchLogs(userId?: string): Promise<SearchLog[]> {
     console.log(`storage.ts: getSearchLogs called for ${userId || 'all'}`);
     if (userId) {
-        return Promise.resolve(MOCK_USER_SEARCH_LOGS.filter(log => log.userId === userId));
+        return Promise.resolve(MOCK_SEARCH_LOGS.filter(log => log.userId === userId));
     }
-    return Promise.resolve(MOCK_USER_SEARCH_LOGS);
+    return Promise.resolve(MOCK_SEARCH_LOGS);
 }
 
 export async function addSearchLog(logData: Omit<SearchLog, 'id' | 'timestamp'>): Promise<void> {
@@ -136,7 +154,7 @@ export async function addSearchLog(logData: Omit<SearchLog, 'id' | 'timestamp'>)
         ...logData,
         timestamp: new Date(),
     };
-    MOCK_USER_SEARCH_LOGS.unshift(newLog);
+    MOCK_SEARCH_LOGS.unshift(newLog);
     return Promise.resolve();
 }
 
@@ -165,7 +183,7 @@ const MOCK_NOTIFICATIONS: UserNotification[] = [];
 
 export async function getUserNotifications(userId: string): Promise<UserNotification[]> {
     console.log(`storage.ts: getUserNotifications for ${userId}`);
-    return Promise.resolve(MOCK_NOTIFICATIONS.filter(n => n.userId === userId).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()));
+    return Promise.resolve(MOCK_NOTIFICATIONS.filter(n => n.userId === userId).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
 }
 
 export async function addUserNotification(userId: string, notificationData: Omit<UserNotification, 'id' | 'createdAt' | 'read' | 'userId'>): Promise<void> {
