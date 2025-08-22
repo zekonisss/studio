@@ -24,17 +24,7 @@ export default function AuthenticatedLayout({
       </div>
     );
   }
-
-  if (!user) {
-    // This case should ideally not happen with the new auth setup,
-    // but it's a good fallback.
-    return (
-       <div className="flex h-screen w-full items-center justify-center">
-        <p>No user session. Redirecting...</p>
-      </div>
-    );
-  }
-
+  
   return (
       <div className="flex min-h-screen w-full bg-background">
         <div className="hidden md:block md:w-72">
