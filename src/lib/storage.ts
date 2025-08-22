@@ -68,7 +68,7 @@ export async function getAllReports(): Promise<Report[]> {
     const allReports = [...MOCK_GENERAL_REPORTS, ...MOCK_USER_REPORTS].map(report => ({
         ...report,
         createdAt: new Date(report.createdAt), // Ensure createdAt is a Date object
-        deletedAt: report.deletedAt ? new Date(report.deletedAt) : null,
+        deletedAt: report.deletedAt ? new Date(report.deletedAt) : undefined,
     }));
     return Promise.resolve(allReports);
 }

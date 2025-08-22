@@ -4,7 +4,6 @@ import { Inter, Roboto_Mono } from 'next/font/google';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { LanguageProvider } from '@/contexts/language-context';
-import { AuthProvider } from '@/hooks/use-auth';
 import { ThemeProvider } from 'next-themes';
 
 const inter = Inter({
@@ -37,10 +36,8 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <LanguageProvider>
-            <AuthProvider>
               {children}
               <Toaster />
-            </AuthProvider>
           </LanguageProvider>
         </ThemeProvider>
       </body>

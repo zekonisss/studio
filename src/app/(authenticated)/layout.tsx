@@ -7,6 +7,7 @@ import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/s
 import { Menu } from 'lucide-react';
 import { LanguageSwitcher } from '@/components/navigation/language-switcher';
 import { ThemeToggle } from '@/components/navigation/theme-toggle';
+import { AuthProvider } from '@/hooks/use-auth';
 
 export default function AuthenticatedLayout({
   children,
@@ -14,6 +15,7 @@ export default function AuthenticatedLayout({
   children: React.ReactNode;
 }) {
   return (
+    <AuthProvider>
       <div className="flex min-h-screen w-full bg-background">
         <div className="hidden md:block md:w-72">
           <SidebarNav isInSheet={false} />
@@ -44,5 +46,6 @@ export default function AuthenticatedLayout({
           </main>
         </div>
       </div>
+    </AuthProvider>
   );
 }
