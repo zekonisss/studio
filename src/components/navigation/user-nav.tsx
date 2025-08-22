@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -12,29 +13,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/use-auth";
-import { LogOut, Settings, UserCircle, CreditCard, ShieldQuestion } from "lucide-react";
+import { Settings, UserCircle, CreditCard, ShieldQuestion } from "lucide-react";
 import Link from "next/link";
-import { useToast } from "@/hooks/use-toast";
 
 export function UserNav() {
-  const { user, logout, loading } = useAuth();
-  const { toast } = useToast();
-
-  const handleLogout = async () => {
-    try {
-      await logout();
-      toast({
-        title: "Sėkmingai atsijungėte",
-      });
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Atsijungimo klaida",
-        description: "Nepavyko atsijungti. Bandykite dar kartą.",
-      });
-    }
-  };
-
+  const { user } = useAuth();
+  
   if (!user) {
     return null;
   }
@@ -85,11 +69,6 @@ export function UserNav() {
             </Link>
           </DropdownMenuItem>
         </DropdownMenuGroup>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleLogout} disabled={loading}>
-          <LogOut className="mr-2 h-4 w-4" />
-          <span>Atsijungti</span>
-        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

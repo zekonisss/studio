@@ -1,15 +1,10 @@
 
 "use client";
 
-import { useEffect, useState } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
-import { useAuth } from '@/hooks/use-auth';
 import { SidebarNav } from '@/components/navigation/sidebar-nav';
-import { UserNav } from '@/components/navigation/user-nav';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { Menu, Loader2 } from 'lucide-react';
-import { WelcomeModal } from '@/components/shared/welcome-modal';
+import { Menu } from 'lucide-react';
 import { LanguageSwitcher } from '@/components/navigation/language-switcher';
 import { ThemeToggle } from '@/components/navigation/theme-toggle'; 
 
@@ -18,65 +13,6 @@ export default function AuthenticatedLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, loading } = useAuth();
-  const router = useRouter();
-  const pathname = usePathname();
-  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
-
-  useEffect(() => {
-    if (loading) {
-      return; 
-    }
-    
-    if (!user) {
-      router.replace('/auth/login');
-      return;
-    }
-    
-    const isUserAdminPage = pathname.startsWith('/admin');
-    const isUserImportPage = pathname.startsWith('/reports/import') || pathname.startsWith('/admin/user-import');
-
-    if (!user.isAdmin && (isUserAdminPage || isUserImportPage)) {
-       router.replace('/dashboard');
-    }
-    
-    if (user.paymentStatus === 'inactive' || user.paymentStatus === 'pending_verification' || user.paymentStatus === 'pending_payment') {
-        const allowedPaths = ['/account', '/support'];
-        const isAllowed = allowedPaths.some(path => pathname.startsWith(path));
-        if (!isAllowed) {
-            router.replace('/account?tab=payment');
-        }
-    }
-
-
-    try {
-      const hasSeenWelcomeModal = localStorage.getItem('hasSeenWelcomeModal_drivercheck');
-      if (!hasSeenWelcomeModal) {
-          setShowWelcomeModal(true);
-      }
-    } catch (e) {
-      console.error("Could not access localStorage. Welcome modal will not be shown.", e);
-    }
-    
-  }, [user, loading, router, pathname]);
-
-  const handleCloseWelcomeModal = () => {
-    setShowWelcomeModal(false);
-    try {
-      localStorage.setItem('hasSeenWelcomeModal_drivercheck', 'true');
-    } catch (e) {
-      console.error("Could not write to localStorage.", e);
-    }
-  };
-
-  if (loading || !user) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center bg-background">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-      </div>
-    );
-  }
-
   return (
       <div className="flex min-h-screen w-full bg-background">
         <div className="hidden md:block md:w-72">
@@ -101,14 +37,12 @@ export default function AuthenticatedLayout({
             <div className="flex items-center gap-2 ml-auto">
               <ThemeToggle />
               <LanguageSwitcher />
-              <UserNav />
             </div>
           </header>
           <main className="flex-1 p-4 md:p-8 overflow-auto">
             {children}
           </main>
         </div>
-        {showWelcomeModal && <WelcomeModal isOpen={showWelcomeModal} onClose={handleCloseWelcomeModal} />}
       </div>
   );
 }

@@ -14,16 +14,12 @@ import {
   History,
   ListChecks,
   UserCircle,
-  LogOut,
-  Settings,
   ShieldQuestion,
   ShieldAlert,
   UserSearch, 
   FileSpreadsheet
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import { useToast } from "@/hooks/use-toast";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { ReactNode } from "react";
 import { useLanguage } from "@/contexts/language-context"; 
 import { LanguageSwitcher } from "./language-switcher"; 
@@ -55,8 +51,7 @@ interface SidebarNavProps {
 
 export function SidebarNav({ isInSheet = false }: SidebarNavProps) {
   const pathname = usePathname();
-  const { user, logout, loading } = useAuth();
-  const { toast } = useToast();
+  const { user } = useAuth();
   const { t } = useLanguage(); 
 
   const mainNavItems = mainNavItemsBase.map(item => ({ ...item, label: t(item.labelKey) }));
@@ -64,24 +59,9 @@ export function SidebarNav({ isInSheet = false }: SidebarNavProps) {
   const accountNavItems = accountNavItemsBase.map(item => ({ ...item, label: t(item.labelKey) }));
   const adminNavItems = adminNavItemsBase.map(item => ({ ...item, label: t(item.labelKey) }));
 
-
-  const handleLogout = async () => {
-    try {
-      await logout();
-    } catch (error) {
-      // Toast is handled within useAuth
-    }
-  };
-
   if (!user) return null;
 
-  const initials = user.contactPerson
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase() || user.email[0].toUpperCase();
-
-  const NavLinkWrapper = ({ children, href }: { children: ReactNode, href?: string }) => {
+  const NavLinkWrapper = ({ children }: { children: ReactNode }) => {
     if (isInSheet) {
       return <SheetClose asChild>{children}</SheetClose>;
     }
@@ -91,7 +71,7 @@ export function SidebarNav({ isInSheet = false }: SidebarNavProps) {
   return (
     <div className="flex h-full flex-col border-r bg-sidebar text-sidebar-foreground shadow-lg">
       <div className="p-4 border-b border-sidebar-border flex justify-between items-center">
-        <NavLinkWrapper href="/dashboard">
+        <NavLinkWrapper>
           <Link href="/dashboard" className="flex items-center space-x-3">
               <UserSearch className="h-8 w-8 text-sidebar-primary" />
             <h1 className="text-2xl font-bold text-sidebar-primary">{t('app.name')}</h1>
@@ -110,7 +90,7 @@ export function SidebarNav({ isInSheet = false }: SidebarNavProps) {
           <div>
             <h3 className="mb-1 px-2 text-xs font-semibold uppercase text-muted-foreground tracking-wider">{t('sidebar.section.main')}</h3>
             {mainNavItems.map((item) => (
-              <NavLinkWrapper key={item.href} href={item.href}>
+              <NavLinkWrapper key={item.href}>
                 <Link
                   href={item.href}
                   className={cn(
@@ -131,7 +111,7 @@ export function SidebarNav({ isInSheet = false }: SidebarNavProps) {
           <div>
             <h3 className="mb-1 mt-3 px-2 text-xs font-semibold uppercase text-muted-foreground tracking-wider">{t('sidebar.section.history')}</h3>
             {historyNavItems.map((item) => (
-              <NavLinkWrapper key={item.href} href={item.href}>
+              <NavLinkWrapper key={item.href}>
                 <Link
                   href={item.href}
                   className={cn(
@@ -152,7 +132,7 @@ export function SidebarNav({ isInSheet = false }: SidebarNavProps) {
           <div>
             <h3 className="mb-1 mt-3 px-2 text-xs font-semibold uppercase text-muted-foreground tracking-wider">{t('sidebar.section.account')}</h3>
             {accountNavItems.map((item) => (
-               <NavLinkWrapper key={item.href} href={item.href}>
+               <NavLinkWrapper key={item.href}>
                 <Link
                   href={item.href}
                   className={cn(
@@ -174,7 +154,7 @@ export function SidebarNav({ isInSheet = false }: SidebarNavProps) {
             <div>
               <h3 className="mb-1 mt-3 px-2 text-xs font-semibold uppercase text-muted-foreground tracking-wider">{t('sidebar.section.admin')}</h3>
               {adminNavItems.map((item) => (
-                <NavLinkWrapper key={item.href} href={item.href}>
+                <NavLinkWrapper key={item.href}>
                   <Link
                     href={item.href}
                     className={cn(
@@ -194,28 +174,6 @@ export function SidebarNav({ isInSheet = false }: SidebarNavProps) {
           )}
         </nav>
       </ScrollArea>
-
-      <div className="mt-auto p-4 border-t border-sidebar-border">
-        <div className="flex items-center gap-3 mb-4">
-          <Avatar className="h-10 w-10 border-2 border-sidebar-primary">
-             <AvatarImage src={`https://placehold.co/100x100.png?text=${initials}`} alt={user.contactPerson} data-ai-hint="avatar person" />
-            <AvatarFallback>{initials}</AvatarFallback>
-          </Avatar>
-          <div>
-            <p className="text-sm font-semibold text-sidebar-foreground">{user.companyName}</p>
-            <p className="text-xs text-muted-foreground">{user.contactPerson}</p>
-          </div>
-        </div>
-        <Button variant="outline" className="w-full h-9" onClick={handleLogout} disabled={loading}>
-          <LogOut className="mr-2 h-4 w-4" />
-          {t('sidebar.logout')}
-        </Button>
-      </div>
     </div>
   );
 }
-
-
-
-
-    
