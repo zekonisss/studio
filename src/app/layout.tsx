@@ -5,6 +5,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { LanguageProvider } from '@/contexts/language-context';
 import { ThemeProvider } from 'next-themes';
+import { AuthProvider } from '@/hooks/use-auth';
 
 const inter = Inter({
   variable: '--font-sans',
@@ -36,8 +37,10 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <LanguageProvider>
+            <AuthProvider>
               {children}
               <Toaster />
+            </AuthProvider>
           </LanguageProvider>
         </ThemeProvider>
       </body>
