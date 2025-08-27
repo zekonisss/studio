@@ -240,16 +240,16 @@ export default function DashboardPage() {
             {recentReports.length > 0 ? (
                 <ul className="space-y-4">
                   {recentReports.map(report => (
-                    <li key={report.id} className="flex items-start justify-between gap-4 p-3 rounded-md hover:bg-muted/30 transition-colors border">
+                    <li key={report.id} className="flex flex-col sm:flex-row items-start justify-between gap-2 sm:gap-4 p-3 rounded-md hover:bg-muted/30 transition-colors border">
                         <div className="flex-1 min-w-0">
                             <p className="font-semibold">{report.fullName}</p>
                             <p className="text-xs text-muted-foreground">{t('dashboard.recentReports.submittedBy')} {report.reporterCompanyName || t('common.notSpecified')}</p>
                         </div>
-                        <div className="text-right shrink-0">
-                            <Badge variant="secondary" className="whitespace-normal text-right">
+                        <div className="flex sm:flex-col items-end sm:items-end gap-2 shrink-0 w-full sm:w-auto">
+                            <Badge variant="secondary" className="whitespace-normal text-right max-w-full sm:max-w-[150px]">
                                 {getCategoryNameForDisplay(report.category, t)}
                             </Badge>
-                            <p className="text-xs text-muted-foreground mt-1">
+                            <p className="text-xs text-muted-foreground mt-0 sm:mt-1">
                                 {formatDateSafe(report.createdAt)}
                             </p>
                         </div>
