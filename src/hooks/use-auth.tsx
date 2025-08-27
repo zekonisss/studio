@@ -2,32 +2,156 @@
 "use client";
 
 import type { UserProfile } from '@/types';
-import React, { createContext, useContext, useState } from 'react';
-import { MOCK_ADMIN_USER } from '@/lib/mock-data';
+import type { LoginFormValues, SignUpFormValues } from '@/lib/schemas';
+import React from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { useLanguage } from '@/contexts/language-context';
+import * as storage from '@/lib/storage';
+import { useRouter } from 'next/navigation';
+import { auth, db } from '@/lib/firebase';
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+} from 'firebase/auth';
+import { doc, setDoc, Timestamp } from 'firebase/firestore';
 
-// This hook provides a mock user context without any real authentication.
-// It ensures that the application operates as if a user is always logged in.
 
 interface AuthContextType {
   user: UserProfile | null;
   loading: boolean;
+  login: (values: LoginFormValues) => Promise<void>;
+  signup: (values: SignUpFormValues) => Promise<void>;
+  logout: () => Promise<void>;
   updateUserInContext: (updatedUser: UserProfile) => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = React.createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<UserProfile | null>(MOCK_ADMIN_USER);
-  
-  // Loading is always false as we are not performing any async operations.
-  const loading = false;
+  const [user, setUser] = React.useState<UserProfile | null>(null);
+  const [loading, setLoading] = React.useState(true);
+  const { toast } = useToast();
+  const { t } = useLanguage();
+  const router = useRouter();
+
+  React.useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        try {
+            const userProfile = await storage.getUserById(firebaseUser.uid);
+            if (userProfile) {
+                setUser(userProfile);
+            } else {
+                await signOut(auth);
+                setUser(null);
+            }
+        } catch (error) {
+             console.error("AuthProvider: Error fetching user profile:", error);
+             await signOut(auth);
+             setUser(null);
+        }
+      } else {
+        setUser(null);
+      }
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const updateUserInContext = async (updatedUser: UserProfile) => {
-      // This is a mock function. In a real scenario, it would update the backend.
-      setUser(updatedUser);
+    setUser(updatedUser);
+    await storage.updateUserProfile(updatedUser.id, updatedUser);
   };
 
-  const value = { user, loading, updateUserInContext };
+  const login = async (values: LoginFormValues): Promise<void> => {
+    setLoading(true);
+    try {
+      await signInWithEmailAndPassword(auth, values.email, values.password);
+      router.push('/dashboard');
+      toast({ title: t('toast.login.success.title'), description: t('toast.login.success.description') });
+    } catch (error: any) {
+      let description = t('toast.login.error.descriptionGeneric');
+       if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+        description = t('toast.login.error.invalidCredentials');
+      }
+      toast({
+        variant: 'destructive',
+        title: t('toast.login.error.title'),
+        description: description,
+      });
+    } finally {
+        setLoading(false);
+    }
+  };
+
+  const signup = async (values: SignUpFormValues): Promise<void> => {
+    setLoading(true);
+    try {
+      const existingUser = await storage.findUserByEmail(values.email);
+      if (existingUser) {
+        throw new Error(t('toast.signup.error.emailExists'));
+      }
+
+      const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
+      const { user: newFirebaseUser } = userCredential;
+
+      const isAdmin = newFirebaseUser.email?.toLowerCase() === 'sarunas.zekonis@gmail.com';
+      const userProfileData: Omit<UserProfile, 'id'> = {
+          email: values.email.toLowerCase(),
+          companyName: values.companyName,
+          companyCode: values.companyCode,
+          vatCode: values.vatCode || '',
+          address: values.address,
+          contactPerson: values.contactPerson,
+          phone: values.phone,
+          paymentStatus: isAdmin ? 'active' : 'pending_verification',
+          isAdmin: isAdmin,
+          agreeToTerms: values.agreeToTerms,
+          registeredAt: Timestamp.now(),
+          accountActivatedAt: isAdmin ? Timestamp.now() : undefined,
+          subUsers: [],
+      };
+      
+      await setDoc(doc(db, "users", newFirebaseUser.uid), userProfileData as UserProfile);
+
+      toast({
+          title: t('toast.signup.success.title'),
+          description: t('toast.signup.success.description'),
+      });
+      
+      await signOut(auth);
+      router.push('/auth/pending-approval');
+
+    } catch(error: any) {
+        let errorMessage = error.message || t('toast.signup.error.descriptionGeneric');
+        if (error.code === 'auth/email-already-in-use') {
+            errorMessage = t('toast.signup.error.emailExists');
+        }
+        toast({ variant: 'destructive', title: t('toast.signup.error.title'), description: errorMessage });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const logout = async () => {
+    try {
+      await signOut(auth);
+      setUser(null); 
+      router.push('/auth/login');
+      toast({ title: t('toast.logout.success.title') });
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: t('toast.logout.error.title'),
+        description: error.message,
+      });
+    }
+  };
+  
+  const value = { user, loading, login, signup, logout, updateUserInContext };
 
   return (
     <AuthContext.Provider value={value}>
@@ -37,7 +161,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 };
 
 export const useAuth = (): AuthContextType => {
-  const context = useContext(AuthContext);
+  const context = React.useContext(AuthContext);
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }

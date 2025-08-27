@@ -3,13 +3,35 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/hooks/use-auth';
+import { Loader2 } from 'lucide-react';
+import { AuthProvider } from '@/hooks/use-auth';
 
-export default function HomePage() {
+function HomePageContent() {
   const router = useRouter();
+  const { user, loading } = useAuth();
 
   useEffect(() => {
-    router.replace('/dashboard');
-  }, [router]);
+    if (!loading) {
+      if (user) {
+        router.replace('/dashboard');
+      } else {
+        router.replace('/auth/login');
+      }
+    }
+  }, [user, loading, router]);
 
-  return null; // The redirect will happen automatically
+  return (
+    <div className="flex h-screen w-full items-center justify-center">
+      <Loader2 className="h-16 w-16 animate-spin text-primary" />
+    </div>
+  );
+}
+
+export default function HomePage() {
+    return (
+        <AuthProvider>
+            <HomePageContent />
+        </AuthProvider>
+    )
 }

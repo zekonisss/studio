@@ -11,8 +11,8 @@ export interface UserProfile {
   paymentStatus: 'active' | 'inactive' | 'pending_verification' | 'pending_payment';
   isAdmin: boolean;
   agreeToTerms: boolean;
-  registeredAt: string | Date;
-  accountActivatedAt?: string | Date;
+  registeredAt: Date;
+  accountActivatedAt?: Date;
   subUsers: string[];
 }
 
