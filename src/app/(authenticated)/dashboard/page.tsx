@@ -241,20 +241,16 @@ export default function DashboardPage() {
                 <ul className="space-y-4">
                    {recentReports.map(report => (
                     <li key={report.id} className="p-3 rounded-md hover:bg-muted/30 transition-colors border">
-                      <div className="flex items-start justify-between gap-4">
-                          <div className="flex-grow min-w-0">
-                            <div className="flex items-start justify-between gap-2">
-                                <p className="font-semibold flex-grow break-words">{report.fullName}</p>
-                                <Badge variant="secondary" className="flex-shrink-0 whitespace-normal text-right">
-                                    {getCategoryNameForDisplay(report.category, t)}
-                                </Badge>
-                            </div>
-                            <p className="text-xs text-muted-foreground mt-1">{t('dashboard.recentReports.submittedBy')} {report.reporterCompanyName || t('common.notSpecified')}</p>
-                          </div>
-                      </div>
-                      <div className="text-right text-xs text-muted-foreground mt-1">
-                          {formatDateSafe(report.createdAt)}
-                      </div>
+                        <div className="mb-2">
+                            <p className="font-semibold break-words">{report.fullName}</p>
+                            <Badge variant="secondary" className="mt-1 whitespace-normal text-left h-auto">
+                                {getCategoryNameForDisplay(report.category, t)}
+                            </Badge>
+                        </div>
+                        <div className="flex items-end justify-between text-xs text-muted-foreground">
+                            <p className="flex-grow">{t('dashboard.recentReports.submittedBy')} {report.reporterCompanyName || t('common.notSpecified')}</p>
+                            <p className="flex-shrink-0">{formatDateSafe(report.createdAt)}</p>
+                        </div>
                     </li>
                   ))}
                 </ul>
