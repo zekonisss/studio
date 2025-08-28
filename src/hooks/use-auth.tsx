@@ -6,7 +6,8 @@ import type { LoginFormValues, SignUpFormValues } from '@/lib/schemas';
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/language-context';
-import { MOCK_ADMIN_USER } from '@/lib/mock-data'; 
+import { MOCK_ADMIN_USER } from '@/lib/mock-data';
+import { useRouter } from 'next/navigation';
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -24,6 +25,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { t } = useLanguage();
+  const router = useRouter();
 
   useEffect(() => {
     // Simulate fetching user data
@@ -39,6 +41,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await new Promise(res => setTimeout(res, 500));
     setUser(MOCK_ADMIN_USER);
     toast({ title: t('toast.login.success.title'), description: t('toast.login.success.description') });
+    router.push('/dashboard');
     setLoading(false);
   };
 
@@ -46,15 +49,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     console.log("Simulating signup for:", values.email);
     await new Promise(res => setTimeout(res, 1000));
-    toast({ title: "Registracija (DEMO)", description: "Ši funkcija yra demonstracinė. Jūs būsite prijungtas kaip demonstracinis vartotojas." });
-    setUser(MOCK_ADMIN_USER);
+    toast({ title: "Registracija (DEMO)", description: "Ši funkcija yra demonstracinė." });
+    // In a real scenario, you might redirect to a pending page or login
+    router.push('/dashboard'); 
     setLoading(false);
   };
 
   const logout = async () => {
     console.log("Simulating logout.");
+    setLoading(true);
+    await new Promise(res => setTimeout(res, 300));
     setUser(null);
-    toast({ title: t('toast.logout.success.title') });
+    setLoading(false);
+    // Since we are not using a real auth system, a full page reload helps clean up state.
+    window.location.href = '/'; 
   };
   
   const updateUserInContext = async (updatedUserData: UserProfile) => {
