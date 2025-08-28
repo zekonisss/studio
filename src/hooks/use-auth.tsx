@@ -73,7 +73,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       router.push('/dashboard');
       toast({ title: t('toast.login.success.title'), description: t('toast.login.success.description') });
     } catch (error: any) {
-      let description = t('toast.login.error.descriptionGeneric');
+       let description = t('toast.login.error.descriptionGeneric');
        if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
         description = t('toast.login.error.invalidCredentials');
       }

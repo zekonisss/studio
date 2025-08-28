@@ -63,7 +63,7 @@ export async function addUsersBatch(usersData: Omit<UserProfile, 'id'>[]): Promi
         const fullUserData: UserProfile = {
             id: newUserDocRef.id,
             ...userData,
-            registeredAt: Timestamp.now(), // Set registration timestamp
+            registeredAt: new Date(), // Set registration timestamp
         };
         batch.set(newUserDocRef, fullUserData);
     }
@@ -152,7 +152,7 @@ export async function getAllReports(): Promise<Report[]> {
     }
 }
 
-export async function addReport(reportData: Omit<Report, 'id'>): Promise<void> {
+export async function addReport(reportData: Omit<Report, 'id' | 'createdAt' | 'deletedAt'>): Promise<void> {
     try {
         const reportsCollectionRef = collection(db, REPORTS_COLLECTION);
         await addDoc(reportsCollectionRef, {

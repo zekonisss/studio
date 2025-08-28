@@ -5,7 +5,6 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { Loader2 } from 'lucide-react';
-import { AuthProvider } from '@/hooks/use-auth';
 
 function HomePageContent() {
   const router = useRouter();
@@ -29,9 +28,5 @@ function HomePageContent() {
 }
 
 export default function HomePage() {
-    return (
-        <AuthProvider>
-            <HomePageContent />
-        </AuthProvider>
-    )
+    return <HomePageContent />
 }
