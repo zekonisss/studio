@@ -1,89 +1,70 @@
-"use client";
-
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { LoginSchema, type LoginFormValues } from "@/lib/schemas";
-import { useAuth } from "@/hooks/use-auth";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Loader2 } from "lucide-react";
-import Link from "next/link";
-import { useLanguage } from "@/contexts/language-context";
-import { useRouter } from "next/navigation";
-
-
-export default function LoginPage() {
-  const { login, loading } = useAuth();
-  const { t } = useLanguage();
-  const router = useRouter();
-
-  const form = useForm<LoginFormValues>({
-    resolver: zodResolver(LoginSchema),
-    defaultValues: { email: "", password: "" },
-  });
-
-  const onSubmit = async (values: LoginFormValues) => {
-    await login(values);
-  };
-  
-  const handleForgotPassword = () => {
-    router.push('/auth/forgot-password');
-  };
-
-  return (
-    <Card className="shadow-2xl">
-      <CardHeader>
-        <CardTitle className="text-2xl">{t('login.title')}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('login.emailLabel')}</FormLabel>
-                  <FormControl>
-                    <Input type="email" placeholder="jusu@imone.lt" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('login.passwordLabel')}</FormLabel>
-                  <FormControl>
-                    <Input type="password" placeholder="••••••••" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-             <div className="flex items-center justify-between">
-                <p className="text-sm text-muted-foreground">
-                  {t('login.noAccount')}{' '}
-                  <Link href="/auth/signup" className="font-semibold text-primary hover:underline">
-                    {t('login.signupLink')}
-                  </Link>
-                </p>
-                {/* <Button variant="link" type="button" onClick={handleForgotPassword} className="px-0">
-                  {t('login.forgotPasswordLink')}
-                </Button> */}
-            </div>
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {t('login.loginButton')}
-            </Button>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
-  );
+{
+  "name": "nextn",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "genkit:dev": "genkit start -- tsx src/ai/dev.ts",
+    "genkit:watch": "genkit start -- tsx --watch src/ai/dev.ts",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@genkit-ai/googleai": "1.1.0",
+    "@hookform/resolvers": "^3.9.0",
+    "@opentelemetry/exporter-jaeger": "^1.25.1",
+    "@radix-ui/react-accordion": "^1.2.0",
+    "@radix-ui/react-alert-dialog": "^1.1.1",
+    "@radix-ui/react-avatar": "^1.1.0",
+    "@radix-ui/react-checkbox": "^1.1.1",
+    "@radix-ui/react-dialog": "^1.1.1",
+    "@radix-ui/react-dropdown-menu": "^2.1.1",
+    "@radix-ui/react-label": "^2.1.0",
+    "@radix-ui/react-menubar": "^1.1.1",
+    "@radix-ui/react-popover": "^1.1.1",
+    "@radix-ui/react-progress": "^1.1.0",
+    "@radix-ui/react-radio-group": "^1.2.0",
+    "@radix-ui/react-scroll-area": "^1.1.0",
+    "@radix-ui/react-select": "^2.1.1",
+    "@radix-ui/react-separator": "^1.1.0",
+    "@radix-ui/react-slider": "^1.2.0",
+    "@radix-ui/react-slot": "^1.1.0",
+    "@radix-ui/react-switch": "^1.1.0",
+    "@radix-ui/react-tabs": "^1.1.0",
+    "@radix-ui/react-toast": "^1.2.1",
+    "@radix-ui/react-tooltip": "^1.1.2",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "date-fns": "^3.6.0",
+    "dotenv": "^16.5.0",
+    "genkit": "1.1.0",
+    "lucide-react": "^0.475.0",
+    "next": "14.2.5",
+    "next-themes": "^0.3.0",
+    "patch-package": "^8.0.0",
+    "react": "18.3.1",
+    "react-day-picker": "^8.10.1",
+    "react-dom": "18.3.1",
+    "react-hook-form": "^7.54.2",
+    "recharts": "^2.15.1",
+    "tailwind-merge": "^3.0.1",
+    "tailwindcss-animate": "^1.0.7",
+    "xlsx": "^0.18.5",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@tailwindcss/typography": "^0.5.13",
+    "@types/node": "^20.14.10",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "genkit-cli": "1.1.0",
+    "postcss": "^8",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5"
+  },
+  "engines": {
+    "node": "20"
+  }
 }

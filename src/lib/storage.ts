@@ -2,360 +2,236 @@
 "use client";
 
 import type { Report, UserProfile, SearchLog, AuditLogEntry, UserNotification } from '@/types';
-import { db } from '@/lib/firebase';
 import { 
-  collection, 
-  getDocs, 
-  doc, 
-  setDoc, 
-  query, 
-  where, 
-  getDoc, 
-  updateDoc, 
-  writeBatch, 
-  addDoc,
-  orderBy,
-  Timestamp,
-  deleteDoc
-} from 'firebase/firestore';
+    MOCK_ADMIN_USER, 
+    MOCK_ALL_USERS, 
+    MOCK_GENERAL_REPORTS, 
+    MOCK_USER_REPORTS,
+    MOCK_USER_SEARCH_LOGS
+} from './mock-data';
 
-const USERS_COLLECTION = 'users';
-const REPORTS_COLLECTION = 'reports';
-const SEARCH_LOGS_COLLECTION = 'searchLogs';
-const AUDIT_LOGS_COLLECTION = 'auditLogs';
-const NOTIFICATIONS_COLLECTION = 'notifications';
+// This is a mock storage implementation that uses localStorage to simulate a database.
+// This allows the app to function without a real backend.
 
-// --- File Management (Placeholder) ---
-export async function uploadReportImage(file: File): Promise<{ url: string; dataAiHint: string }> {
-  console.log("Simulating file upload for:", file.name);
-  // In a real scenario, this would upload to a service and return a URL.
-  // For mock, we'll return a placeholder.
-  await new Promise(res => setTimeout(res, 500)); // Simulate network delay
-  const hint = file.name.split('.')[0].replace(/[^a-zA-Z\s]/g, '').substring(0, 20);
-  return { 
-    url: `https://placehold.co/600x400.png?text=Uploaded+${encodeURIComponent(file.name)}`,
-    dataAiHint: hint
-  };
-}
+const getFromStorage = <T>(key: string, defaultValue: T): T => {
+    if (typeof window === 'undefined') {
+        return defaultValue;
+    }
+    try {
+        const item = window.localStorage.getItem(key);
+        return item ? JSON.parse(item) : defaultValue;
+    } catch (error) {
+        console.error(`Error reading from localStorage key “${key}”:`, error);
+        return defaultValue;
+    }
+};
+
+const saveToStorage = <T>(key: string, value: T): void => {
+    if (typeof window === 'undefined') {
+        return;
+    }
+    try {
+        const item = JSON.stringify(value);
+        window.localStorage.setItem(key, item);
+    } catch (error) {
+        console.error(`Error writing to localStorage key “${key}”:`, error);
+    }
+};
+
+// Initialize with mock data if storage is empty
+const initializeStorage = () => {
+    if (typeof window !== 'undefined' && !localStorage.getItem('reports')) {
+        saveToStorage('reports', [...MOCK_GENERAL_REPORTS, ...MOCK_USER_REPORTS]);
+    }
+    if (typeof window !== 'undefined' && !localStorage.getItem('users')) {
+        saveToStorage('users', MOCK_ALL_USERS);
+    }
+    if (typeof window !== 'undefined' && !localStorage.getItem('searchLogs')) {
+        saveToStorage('searchLogs', MOCK_USER_SEARCH_LOGS);
+    }
+     if (typeof window !== 'undefined' && !localStorage.getItem('auditLogs')) {
+        saveToStorage('auditLogs', []);
+    }
+    if (typeof window !== 'undefined' && !localStorage.getItem('notifications')) {
+        saveToStorage('notifications', []);
+    }
+};
+
+// Call initialization on load
+initializeStorage();
 
 
 // --- User Management ---
 
 export async function getAllUsers(): Promise<UserProfile[]> {
-  try {
-    const usersCollectionRef = collection(db, USERS_COLLECTION);
-    const snapshot = await getDocs(usersCollectionRef);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserProfile));
-  } catch (error) {
-    console.error("Error in getAllUsers:", error);
-    throw error;
-  }
+    return Promise.resolve(getFromStorage<UserProfile[]>('users', []));
 }
 
 export async function addUsersBatch(usersData: Omit<UserProfile, 'id'>[]): Promise<void> {
-    const batch = writeBatch(db);
-    const usersCollectionRef = collection(db, USERS_COLLECTION);
-
-    for (const userData of usersData) {
-        // In a real app, you'd create the auth user first, then use that UID.
-        // For this mock import, we'll just create a new doc.
-        const newUserDocRef = doc(usersCollectionRef); 
-        const fullUserData: UserProfile = {
-            id: newUserDocRef.id,
-            ...userData,
-            registeredAt: new Date(), // Set registration timestamp
-        };
-        batch.set(newUserDocRef, fullUserData);
-    }
-
-    try {
-        await batch.commit();
-    } catch(error) {
-        console.error("Error in addUsersBatch:", error);
-        throw error;
-    }
+    const currentUsers = await getAllUsers();
+    const newUsers = usersData.map((data, index) => ({
+        ...data,
+        id: `imported-user-${Date.now()}-${index}`,
+        registeredAt: new Date(),
+    }));
+    const updatedUsers = [...currentUsers, ...newUsers];
+    saveToStorage('users', updatedUsers);
+    return Promise.resolve();
 }
-
 
 export async function updateUserProfile(userId: string, userData: Partial<UserProfile>): Promise<void> {
-  try {
-    const userDocRef = doc(db, USERS_COLLECTION, userId);
-    await updateDoc(userDocRef, userData);
-  } catch (error) {
-    console.error(`Error updating user profile for user ID ${userId}:`, error);
-    throw error;
-  }
+    const users = await getAllUsers();
+    const userIndex = users.findIndex(u => u.id === userId);
+    if (userIndex > -1) {
+        users[userIndex] = { ...users[userIndex], ...userData };
+        saveToStorage('users', users);
+    }
+    return Promise.resolve();
 }
 
-
 export async function findUserByEmail(email: string): Promise<UserProfile | null> {
-  try {
-    const q = query(collection(db, USERS_COLLECTION), where("email", "==", email.toLowerCase()));
-    const querySnapshot = await getDocs(q);
-    if (querySnapshot.empty) {
-      return null;
-    }
-    const userDoc = querySnapshot.docs[0];
-    return { id: userDoc.id, ...userDoc.data() } as UserProfile;
-  } catch(error) {
-      console.error(`Error finding user by email ${email}:`, error);
-      throw error;
-  }
+    const users = await getAllUsers();
+    return Promise.resolve(users.find(u => u.email.toLowerCase() === email.toLowerCase()) || null);
 }
 
 export async function getUserById(userId: string): Promise<UserProfile | null> {
-    if (!userId || userId === "undefined") {
-      console.warn("storage.ts: getUserById was called with an invalid UID!", userId);
-      return null;
-    }
-    try {
-        const userDocRef = doc(db, USERS_COLLECTION, userId);
-        const docSnap = await getDoc(userDocRef);
-        if (docSnap.exists()) {
-            const data = docSnap.data();
-            // Convert Firestore Timestamps to Date objects
-            const profile: UserProfile = {
-                ...data,
-                id: docSnap.id,
-                registeredAt: (data.registeredAt as Timestamp)?.toDate(),
-                accountActivatedAt: (data.accountActivatedAt as Timestamp)?.toDate(),
-            } as UserProfile;
-            return profile;
-        }
-        console.warn(`No user profile found in Firestore for UID: ${userId}`);
-        return null;
-    } catch (error) {
-        console.error(`Error in getUserById for UID ${userId}:`, error);
-        throw error;
-    }
+    const users = await getAllUsers();
+    return Promise.resolve(users.find(u => u.id === userId) || null);
 }
 
 // --- Report Management ---
 
 export async function getAllReports(): Promise<Report[]> {
-    try {
-        const reportsCollectionRef = collection(db, REPORTS_COLLECTION);
-        const q = query(reportsCollectionRef, orderBy("createdAt", "desc"));
-        const snapshot = await getDocs(q);
-        return snapshot.docs.map(doc => {
-            const data = doc.data();
-            return {
-                id: doc.id,
-                ...data,
-                createdAt: (data.createdAt as Timestamp).toDate(),
-                deletedAt: (data.deletedAt as Timestamp)?.toDate(),
-            } as Report;
-        });
-    } catch (error) {
-        console.error("Error in getAllReports:", error);
-        return [];
-    }
+    const reports = getFromStorage<Report[]>('reports', []);
+    return Promise.resolve(reports);
 }
 
 export async function addReport(reportData: Omit<Report, 'id' | 'createdAt' | 'deletedAt'>): Promise<void> {
-    try {
-        const reportsCollectionRef = collection(db, REPORTS_COLLECTION);
-        await addDoc(reportsCollectionRef, {
-            ...reportData,
-            createdAt: Timestamp.now(),
-            deletedAt: null
-        });
-    } catch (error) {
-        console.error("Error in addReport:", error);
-        throw error;
-    }
+    const reports = await getAllReports();
+    const newReport: Report = {
+        ...reportData,
+        id: `report-${Date.now()}-${Math.random()}`,
+        createdAt: new Date(),
+        deletedAt: null,
+    };
+    reports.unshift(newReport); // Add to the beginning
+    saveToStorage('reports', reports);
+    return Promise.resolve();
 }
 
-
 export async function softDeleteReport(reportId: string): Promise<void> {
-    try {
-        const reportDocRef = doc(db, REPORTS_COLLECTION, reportId);
-        await updateDoc(reportDocRef, {
-            deletedAt: Timestamp.now(),
-        });
-    } catch (error) {
-        console.error(`Error soft-deleting report ID ${reportId}:`, error);
-        throw new Error("Failed to update report for deletion.");
-    }
+    let reports = await getAllReports();
+    reports = reports.map(r => r.id === reportId ? { ...r, deletedAt: new Date() } : r);
+    saveToStorage('reports', reports);
+    return Promise.resolve();
 }
 
 export async function softDeleteAllReports(): Promise<number> {
-    try {
-        const reportsCollectionRef = collection(db, REPORTS_COLLECTION);
-        const q = query(reportsCollectionRef, where("deletedAt", "==", null));
-        const reportsSnapshot = await getDocs(q);
-        
-        if (reportsSnapshot.empty) {
-            return 0;
+    let reports = await getAllReports();
+    let count = 0;
+    reports = reports.map(r => {
+        if (!r.deletedAt) {
+            count++;
+            return { ...r, deletedAt: new Date() };
         }
-
-        const batch = writeBatch(db);
-        reportsSnapshot.docs.forEach(doc => {
-            batch.update(doc.ref, { deletedAt: Timestamp.now() });
-        });
-        await batch.commit();
-        return reportsSnapshot.size;
-    } catch (error) {
-        console.error("Error in softDeleteAllReports:", error);
-        throw error;
-    }
+        return r;
+    });
+    saveToStorage('reports', reports);
+    return Promise.resolve(count);
 }
 
 export async function getUserReports(userId: string): Promise<{ active: Report[], deleted: Report[] }> {
-    try {
-        const reportsCollectionRef = collection(db, REPORTS_COLLECTION);
-        const q = query(reportsCollectionRef, where("reporterId", "==", userId));
-        const snapshot = await getDocs(q);
-        const allUserReports = snapshot.docs.map(doc => {
-            const data = doc.data();
-            return {
-                id: doc.id,
-                ...data,
-                createdAt: (data.createdAt as Timestamp).toDate(),
-                deletedAt: (data.deletedAt as Timestamp)?.toDate(),
-            } as Report;
-        });
+    const allReports = await getAllReports();
+    const userReports = allReports.filter(r => r.reporterId === userId);
+    
+    const active = userReports
+      .filter(r => !r.deletedAt)
+      .sort((a, b) => new Date(b.createdAt as Date).getTime() - new Date(a.createdAt as Date).getTime());
+    
+    const deleted = userReports
+      .filter(r => r.deletedAt)
+      .sort((a, b) => new Date(b.deletedAt as Date).getTime() - new Date(a.deletedAt as Date).getTime());
 
-        const active = allUserReports
-          .filter(r => !r.deletedAt)
-          .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-        
-        const deleted = allUserReports
-          .filter(r => r.deletedAt)
-          .sort((a, b) => b.deletedAt!.getTime() - a.deletedAt!.getTime());
-        
-        return { active, deleted };
-    } catch (error) {
-        console.error(`Error getting user reports for user ID ${userId}:`, error);
-        return { active: [], deleted: [] };
-    }
+    return Promise.resolve({ active, deleted });
 }
 
 // --- Log Management ---
 
 export async function getSearchLogs(userId?: string): Promise<SearchLog[]> {
-    try {
-        const logsCollectionRef = collection(db, SEARCH_LOGS_COLLECTION);
-        const q = userId 
-            ? query(logsCollectionRef, where("userId", "==", userId), orderBy("timestamp", "desc"))
-            : query(logsCollectionRef, orderBy("timestamp", "desc"));
-        
-        const snapshot = await getDocs(q);
-        return snapshot.docs.map(doc => {
-            const data = doc.data();
-            return {
-                id: doc.id,
-                ...data,
-                timestamp: (data.timestamp as Timestamp).toDate()
-            } as SearchLog;
-        });
-    } catch (error) {
-        console.error(`Error getting search logs for user ID ${userId || 'all'}:`, error);
-        return [];
+    const allLogs = getFromStorage<SearchLog[]>('searchLogs', []);
+    if (userId) {
+        return Promise.resolve(allLogs.filter(log => log.userId === userId));
     }
+    return Promise.resolve(allLogs);
 }
 
 export async function addSearchLog(logData: Omit<SearchLog, 'id' | 'timestamp'>): Promise<void> {
-    try {
-        const logsCollectionRef = collection(db, SEARCH_LOGS_COLLECTION);
-        await addDoc(logsCollectionRef, {
-            ...logData,
-            timestamp: Timestamp.now(),
-        });
-    } catch (error) {
-        console.error("Error in addSearchLog:", error);
-    }
+    const logs = await getSearchLogs();
+    const newLog: SearchLog = {
+        ...logData,
+        id: `log-${Date.now()}`,
+        timestamp: new Date(),
+    };
+    logs.unshift(newLog);
+    saveToStorage('searchLogs', logs);
+    return Promise.resolve();
 }
 
+
 export async function getAuditLogs(): Promise<AuditLogEntry[]> {
-    try {
-        const auditLogsCollectionRef = collection(db, AUDIT_LOGS_COLLECTION);
-        const q = query(auditLogsCollectionRef, orderBy("timestamp", "desc"));
-        const snapshot = await getDocs(q);
-        return snapshot.docs.map(doc => {
-             const data = doc.data();
-             return {
-                id: doc.id,
-                ...data,
-                timestamp: (data.timestamp as Timestamp).toDate(),
-             } as AuditLogEntry
-        });
-    } catch (error) {
-        console.error("Error in getAuditLogs:", error);
-        return [];
-    }
+    return Promise.resolve(getFromStorage<AuditLogEntry[]>('auditLogs', []));
 }
 
 export async function addAuditLogEntry(entryData: Omit<AuditLogEntry, 'id' | 'timestamp'>): Promise<void> {
-    try {
-        const auditLogsCollectionRef = collection(db, AUDIT_LOGS_COLLECTION);
-        await addDoc(auditLogsCollectionRef, {
-            ...entryData,
-            timestamp: Timestamp.now(),
-        });
-    } catch (error) {
-        console.error("Error in addAuditLogEntry:", error);
-    }
+    const logs = await getAuditLogs();
+    const newLog: AuditLogEntry = {
+        ...entryData,
+        id: `audit-${Date.now()}`,
+        timestamp: new Date(),
+    };
+    logs.unshift(newLog);
+    saveToStorage('auditLogs', logs);
 }
 
 // --- Notification Management ---
 
 export async function getUserNotifications(userId: string): Promise<UserNotification[]> {
-    try {
-        const notificationsCollectionRef = collection(db, NOTIFICATIONS_COLLECTION);
-        const q = query(notificationsCollectionRef, where("userId", "==", userId), orderBy("createdAt", "desc"));
-        const snapshot = await getDocs(q);
-        return snapshot.docs.map(doc => {
-            const data = doc.data();
-            return {
-                id: doc.id,
-                ...data,
-                createdAt: (data.createdAt as Timestamp).toDate(),
-            } as UserNotification
-        });
-    } catch (error) {
-        console.error(`Error getting notifications for user ID ${userId}:`, error);
-        return [];
-    }
+    const allNotifications = getFromStorage<UserNotification[]>('notifications', []);
+    return Promise.resolve(allNotifications.filter(n => n.userId === userId));
 }
 
 export async function addUserNotification(userId: string, notificationData: Omit<UserNotification, 'id' | 'createdAt' | 'read' | 'userId'>): Promise<void> {
-    try {
-        const notificationsCollectionRef = collection(db, NOTIFICATIONS_COLLECTION);
-        await addDoc(notificationsCollectionRef, {
-            userId,
-            ...notificationData,
-            createdAt: Timestamp.now(),
-            read: false,
-        });
-    } catch (error) {
-        console.error(`Error adding notification for user ID ${userId}:`, error);
-    }
+    const notifications = getFromStorage<UserNotification[]>('notifications', []);
+    const newNotification: UserNotification = {
+        ...notificationData,
+        id: `notif-${Date.now()}`,
+        userId,
+        createdAt: new Date(),
+        read: false,
+    };
+    notifications.unshift(newNotification);
+    saveToStorage('notifications', notifications);
 }
 
 export async function markNotificationAsRead(notificationId: string): Promise<void> {
-    try {
-        const notifDocRef = doc(db, NOTIFICATIONS_COLLECTION, notificationId);
-        await updateDoc(notifDocRef, { read: true });
-    } catch (error) {
-        console.error(`Error marking notification ID ${notificationId} as read:`, error);
-    }
+    const notifications = getFromStorage<UserNotification[]>('notifications', []);
+    const updatedNotifications = notifications.map(n => n.id === notificationId ? { ...n, read: true } : n);
+    saveToStorage('notifications', updatedNotifications);
 }
 
 export async function markAllNotificationsAsRead(userId: string): Promise<void> {
-    try {
-        const notificationsCollectionRef = collection(db, NOTIFICATIONS_COLLECTION);
-        const q = query(notificationsCollectionRef, where("userId", "==", userId), where("read", "==", false));
-        const snapshot = await getDocs(q);
-        
-        if (snapshot.empty) return;
+    const notifications = getFromStorage<UserNotification[]>('notifications', []);
+    const updatedNotifications = notifications.map(n => n.userId === userId ? { ...n, read: true } : n);
+    saveToStorage('notifications', updatedNotifications);
+}
 
-        const batch = writeBatch(db);
-        snapshot.docs.forEach(doc => {
-            batch.update(doc.ref, { read: true });
-        });
-        await batch.commit();
-    } catch (error) {
-        console.error(`Error marking all notifications as read for user ID ${userId}:`, error);
-    }
+// --- File Management ---
+export async function uploadReportImage(file: File): Promise<{ url: string; dataAiHint: string }> {
+  console.log("Simulating file upload for:", file.name);
+  await new Promise(res => setTimeout(res, 500));
+  const hint = file.name.split('.')[0].replace(/[^a-zA-Z\s]/g, '').substring(0, 20);
+  return { 
+    url: `https://placehold.co/600x400.png?text=Uploaded+${encodeURIComponent(file.name)}`,
+    dataAiHint: hint
+  };
 }

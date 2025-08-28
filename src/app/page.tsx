@@ -3,30 +3,18 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/hooks/use-auth';
 import { Loader2 } from 'lucide-react';
 
-function HomePageContent() {
+export default function HomePage() {
   const router = useRouter();
-  const { user, loading } = useAuth();
 
   useEffect(() => {
-    if (!loading) {
-      if (user) {
-        router.replace('/dashboard');
-      } else {
-        router.replace('/auth/login');
-      }
-    }
-  }, [user, loading, router]);
+    router.replace('/dashboard');
+  }, [router]);
 
   return (
     <div className="flex h-screen w-full items-center justify-center">
       <Loader2 className="h-16 w-16 animate-spin text-primary" />
     </div>
   );
-}
-
-export default function HomePage() {
-    return <HomePageContent />
 }

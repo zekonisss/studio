@@ -3,20 +3,10 @@
 
 import type { UserProfile } from '@/types';
 import type { LoginFormValues, SignUpFormValues } from '@/lib/schemas';
-import React from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/language-context';
-import * as storage from '@/lib/storage';
-import { useRouter } from 'next/navigation';
-import { auth, db } from '@/lib/firebase';
-import {
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  signOut,
-  onAuthStateChanged,
-} from 'firebase/auth';
-import { doc, setDoc, Timestamp } from 'firebase/firestore';
-
+import { MOCK_ADMIN_USER } from '@/lib/mock-data'; 
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -27,130 +17,52 @@ interface AuthContextType {
   updateUserInContext: (updatedUser: UserProfile) => Promise<void>;
 }
 
-const AuthContext = React.createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = React.useState<UserProfile | null>(null);
-  const [loading, setLoading] = React.useState(true);
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { t } = useLanguage();
-  const router = useRouter();
 
-  React.useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        try {
-            const userProfile = await storage.getUserById(firebaseUser.uid);
-            if (userProfile) {
-                setUser(userProfile);
-            } else {
-                await signOut(auth);
-                setUser(null);
-            }
-        } catch (error) {
-             console.error("AuthProvider: Error fetching user profile:", error);
-             await signOut(auth);
-             setUser(null);
-        }
-      } else {
-        setUser(null);
-      }
+  useEffect(() => {
+    // Simulate fetching user data
+    setTimeout(() => {
+      setUser(MOCK_ADMIN_USER);
       setLoading(false);
-    });
-
-    return () => unsubscribe();
+    }, 500);
   }, []);
-
-  const updateUserInContext = async (updatedUser: UserProfile) => {
-    setUser(updatedUser);
-    await storage.updateUserProfile(updatedUser.id, updatedUser);
-  };
 
   const login = async (values: LoginFormValues): Promise<void> => {
     setLoading(true);
-    try {
-      await signInWithEmailAndPassword(auth, values.email, values.password);
-      router.push('/dashboard');
-      toast({ title: t('toast.login.success.title'), description: t('toast.login.success.description') });
-    } catch (error: any) {
-       let description = t('toast.login.error.descriptionGeneric');
-       if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-        description = t('toast.login.error.invalidCredentials');
-      }
-      toast({
-        variant: 'destructive',
-        title: t('toast.login.error.title'),
-        description: description,
-      });
-    } finally {
-        setLoading(false);
-    }
+    console.log("Simulating login for:", values.email);
+    await new Promise(res => setTimeout(res, 500));
+    setUser(MOCK_ADMIN_USER);
+    toast({ title: t('toast.login.success.title'), description: t('toast.login.success.description') });
+    setLoading(false);
   };
 
   const signup = async (values: SignUpFormValues): Promise<void> => {
     setLoading(true);
-    try {
-      const existingUser = await storage.findUserByEmail(values.email);
-      if (existingUser) {
-        throw new Error(t('toast.signup.error.emailExists'));
-      }
-
-      const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
-      const { user: newFirebaseUser } = userCredential;
-
-      const isAdmin = newFirebaseUser.email?.toLowerCase() === 'sarunas.zekonis@gmail.com';
-      const userProfileData: Omit<UserProfile, 'id'> = {
-          email: values.email.toLowerCase(),
-          companyName: values.companyName,
-          companyCode: values.companyCode,
-          vatCode: values.vatCode || '',
-          address: values.address,
-          contactPerson: values.contactPerson,
-          phone: values.phone,
-          paymentStatus: isAdmin ? 'active' : 'pending_verification',
-          isAdmin: isAdmin,
-          agreeToTerms: values.agreeToTerms,
-          registeredAt: Timestamp.now(),
-          accountActivatedAt: isAdmin ? Timestamp.now() : undefined,
-          subUsers: [],
-      };
-      
-      await setDoc(doc(db, "users", newFirebaseUser.uid), userProfileData as UserProfile);
-
-      toast({
-          title: t('toast.signup.success.title'),
-          description: t('toast.signup.success.description'),
-      });
-      
-      await signOut(auth);
-      router.push('/auth/pending-approval');
-
-    } catch(error: any) {
-        let errorMessage = error.message || t('toast.signup.error.descriptionGeneric');
-        if (error.code === 'auth/email-already-in-use') {
-            errorMessage = t('toast.signup.error.emailExists');
-        }
-        toast({ variant: 'destructive', title: t('toast.signup.error.title'), description: errorMessage });
-    } finally {
-      setLoading(false);
-    }
+    console.log("Simulating signup for:", values.email);
+    await new Promise(res => setTimeout(res, 1000));
+    toast({ title: "Registracija (DEMO)", description: "Ši funkcija yra demonstracinė. Jūs būsite prijungtas kaip demonstracinis vartotojas." });
+    setUser(MOCK_ADMIN_USER);
+    setLoading(false);
   };
 
   const logout = async () => {
-    try {
-      await signOut(auth);
-      setUser(null); 
-      router.push('/auth/login');
-      toast({ title: t('toast.logout.success.title') });
-    } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: t('toast.logout.error.title'),
-        description: error.message,
-      });
-    }
+    console.log("Simulating logout.");
+    setUser(null);
+    toast({ title: t('toast.logout.success.title') });
   };
   
+  const updateUserInContext = async (updatedUserData: UserProfile) => {
+    console.log("Simulating user update in context:", updatedUserData);
+    setUser(updatedUserData);
+    toast({ title: "Duomenys atnaujinti", description: "Jūsų duomenys buvo sėkmingai atnaujinti (DEMO)." });
+  };
+
   const value = { user, loading, login, signup, logout, updateUserInContext };
 
   return (
@@ -161,7 +73,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 };
 
 export const useAuth = (): AuthContextType => {
-  const context = React.useContext(AuthContext);
+  const context = useContext(AuthContext);
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }

@@ -1,217 +1,70 @@
-"use client";
-
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { SignUpSchema, type SignUpFormValues } from "@/lib/schemas";
-import { useAuth } from "@/hooks/use-auth";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Loader2 } from "lucide-react";
-import Link from "next/link";
-import { useLanguage } from "@/contexts/language-context";
-import { Checkbox } from "@/components/ui/checkbox";
-
-export default function SignUpPage() {
-  const { signup, loading } = useAuth();
-  const { t } = useLanguage();
-
-  const form = useForm<SignUpFormValues>({
-    resolver: zodResolver(SignUpSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-      confirmPassword: "",
-      companyName: "",
-      companyCode: "",
-      vatCode: "",
-      address: "",
-      contactPerson: "",
-      phone: "",
-      agreeToTerms: false,
-    },
-  });
-
-  const onSubmit = async (values: SignUpFormValues) => {
-    await signup(values);
-  };
-
-  return (
-    <Card className="shadow-2xl">
-      <CardHeader>
-        <CardTitle className="text-2xl">{t('signup.title')}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="companyName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('signup.form.companyName.label')}</FormLabel>
-                    <FormControl>
-                      <Input placeholder={t('signup.form.companyName.placeholder')} {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="companyCode"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('signup.form.companyCode.label')}</FormLabel>
-                    <FormControl>
-                      <Input placeholder={t('signup.form.companyCode.placeholder')} {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            
-            <FormField
-              control={form.control}
-              name="vatCode"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('signup.form.vatCode.label')}</FormLabel>
-                  <FormControl>
-                    <Input placeholder={t('signup.form.vatCode.placeholder')} {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="address"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('signup.form.address.label')}</FormLabel>
-                  <FormControl>
-                    <Input placeholder={t('signup.form.address.placeholder')} {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="contactPerson"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('signup.form.contactPerson.label')}</FormLabel>
-                    <FormControl>
-                      <Input placeholder={t('signup.form.contactPerson.placeholder')} {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="phone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('signup.form.phone.label')}</FormLabel>
-                    <FormControl>
-                      <Input placeholder={t('signup.form.phone.placeholder')} {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('signup.form.email.label')}</FormLabel>
-                  <FormControl>
-                    <Input type="email" placeholder={t('signup.form.email.placeholder')} {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('signup.form.password.label')}</FormLabel>
-                    <FormControl>
-                      <Input type="password" placeholder={t('signup.form.password.placeholder')} {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="confirmPassword"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('signup.form.confirmPassword.label')}</FormLabel>
-                    <FormControl>
-                      <Input type="password" placeholder={t('signup.form.confirmPassword.placeholder')} {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="agreeToTerms"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0 pt-2">
-                  <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                  <div className="space-y-1 leading-none">
-                    <FormLabel>
-                      {t('signup.form.agreeToTerms.labelPart1')}
-                      <Link href="/terms" target="_blank" className="font-semibold text-primary hover:underline">
-                        {t('signup.form.agreeToTerms.linkText')}
-                      </Link>
-                    </FormLabel>
-                     <FormMessage />
-                  </div>
-                </FormItem>
-              )}
-            />
-            
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {t('signup.form.submitButton')}
-            </Button>
-            
-            <p className="text-center text-sm text-muted-foreground">
-              {t('signup.form.alreadyHaveAccount')}
-              <Link href="/auth/login" className="font-semibold text-primary hover:underline">
-                {t('signup.form.loginLink')}
-              </Link>
-            </p>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
-  );
+{
+  "name": "nextn",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "genkit:dev": "genkit start -- tsx src/ai/dev.ts",
+    "genkit:watch": "genkit start -- tsx --watch src/ai/dev.ts",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@genkit-ai/googleai": "1.1.0",
+    "@hookform/resolvers": "^3.9.0",
+    "@opentelemetry/exporter-jaeger": "^1.25.1",
+    "@radix-ui/react-accordion": "^1.2.0",
+    "@radix-ui/react-alert-dialog": "^1.1.1",
+    "@radix-ui/react-avatar": "^1.1.0",
+    "@radix-ui/react-checkbox": "^1.1.1",
+    "@radix-ui/react-dialog": "^1.1.1",
+    "@radix-ui/react-dropdown-menu": "^2.1.1",
+    "@radix-ui/react-label": "^2.1.0",
+    "@radix-ui/react-menubar": "^1.1.1",
+    "@radix-ui/react-popover": "^1.1.1",
+    "@radix-ui/react-progress": "^1.1.0",
+    "@radix-ui/react-radio-group": "^1.2.0",
+    "@radix-ui/react-scroll-area": "^1.1.0",
+    "@radix-ui/react-select": "^2.1.1",
+    "@radix-ui/react-separator": "^1.1.0",
+    "@radix-ui/react-slider": "^1.2.0",
+    "@radix-ui/react-slot": "^1.1.0",
+    "@radix-ui/react-switch": "^1.1.0",
+    "@radix-ui/react-tabs": "^1.1.0",
+    "@radix-ui/react-toast": "^1.2.1",
+    "@radix-ui/react-tooltip": "^1.1.2",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "date-fns": "^3.6.0",
+    "dotenv": "^16.5.0",
+    "genkit": "1.1.0",
+    "lucide-react": "^0.475.0",
+    "next": "14.2.5",
+    "next-themes": "^0.3.0",
+    "patch-package": "^8.0.0",
+    "react": "18.3.1",
+    "react-day-picker": "^8.10.1",
+    "react-dom": "18.3.1",
+    "react-hook-form": "^7.54.2",
+    "recharts": "^2.15.1",
+    "tailwind-merge": "^3.0.1",
+    "tailwindcss-animate": "^1.0.7",
+    "xlsx": "^0.18.5",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@tailwindcss/typography": "^0.5.13",
+    "@types/node": "^20.14.10",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "genkit-cli": "1.1.0",
+    "postcss": "^8",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5"
+  },
+  "engines": {
+    "node": "20"
+  }
 }
