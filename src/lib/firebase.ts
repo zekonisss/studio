@@ -1,34 +1,22 @@
-
 // This file is safe to be imported on the client (browser).
-import { initializeApp, getApps, getApp, type FirebaseOptions } from "firebase/app";
-import { getFirestore, enableNetwork, Timestamp } from "firebase/firestore";
+import { getApp, getApps, initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
+import { getFirestore, Timestamp } from "firebase/firestore";
 
-// Firebase config from your Firebase project
-const FIREBASE_CLIENT_CONFIG: FirebaseOptions = {
-  apiKey: "AIzaSyBusklRtrpm-gfnwCdmi2yj5vTumqLte3c",
-  authDomain: "drivershield.firebaseapp.com",
-  projectId: "drivershield",
-  storageBucket: "drivershield.appspot.com",
-  messagingSenderId: "688007961476",
-  appId: "1:688007961476:web:d6d663ef7430182d781bd1",
-  measurementId: "G-WWHPWT8FGC"
+const firebaseConfig = {
+  "projectId": "authstart-dk3mq",
+  "appId": "1:1016219162805:web:90e70c0ac44a1bfa5f46fc",
+  "storageBucket": "authstart-dk3mq.appspot.com",
+  "apiKey": "AIzaSyD1pai6sYqiQ6O0vx7dSli1ZvSGadIf7lg",
+  "authDomain": "authstart-dk3mq.firebaseapp.com",
+  "measurementId": "",
+  "messagingSenderId": "1016219162805"
 };
 
-// Initialize Firebase only once
-const app = !getApps().length ? initializeApp(FIREBASE_CLIENT_CONFIG) : getApp();
 
-// Firestore and Auth
+// Initialize Firebase
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// Enable Firestore network only in the browser to avoid SSR issues
-if (typeof window !== "undefined") {
-  try {
-    enableNetwork(db);
-  } catch (error) {
-    console.error("❌ Error enabling Firestore network:", error);
-  }
-}
-
-export { db, auth, Timestamp };
+export { app, db, auth, Timestamp };
