@@ -6,6 +6,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/language-context';
 import { MOCK_ADMIN_USER } from '@/lib/mock-data';
+import * as storage from '@/lib/storage';
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -55,12 +56,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await new Promise(res => setTimeout(res, 300));
     setUser(null);
     setLoading(false);
+    // This might cause a full page reload, which is acceptable for a demo logout
     window.location.reload(); 
   };
   
   const updateUserInContext = async (updatedUserData: UserProfile) => {
     console.log("Simulating user update in context:", updatedUserData);
     setUser(updatedUserData);
+    // In a real app, this would also update the backend
+    await storage.updateUserProfile(updatedUserData.id, updatedUserData);
   };
 
   const value = { user, loading, login, signup, logout, updateUserInContext };
