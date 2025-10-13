@@ -6,16 +6,8 @@ import type { LoginFormValues, SignupFormValuesExtended } from '@/lib/schemas';
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/language-context';
-import { auth, db } from '@/lib/firebase';
-import {
-  onAuthStateChanged,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signOut,
-  type User,
-} from 'firebase/auth';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
+import { MOCK_ADMIN_USER } from '@/lib/mock-data';
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -36,94 +28,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const router = useRouter();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: User | null) => {
-      if (firebaseUser) {
-        const userDocRef = doc(db, 'users', firebaseUser.uid);
-        const userDoc = await getDoc(userDocRef);
-        if (userDoc.exists()) {
-          setUser({ id: firebaseUser.uid, ...userDoc.data() } as UserProfile);
-        } else {
-           console.log("User document doesn't exist, signing out.");
-           await signOut(auth);
-           setUser(null);
-        }
-      } else {
-        setUser(null);
-      }
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
+    // Simulate fetching a logged-in user
+    setUser(MOCK_ADMIN_USER);
+    setLoading(false);
   }, []);
 
   const login = async (values: LoginFormValues) => {
-    try {
-      await signInWithEmailAndPassword(auth, values.email, values.password);
-      toast({ title: t('toast.login.success.title'), description: t('toast.login.success.description') });
-      router.push('/dashboard');
-    } catch (error: any) {
-      console.error("Login error:", error);
-      toast({ variant: 'destructive', title: t('toast.login.error.title'), description: error.message });
-    }
+    console.log("Simulating login for", values.email);
+    toast({ title: "Login (Demo)", description: "This is a demo. No real login happens." });
+    return Promise.resolve();
   };
 
   const signup = async (values: SignupFormValuesExtended) => {
-    try {
-      const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
-      const newUser = userCredential.user;
-      
-      const isAdminUser = newUser.email === 'admin@drivercheck.lt';
-
-      const userProfile: Omit<UserProfile, 'id' | 'registeredAt'> = {
-        email: newUser.email || '',
-        companyName: values.companyName,
-        companyCode: values.companyCode,
-        vatCode: values.vatCode || '',
-        address: values.address,
-        contactPerson: values.contactPerson,
-        phone: values.phone,
-        paymentStatus: isAdminUser ? 'active' : 'pending_verification',
-        isAdmin: isAdminUser,
-        agreeToTerms: values.agreeToTerms,
-        subUsers: [],
-      };
-
-      await setDoc(doc(db, "users", newUser.uid), {
-        ...userProfile,
-        registeredAt: new Date().toISOString()
-      });
-      
-      toast({ 
-        title: t('toast.signup.success.title'), 
-        description: t('toast.signup.success.description'),
-        duration: 7000 
-      });
-      
-      await signOut(auth);
-      router.push('/login');
-
-    } catch (error: any) {
-       console.error("Signup error:", error);
-      toast({ variant: 'destructive', title: t('toast.signup.error.title'), description: error.message });
-    }
+    console.log("Simulating signup for", values.email);
+    toast({ title: "Signup (Demo)", description: "This is a demo. No real user is created." });
+    return Promise.resolve();
   };
 
   const logout = async () => {
-    try {
-      await signOut(auth);
-      router.push('/login');
-      toast({ title: t('toast.logout.success.title') });
-    } catch (error: any) {
-       console.error("Logout error:", error);
-       toast({ variant: 'destructive', title: t('toast.logout.error.title'), description: error.message });
-    }
+    console.log("Simulating logout");
+    setUser(null);
+    toast({ title: "Logout (Demo)" });
+    router.push("/");
+    return Promise.resolve();
   };
   
   const updateUserInContext = async (updatedUserData: UserProfile) => {
     setUser(updatedUserData);
-    const { id, ...dataToSave } = updatedUserData;
-    await setDoc(doc(db, "users", id), dataToSave, { merge: true });
-    console.log("Updating user in context and Firestore", updatedUserData);
+    console.log("Simulating user update in context", updatedUserData);
+    return Promise.resolve();
   };
 
   const value = { user, loading, login, signup, logout, updateUserInContext };

@@ -26,24 +26,6 @@ export const LoginSchema = z.object({
 
 export type LoginFormValues = z.infer<typeof LoginSchema>;
 
-// This is a simplified schema, the full one is SignupFormSchema
-export const SignupSchema = z.object({
-  email: z.string().email({ message: "Neteisingas el. pašto formatas." }),
-  password: z.string().min(8, { message: "Slaptažodis turi būti bent 8 simbolių ilgio." }),
-  confirmPassword: z.string()
-}).refine(data => data.password === data.confirmPassword, {
-  message: "Slaptažodžiai nesutampa.",
-  path: ["confirmPassword"],
-});
-export type SignupFormValues = z.infer<typeof SignupSchema>;
-
-
-export const ForgotPasswordSchema = z.object({
-  email: z.string().email({ message: "Neteisingas el. pašto formatas." }),
-});
-
-export type ForgotPasswordFormValues = z.infer<typeof ForgotPasswordSchema>;
-
 export const ReportSchema = z.object({
   fullName: z.string().min(3, { message: "Vardas ir pavardė turi būti bent 3 simbolių ilgio." }),
   nationality: z.string().optional(),
