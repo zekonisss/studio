@@ -1,37 +1,10 @@
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow users to read and write to their own profile document
+    // Leisti vartotojui skaityti ir rašyti (kurti, atnaujinti) tik į savo paties dokumentą
     match /users/{userId} {
-      allow read, update, create: if request.auth.uid == userId;
-    }
-
-    // Allow logged-in users to read from the reports collection
-    match /reports/{reportId} {
-      allow read: if request.auth != null;
-    }
-
-    // Allow users to write to the reports collection if they are logged in
-    // and the reporterId in the document matches their UID.
-    match /reports/{reportId} {
-        allow create: if request.auth != null && request.resource.data.reporterId == request.auth.uid;
-        allow update, delete: if request.auth != null && resource.data.reporterId == request.auth.uid;
-    }
-
-     // Allow logged-in users to write to their own search logs
-    match /searchLogs/{logId} {
-      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-    }
-
-    // Allow logged-in users to read their own notifications
-     match /notifications/{notificationId} {
-        allow read, update: if request.auth != null && resource.data.userId == request.auth.uid;
-        allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-    }
-
-    // Allow admin users to perform any action on any collection
-    match /{document=**} {
-      allow read, write: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+      allow read, write: if request.auth.uid == userId;
     }
   }
 }
