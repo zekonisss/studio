@@ -1,4 +1,3 @@
-
 export interface UserProfile {
   id: string;
   email: string;
@@ -12,7 +11,7 @@ export interface UserProfile {
   isAdmin: boolean;
   agreeToTerms: boolean;
   registeredAt: Date | string;
-  accountActivatedAt?: Date | string;
+  accountActivatedAt?: Date | string | null;
   subUsers: string[];
 }
 
