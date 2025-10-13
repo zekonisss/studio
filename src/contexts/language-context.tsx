@@ -31,32 +31,34 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 
 export const LanguageProvider = ({ children }: { children: ReactNode }) => {
   const [locale, setLocale] = useState<Locale>('lt'); // Default to Lithuanian initially
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    // This effect runs only once on the client-side
-    const storedLocale = localStorage.getItem('drivercheck-locale') as Locale | null;
-    if (storedLocale && translations.hasOwnProperty(storedLocale)) {
-      setLocale(storedLocale);
-    } else {
-      // If no stored locale, detect from browser settings
-      const browserLang = navigator.language.split('-')[0] as Locale;
-      if (translations.hasOwnProperty(browserLang)) {
-        setLocale(browserLang);
-      } else {
-        // Fallback to English if the browser language is not supported
-        setLocale('en');
-      }
-    }
+    setIsClient(true);
   }, []);
 
   useEffect(() => {
-    // This effect runs whenever the locale changes, saving it to localStorage
-    // and updating the document's lang attribute.
-    localStorage.setItem('drivercheck-locale', locale);
-    if (typeof document !== 'undefined') {
-        document.documentElement.lang = locale;
+    if (isClient) {
+      const storedLocale = localStorage.getItem('drivercheck-locale') as Locale | null;
+      if (storedLocale && translations.hasOwnProperty(storedLocale)) {
+        setLocale(storedLocale);
+      } else {
+        const browserLang = navigator.language.split('-')[0] as Locale;
+        if (translations.hasOwnProperty(browserLang)) {
+          setLocale(browserLang);
+        } else {
+          setLocale('lt'); // Fallback to Lithuanian if browser language not supported
+        }
+      }
     }
-  }, [locale]);
+  }, [isClient]);
+
+  useEffect(() => {
+    if (isClient) {
+      localStorage.setItem('drivercheck-locale', locale);
+      document.documentElement.lang = locale;
+    }
+  }, [locale, isClient]);
 
   const t = useCallback((key: string, params?: Record<string, string | number>): string => {
     let translation = translations[locale]?.[key] || translations['en']?.[key] || key; // Fallback to English, then key itself
