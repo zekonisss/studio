@@ -46,17 +46,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setUser({ id: firebaseUser.uid, ...userDoc.data() } as UserProfile);
         } else {
           // Handle case where user exists in Auth but not in Firestore
+          // This might happen if Firestore profile creation fails after auth creation
            setUser({
               id: firebaseUser.uid,
               email: firebaseUser.email || '',
-              companyName: 'N/A',
-              companyCode: 'N/A',
-              address: 'N/A',
-              contactPerson: 'N/A',
-              phone: 'N/A',
-              paymentStatus: 'inactive',
+              companyName: '',
+              companyCode: '',
+              address: '',
+              contactPerson: '',
+              phone: '',
+              paymentStatus: 'pending_verification',
               isAdmin: false,
-              agreeToTerms: false,
+              agreeToTerms: true,
               registeredAt: new Date(),
               subUsers: [],
             });
@@ -87,8 +88,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       const newUser = userCredential.user;
       
-      // For simple registration, we create a basic user profile
-      // In a real app, you would collect more details
+      // NOTE: Temporarily disabling Firestore profile creation on signup
+      // to fix registration getting stuck.
+      // We will re-enable this later.
+      /*
       const userProfile: Omit<UserProfile, 'id'> = {
         email: newUser.email || '',
         companyName: '',
@@ -98,12 +101,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         phone: '',
         paymentStatus: 'pending_verification',
         isAdmin: false,
-        agreeToTerms: true, // Assuming this is part of a real form
+        agreeToTerms: true,
         registeredAt: new Date().toISOString(),
         subUsers: [],
       };
 
       await setDoc(doc(db, "users", newUser.uid), userProfile);
+      */
+      
       toast({ title: t('toast.signup.success.title'), description: t('toast.signup.success.description') });
        // signOut after registration to force login/wait for approval
       await signOut(auth);
@@ -127,8 +132,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   
   const updateUserInContext = async (updatedUserData: UserProfile) => {
     setUser(updatedUserData);
-    // In a real app, this would also update the backend
-    // This is a placeholder for now.
     console.log("Updating user in context", updatedUserData);
   };
 
