@@ -26,6 +26,7 @@ export const LoginSchema = z.object({
 
 export type LoginFormValues = z.infer<typeof LoginSchema>;
 
+// This is a simplified schema, the full one is SignupFormSchema
 export const SignupSchema = z.object({
   email: z.string().email({ message: "Neteisingas el. pašto formatas." }),
   password: z.string().min(8, { message: "Slaptažodis turi būti bent 8 simbolių ilgio." }),
