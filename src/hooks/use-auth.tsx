@@ -14,7 +14,7 @@ import {
   signOut,
   type User,
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 
 interface AuthContextType {
@@ -43,8 +43,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (userDoc.exists()) {
           setUser({ id: firebaseUser.uid, ...userDoc.data() } as UserProfile);
         } else {
-           // This case might happen if a user is created in Auth but Firestore doc creation fails
-           // Or if it's a new registration that hasn't completed profile creation
            console.log("User document doesn't exist, signing out.");
            await signOut(auth);
            setUser(null);
@@ -74,7 +72,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       const newUser = userCredential.user;
       
-      const userProfile: Omit<UserProfile, 'id'> = {
+      const isAdminUser = newUser.email === 'admin@drivercheck.lt';
+
+      const userProfile: Omit<UserProfile, 'id' | 'registeredAt'> = {
         email: newUser.email || '',
         companyName: values.companyName,
         companyCode: values.companyCode,
@@ -82,22 +82,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         address: values.address,
         contactPerson: values.contactPerson,
         phone: values.phone,
-        paymentStatus: 'pending_verification',
-        isAdmin: false,
+        paymentStatus: isAdminUser ? 'active' : 'pending_verification',
+        isAdmin: isAdminUser,
         agreeToTerms: values.agreeToTerms,
-        registeredAt: serverTimestamp() as any, // Use serverTimestamp
         subUsers: [],
       };
 
-      await setDoc(doc(db, "users", newUser.uid), userProfile);
+      await setDoc(doc(db, "users", newUser.uid), {
+        ...userProfile,
+        registeredAt: new Date().toISOString()
+      });
       
       toast({ 
         title: t('toast.signup.success.title'), 
         description: t('toast.signup.success.description'),
         duration: 7000 
       });
-      await signOut(auth); // Force user to log in after registration
+      
+      await signOut(auth);
       router.push('/login');
+
     } catch (error: any) {
        console.error("Signup error:", error);
       toast({ variant: 'destructive', title: t('toast.signup.error.title'), description: error.message });
@@ -117,7 +121,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   
   const updateUserInContext = async (updatedUserData: UserProfile) => {
     setUser(updatedUserData);
-    await setDoc(doc(db, "users", updatedUserData.id), updatedUserData, { merge: true });
+    const { id, ...dataToSave } = updatedUserData;
+    await setDoc(doc(db, "users", id), dataToSave, { merge: true });
     console.log("Updating user in context and Firestore", updatedUserData);
   };
 
