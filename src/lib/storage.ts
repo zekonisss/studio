@@ -1,17 +1,17 @@
-
 "use client";
 
 import type { Report, UserProfile, SearchLog, AuditLogEntry, UserNotification } from '@/types';
-import { 
-    MOCK_ADMIN_USER, 
-    MOCK_ALL_USERS, 
-    MOCK_GENERAL_REPORTS, 
+import {
+    MOCK_ADMIN_USER,
+    MOCK_ALL_USERS,
+    MOCK_GENERAL_REPORTS,
     MOCK_USER_REPORTS,
     MOCK_USER_SEARCH_LOGS
 } from './mock-data';
 
-// This is a mock storage implementation that uses localStorage to simulate a database.
-// This allows the app to function without a real backend.
+// THIS IS A MOCK STORAGE IMPLEMENTATION.
+// IT USES LOCALSTORAGE TO SIMULATE A DATABASE FOR DEMONSTRATION PURPOSES.
+// ALL REAL FIREBASE CALLS ARE COMMENTED OUT.
 
 const getFromStorage = <T>(key: string, defaultValue: T): T => {
     if (typeof window === 'undefined') {
@@ -38,7 +38,6 @@ const saveToStorage = <T>(key: string, value: T): void => {
     }
 };
 
-// Initialize with mock data if storage is empty
 const initializeStorage = () => {
     if (typeof window !== 'undefined' && !localStorage.getItem('reports')) {
         saveToStorage('reports', [...MOCK_GENERAL_REPORTS, ...MOCK_USER_REPORTS]);
@@ -57,7 +56,6 @@ const initializeStorage = () => {
     }
 };
 
-// Call initialization on load
 initializeStorage();
 
 
@@ -111,7 +109,7 @@ export async function addReport(reportData: Omit<Report, 'id' | 'createdAt' | 'd
     const newReport: Report = {
         ...reportData,
         id: `report-${Date.now()}-${Math.random()}`,
-        createdAt: new Date(),
+        createdAt: new Date().toISOString(),
         deletedAt: null,
     };
     reports.unshift(newReport); // Add to the beginning
@@ -121,7 +119,7 @@ export async function addReport(reportData: Omit<Report, 'id' | 'createdAt' | 'd
 
 export async function softDeleteReport(reportId: string): Promise<void> {
     let reports = await getAllReports();
-    reports = reports.map(r => r.id === reportId ? { ...r, deletedAt: new Date() } : r);
+    reports = reports.map(r => r.id === reportId ? { ...r, deletedAt: new Date().toISOString() } : r);
     saveToStorage('reports', reports);
     return Promise.resolve();
 }
@@ -132,7 +130,7 @@ export async function softDeleteAllReports(): Promise<number> {
     reports = reports.map(r => {
         if (!r.deletedAt) {
             count++;
-            return { ...r, deletedAt: new Date() };
+            return { ...r, deletedAt: new Date().toISOString() };
         }
         return r;
     });
@@ -143,14 +141,14 @@ export async function softDeleteAllReports(): Promise<number> {
 export async function getUserReports(userId: string): Promise<{ active: Report[], deleted: Report[] }> {
     const allReports = await getAllReports();
     const userReports = allReports.filter(r => r.reporterId === userId);
-    
+
     const active = userReports
       .filter(r => !r.deletedAt)
-      .sort((a, b) => new Date(b.createdAt as Date).getTime() - new Date(a.createdAt as Date).getTime());
-    
+      .sort((a, b) => new Date(b.createdAt as string).getTime() - new Date(a.createdAt as string).getTime());
+
     const deleted = userReports
       .filter(r => r.deletedAt)
-      .sort((a, b) => new Date(b.deletedAt as Date).getTime() - new Date(a.deletedAt as Date).getTime());
+      .sort((a, b) => new Date(b.deletedAt as string).getTime() - new Date(a.deletedAt as string).getTime());
 
     return Promise.resolve({ active, deleted });
 }
@@ -170,7 +168,7 @@ export async function addSearchLog(logData: Omit<SearchLog, 'id' | 'timestamp'>)
     const newLog: SearchLog = {
         ...logData,
         id: `log-${Date.now()}`,
-        timestamp: new Date(),
+        timestamp: new Date().toISOString(),
     };
     logs.unshift(newLog);
     saveToStorage('searchLogs', logs);
@@ -187,7 +185,7 @@ export async function addAuditLogEntry(entryData: Omit<AuditLogEntry, 'id' | 'ti
     const newLog: AuditLogEntry = {
         ...entryData,
         id: `audit-${Date.now()}`,
-        timestamp: new Date(),
+        timestamp: new Date().toISOString(),
     };
     logs.unshift(newLog);
     saveToStorage('auditLogs', logs);
@@ -206,7 +204,7 @@ export async function addUserNotification(userId: string, notificationData: Omit
         ...notificationData,
         id: `notif-${Date.now()}`,
         userId,
-        createdAt: new Date(),
+        createdAt: new Date().toISOString(),
         read: false,
     };
     notifications.unshift(newNotification);
@@ -230,7 +228,7 @@ export async function uploadReportImage(file: File): Promise<{ url: string; data
   console.log("Simulating file upload for:", file.name);
   await new Promise(res => setTimeout(res, 500));
   const hint = file.name.split('.')[0].replace(/[^a-zA-Z\s]/g, '').substring(0, 20);
-  return { 
+  return {
     url: `https://placehold.co/600x400.png?text=Uploaded+${encodeURIComponent(file.name)}`,
     dataAiHint: hint
   };
