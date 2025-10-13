@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { UserProfile } from '@/types';
