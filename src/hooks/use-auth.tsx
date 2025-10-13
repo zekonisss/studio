@@ -2,18 +2,26 @@
 "use client";
 
 import type { UserProfile } from '@/types';
-import type { LoginFormValues, SignUpFormValues } from '@/lib/schemas';
+import type { LoginFormValues, SignupFormValues } from '@/lib/schemas';
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/language-context';
-import { MOCK_ADMIN_USER } from '@/lib/mock-data';
-import * as storage from '@/lib/storage';
+import { auth, db } from '@/lib/firebase';
+import {
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
+  type User,
+} from 'firebase/auth';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { useRouter } from 'next/navigation';
 
 interface AuthContextType {
   user: UserProfile | null;
   loading: boolean;
   login: (values: LoginFormValues) => Promise<void>;
-  signup: (values: SignUpFormValues) => Promise<void>;
+  signup: (values: SignupFormValues) => Promise<void>;
   logout: () => Promise<void>;
   updateUserInContext: (updatedUser: UserProfile) => Promise<void>;
 }
@@ -25,47 +33,103 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { t } = useLanguage();
+  const router = useRouter();
 
   useEffect(() => {
-    // Simulate fetching user data
-    setTimeout(() => {
-      setUser(MOCK_ADMIN_USER);
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: User | null) => {
+      if (firebaseUser) {
+        // User is signed in, see docs for a list of available properties
+        // https://firebase.google.com/docs/reference/js/firebase.User
+        const userDocRef = doc(db, 'users', firebaseUser.uid);
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists()) {
+          setUser({ id: firebaseUser.uid, ...userDoc.data() } as UserProfile);
+        } else {
+          // Handle case where user exists in Auth but not in Firestore
+           setUser({
+              id: firebaseUser.uid,
+              email: firebaseUser.email || '',
+              companyName: 'N/A',
+              companyCode: 'N/A',
+              address: 'N/A',
+              contactPerson: 'N/A',
+              phone: 'N/A',
+              paymentStatus: 'inactive',
+              isAdmin: false,
+              agreeToTerms: false,
+              registeredAt: new Date(),
+              subUsers: [],
+            });
+        }
+      } else {
+        // User is signed out
+        setUser(null);
+      }
       setLoading(false);
-    }, 500);
+    });
+
+    return () => unsubscribe();
   }, []);
 
-  const login = async (values: LoginFormValues): Promise<void> => {
-    setLoading(true);
-    console.log("Simulating login for:", values.email);
-    await new Promise(res => setTimeout(res, 500));
-    setUser(MOCK_ADMIN_USER);
-    toast({ title: t('toast.login.success.title'), description: t('toast.login.success.description') });
-    setLoading(false);
+  const login = async (values: LoginFormValues) => {
+    try {
+      await signInWithEmailAndPassword(auth, values.email, values.password);
+      toast({ title: t('toast.login.success.title'), description: t('toast.login.success.description') });
+      router.push('/dashboard');
+    } catch (error: any) {
+      console.error("Login error:", error);
+      toast({ variant: 'destructive', title: t('toast.login.error.title'), description: error.message });
+    }
   };
 
-  const signup = async (values: SignUpFormValues): Promise<void> => {
-    setLoading(true);
-    console.log("Simulating signup for:", values.email);
-    await new Promise(res => setTimeout(res, 1000));
-    toast({ title: "Registracija (DEMO)", description: "Ši funkcija yra demonstracinė." });
-    setLoading(false);
+  const signup = async (values: SignupFormValues) => {
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
+      const newUser = userCredential.user;
+      
+      // For simple registration, we create a basic user profile
+      // In a real app, you would collect more details
+      const userProfile: Omit<UserProfile, 'id'> = {
+        email: newUser.email || '',
+        companyName: '',
+        companyCode: '',
+        address: '',
+        contactPerson: '',
+        phone: '',
+        paymentStatus: 'pending_verification',
+        isAdmin: false,
+        agreeToTerms: true, // Assuming this is part of a real form
+        registeredAt: new Date().toISOString(),
+        subUsers: [],
+      };
+
+      await setDoc(doc(db, "users", newUser.uid), userProfile);
+      toast({ title: t('toast.signup.success.title'), description: t('toast.signup.success.description') });
+       // signOut after registration to force login/wait for approval
+      await signOut(auth);
+      router.push('/login');
+    } catch (error: any) {
+       console.error("Signup error:", error);
+      toast({ variant: 'destructive', title: t('toast.signup.error.title'), description: error.message });
+    }
   };
 
   const logout = async () => {
-    console.log("Simulating logout.");
-    setLoading(true);
-    await new Promise(res => setTimeout(res, 300));
-    setUser(null);
-    setLoading(false);
-    // This might cause a full page reload, which is acceptable for a demo logout
-    window.location.reload(); 
+    try {
+      await signOut(auth);
+      router.push('/login');
+      toast({ title: t('toast.logout.success.title') });
+    } catch (error: any) {
+       console.error("Logout error:", error);
+       toast({ variant: 'destructive', title: t('toast.logout.error.title'), description: error.message });
+    }
   };
   
   const updateUserInContext = async (updatedUserData: UserProfile) => {
-    console.log("Simulating user update in context:", updatedUserData);
     setUser(updatedUserData);
     // In a real app, this would also update the backend
-    await storage.updateUserProfile(updatedUserData.id, updatedUserData);
+    // This is a placeholder for now.
+    console.log("Updating user in context", updatedUserData);
   };
 
   const value = { user, loading, login, signup, logout, updateUserInContext };

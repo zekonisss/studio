@@ -1,7 +1,7 @@
 
 import { z } from 'zod';
 
-export const SignUpSchema = z.object({
+export const SignupFormSchema = z.object({
   email: z.string().email({ message: "Neteisingas el. pašto formatas." }),
   password: z.string().min(8, { message: "Slaptažodis turi būti bent 8 simbolių ilgio." }),
   confirmPassword: z.string().min(8, { message: "Slaptažodis turi būti bent 8 simbolių ilgio." }),
@@ -17,7 +17,7 @@ export const SignUpSchema = z.object({
   path: ["confirmPassword"],
 });
 
-export type SignUpFormValues = z.infer<typeof SignUpSchema>;
+export type SignupFormValuesExtended = z.infer<typeof SignupFormSchema>;
 
 export const LoginSchema = z.object({
   email: z.string().email({ message: "Neteisingas el. pašto formatas." }),
@@ -25,6 +25,17 @@ export const LoginSchema = z.object({
 });
 
 export type LoginFormValues = z.infer<typeof LoginSchema>;
+
+export const SignupSchema = z.object({
+  email: z.string().email({ message: "Neteisingas el. pašto formatas." }),
+  password: z.string().min(8, { message: "Slaptažodis turi būti bent 8 simbolių ilgio." }),
+  confirmPassword: z.string()
+}).refine(data => data.password === data.confirmPassword, {
+  message: "Slaptažodžiai nesutampa.",
+  path: ["confirmPassword"],
+});
+export type SignupFormValues = z.infer<typeof SignupSchema>;
+
 
 export const ForgotPasswordSchema = z.object({
   email: z.string().email({ message: "Neteisingas el. pašto formatas." }),
