@@ -1,6 +1,7 @@
 
 "use client";
 
+import { useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { ShieldQuestion, LifeBuoy, ArrowLeft } from "lucide-react";
@@ -40,10 +41,10 @@ export default function SupportPage() {
   const router = useRouter();
   const { t } = useLanguage();
 
-  const faqItems = faqItemsBase.map(item => ({
+  const faqItems = useMemo(() => faqItemsBase.map(item => ({
     question: t(item.questionKey),
     answer: t(item.answerKey)
-  }));
+  })), [t]);
 
   return (
     <div className="container mx-auto py-12 px-4 md:px-6">
@@ -94,3 +95,5 @@ export default function SupportPage() {
     </div>
   );
 }
+
+    
