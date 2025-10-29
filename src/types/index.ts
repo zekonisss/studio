@@ -1,3 +1,4 @@
+
 export interface UserProfile {
   id: string;
   email: string;
@@ -10,7 +11,7 @@ export interface UserProfile {
   paymentStatus: 'active' | 'inactive' | 'pending_verification' | 'pending_payment';
   isAdmin: boolean;
   agreeToTerms: boolean;
-  registeredAt: Date | string;
+  registeredAt: Date | string | any; // Changed to any to support serverTimestamp
   accountActivatedAt?: Date | string | null;
   subUsers: string[];
 }
@@ -27,8 +28,8 @@ export interface Report {
   comment: string;
   imageUrl?: string;
   dataAiHint?: string;
-  createdAt: Date | string;
-  deletedAt?: (Date | string) | null;
+  createdAt: Date | string | any; // Changed to any to support serverTimestamp
+  deletedAt?: (Date | string | any) | null; // Changed to any to support serverTimestamp
 }
 
 export interface SearchLog {
@@ -36,7 +37,7 @@ export interface SearchLog {
   userId: string;
   searchText: string;
   resultsCount: number;
-  timestamp: Date | string;
+  timestamp: Date | string | any; // Changed to any to support serverTimestamp
 }
 
 export interface AuditLogEntry {
@@ -45,7 +46,7 @@ export interface AuditLogEntry {
   adminName: string;
   actionKey: string;
   details: Record<string, any>;
-  timestamp: Date | string;
+  timestamp: Date | string | any; // Changed to any to support serverTimestamp
 }
 
 export interface UserNotification {
@@ -56,7 +57,7 @@ export interface UserNotification {
   messageKey: string;
   messageParams?: Record<string, any>;
   link?: string;
-  createdAt: Date | string;
+  createdAt: Date | string | any; // Changed to any to support serverTimestamp
   read: boolean;
 }
 
