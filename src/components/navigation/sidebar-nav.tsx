@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -17,7 +16,8 @@ import {
   ShieldQuestion,
   ShieldAlert,
   UserSearch, 
-  FileSpreadsheet
+  FileSpreadsheet,
+  LogOut
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import type { ReactNode } from "react";
@@ -43,6 +43,7 @@ const accountNavItemsBase = [
 const adminNavItemsBase = [
   { href: "/admin", labelKey: "sidebar.adminPanel", icon: ShieldAlert },
   { href: "/reports/import", labelKey: "sidebar.importReports", icon: FileSpreadsheet },
+  { href: "/admin/user-import", labelKey: "usersImport.title", icon: FileSpreadsheet}
 ];
 
 interface SidebarNavProps {
@@ -51,7 +52,7 @@ interface SidebarNavProps {
 
 export function SidebarNav({ isInSheet = false }: SidebarNavProps) {
   const pathname = usePathname();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { t } = useLanguage(); 
 
   const mainNavItems = mainNavItemsBase.map(item => ({ ...item, label: t(item.labelKey) }));
@@ -78,12 +79,6 @@ export function SidebarNav({ isInSheet = false }: SidebarNavProps) {
           </Link>
         </NavLinkWrapper>
       </div>
-      {isInSheet && (
-        <div className="p-4 border-b border-sidebar-border flex justify-end">
-            <LanguageSwitcher /> 
-        </div>
-      )}
-
 
       <ScrollArea className="flex-1">
         <nav className="flex flex-col gap-1 p-4">
@@ -174,6 +169,12 @@ export function SidebarNav({ isInSheet = false }: SidebarNavProps) {
           )}
         </nav>
       </ScrollArea>
+      <div className="p-4 mt-auto border-t border-sidebar-border">
+          <Button variant="ghost" className="w-full justify-start" onClick={logout}>
+              <LogOut className="mr-3 h-5 w-5" />
+              {t('sidebar.logout')}
+          </Button>
+      </div>
     </div>
   );
 }

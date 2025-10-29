@@ -3,26 +3,25 @@
 import { SidebarNav } from '@/components/navigation/sidebar-nav';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { Menu, Loader2 } from 'lucide-react';
+import { Menu, Loader2, LogOut } from 'lucide-react';
 import { LanguageSwitcher } from '@/components/navigation/language-switcher';
 import { ThemeToggle } from '@/components/navigation/theme-toggle';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
+import { UserNav } from '@/components/navigation/user-nav';
 
 export default function AuthenticatedLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { user, loading } = useAuth();
+  const { user, loading, logout } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
     if (!loading && !user) {
-      // In a real app with login, this would redirect.
-      // Since we are mocking the user, this should not happen.
-      console.log("No user found, redirecting would happen here in a real app.");
+      router.replace('/login');
     }
   }, [user, loading, router]);
   
@@ -58,6 +57,7 @@ export default function AuthenticatedLayout({
           <div className="flex items-center gap-2 ml-auto">
             <ThemeToggle />
             <LanguageSwitcher />
+            <UserNav />
           </div>
         </header>
         <main className="flex-1 p-4 md:p-8 overflow-auto">

@@ -1,131 +1,217 @@
 "use client";
 
 import type { Report, UserProfile, SearchLog, AuditLogEntry, UserNotification } from '@/types';
-import { MOCK_ALL_USERS, MOCK_GENERAL_REPORTS, MOCK_USER_REPORTS, MOCK_USER_SEARCH_LOGS } from './mock-data';
+import { db } from './firebase';
+import { 
+  collection, 
+  getDocs, 
+  addDoc, 
+  doc, 
+  updateDoc, 
+  query, 
+  where, 
+  limit,
+  orderBy,
+  Timestamp,
+  getDoc,
+  writeBatch
+} from 'firebase/firestore';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+
+const convertTimestamp = (data: any) => {
+  const convertValue = (value: any): any => {
+    if (value instanceof Timestamp) {
+      return value.toDate().toISOString();
+    }
+    if (Array.isArray(value)) {
+      return value.map(convertValue);
+    }
+    if (value !== null && typeof value === 'object') {
+      return Object.keys(value).reduce((acc, key) => {
+        acc[key] = convertValue(value[key]);
+        return acc;
+      }, {} as { [key: string]: any });
+    }
+    return value;
+  };
+  return convertValue(data);
+};
+
 
 // --- User Management ---
 
 export async function getAllUsers(): Promise<UserProfile[]> {
-  console.log("storage.ts: Fetching all mock users.");
-  return Promise.resolve(MOCK_ALL_USERS);
+  const usersCol = collection(db, "users");
+  const userSnapshot = await getDocs(usersCol);
+  const userList = userSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserProfile));
+  return convertTimestamp(userList);
 }
 
 export async function addUsersBatch(usersData: Omit<UserProfile, 'id'>[]): Promise<void> {
-    console.log("storage.ts: Simulating adding user batch:", usersData);
-    return Promise.resolve();
+    const batch = writeBatch(db);
+    usersData.forEach(userData => {
+        const newUserRef = doc(collection(db, "users")); // Auto-generate ID
+        const finalUserData = {
+          ...userData,
+          registeredAt: Timestamp.now()
+        };
+        batch.set(newUserRef, finalUserData);
+    });
+    await batch.commit();
 }
 
 export async function updateUserProfile(userId: string, userData: Partial<UserProfile>): Promise<void> {
-  console.log(`storage.ts: Simulating update for user ${userId} with`, userData);
-  return Promise.resolve();
+  const userRef = doc(db, "users", userId);
+  await updateDoc(userRef, userData);
 }
 
 export async function findUserByEmail(email: string): Promise<UserProfile | null> {
-    const user = MOCK_ALL_USERS.find(u => u.email === email);
-    console.log(`storage.ts: Simulating findUserByEmail for ${email}. Found:`, !!user);
-    return Promise.resolve(user || null);
+    const q = query(collection(db, "users"), where("email", "==", email), limit(1));
+    const querySnapshot = await getDocs(q);
+    if (!querySnapshot.empty) {
+        const userDoc = querySnapshot.docs[0];
+        return convertTimestamp({ id: userDoc.id, ...userDoc.data() } as UserProfile);
+    }
+    return null;
 }
 
 export async function getUserById(userId: string): Promise<UserProfile | null> {
-    const user = MOCK_ALL_USERS.find(u => u.id === userId);
-    console.log(`storage.ts: Simulating getUserById for ${userId}. Found:`, !!user);
-    return Promise.resolve(user || null);
+    const docRef = doc(db, "users", userId);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+        return convertTimestamp({ id: docSnap.id, ...docSnap.data() } as UserProfile);
+    }
+    return null;
 }
 
 
 // --- Report Management ---
 
 export async function getAllReports(): Promise<Report[]> {
-  console.log("storage.ts: Fetching all mock general reports.");
-  return Promise.resolve(MOCK_GENERAL_REPORTS);
+  const reportsCol = collection(db, "reports");
+  const q = query(reportsCol, orderBy("createdAt", "desc"));
+  const reportSnapshot = await getDocs(q);
+  const reportList = reportSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Report));
+  return convertTimestamp(reportList);
 }
 
 export async function addReport(reportData: Omit<Report, 'id'>): Promise<void> {
-  console.log("storage.ts: Simulating adding report:", reportData);
-  return Promise.resolve();
+  const reportsCol = collection(db, "reports");
+  const dataWithTimestamp = {
+    ...reportData,
+    createdAt: Timestamp.now(),
+    deletedAt: null,
+  };
+  await addDoc(reportsCol, dataWithTimestamp);
 }
 
 export async function softDeleteReport(reportId: string): Promise<void> {
-  console.log(`storage.ts: Simulating soft delete for report ${reportId}`);
-  return Promise.resolve();
+  const reportRef = doc(db, "reports", reportId);
+  await updateDoc(reportRef, {
+    deletedAt: Timestamp.now()
+  });
 }
 
 export async function softDeleteAllReports(): Promise<number> {
-    console.log("storage.ts: Simulating soft deleting all reports.");
-    const count = MOCK_GENERAL_REPORTS.length;
-    return Promise.resolve(count);
+    const reportsCol = collection(db, "reports");
+    const reportSnapshot = await getDocs(reportsCol);
+    const batch = writeBatch(db);
+    reportSnapshot.docs.forEach(document => {
+        batch.update(document.ref, { deletedAt: Timestamp.now() });
+    });
+    await batch.commit();
+    return reportSnapshot.size;
 }
 
 export async function getUserReports(userId: string): Promise<{ active: Report[], deleted: Report[] }> {
-  console.log(`storage.ts: Fetching mock reports for user ${userId}.`);
-  const active = MOCK_USER_REPORTS.filter(r => !r.deletedAt);
-  const deleted = MOCK_USER_REPORTS.filter(r => r.deletedAt);
-  return Promise.resolve({ active, deleted });
+  const q = query(collection(db, "reports"), where("reporterId", "==", userId), orderBy("createdAt", "desc"));
+  const querySnapshot = await getDocs(q);
+  const reports = querySnapshot.docs.map(doc => convertTimestamp({ id: doc.id, ...doc.data() } as Report));
+  const active = reports.filter(r => !r.deletedAt);
+  const deleted = reports.filter(r => !!r.deletedAt);
+  return { active, deleted };
 }
 
 // --- Log Management ---
 
 export async function getSearchLogs(userId?: string): Promise<SearchLog[]> {
-  console.log(`storage.ts: Fetching mock search logs for user ${userId}.`);
-  return Promise.resolve(MOCK_USER_SEARCH_LOGS);
+  if (!userId) return [];
+  const q = query(collection(db, "searchLogs"), where("userId", "==", userId), orderBy("timestamp", "desc"), limit(50));
+  const querySnapshot = await getDocs(q);
+  const logs = querySnapshot.docs.map(doc => convertTimestamp({ id: doc.id, ...doc.data() } as SearchLog));
+  return logs;
 }
 
 export async function addSearchLog(logData: Omit<SearchLog, 'id'>): Promise<void> {
-  console.log("storage.ts: Simulating adding search log:", logData);
-  return Promise.resolve();
+  const dataWithTimestamp = {
+    ...logData,
+    timestamp: Timestamp.now(),
+  };
+  await addDoc(collection(db, "searchLogs"), dataWithTimestamp);
 }
 
 export async function getAuditLogs(): Promise<AuditLogEntry[]> {
-    console.log("storage.ts: Fetching mock audit logs.");
-    const MOCK_AUDIT_LOGS: AuditLogEntry[] = [
-      { id: 'log1', adminId: 'admin-user-001', adminName: 'Admin User', actionKey: 'auditLog.action.userStatusChanged', details: { userId: 'dev-user-101', companyName: 'MB "Logist"', userEmail: 'laura@logist.lt', oldStatus: 'Laukia Patvirtinimo', newStatus: 'Aktyvi' }, timestamp: new Date() },
-    ];
-    return Promise.resolve(MOCK_AUDIT_LOGS);
+    const q = query(collection(db, "auditLogs"), orderBy("timestamp", "desc"), limit(100));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => convertTimestamp({ id: doc.id, ...doc.data() } as AuditLogEntry));
 }
 
 export async function addAuditLogEntry(entryData: Omit<AuditLogEntry, 'id'>): Promise<void> {
-    console.log("storage.ts: Simulating adding audit log:", entryData);
-    return Promise.resolve();
+    const dataWithTimestamp = {
+        ...entryData,
+        timestamp: Timestamp.now(),
+    };
+    await addDoc(collection(db, "auditLogs"), dataWithTimestamp);
 }
 
 // --- Notification Management ---
 
 export async function getUserNotifications(userId: string): Promise<UserNotification[]> {
-    console.log(`storage.ts: Fetching mock notifications for user ${userId}.`);
-     const MOCK_NOTIFICATIONS: UserNotification[] = [
-        { id: 'notif1', userId: 'admin-user-001', type: 'account_status_change', titleKey: 'notifications.accountStatusChanged.title', messageKey: 'notifications.accountStatusChanged.message', messageParams: { oldStatus: 'Laukia Patvirtinimo', newStatus: 'Aktyvi', adminName: 'Sistemos Admin' }, createdAt: new Date(), read: false, link: '/account?tab=details' },
-        { id: 'notif2', userId: 'admin-user-001', type: 'subscription_warning', titleKey: 'notifications.subscriptionWarning.title', messageKey: 'notifications.subscriptionWarning.message', messageParams: { endDate: '2024-12-31', daysLeft: 30 }, createdAt: new Date(Date.now() - 86400000 * 2), read: true, link: '/account?tab=payment' },
-     ];
-    return Promise.resolve(MOCK_NOTIFICATIONS);
+    const q = query(collection(db, "notifications"), where("userId", "==", userId), orderBy("createdAt", "desc"), limit(20));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => convertTimestamp({ id: doc.id, ...doc.data() } as UserNotification));
 }
 
 export async function addUserNotification(userId: string, notificationData: Omit<UserNotification, 'id' | 'createdAt' | 'read' | 'userId'>): Promise<void> {
-    console.log(`storage.ts: Simulating adding notification for user ${userId}:`, notificationData);
-    return Promise.resolve();
+    const data = {
+        ...notificationData,
+        userId,
+        read: false,
+        createdAt: Timestamp.now(),
+    };
+    await addDoc(collection(db, "notifications"), data);
 }
 
 export async function markNotificationAsRead(notificationId: string): Promise<void> {
-    console.log(`storage.ts: Simulating marking notification ${notificationId} as read.`);
-    return Promise.resolve();
+    const notifRef = doc(db, "notifications", notificationId);
+    await updateDoc(notifRef, { read: true });
 }
 
 export async function markAllNotificationsAsRead(userId: string): Promise<void> {
-    console.log(`storage.ts: Simulating marking all notifications as read for user ${userId}.`);
-    return Promise.resolve();
+    const q = query(collection(db, "notifications"), where("userId", "==", userId), where("read", "==", false));
+    const querySnapshot = await getDocs(q);
+    const batch = writeBatch(db);
+    querySnapshot.docs.forEach(document => {
+        batch.update(document.ref, { read: true });
+    });
+    await batch.commit();
 }
 
 
 // --- File Management ---
 export async function uploadReportImage(file: File): Promise<{ url: string, dataAiHint: string }> {
-  console.log("storage.ts: Simulating image upload for file:", file.name);
-  const randomId = Math.floor(Math.random() * 1000);
+  const storage = getStorage();
+  const fileId = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+  const fileExtension = file.name.split('.').pop();
+  const storageRef = ref(storage, `reports/${fileId}.${fileExtension}`);
+
+  await uploadBytes(storageRef, file);
+  const downloadURL = await getDownloadURL(storageRef);
+
   const hint = file.name.split('.')[0].replace(/[^a-zA-Z\s]/g, '').substring(0, 20) || 'document scan';
 
-  // Using a placeholder service that generates images from text
-  const placeholderUrl = `https://placehold.co/600x400/EFEFEF/7F7F7F?text=${encodeURIComponent(hint)}`;
-  
-  return Promise.resolve({
-    url: placeholderUrl,
+  return {
+    url: downloadURL,
     dataAiHint: hint,
-  });
+  };
 }
