@@ -1,4 +1,3 @@
-
 import { z } from 'zod';
 
 export const SignupFormSchema = z.object({
@@ -18,6 +17,7 @@ export const SignupFormSchema = z.object({
 });
 
 export type SignupFormValuesExtended = z.infer<typeof SignupFormSchema>;
+
 
 export const LoginSchema = z.object({
   email: z.string().email({ message: "Neteisingas el. pašto formatas." }),

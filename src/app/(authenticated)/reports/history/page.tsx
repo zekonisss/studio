@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -149,6 +148,85 @@ export default function ReportsHistoryPage() {
                             <Eye className="mr-2 h-4 w-4" /> {t('reports.history.entry.viewDetailsButton')}
                           </Button>
                         </DialogTrigger>
+                        {selectedReport && selectedReport.id === report.id && (
+                           <DialogContent className="sm:max-w-lg">
+                              <DialogHeader>
+                                <DialogTitle className="flex items-center text-xl">
+                                  <FileText className="mr-2 h-5 w-5 text-primary" />
+                                  {t('reports.history.detailsModal.title')}
+                                </DialogTitle>
+                                <DialogDescription>{t('reports.history.detailsModal.description')}</DialogDescription>
+                              </DialogHeader>
+                              <div className="py-4 space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+                                  <div className="space-y-1">
+                                    <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Building className="mr-2 h-4 w-4" />{t('reports.history.detailsModal.driver')}</h4>
+                                    <p className="text-base text-foreground">{selectedReport.fullName}</p>
+                                  </div>
+                                  {selectedReport.nationality && (
+                                    <div className="space-y-1">
+                                      <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Globe className="mr-2 h-4 w-4" />{t('reports.history.detailsModal.nationality')}</h4>
+                                      <p className="text-base text-foreground">{getNationalityLabel(selectedReport.nationality)}</p>
+                                    </div>
+                                  )}
+                                  {selectedReport.birthYear && (
+                                    <div className="space-y-1">
+                                      <h4 className="text-sm font-medium text-muted-foreground flex items-center"><CalendarIcon className="mr-2 h-4 w-4" />{t('reports.history.detailsModal.birthYear')}</h4>
+                                      <p className="text-base text-foreground">{selectedReport.birthYear}</p>
+                                    </div>
+                                  )}
+                                  <div className="space-y-1">
+                                    <h4 className="text-sm font-medium text-muted-foreground flex items-center"><FileText className="mr-2 h-4 w-4" />{t('reports.history.detailsModal.mainCategory')}</h4>
+                                    <Badge
+                                      variant={DESTRUCTIVE_REPORT_MAIN_CATEGORIES.includes(selectedReport.category) ? 'destructive' : 'secondary'}
+                                      className="text-sm">
+                                      {getCategoryNameForDisplay(selectedReport.category, t)}
+                                    </Badge>
+                                  </div>
+                                  {selectedReport.tags && selectedReport.tags.length > 0 && (
+                                    <div className="space-y-1">
+                                      <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Tag className="mr-2 h-4 w-4" />{t('reports.history.detailsModal.tags')}</h4>
+                                      <div className="flex flex-wrap gap-2">
+                                        {selectedReport.tags.map(tagKey => (
+                                          <Badge key={tagKey} variant="outline" className="text-sm">{t('tags.' + tagKey)}</Badge>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+                                  <div className="space-y-1">
+                                    <h4 className="text-sm font-medium text-muted-foreground flex items-center"><MessageSquare className="mr-2 h-4 w-4" />{t('reports.history.detailsModal.comment')}</h4>
+                                    <p className="text-base text-foreground whitespace-pre-wrap bg-secondary/30 p-3 rounded-md">{selectedReport.comment}</p>
+                                  </div>
+                                  {selectedReport.imageUrl && (
+                                    <div className="space-y-1">
+                                      <h4 className="text-sm font-medium text-muted-foreground flex items-center"><ImageIcon className="mr-2 h-4 w-4" />{t('reports.history.detailsModal.attachedFile')}</h4>
+                                      <div className="w-full overflow-hidden rounded-md border">
+                                        <NextImage
+                                          src={selectedReport.imageUrl}
+                                          alt={t('reports.history.detailsModal.imageAlt', { fullName: selectedReport.fullName })}
+                                          width={600}
+                                          height={400}
+                                          layout="responsive"
+                                          objectFit="contain"
+                                        />
+                                      </div>
+                                    </div>
+                                  )}
+                                  <div className="space-y-1">
+                                    <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Building className="mr-2 h-4 w-4" />{t('reports.history.detailsModal.submittedByCompany')}</h4>
+                                    <p className="text-base text-foreground">{selectedReport.reporterCompanyName || t('common.notSpecified')}</p>
+                                  </div>
+                                  <div className="space-y-1">
+                                    <h4 className="text-sm font-medium text-muted-foreground flex items-center"><CalendarIcon className="mr-2 h-4 w-4" />{t('reports.history.detailsModal.submissionDate')}</h4>
+                                    <p className="text-base text-foreground">{formatDateSafe(selectedReport.createdAt)}</p>
+                                  </div>
+                              </div>
+                              <DialogFooter>
+                                <DialogClose asChild>
+                                  <Button type="button" variant="outline" onClick={() => setSelectedReport(null)}>{t('common.close')}</Button>
+                                </DialogClose>
+                              </DialogFooter>
+                            </DialogContent>
+                          )}
                       </Dialog>
                      
                       <AlertDialog>
@@ -202,90 +280,6 @@ export default function ReportsHistoryPage() {
           </Card>
         </div>
       )}
-
-      <Dialog open={!!selectedReport} onOpenChange={(isOpen) => !isOpen && setSelectedReport(null)}>
-        {selectedReport && (
-          <DialogContent className="sm:max-w-lg">
-            <DialogHeader>
-              <DialogTitle className="flex items-center text-xl">
-                <FileText className="mr-2 h-5 w-5 text-primary" />
-                {t('reports.history.detailsModal.title')}
-              </DialogTitle>
-              <DialogDescription>{t('reports.history.detailsModal.description')}</DialogDescription>
-            </DialogHeader>
-            <div className="py-4 space-y-4 max-h-[60vh] overflow-y-auto pr-2">
-                <div className="space-y-1">
-                  <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Building className="mr-2 h-4 w-4" />{t('reports.history.detailsModal.driver')}</h4>
-                  <p className="text-base text-foreground">{selectedReport.fullName}</p>
-                </div>
-                {selectedReport.nationality && (
-                  <div className="space-y-1">
-                    <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Globe className="mr-2 h-4 w-4" />{t('reports.history.detailsModal.nationality')}</h4>
-                    <p className="text-base text-foreground">{getNationalityLabel(selectedReport.nationality)}</p>
-                  </div>
-                )}
-                {selectedReport.birthYear && (
-                  <div className="space-y-1">
-                    <h4 className="text-sm font-medium text-muted-foreground flex items-center"><CalendarIcon className="mr-2 h-4 w-4" />{t('reports.history.detailsModal.birthYear')}</h4>
-                    <p className="text-base text-foreground">{selectedReport.birthYear}</p>
-                  </div>
-                )}
-                <div className="space-y-1">
-                  <h4 className="text-sm font-medium text-muted-foreground flex items-center"><FileText className="mr-2 h-4 w-4" />{t('reports.history.detailsModal.mainCategory')}</h4>
-                  <Badge
-                    variant={DESTRUCTIVE_REPORT_MAIN_CATEGORIES.includes(selectedReport.category) ? 'destructive' : 'secondary'}
-                    className="text-sm">
-                    {getCategoryNameForDisplay(selectedReport.category, t)}
-                  </Badge>
-                </div>
-                {selectedReport.tags && selectedReport.tags.length > 0 && (
-                  <div className="space-y-1">
-                    <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Tag className="mr-2 h-4 w-4" />{t('reports.history.detailsModal.tags')}</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {selectedReport.tags.map(tagKey => (
-                        <Badge key={tagKey} variant="outline" className="text-sm">{t('tags.' + tagKey)}</Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                <div className="space-y-1">
-                  <h4 className="text-sm font-medium text-muted-foreground flex items-center"><MessageSquare className="mr-2 h-4 w-4" />{t('reports.history.detailsModal.comment')}</h4>
-                  <p className="text-base text-foreground whitespace-pre-wrap bg-secondary/30 p-3 rounded-md">{selectedReport.comment}</p>
-                </div>
-                {selectedReport.imageUrl && (
-                  <div className="space-y-1">
-                    <h4 className="text-sm font-medium text-muted-foreground flex items-center"><ImageIcon className="mr-2 h-4 w-4" />{t('reports.history.detailsModal.attachedFile')}</h4>
-                    <div className="w-full overflow-hidden rounded-md border">
-                      <NextImage
-                        src={selectedReport.imageUrl}
-                        alt={t('reports.history.detailsModal.imageAlt', { fullName: selectedReport.fullName })}
-                        width={600}
-                        height={400}
-                        layout="responsive"
-                        objectFit="contain"
-                      />
-                    </div>
-                  </div>
-                )}
-                <div className="space-y-1">
-                  <h4 className="text-sm font-medium text-muted-foreground flex items-center"><Building className="mr-2 h-4 w-4" />{t('reports.history.detailsModal.submittedByCompany')}</h4>
-                  <p className="text-base text-foreground">{selectedReport.reporterCompanyName || t('common.notSpecified')}</p>
-                </div>
-                <div className="space-y-1">
-                  <h4 className="text-sm font-medium text-muted-foreground flex items-center"><CalendarIcon className="mr-2 h-4 w-4" />{t('reports.history.detailsModal.submissionDate')}</h4>
-                  <p className="text-base text-foreground">{formatDateSafe(selectedReport.createdAt)}</p>
-                </div>
-            </div>
-            <DialogFooter>
-              <DialogClose asChild>
-                <Button type="button" variant="outline" onClick={() => setSelectedReport(null)}>{t('common.close')}</Button>
-              </DialogClose>
-            </DialogFooter>
-          </DialogContent>
-        )}
-      </Dialog>
     </div>
   );
 }
-
-    

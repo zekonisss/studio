@@ -1,4 +1,3 @@
-
 "use client";
 
 import { SidebarNav } from '@/components/navigation/sidebar-nav';
@@ -21,7 +20,9 @@ export default function AuthenticatedLayout({
 
   useEffect(() => {
     if (!loading && !user) {
-      router.replace('/login');
+      // In a real app with login, this would redirect.
+      // Since we are mocking the user, this should not happen.
+      console.log("No user found, redirecting would happen here in a real app.");
     }
   }, [user, loading, router]);
   

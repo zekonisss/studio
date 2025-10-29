@@ -46,29 +46,23 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const fetchStats = async () => {
-      // This is the critical check. We must not proceed if auth is loading or user is not yet defined.
-      if (authLoading || !user) return;
+      if (authLoading || !user) {
+        return;
+      }
       
       setIsLoading(true);
       
       try {
-        const promises: [Promise<Report[]>, Promise<{ active: Report[] } | null>, Promise<any[] | null>] = [
+        const [allPlatformReports, userReportsResult, userSearchLogs] = await Promise.all([
             storage.getAllReports(),
             storage.getUserReports(user.id),
             storage.getSearchLogs(user.id),
-        ];
-
-        const [allPlatformReports, userReportsResult, userSearchLogs] = await Promise.all(promises);
+        ]);
 
         setTotalReportsCount(allPlatformReports.length);
         setRecentReports(allPlatformReports.slice(0, 4));
-
-        if (userReportsResult) {
-            setUserReportsCount(userReportsResult.active.length);
-        }
-        if (userSearchLogs) {
-            setUserSearchesCount(userSearchLogs.length);
-        }
+        setUserReportsCount(userReportsResult.active.length);
+        setUserSearchesCount(userSearchLogs.length);
 
       } catch (error) {
         console.error("Dashboard: Failed to fetch stats:", error);
@@ -79,7 +73,7 @@ export default function DashboardPage() {
 
     fetchStats();
     
-  }, [user, authLoading]); // Depend on user and authLoading
+  }, [user, authLoading]);
 
 
   useEffect(() => {

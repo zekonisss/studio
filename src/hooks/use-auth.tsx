@@ -1,22 +1,12 @@
-
 "use client";
 
 import type { UserProfile } from '@/types';
 import type { LoginFormValues, SignupFormValuesExtended } from '@/lib/schemas';
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { useLanguage } from '@/contexts/language-context';
-import { useRouter, usePathname } from 'next/navigation';
-import { auth, db } from '@/lib/firebase';
-import { 
-    createUserWithEmailAndPassword, 
-    signInWithEmailAndPassword, 
-    signOut, 
-    onAuthStateChanged,
-    type User as FirebaseUser
-} from 'firebase/auth';
-import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { MOCK_ADMIN_USER } from '@/lib/mock-data';
+import { useLanguage } from '@/contexts/language-context';
+import { useRouter } from 'next/navigation';
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -35,96 +25,53 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
   const { t } = useLanguage();
   const router = useRouter();
-  const pathname = usePathname();
-
-  const handleAuthChange = useCallback(async (firebaseUser: FirebaseUser | null) => {
-    if (firebaseUser) {
-        const userDocRef = doc(db, "users", firebaseUser.uid);
-        const userDoc = await getDoc(userDocRef);
-
-        if (userDoc.exists()) {
-            const userProfile = userDoc.data() as UserProfile;
-            setUser({ ...userProfile, id: firebaseUser.uid });
-        } else {
-             // This case might happen if user is created in Auth but not in Firestore.
-             // For this app, we'll log them out.
-            await signOut(auth);
-            setUser(null);
-        }
-    } else {
-        setUser(null);
-    }
-    setLoading(false);
+  
+  useEffect(() => {
+    // Simulate fetching the logged-in user
+    setLoading(true);
+    setTimeout(() => {
+      // In this version, we always set the mock admin user
+      setUser(MOCK_ADMIN_USER);
+      setLoading(false);
+    }, 500);
   }, []);
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, handleAuthChange);
-    return () => unsubscribe();
-  }, [handleAuthChange]);
-
-
   const login = async (values: LoginFormValues) => {
-    try {
-      await signInWithEmailAndPassword(auth, values.email, values.password);
-      router.push('/dashboard');
-    } catch (error: any) {
-      console.error("Login error:", error);
-      toast({
-        variant: 'destructive',
-        title: t('toast.login.error.title'),
-        description: t('toast.login.error.invalidCredentials')
-      });
-    }
+    console.log("Simulating login with:", values);
+    setLoading(true);
+    // In a real Firebase app, you would use signInWithEmailAndPassword
+    setTimeout(() => {
+        setUser(MOCK_ADMIN_USER);
+        setLoading(false);
+        toast({
+          title: t('toast.login.success.title'),
+          description: t('toast.login.success.description'),
+        });
+        router.push('/dashboard');
+    }, 1000);
+    return Promise.resolve();
   };
 
   const signup = async (values: SignupFormValuesExtended) => {
-    try {
-      const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
-      const newUser = userCredential.user;
-
-      const userProfile: Omit<UserProfile, 'id'> = {
-          email: values.email,
-          companyName: values.companyName,
-          companyCode: values.companyCode,
-          vatCode: values.vatCode || '',
-          address: values.address,
-          contactPerson: values.contactPerson,
-          phone: values.phone,
-          paymentStatus: 'pending_verification',
-          isAdmin: values.email === 'admin@drivercheck.lt',
-          agreeToTerms: values.agreeToTerms,
-          registeredAt: serverTimestamp(),
-          subUsers: [],
-      };
-      
-      await setDoc(doc(db, "users", newUser.uid), userProfile);
-      
-      toast({
-          title: t('toast.signup.success.title'),
-          description: t('toast.signup.success.description'),
-      });
-
-      await signOut(auth);
-      router.push('/login');
-
-    } catch (error: any) {
-      console.error("Signup error:", error);
-      toast({
-        variant: 'destructive',
-        title: t('toast.signup.error.title'),
-        description: error.code === 'auth/email-already-in-use' ? t('toast.signup.error.emailExists') : t('toast.signup.error.descriptionGeneric'),
-      });
-    }
+    console.log("Simulating signup with:", values);
+    toast({
+      title: t('toast.signup.success.title'),
+      description: "Ši funkcija yra imituojama.",
+    });
+    router.push('/login');
+    return Promise.resolve();
   };
 
   const logout = async () => {
-    try {
-        await signOut(auth);
+    console.log("Simulating logout.");
+    setLoading(true);
+    setTimeout(() => {
+        setUser(null);
+        setLoading(false);
+        toast({ title: t('toast.logout.success.title') });
         router.push('/login');
-    } catch (error) {
-        console.error("Logout error:", error);
-        toast({ variant: 'destructive', title: t('toast.logout.error.title') });
-    }
+    }, 500);
+    return Promise.resolve();
   };
   
   const updateUserInContext = async (updatedUserData: UserProfile) => {
