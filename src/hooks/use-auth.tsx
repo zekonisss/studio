@@ -4,9 +4,8 @@ import type { UserProfile } from '@/types';
 import type { LoginFormValues, SignupFormValuesExtended } from '@/lib/schemas';
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { MOCK_ADMIN_USER } from '@/lib/mock-data';
 import { useLanguage } from '@/contexts/language-context';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { auth, db } from '@/lib/firebase';
 import { 
     createUserWithEmailAndPassword, 
@@ -34,56 +33,58 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
   const { t } = useLanguage();
   const router = useRouter();
-  const pathname = usePathname();
-  
+
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-        if (firebaseUser) {
-            const userProfile = await fetchUserProfile(firebaseUser);
-            if (userProfile) {
-              setUser(userProfile);
-            } else {
-              // This can happen if the user is authenticated in Firebase Auth but profile document doesn't exist
-              // For now, we sign them out.
-              await signOut(auth);
-              setUser(null);
-            }
-        } else {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
+      if (firebaseUser) {
+        try {
+          const userDocRef = doc(db, "users", firebaseUser.uid);
+          const userDocSnap = await getDoc(userDocRef);
+          
+          if (userDocSnap.exists()) {
+            const userData = userDocSnap.data() as Omit<UserProfile, 'id'>;
+            setUser({ id: firebaseUser.uid, ...userData });
+          } else {
+            console.warn("User document not found in Firestore");
             setUser(null);
+          }
+        } catch (error) {
+          console.error("Error fetching user profile:", error);
+          setUser(null);
         }
-        setLoading(false);
+      } else {
+        setUser(null);
+      }
+      setLoading(false);
     });
 
     return () => unsubscribe();
   }, []);
 
-  const fetchUserProfile = async (firebaseUser: FirebaseUser): Promise<UserProfile | null> => {
-      try {
-          const docRef = doc(db, "users", firebaseUser.uid);
-          const docSnap = await getDoc(docRef);
-          if (docSnap.exists()) {
-              return { id: docSnap.id, ...docSnap.data() } as UserProfile;
-          } else {
-              console.log("No such user profile!");
-              return null;
-          }
-      } catch (error) {
-          console.error("Error fetching user profile:", error);
-          return null;
-      }
-  };
-
   const login = async (values: LoginFormValues) => {
     setLoading(true);
     try {
-        await signInWithEmailAndPassword(auth, values.email, values.password);
-        toast({
-          title: t('toast.login.success.title'),
-          description: t('toast.login.success.description'),
-        });
-        router.push('/dashboard');
-    } catch(error: any) {
-        console.error(error);
+        const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
+        const firebaseUser = userCredential.user;
+        
+        const userDocRef = doc(db, "users", firebaseUser.uid);
+        const userDocSnap = await getDoc(userDocRef);
+        
+        if (userDocSnap.exists()) {
+          const userData = userDocSnap.data() as Omit<UserProfile, 'id'>;
+          setUser({ id: firebaseUser.uid, ...userData });
+          
+          toast({
+            title: t('toast.login.success.title'),
+            description: t('toast.login.success.description'),
+          });
+          
+          router.push('/dashboard');
+        } else {
+          throw new Error("User profile not found");
+        }
+    } catch (error: any) {
+        console.error("Login error:", error);
         toast({
           variant: "destructive",
           title: t('toast.login.error.title'),
@@ -97,8 +98,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signup = async (values: SignupFormValuesExtended) => {
     setLoading(true);
     try {
+      console.log("[SIGNUP] Starting signup process...");
+      
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       const firebaseUser = userCredential.user;
+      console.log("[SIGNUP] User created in Firebase Auth:", firebaseUser.uid);
 
       const newUserProfile: Omit<UserProfile, 'id'> = {
         email: values.email,
@@ -108,61 +112,94 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         address: values.address,
         contactPerson: values.contactPerson,
         phone: values.phone,
-        isAdmin: values.email === 'admin@drivercheck.lt', // Make admin if specific email
         paymentStatus: 'pending_verification',
+        isAdmin: false,
         agreeToTerms: values.agreeToTerms,
         registeredAt: new Date().toISOString(),
+        accountActivatedAt: null,
         subUsers: [],
       };
-      
-      await setDoc(doc(db, "users", firebaseUser.uid), newUserProfile);
-      
-      // Logout user immediately after signup to enforce admin verification
-      await signOut(auth);
+
+      const userDocRef = doc(db, "users", firebaseUser.uid);
+      console.log("[SIGNUP] Saving user profile to Firestore...");
+      await setDoc(userDocRef, newUserProfile);
+      console.log("[SIGNUP] User profile saved successfully");
+
+      setUser({ id: firebaseUser.uid, ...newUserProfile });
 
       toast({
         title: t('toast.signup.success.title'),
         description: t('toast.signup.success.description'),
       });
 
-      router.push('/login');
-
+      console.log("[SIGNUP] Redirecting to dashboard...");
+      setTimeout(() => {
+        router.push('/dashboard');
+      }, 500);
     } catch (error: any) {
-      console.error(error);
-      const description = error.code === 'auth/email-already-in-use' 
-        ? t('toast.signup.error.emailExists') 
-        : t('toast.signup.error.descriptionGeneric');
+      console.error("[SIGNUP] Error:", error);
+      console.error("[SIGNUP] Error code:", error.code);
+      console.error("[SIGNUP] Error message:", error.message);
+      
+      let errorMessage = t('toast.signup.error.descriptionGeneric');
+      
+      if (error.code) {
+        switch (error.code) {
+          case 'auth/email-already-in-use':
+            errorMessage = t('toast.signup.error.emailExists');
+            break;
+          case 'auth/weak-password':
+            errorMessage = t('toast.signup.error.weakPassword');
+            break;
+          case 'auth/invalid-email':
+            errorMessage = t('toast.signup.error.invalidEmail');
+            break;
+          default:
+            errorMessage = error.message || t('toast.signup.error.descriptionGeneric');
+        }
+      }
+
       toast({
         variant: "destructive",
         title: t('toast.signup.error.title'),
-        description,
+        description: errorMessage,
       });
     } finally {
-        setLoading(false);
+      setLoading(false);
+      console.log("[SIGNUP] Process completed, loading set to false");
     }
   };
 
   const logout = async () => {
-    setLoading(true);
     try {
       await signOut(auth);
-      toast({ title: t('toast.logout.success.title') });
-      router.push('/login');
-    } catch(error) {
-      console.error(error);
-      toast({ variant: "destructive", title: t('toast.logout.error.title')});
-    } finally {
-        // We don't set loading to false here, because the onAuthStateChanged listener will handle it.
+      setUser(null);
+      toast({
+        title: t('toast.logout.success.title'),
+        description: t('toast.logout.success.description'),
+      });
+      router.push("/login");
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast({
+        variant: "destructive",
+        title: t('toast.logout.error.title'),
+        description: t('toast.logout.error.description'),
+      });
     }
   };
   
   const updateUserInContext = async (updatedUserData: UserProfile) => {
     setUser(updatedUserData);
+    
     try {
-      const { id, ...dataToSave } = updatedUserData;
-      await setDoc(doc(db, "users", id), dataToSave, { merge: true });
+      if (updatedUserData.id) {
+        const userDocRef = doc(db, "users", updatedUserData.id);
+        const { id, ...dataWithoutId } = updatedUserData;
+        await setDoc(userDocRef, dataWithoutId, { merge: true });
+      }
     } catch (error) {
-       console.error("Error updating user profile in DB:", error);
+      console.error("Error updating user in Firestore:", error);
     }
   };
 

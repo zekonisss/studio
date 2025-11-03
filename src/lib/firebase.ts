@@ -5,12 +5,12 @@ import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  apiKey: "AIzaSyBusk1Rtrpm-gfnWCdmi2yj5vTumqLte3c",
+  authDomain: "drivershield.firebaseapp.com",
+  projectId: "drivershield",
+  storageBucket: "drivershield.firebasestorage.app",
+  messagingSenderId: "688007961476",
+  appId: "1:688007961476:web:d6d663ef7430182d781bd1",
 };
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
