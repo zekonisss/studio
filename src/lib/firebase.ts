@@ -5,7 +5,7 @@ import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBusk1Rtrpm-gfnWCdmi2yj5vTumqLte3c",
+  apiKey: "AIzaSyDOC3qL6S8zGz-kF9eA_I2aJbIu692rG_g",
   authDomain: "drivershield.firebaseapp.com",
   projectId: "drivershield",
   storageBucket: "drivershield.firebasestorage.app",
