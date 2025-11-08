@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { UserProfile } from '@/types';
@@ -35,29 +36,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const { auth } = getFirebase();
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        try {
+      try {
+        if (firebaseUser) {
           const userProfile = await storage.getUserById(firebaseUser.uid);
           if (userProfile) {
             setUser(userProfile);
           } else {
-            setUser(null); 
-            console.warn("User is authenticated, but no profile found in Firestore.");
+            console.warn("User authenticated, but no Firestore profile found. Logging out.");
+            await signOut(auth);
+            setUser(null);
           }
-        } catch (error) {
-          console.error("Error fetching user profile:", error);
-          // This toast will inform the user if Firestore is unreachable
-          toast({
-            variant: "destructive",
-            title: "Duomenų Bazės Klaida",
-            description: "Nepavyko gauti vartotojo profilio. Patikrinkite interneto ryšį arba susisiekite su palaikymo komanda.",
-          });
+        } else {
           setUser(null);
         }
-      } else {
+      } catch (error) {
+        console.error("Error during auth state change:", error);
+        toast({
+          variant: "destructive",
+          title: "Autentifikacijos Klaida",
+          description: "Nepavyko gauti vartotojo profilio. Bandykite perkrauti puslapį.",
+        });
         setUser(null);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     return () => unsubscribe();
@@ -90,6 +92,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     await setDoc(doc(db, "users", firebaseUser.uid), newUserProfile);
+    // No need to set user here, onAuthStateChanged will handle it
   };
 
   const logout = async () => {
