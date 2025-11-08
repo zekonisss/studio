@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -13,11 +12,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/use-auth";
-import { Settings, UserCircle, CreditCard, ShieldQuestion } from "lucide-react";
+import { Settings, UserCircle, CreditCard, ShieldQuestion, LogOut } from "lucide-react";
 import Link from "next/link";
+import { useLanguage } from "@/contexts/language-context";
 
 export function UserNav() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const { t } = useLanguage();
   
   if (!user) {
     return null;
@@ -53,22 +54,27 @@ export function UserNav() {
           <DropdownMenuItem asChild>
             <Link href="/account">
               <UserCircle className="mr-2 h-4 w-4" />
-              <span>Paskyra</span>
+              <span>{t('sidebar.account')}</span>
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
-            <Link href="/account?tab=payment"> {/* Placeholder for payment/subscription page */}
+            <Link href="/account?tab=payment">
               <CreditCard className="mr-2 h-4 w-4" />
-              <span>Mokėjimai</span>
+              <span>{t('account.tabs.payments')}</span>
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
-            <Link href="/support"> {/* Placeholder for support page */}
+            <Link href="/support">
               <ShieldQuestion className="mr-2 h-4 w-4" />
-              <span>Pagalba</span>
+              <span>{t('sidebar.support')}</span>
             </Link>
           </DropdownMenuItem>
         </DropdownMenuGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={logout}>
+          <LogOut className="mr-2 h-4 w-4" />
+          <span>{t('sidebar.logout')}</span>
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
