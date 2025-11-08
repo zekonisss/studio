@@ -46,33 +46,36 @@ export default function DashboardPage() {
   }
 
   useEffect(() => {
-    const fetchStats = async () => {
-      if (authLoading || !user) {
-        return;
-      }
+    // Temporarily disabled data fetching to preview UI
+    setIsLoading(false);
+    
+    // const fetchStats = async () => {
+    //   if (authLoading || !user) {
+    //     return;
+    //   }
       
-      setIsLoading(true);
+    //   setIsLoading(true);
       
-      try {
-        const [allPlatformReports, userReportsResult, userSearchLogs] = await Promise.all([
-            storage.getAllReports(),
-            storage.getUserReports(user.id),
-            storage.getSearchLogs(user.id),
-        ]);
+    //   try {
+    //     const [allPlatformReports, userReportsResult, userSearchLogs] = await Promise.all([
+    //         storage.getAllReports(),
+    //         storage.getUserReports(user.id),
+    //         storage.getSearchLogs(user.id),
+    //     ]);
 
-        setTotalReportsCount(allPlatformReports.length);
-        setRecentReports(allPlatformReports.slice(0, 4));
-        setUserReportsCount(userReportsResult.active.length);
-        setUserSearchesCount(userSearchLogs.length);
+    //     setTotalReportsCount(allPlatformReports.length);
+    //     setRecentReports(allPlatformReports.slice(0, 4));
+    //     setUserReportsCount(userReportsResult.active.length);
+    //     setUserSearchesCount(userSearchLogs.length);
 
-      } catch (error) {
-        console.error("Dashboard: Failed to fetch stats:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    //   } catch (error) {
+    //     console.error("Dashboard: Failed to fetch stats:", error);
+    //   } finally {
+    //     setIsLoading(false);
+    //   }
+    // };
 
-    fetchStats();
+    // fetchStats();
     
   }, [user, authLoading]);
 
@@ -253,5 +256,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-    
