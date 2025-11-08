@@ -52,27 +52,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           } catch (error) {
             console.error("Error fetching user profile on auth state change:", error);
             setUser(null);
+          } finally {
+            setLoading(false);
           }
       } else {
         setUser(null);
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     return () => unsubscribe();
   }, []);
 
   const login = async (values: LoginFormValues) => {
-    const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
-    const firebaseUser = userCredential.user;
-    const userDocRef = doc(db, "users", firebaseUser.uid);
-    const userDocSnap = await getDoc(userDocRef);
-    if (userDocSnap.exists()) {
-        const userData = userDocSnap.data() as Omit<UserProfile, 'id'>;
-        setUser({ id: firebaseUser.uid, ...userData });
-    } else {
-        throw new Error("User profile not found in database.");
-    }
+    await signInWithEmailAndPassword(auth, values.email, values.password);
+    // onAuthStateChanged will handle setting the user state.
   };
 
   const signup = async (values: SignupFormValuesExtended) => {
