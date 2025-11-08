@@ -10,15 +10,19 @@ export default function HomePage() {
   const { user, loading } = useAuth();
 
   useEffect(() => {
+    // We wait until the loading is false.
     if (!loading) {
+      // If there is a user, we redirect to the dashboard.
       if (user) {
         router.replace('/dashboard');
       } else {
+        // If there is no user, we redirect to the login page.
         router.replace('/login');
       }
     }
   }, [router, user, loading]);
 
+  // While the authentication state is loading, we show a spinner.
   return (
     <div className="flex h-screen w-full items-center justify-center bg-background">
       <Loader2 className="h-12 w-12 animate-spin text-primary" />

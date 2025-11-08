@@ -52,13 +52,13 @@ export default function LoginPage() {
           title: t('toast.login.success.title'),
           description: t('toast.login.success.description'),
       });
-      router.push('/dashboard');
+      // Redirection is now handled by the root HomePage
     } catch (error: any) {
        console.error("Login error:", error);
         toast({
           variant: "destructive",
           title: t('toast.login.error.title'),
-          description: t('toast.login.error.invalidCredentials'),
+          description: error.message || t('toast.login.error.invalidCredentials'),
         });
     } finally {
       setIsLoading(false);
