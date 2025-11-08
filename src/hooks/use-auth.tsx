@@ -2,7 +2,7 @@
 
 import type { UserProfile } from '@/types';
 import type { LoginFormValues, SignupFormValuesExtended } from '@/lib/schemas';
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { auth, db } from '@/lib/firebase';
 import { 
     createUserWithEmailAndPassword, 
@@ -13,6 +13,7 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, Timestamp } from "firebase/firestore";
 import * as storage from '@/lib/storage';
+import { useToast } from './use-toast';
 
 
 interface AuthContextType {
@@ -29,15 +30,30 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         try {
           const userProfile = await storage.getUserById(firebaseUser.uid);
-          setUser(userProfile);
-        } catch (error) {
-          console.error("Error fetching user profile:", error);
+          if (userProfile) {
+            setUser(userProfile);
+          } else {
+            // This case might happen if a user is authenticated in Firebase
+            // but their profile document doesn't exist in Firestore.
+            setUser(null); 
+            console.warn("User is authenticated, but no profile found in Firestore.");
+          }
+        } catch (error: any) {
+          console.error("Failed to get document because the client is offline or other error:", error);
+          toast({
+            variant: "destructive",
+            title: "Diagnostikos Klaida: Firestore Nepasiekiama",
+            description: `Nepavyko gauti vartotojo profilio. Priežastis: ${error.message}. Tai tikriausiai reiškia, kad Firestore duomenų bazė nėra sukurta arba aktyvuota.`,
+            duration: 10000,
+          });
+          // Still set user to null and stop loading to prevent infinite loop
           setUser(null);
         }
       } else {
@@ -47,7 +63,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [toast]);
 
   const login = async (values: LoginFormValues) => {
     await signInWithEmailAndPassword(auth, values.email, values.password);
@@ -78,6 +94,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = async () => {
     await signOut(auth);
+    setUser(null);
   };
   
   const updateUserInContext = async (updatedUserData: UserProfile) => {
