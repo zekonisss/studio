@@ -3,8 +3,6 @@
 import type { UserProfile } from '@/types';
 import type { LoginFormValues, SignupFormValuesExtended } from '@/lib/schemas';
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { useToast } from '@/hooks/use-toast';
-import { useLanguage } from '@/contexts/language-context';
 import { auth, db } from '@/lib/firebase';
 import { 
     createUserWithEmailAndPassword, 
@@ -13,7 +11,7 @@ import {
     onAuthStateChanged,
     type User as FirebaseUser
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, Timestamp, updateDoc } from "firebase/firestore";
+import { doc, setDoc, getDoc, Timestamp } from "firebase/firestore";
 import * as storage from '@/lib/storage';
 
 
@@ -52,7 +50,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const login = async (values: LoginFormValues) => {
-     await signInWithEmailAndPassword(auth, values.email, values.password);
+    await signInWithEmailAndPassword(auth, values.email, values.password);
   };
 
   const signup = async (values: SignupFormValuesExtended) => {
@@ -80,28 +78,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = async () => {
     await signOut(auth);
-    setUser(null);
   };
   
   const updateUserInContext = async (updatedUserData: UserProfile) => {
     setUser(updatedUserData);
-    
-    try {
-      if (updatedUserData.id) {
-        const userDocRef = doc(db, "users", updatedUserData.id);
-        const { id, ...dataWithoutId } = updatedUserData;
-        const dataToUpdate = Object.fromEntries(Object.entries(dataWithoutId).map(([key, value]) => {
-          if (value instanceof Date) {
-            return [key, Timestamp.fromDate(value)];
-          }
-          return [key, value];
-        }));
-
-        await updateDoc(userDocRef, dataToUpdate);
-      }
-    } catch (error) {
-      console.error("Error updating user in Firestore:", error);
-      throw error; 
+    if (updatedUserData.id) {
+        await storage.updateUserProfile(updatedUserData.id, updatedUserData);
     }
   };
 
