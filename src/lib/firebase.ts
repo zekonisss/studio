@@ -1,9 +1,9 @@
-
 "use client";
 
-import { initializeApp, getApps, getApp } from 'firebase/app';
+import { initializeApp, getApp, getApps } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
   apiKey: "AIzaSyBusklRtrpm-gfnwCdmi2yj5vTumqLte3c",
@@ -15,8 +15,10 @@ const firebaseConfig = {
   measurementId: "G-BKJYEF2X6Y"
 };
 
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const auth = getAuth(app);
+// Initialize Firebase
+const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app);
+const storage = getStorage(app);
 
-export { app, auth, db };
+export { app, db, auth, storage };
