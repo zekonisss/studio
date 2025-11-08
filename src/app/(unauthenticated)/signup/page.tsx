@@ -35,6 +35,7 @@ export default function SignupPage() {
   const { signup } = useAuth();
   const { t } = useLanguage();
   const { toast } = useToast();
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
 
@@ -62,7 +63,7 @@ export default function SignupPage() {
         title: t('toast.signup.success.title'),
         description: t('toast.signup.success.description'),
       });
-       // Redirection is handled by page.tsx
+      router.push('/dashboard');
     } catch (error: any) {
       console.error("[SIGNUP] Error:", error);
       
@@ -96,7 +97,7 @@ export default function SignupPage() {
     <Card className="w-full max-w-lg">
       <CardHeader>
         <CardTitle className="text-2xl">{t('signup.title')}</CardTitle>
-        <CardDescription>{t('toast.signup.success.description')}</CardDescription>
+        <CardDescription>{t('signup.description_short')}</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>

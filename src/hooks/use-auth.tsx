@@ -2,7 +2,7 @@
 
 import type { UserProfile } from '@/types';
 import type { LoginFormValues, SignupFormValuesExtended } from '@/lib/schemas';
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/language-context';
 import { auth, db } from '@/lib/firebase';
@@ -13,7 +13,7 @@ import {
     onAuthStateChanged,
     type User as FirebaseUser
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, Timestamp } from "firebase/firestore";
+import { doc, setDoc, getDoc, Timestamp, updateDoc } from "firebase/firestore";
 import { useRouter } from 'next/navigation';
 
 interface AuthContextType {
@@ -33,7 +33,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
   const { t } = useLanguage();
   const router = useRouter();
-  
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
@@ -46,7 +45,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               const userData = userDocSnap.data() as Omit<UserProfile, 'id'>;
               setUser({ id: firebaseUser.uid, ...userData });
             } else {
-              console.warn("User document not found in Firestore on auth state change");
+              console.warn("User document not found in Firestore on auth state change. Logging out.");
               await signOut(auth);
               setUser(null);
             }
@@ -64,11 +63,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const login = async (values: LoginFormValues) => {
-    await signInWithEmailAndPassword(auth, values.email, values.password);
-    // onAuthStateChanged will handle the rest
+    const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
+    const firebaseUser = userCredential.user;
+    const userDocRef = doc(db, "users", firebaseUser.uid);
+    const userDocSnap = await getDoc(userDocRef);
+    if (userDocSnap.exists()) {
+        const userData = userDocSnap.data() as Omit<UserProfile, 'id'>;
+        setUser({ id: firebaseUser.uid, ...userData });
+    } else {
+        throw new Error("User profile not found in database.");
+    }
   };
 
- const signup = async (values: SignupFormValuesExtended) => {
+  const signup = async (values: SignupFormValuesExtended) => {
     const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
     const firebaseUser = userCredential.user;
 
@@ -83,25 +90,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       paymentStatus: 'pending_verification',
       isAdmin: false,
       agreeToTerms: values.agreeToTerms,
-      registeredAt: new Date().toISOString(),
+      registeredAt: Timestamp.now(),
       accountActivatedAt: null,
       subUsers: [],
     };
 
-    const userDocRef = doc(db, "users", firebaseUser.uid);
-    await setDoc(userDocRef, newUserProfile);
-    
-    // Let onAuthStateChanged handle setting the user to prevent race conditions
+    await setDoc(doc(db, "users", firebaseUser.uid), newUserProfile);
+    // onAuthStateChanged will set the user state after signup.
   };
 
   const logout = async () => {
     try {
       await signOut(auth);
       // setUser(null) is handled by onAuthStateChanged
+      router.push("/login");
       toast({
         title: t('toast.logout.success.title'),
       });
-      router.push("/login");
     } catch (error) {
       console.error("Logout error:", error);
       toast({
@@ -118,10 +123,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (updatedUserData.id) {
         const userDocRef = doc(db, "users", updatedUserData.id);
         const { id, ...dataWithoutId } = updatedUserData;
-        await setDoc(userDocRef, dataWithoutId, { merge: true });
+        // Firestore does not allow `id` field to be written
+        const dataToUpdate = Object.fromEntries(Object.entries(dataWithoutId).map(([key, value]) => {
+          if (value instanceof Date) {
+            return [key, Timestamp.fromDate(value)];
+          }
+          return [key, value];
+        }));
+
+        await updateDoc(userDocRef, dataToUpdate);
       }
     } catch (error) {
       console.error("Error updating user in Firestore:", error);
+      throw error; // Re-throw to be caught in UI
     }
   };
 
