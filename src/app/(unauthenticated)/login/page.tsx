@@ -30,7 +30,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
-  const { login, user, loading, userProfileLoading } = useAuth();
+  const { login, user, loading } = useAuth();
   const { t } = useLanguage();
   const { toast } = useToast();
   const router = useRouter();
@@ -45,17 +45,17 @@ export default function LoginPage() {
   });
 
   useEffect(() => {
-    // Redirect if user is logged in and all loading is complete
-    if (!loading && !userProfileLoading && user) {
+    // Redirect if user is logged in
+    if (!loading && user) {
       router.push('/dashboard');
     }
-  }, [user, loading, userProfileLoading, router]);
+  }, [user, loading, router]);
 
   const onSubmit = async (values: LoginFormValues) => {
     setIsSubmitting(true);
     try {
       await login(values);
-      // The useEffect will handle redirection upon successful login and user state update.
+      // Successful login will trigger the useEffect to redirect.
     } catch (error: any) {
        console.error("Login error:", error);
         toast({
@@ -65,12 +65,23 @@ export default function LoginPage() {
             ? t('toast.login.error.invalidCredentials') 
             : error.message || t('toast.login.error.descriptionGeneric'),
         });
-        setIsSubmitting(false); // Make sure to re-enable the form on error
+    } finally {
+        setIsSubmitting(false); // Always re-enable the form
     }
   };
 
-  // Combine all loading states to disable the form
-  const isLoading = isSubmitting || loading || userProfileLoading;
+  // The main loading state for the page before hydration is `loading` from useAuth
+  // `isSubmitting` is for when the user clicks the button
+  const isLoading = isSubmitting || loading;
+
+  // Don't render the form until the initial auth check is done
+  if (loading) {
+     return (
+        <div className="flex h-screen w-full items-center justify-center bg-background">
+          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        </div>
+      );
+  }
 
   return (
     <Card className="w-full max-w-md">
@@ -107,7 +118,7 @@ export default function LoginPage() {
               )}
             />
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               {t('login.loginButton')}
             </Button>
           </form>

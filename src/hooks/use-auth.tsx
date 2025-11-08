@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { UserProfile } from '@/types';
@@ -20,7 +21,7 @@ interface AuthContextType {
   user: UserProfile | null;
   loading: boolean;
   userProfileLoading: boolean;
-  login: (values: LoginFormValues) => Promise<void>;
+  login: (values: LoginFormValues) => Promise<FirebaseUser>;
   signup: (values: SignupFormValuesExtended) => Promise<void>;
   logout: () => Promise<void>;
   updateUserInContext: (updatedUser: UserProfile) => Promise<void>;
@@ -30,13 +31,14 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [userProfileLoading, setUserProfileLoading] = useState(false);
+  const [loading, setLoading] = useState(true); // For initial auth state check
+  const [userProfileLoading, setUserProfileLoading] = useState(false); // For fetching firestore profile
   const { toast } = useToast();
   const router = useRouter();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      setLoading(true);
       if (firebaseUser) {
         setUserProfileLoading(true);
         try {
@@ -44,32 +46,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           if (userProfile) {
             setUser(userProfile);
           } else {
-            console.warn("No Firestore profile found for authenticated user.");
-            toast({
-              variant: "destructive",
-              title: "Profilio Klaida",
-              description: "Jūsų profilis nerastas. Prašome susisiekti su palaikymo komanda.",
-            });
-            await signOut(auth);
+             // This case might happen if Firestore profile creation fails after signup
+            console.warn("No Firestore profile found for authenticated user:", firebaseUser.uid);
             setUser(null);
+            await signOut(auth); // Log out the inconsistent user
           }
         } catch (error) {
           console.error("Error fetching user profile:", error);
           toast({
             variant: "destructive",
-            title: "Autentifikacijos Klaida",
+            title: "Autentifikacijos klaida",
             description: "Nepavyko gauti vartotojo profilio. Bandykite perkrauti puslapį.",
           });
-          setUser(null); // Clear user on error
+          setUser(null);
         } finally {
           setUserProfileLoading(false);
-          setLoading(false);
         }
       } else {
         setUser(null);
-        setLoading(false);
         setUserProfileLoading(false);
       }
+      setLoading(false);
     });
 
     return () => unsubscribe();
@@ -77,8 +74,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
 
   const login = async (values: LoginFormValues) => {
-    await signInWithEmailAndPassword(auth, values.email, values.password);
-    // onAuthStateChanged will handle the rest, including profile fetching
+    const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
+    // onAuthStateChanged will handle the rest
+    return userCredential.user;
   };
 
   const signup = async (values: SignupFormValuesExtended) => {
@@ -102,7 +100,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     await setDoc(doc(db, "users", fbUser.uid), newUserProfile);
-    // onAuthStateChanged will handle the state update after registration
+    // onAuthStateChanged will set the user state after this.
   };
 
   const logout = async () => {
