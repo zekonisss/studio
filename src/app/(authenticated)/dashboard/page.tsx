@@ -47,7 +47,8 @@ export default function DashboardPage() {
 
   useEffect(() => {    
     const fetchStats = async () => {
-      if (authLoading || !user) {
+      if (!user) {
+        setIsLoading(false);
         return;
       }
       
@@ -71,8 +72,10 @@ export default function DashboardPage() {
         setIsLoading(false);
       }
     };
-
-    fetchStats();
+    // Fetch stats only when auth is done and we have a user
+    if (!authLoading) {
+        fetchStats();
+    }
     
   }, [user, authLoading]);
 
@@ -93,13 +96,13 @@ export default function DashboardPage() {
       setShowExpirationWarning(false);
       setExpirationEndDate(null);
     }
-  }, [user, dateLocale, t]);
+  }, [user, dateLocale]);
 
   const subscriptionEndDateForDisplay = user?.accountActivatedAt
     ? addYears(getSafeDate(user.accountActivatedAt)!, 1)
     : null;
   
-   if (isLoading || authLoading) {
+   if (authLoading || isLoading) {
     return (
       <div className="flex justify-center items-center h-[calc(100vh-10rem)]">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />

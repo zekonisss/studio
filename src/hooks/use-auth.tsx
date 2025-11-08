@@ -3,7 +3,7 @@
 
 import type { UserProfile } from '@/types';
 import type { LoginFormValues, SignupFormValuesExtended } from '@/lib/schemas';
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { getFirebase } from '@/lib/firebase';
 import { 
     createUserWithEmailAndPassword, 
@@ -35,7 +35,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const { auth } = getFirebase();
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      setLoading(true);
       if (firebaseUser) {
         try {
           const userProfile = await storage.getUserById(firebaseUser.uid);
@@ -67,7 +66,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = async (values: LoginFormValues) => {
     const { auth } = getFirebase();
     await signInWithEmailAndPassword(auth, values.email, values.password);
-    // onAuthStateChanged will handle the rest
+    // onAuthStateChanged will handle setting the user state
   };
 
   const signup = async (values: SignupFormValuesExtended) => {
