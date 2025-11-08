@@ -24,11 +24,17 @@ import { useAuth } from "@/hooks/use-auth";
 import Link from "next/link";
 import { useLanguage } from "@/contexts/language-context";
 import { Loader2 } from "lucide-react";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
 
 
 export default function LoginPage() {
-  const { login, loading } = useAuth();
+  const { login } = useAuth();
   const { t } = useLanguage();
+  const { toast } = useToast();
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(LoginSchema),
@@ -39,7 +45,24 @@ export default function LoginPage() {
   });
 
   const onSubmit = async (values: LoginFormValues) => {
-    await login(values);
+    setIsLoading(true);
+    try {
+      await login(values);
+      toast({
+          title: t('toast.login.success.title'),
+          description: t('toast.login.success.description'),
+      });
+      router.push('/dashboard');
+    } catch (error: any) {
+       console.error("Login error:", error);
+        toast({
+          variant: "destructive",
+          title: t('toast.login.error.title'),
+          description: t('toast.login.error.invalidCredentials'),
+        });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -76,8 +99,8 @@ export default function LoginPage() {
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               {t('login.loginButton')}
             </Button>
           </form>

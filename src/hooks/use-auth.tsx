@@ -1,4 +1,3 @@
-
 "use client";
 
 import type { UserProfile } from '@/types';
@@ -64,42 +63,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const login = async (values: LoginFormValues) => {
-    setLoading(true);
-    try {
-      const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
-      const firebaseUser = userCredential.user;
-
-      const userDocRef = doc(db, "users", firebaseUser.uid);
-      const userDocSnap = await getDoc(userDocRef);
-
-      if (userDocSnap.exists()) {
-        const userData = userDocSnap.data() as Omit<UserProfile, 'id'>;
-        setUser({ id: firebaseUser.uid, ...userData });
-
-        toast({
-          title: t('toast.login.success.title'),
-          description: t('toast.login.success.description'),
-        });
-        
-        router.push('/dashboard');
-      } else {
-         throw new Error("User profile not found in database.");
-      }
-
-    } catch (error: any) {
-        console.error("Login error:", error);
-        toast({
-          variant: "destructive",
-          title: t('toast.login.error.title'),
-          description: t('toast.login.error.invalidCredentials'),
-        });
-    } finally {
-        setLoading(false);
-    }
+    await signInWithEmailAndPassword(auth, values.email, values.password);
+    // onAuthStateChanged will handle the user state update and redirection logic
+    // through the main useEffect.
   };
 
   const signup = async (values: SignupFormValuesExtended) => {
-    setLoading(true);
     try {
       console.log("[SIGNUP] Starting signup process...");
       
@@ -138,8 +107,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
     } catch (error: any) {
       console.error("[SIGNUP] Error:", error);
-      console.error("[SIGNUP] Error code:", error.code);
-      console.error("[SIGNUP] Error message:", error.message);
       
       let errorMessage = error.message || t('toast.signup.error.descriptionGeneric');
       
@@ -162,9 +129,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         title: t('toast.signup.error.title'),
         description: errorMessage,
       });
-    } finally {
-      setLoading(false);
-      console.log("[SIGNUP] Process completed, loading set to false");
     }
   };
 
