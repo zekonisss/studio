@@ -2,8 +2,29 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
+    // Vartotojai gali pasiekti savo profilius
+    match /users/{userId} {
       allow read, write: if request.auth != null;
+    }
+
+    // Įrašus gali kurti, skaityti ir atnaujinti tik prisijungę vartotojai
+    match /reports/{reportId} {
+      allow read, create, update: if request.auth != null;
+    }
+
+    // Paieškos žurnalus gali kurti tik prisijungę vartotojai
+    match /searchLogs/{logId} {
+        allow create: if request.auth != null;
+    }
+
+    // Audito žurnalus gali pasiekti tik prisijungę vartotojai
+    match /auditLogs/{logId} {
+        allow read, create: if request.auth != null;
+    }
+    
+    // Pranešimus gali pasiekti tik prisijungę vartotojai
+    match /notifications/{notificationId} {
+        allow read, create, update: if request.auth != null;
     }
   }
 }
