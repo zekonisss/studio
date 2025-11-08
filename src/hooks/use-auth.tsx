@@ -47,6 +47,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setUser(userProfile);
           } else {
             console.warn("No Firestore profile found for authenticated user:", firebaseUser.uid);
+            // This might happen if user is deleted from DB but not from Auth
+            // Or during signup race conditions. Force sign out.
             setUser(null);
             await signOut(auth);
           }
