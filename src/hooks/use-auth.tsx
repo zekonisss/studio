@@ -37,21 +37,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
       if (firebaseUser) {
-        try {
-          const userDocRef = doc(db, "users", firebaseUser.uid);
-          const userDocSnap = await getDoc(userDocRef);
-          
-          if (userDocSnap.exists()) {
-            const userData = userDocSnap.data() as Omit<UserProfile, 'id'>;
-            setUser({ id: firebaseUser.uid, ...userData });
-          } else {
-            console.warn("User document not found in Firestore");
-            await signOut(auth);
+        // If user state is not already set, fetch it.
+        // This handles the initial page load and persistence.
+        if (!user) {
+          try {
+            const userDocRef = doc(db, "users", firebaseUser.uid);
+            const userDocSnap = await getDoc(userDocRef);
+            
+            if (userDocSnap.exists()) {
+              const userData = userDocSnap.data() as Omit<UserProfile, 'id'>;
+              setUser({ id: firebaseUser.uid, ...userData });
+            } else {
+              console.warn("User document not found in Firestore on auth state change");
+              await signOut(auth);
+              setUser(null);
+            }
+          } catch (error) {
+            console.error("Error fetching user profile on auth state change:", error);
             setUser(null);
           }
-        } catch (error) {
-          console.error("Error fetching user profile:", error);
-          setUser(null);
         }
       } else {
         setUser(null);
@@ -60,21 +64,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     return () => unsubscribe();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const login = async (values: LoginFormValues) => {
-    await signInWithEmailAndPassword(auth, values.email, values.password);
-    // onAuthStateChanged will handle the user state update and redirection logic
-    // through the main useEffect.
+      const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
+      const firebaseUser = userCredential.user;
+      
+      const userDocRef = doc(db, "users", firebaseUser.uid);
+      const userDocSnap = await getDoc(userDocRef);
+
+      if (userDocSnap.exists()) {
+        const userData = userDocSnap.data() as Omit<UserProfile, 'id'>;
+        setUser({ id: firebaseUser.uid, ...userData });
+      } else {
+        throw new Error("User profile not found in database.");
+      }
   };
 
   const signup = async (values: SignupFormValuesExtended) => {
-    try {
-      console.log("[SIGNUP] Starting signup process...");
-      
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       const firebaseUser = userCredential.user;
-      console.log("[SIGNUP] User created in Firebase Auth:", firebaseUser.uid);
 
       const newUserProfile: Omit<UserProfile, 'id'> = {
         email: values.email,
@@ -93,43 +103,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       };
 
       const userDocRef = doc(db, "users", firebaseUser.uid);
-      console.log("[SIGNUP] Saving user profile to Firestore...");
       await setDoc(userDocRef, newUserProfile);
-      console.log("[SIGNUP] User profile saved successfully");
       
-      toast({
-        title: t('toast.signup.success.title'),
-        description: t('toast.signup.success.description'),
-      });
-      
-      console.log("[SIGNUP] Redirecting to dashboard...");
-      router.push('/dashboard');
-      
-    } catch (error: any) {
-      console.error("[SIGNUP] Error:", error);
-      
-      let errorMessage = error.message || t('toast.signup.error.descriptionGeneric');
-      
-      if (error.code) {
-        switch (error.code) {
-          case 'auth/email-already-in-use':
-            errorMessage = t('toast.signup.error.emailExists');
-            break;
-          case 'auth/weak-password':
-            errorMessage = t('toast.signup.error.weakPassword');
-            break;
-          case 'auth/invalid-email':
-            errorMessage = t('toast.signup.error.invalidEmail');
-            break;
-        }
-      }
-
-      toast({
-        variant: "destructive",
-        title: t('toast.signup.error.title'),
-        description: errorMessage,
-      });
-    }
+      setUser({ id: firebaseUser.uid, ...newUserProfile });
   };
 
   const logout = async () => {

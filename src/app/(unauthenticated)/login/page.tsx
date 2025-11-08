@@ -52,7 +52,7 @@ export default function LoginPage() {
           title: t('toast.login.success.title'),
           description: t('toast.login.success.description'),
       });
-      // Redirection is now handled by the root HomePage
+      router.push('/dashboard');
     } catch (error: any) {
        console.error("Login error:", error);
         toast({

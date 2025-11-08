@@ -27,10 +27,17 @@ import Link from "next/link";
 import { useLanguage } from "@/contexts/language-context";
 import { Loader2 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 export default function SignupPage() {
-  const { signup, loading } = useAuth();
+  const { signup } = useAuth();
   const { t } = useLanguage();
+  const { toast } = useToast();
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+
 
   const form = useForm<SignupFormValuesExtended>({
     resolver: zodResolver(SignupFormSchema),
@@ -49,7 +56,41 @@ export default function SignupPage() {
   });
 
   const onSubmit = async (values: SignupFormValuesExtended) => {
-    await signup(values);
+    setIsLoading(true);
+    try {
+      await signup(values);
+      toast({
+        title: t('toast.signup.success.title'),
+        description: t('toast.signup.success.description'),
+      });
+       router.push('/dashboard');
+    } catch (error: any) {
+      console.error("[SIGNUP] Error:", error);
+      
+      let errorMessage = error.message || t('toast.signup.error.descriptionGeneric');
+      
+      if (error.code) {
+        switch (error.code) {
+          case 'auth/email-already-in-use':
+            errorMessage = t('toast.signup.error.emailExists');
+            break;
+          case 'auth/weak-password':
+            errorMessage = t('toast.signup.error.weakPassword');
+            break;
+          case 'auth/invalid-email':
+            errorMessage = t('toast.signup.error.invalidEmail');
+            break;
+        }
+      }
+
+      toast({
+        variant: "destructive",
+        title: t('toast.signup.error.title'),
+        description: errorMessage,
+      });
+    } finally {
+        setIsLoading(false);
+    }
   };
 
   return (
@@ -211,8 +252,8 @@ export default function SignupPage() {
               )}
             />
 
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               {t('signup.form.submitButton')}
             </Button>
           </form>
