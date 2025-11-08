@@ -35,7 +35,6 @@ export default function SignupPage() {
   const { signup } = useAuth();
   const { t } = useLanguage();
   const { toast } = useToast();
-  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
 
@@ -63,7 +62,7 @@ export default function SignupPage() {
         title: t('toast.signup.success.title'),
         description: t('toast.signup.success.description'),
       });
-       router.push('/dashboard');
+       // Redirection is handled by page.tsx
     } catch (error: any) {
       console.error("[SIGNUP] Error:", error);
       

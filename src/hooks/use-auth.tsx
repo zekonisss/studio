@@ -5,7 +5,6 @@ import type { LoginFormValues, SignupFormValuesExtended } from '@/lib/schemas';
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/language-context';
-import { useRouter } from 'next/navigation';
 import { auth, db } from '@/lib/firebase';
 import { 
     createUserWithEmailAndPassword, 
@@ -14,7 +13,8 @@ import {
     onAuthStateChanged,
     type User as FirebaseUser
 } from 'firebase/auth';
-import { doc, setDoc, getDoc } from "firebase/firestore";
+import { doc, setDoc, getDoc, Timestamp } from "firebase/firestore";
+import { useRouter } from 'next/navigation';
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -33,6 +33,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
   const { t } = useLanguage();
   const router = useRouter();
+  
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
@@ -63,44 +64,42 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const login = async (values: LoginFormValues) => {
-      await signInWithEmailAndPassword(auth, values.email, values.password);
-      // After successful sign-in, onAuthStateChanged will handle fetching user data.
-      // This prevents the "client is offline" error by not calling getDoc immediately.
+    await signInWithEmailAndPassword(auth, values.email, values.password);
+    // onAuthStateChanged will handle the rest
   };
 
-  const signup = async (values: SignupFormValuesExtended) => {
-      const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
-      const firebaseUser = userCredential.user;
+ const signup = async (values: SignupFormValuesExtended) => {
+    const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
+    const firebaseUser = userCredential.user;
 
-      const newUserProfile: Omit<UserProfile, 'id'> = {
-        email: values.email,
-        companyName: values.companyName,
-        companyCode: values.companyCode,
-        vatCode: values.vatCode,
-        address: values.address,
-        contactPerson: values.contactPerson,
-        phone: values.phone,
-        paymentStatus: 'pending_verification',
-        isAdmin: false,
-        agreeToTerms: values.agreeToTerms,
-        registeredAt: new Date().toISOString(),
-        accountActivatedAt: null,
-        subUsers: [],
-      };
+    const newUserProfile: Omit<UserProfile, 'id'> = {
+      email: values.email,
+      companyName: values.companyName,
+      companyCode: values.companyCode,
+      vatCode: values.vatCode || "",
+      address: values.address,
+      contactPerson: values.contactPerson,
+      phone: values.phone,
+      paymentStatus: 'pending_verification',
+      isAdmin: false,
+      agreeToTerms: values.agreeToTerms,
+      registeredAt: new Date().toISOString(),
+      accountActivatedAt: null,
+      subUsers: [],
+    };
 
-      const userDocRef = doc(db, "users", firebaseUser.uid);
-      await setDoc(userDocRef, newUserProfile);
-      
-      setUser({ id: firebaseUser.uid, ...newUserProfile });
+    const userDocRef = doc(db, "users", firebaseUser.uid);
+    await setDoc(userDocRef, newUserProfile);
+    
+    // Let onAuthStateChanged handle setting the user to prevent race conditions
   };
 
   const logout = async () => {
     try {
       await signOut(auth);
-      setUser(null);
+      // setUser(null) is handled by onAuthStateChanged
       toast({
         title: t('toast.logout.success.title'),
-        description: t('toast.logout.success.description'),
       });
       router.push("/login");
     } catch (error) {
@@ -108,7 +107,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       toast({
         variant: "destructive",
         title: t('toast.logout.error.title'),
-        description: t('toast.logout.error.description'),
       });
     }
   };
