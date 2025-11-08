@@ -37,9 +37,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
       if (firebaseUser) {
-        // If user state is not already set, fetch it.
-        // This handles the initial page load and persistence.
-        if (!user) {
           try {
             const userDocRef = doc(db, "users", firebaseUser.uid);
             const userDocSnap = await getDoc(userDocRef);
@@ -56,7 +53,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             console.error("Error fetching user profile on auth state change:", error);
             setUser(null);
           }
-        }
       } else {
         setUser(null);
       }
@@ -64,22 +60,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     return () => unsubscribe();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const login = async (values: LoginFormValues) => {
-      const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
-      const firebaseUser = userCredential.user;
-      
-      const userDocRef = doc(db, "users", firebaseUser.uid);
-      const userDocSnap = await getDoc(userDocRef);
-
-      if (userDocSnap.exists()) {
-        const userData = userDocSnap.data() as Omit<UserProfile, 'id'>;
-        setUser({ id: firebaseUser.uid, ...userData });
-      } else {
-        throw new Error("User profile not found in database.");
-      }
+      await signInWithEmailAndPassword(auth, values.email, values.password);
+      // After successful sign-in, onAuthStateChanged will handle fetching user data.
+      // This prevents the "client is offline" error by not calling getDoc immediately.
   };
 
   const signup = async (values: SignupFormValuesExtended) => {
