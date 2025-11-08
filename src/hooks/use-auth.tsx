@@ -46,6 +46,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setUser({ id: firebaseUser.uid, ...userData });
           } else {
             console.warn("User document not found in Firestore");
+            await signOut(auth);
             setUser(null);
           }
         } catch (error) {
@@ -64,25 +65,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = async (values: LoginFormValues) => {
     setLoading(true);
     try {
-        const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
-        const firebaseUser = userCredential.user;
-        
-        const userDocRef = doc(db, "users", firebaseUser.uid);
-        const userDocSnap = await getDoc(userDocRef);
-        
-        if (userDocSnap.exists()) {
-          const userData = userDocSnap.data() as Omit<UserProfile, 'id'>;
-          setUser({ id: firebaseUser.uid, ...userData });
-          
-          toast({
-            title: t('toast.login.success.title'),
-            description: t('toast.login.success.description'),
-          });
-          
-          router.push('/dashboard');
-        } else {
-          throw new Error("User profile not found");
-        }
+        await signInWithEmailAndPassword(auth, values.email, values.password);
+        toast({
+          title: t('toast.login.success.title'),
+          description: t('toast.login.success.description'),
+        });
+        router.push('/dashboard');
     } catch (error: any) {
         console.error("Login error:", error);
         toast({
@@ -124,8 +112,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.log("[SIGNUP] Saving user profile to Firestore...");
       await setDoc(userDocRef, newUserProfile);
       console.log("[SIGNUP] User profile saved successfully");
-
-      setUser({ id: firebaseUser.uid, ...newUserProfile });
 
       toast({
         title: t('toast.signup.success.title'),
