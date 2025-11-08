@@ -126,18 +126,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.log("[SIGNUP] Saving user profile to Firestore...");
       await setDoc(userDocRef, newUserProfile);
       console.log("[SIGNUP] User profile saved successfully");
-
-      // Directly set the new user in state to avoid race conditions
-      setUser({ id: firebaseUser.uid, ...newUserProfile });
       
       toast({
         title: t('toast.signup.success.title'),
         description: t('toast.signup.success.description'),
       });
-
+      
       console.log("[SIGNUP] Redirecting to dashboard...");
       router.push('/dashboard');
-
+      
     } catch (error: any) {
       console.error("[SIGNUP] Error:", error);
       console.error("[SIGNUP] Error code:", error.code);
