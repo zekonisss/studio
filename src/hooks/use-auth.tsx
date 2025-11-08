@@ -3,7 +3,7 @@
 
 import type { UserProfile } from '@/types';
 import type { LoginFormValues, SignupFormValuesExtended } from '@/lib/schemas';
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { getFirebase } from '@/lib/firebase';
 import { 
     createUserWithEmailAndPassword, 
@@ -15,7 +15,6 @@ import {
 import { doc, setDoc, getDoc, Timestamp } from "firebase/firestore";
 import * as storage from '@/lib/storage';
 import { useToast } from './use-toast';
-
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -36,8 +35,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const { auth } = getFirebase();
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      try {
-        if (firebaseUser) {
+      setLoading(true);
+      if (firebaseUser) {
+        try {
           const userProfile = await storage.getUserById(firebaseUser.uid);
           if (userProfile) {
             setUser(userProfile);
@@ -46,20 +46,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             await signOut(auth);
             setUser(null);
           }
-        } else {
-          setUser(null);
+        } catch (error) {
+           console.error("Error fetching user profile:", error);
+           toast({
+             variant: "destructive",
+             title: "Autentifikacijos Klaida",
+             description: "Nepavyko gauti vartotojo profilio. Bandykite perkrauti puslapį.",
+           });
+           setUser(null);
         }
-      } catch (error) {
-        console.error("Error during auth state change:", error);
-        toast({
-          variant: "destructive",
-          title: "Autentifikacijos Klaida",
-          description: "Nepavyko gauti vartotojo profilio. Bandykite perkrauti puslapį.",
-        });
+      } else {
         setUser(null);
-      } finally {
-        setLoading(false);
       }
+      setLoading(false);
     });
 
     return () => unsubscribe();
@@ -68,6 +67,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = async (values: LoginFormValues) => {
     const { auth } = getFirebase();
     await signInWithEmailAndPassword(auth, values.email, values.password);
+    // onAuthStateChanged will handle the rest
   };
 
   const signup = async (values: SignupFormValuesExtended) => {
@@ -92,7 +92,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     await setDoc(doc(db, "users", firebaseUser.uid), newUserProfile);
-    // No need to set user here, onAuthStateChanged will handle it
+    // onAuthStateChanged will handle setting the user state
   };
 
   const logout = async () => {
