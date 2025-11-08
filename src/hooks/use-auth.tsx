@@ -65,12 +65,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = async (values: LoginFormValues) => {
     setLoading(true);
     try {
-        await signInWithEmailAndPassword(auth, values.email, values.password);
+      const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
+      const firebaseUser = userCredential.user;
+
+      const userDocRef = doc(db, "users", firebaseUser.uid);
+      const userDocSnap = await getDoc(userDocRef);
+
+      if (userDocSnap.exists()) {
+        const userData = userDocSnap.data() as Omit<UserProfile, 'id'>;
+        setUser({ id: firebaseUser.uid, ...userData });
+
         toast({
           title: t('toast.login.success.title'),
           description: t('toast.login.success.description'),
         });
+        
         router.push('/dashboard');
+      } else {
+         throw new Error("User profile not found in database.");
+      }
+
     } catch (error: any) {
         console.error("Login error:", error);
         toast({
@@ -113,6 +127,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       await setDoc(userDocRef, newUserProfile);
       console.log("[SIGNUP] User profile saved successfully");
 
+      // Directly set the new user in state to avoid race conditions
+      setUser({ id: firebaseUser.uid, ...newUserProfile });
+      
       toast({
         title: t('toast.signup.success.title'),
         description: t('toast.signup.success.description'),
