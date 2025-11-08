@@ -1,10 +1,9 @@
-
 "use client";
 
 import type { UserProfile } from '@/types';
 import type { LoginFormValues, SignupFormValuesExtended } from '@/lib/schemas';
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { app, auth, db } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
 import { 
     createUserWithEmailAndPassword, 
     signInWithEmailAndPassword, 
@@ -15,6 +14,7 @@ import {
 import { doc, setDoc, Timestamp, getDoc } from "firebase/firestore";
 import * as storageApi from '@/lib/storage';
 import { useToast } from './use-toast';
+import { useRouter } from 'next/navigation';
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -32,59 +32,53 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [userProfileLoading, setUserProfileLoading] = useState(false);
-  const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const { toast } = useToast();
+  const router = useRouter();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (fbUser) => {
-      setFirebaseUser(fbUser);
-      setLoading(false);
-    });
-    return () => unsubscribe();
-  }, []);
-
-  const fetchUserProfile = useCallback(async (fbUser: FirebaseUser) => {
-    setUserProfileLoading(true);
-    try {
-      const userProfile = await storageApi.getUserById(fbUser.uid);
-      if (userProfile) {
-        setUser(userProfile);
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        setUserProfileLoading(true);
+        try {
+          const userProfile = await storageApi.getUserById(firebaseUser.uid);
+          if (userProfile) {
+            setUser(userProfile);
+          } else {
+            console.warn("No Firestore profile found for authenticated user.");
+            toast({
+              variant: "destructive",
+              title: "Profilio Klaida",
+              description: "Jūsų profilis nerastas. Prašome susisiekti su palaikymo komanda.",
+            });
+            await signOut(auth);
+            setUser(null);
+          }
+        } catch (error) {
+          console.error("Error fetching user profile:", error);
+          toast({
+            variant: "destructive",
+            title: "Autentifikacijos Klaida",
+            description: "Nepavyko gauti vartotojo profilio. Bandykite perkrauti puslapį.",
+          });
+          setUser(null); // Clear user on error
+        } finally {
+          setUserProfileLoading(false);
+          setLoading(false);
+        }
       } else {
-        console.warn("User authenticated with Firebase, but no Firestore profile found.");
-        toast({
-          variant: "destructive",
-          title: "Profilio Klaida",
-          description: "Jūsų profilis nerastas duomenų bazėje. Prašome susisiekti su palaikymo komanda.",
-        });
-        await signOut(auth);
         setUser(null);
+        setLoading(false);
+        setUserProfileLoading(false);
       }
-    } catch (error) {
-      console.error("Error fetching user profile:", error);
-      toast({
-        variant: "destructive",
-        title: "Autentifikacijos Klaida",
-        description: "Nepavyko gauti vartotojo profilio. Bandykite perkrauti puslapį.",
-      });
-      setUser(null);
-    } finally {
-      setUserProfileLoading(false);
-    }
-  }, [toast]);
+    });
 
-  useEffect(() => {
-    if (firebaseUser) {
-      fetchUserProfile(firebaseUser);
-    } else {
-      setUser(null);
-      setUserProfileLoading(false);
-    }
-  }, [firebaseUser, fetchUserProfile]);
+    return () => unsubscribe();
+  }, [toast]);
 
 
   const login = async (values: LoginFormValues) => {
     await signInWithEmailAndPassword(auth, values.email, values.password);
-    // onAuthStateChanged will handle the rest
+    // onAuthStateChanged will handle the rest, including profile fetching
   };
 
   const signup = async (values: SignupFormValuesExtended) => {
@@ -103,18 +97,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       isAdmin: false,
       agreeToTerms: values.agreeToTerms,
       registeredAt: Timestamp.now(),
-      accountActivatedAt: null,
+      accountActivatedAt: undefined,
       subUsers: [],
     };
 
     await setDoc(doc(db, "users", fbUser.uid), newUserProfile);
-    // onAuthStateChanged will handle the state update
+    // onAuthStateChanged will handle the state update after registration
   };
 
   const logout = async () => {
     await signOut(auth);
     setUser(null);
-    setFirebaseUser(null);
+    router.push('/login'); // Redirect to login on logout
   };
   
   const updateUserInContext = async (updatedUserData: UserProfile) => {
