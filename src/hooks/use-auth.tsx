@@ -1,9 +1,8 @@
-
 "use client";
 
 import type { UserProfile } from '@/types';
 import type { LoginFormValues, SignupFormValuesExtended } from '@/lib/schemas';
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/language-context';
 import { auth, db } from '@/lib/firebase';
@@ -32,8 +31,6 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
-  const { t } = useLanguage();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -82,16 +79,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = async () => {
-    try {
-      await signOut(auth);
-      // The redirection will be handled by the page component after state change.
-    } catch (error) {
-      console.error("Logout error:", error);
-      toast({
-        variant: "destructive",
-        title: t('toast.logout.error.title'),
-      });
-    }
+    await signOut(auth);
+    setUser(null);
   };
   
   const updateUserInContext = async (updatedUserData: UserProfile) => {
