@@ -133,9 +133,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
 
       console.log("[SIGNUP] Redirecting to dashboard...");
-      setTimeout(() => {
-        router.push('/dashboard');
-      }, 500);
+      router.push('/dashboard');
+
     } catch (error: any) {
       console.error("[SIGNUP] Error:", error);
       console.error("[SIGNUP] Error code:", error.code);
