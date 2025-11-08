@@ -84,7 +84,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = async () => {
     try {
       await signOut(auth);
-      // Nukreipimas bus valdomas per `page.tsx` po būsenos pasikeitimo
+      // The redirection will be handled by the page component after state change.
     } catch (error) {
       console.error("Logout error:", error);
       toast({

@@ -27,11 +27,13 @@ import { useLanguage } from "@/contexts/language-context";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
   const { login } = useAuth();
   const { t } = useLanguage();
   const { toast } = useToast();
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<LoginFormValues>({
@@ -50,7 +52,7 @@ export default function LoginPage() {
           title: t('toast.login.success.title'),
           description: t('toast.login.success.description'),
       });
-      // The redirection is now handled by src/app/page.tsx
+      router.push('/dashboard');
     } catch (error: any) {
        console.error("Login error:", error);
         toast({
