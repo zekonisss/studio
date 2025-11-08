@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/use-auth";
-import { Settings, UserCircle, CreditCard, ShieldQuestion, LogOut } from "lucide-react";
+import { UserCircle, CreditCard, ShieldQuestion, LogOut } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/contexts/language-context";
 
