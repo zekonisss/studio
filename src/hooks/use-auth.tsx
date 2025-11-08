@@ -15,6 +15,8 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, Timestamp, updateDoc } from "firebase/firestore";
 import { useRouter } from 'next/navigation';
+import * as storage from '@/lib/storage';
+
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -35,23 +37,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const router = useRouter();
 
   useEffect(() => {
-    setLoading(true);
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
       if (firebaseUser) {
           try {
-            const userDocRef = doc(db, "users", firebaseUser.uid);
-            const userDocSnap = await getDoc(userDocRef);
-            
-            if (userDocSnap.exists()) {
-              const userData = userDocSnap.data() as Omit<UserProfile, 'id'>;
-              setUser({ id: firebaseUser.uid, ...userData });
+            const userProfile = await storage.getUserById(firebaseUser.uid);
+            if (userProfile) {
+              setUser(userProfile);
             } else {
-              console.warn("User document not found in Firestore on auth state change. Logging out.");
-              await signOut(auth);
-              setUser(null);
+               console.warn("User document not found in Firestore. Logging out.");
+               await signOut(auth);
+               setUser(null);
             }
           } catch (error) {
-            console.error("Error fetching user profile on auth state change:", error);
+            console.error("Error fetching user profile:", error);
             setUser(null);
           } finally {
             setLoading(false);
@@ -67,7 +65,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (values: LoginFormValues) => {
     await signInWithEmailAndPassword(auth, values.email, values.password);
-    // onAuthStateChanged will handle setting the user state.
+    // onAuthStateChanged will handle the rest
   };
 
   const signup = async (values: SignupFormValuesExtended) => {

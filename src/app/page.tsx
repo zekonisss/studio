@@ -10,7 +10,7 @@ export default function HomePage() {
   const { user, loading } = useAuth();
 
   useEffect(() => {
-    // We wait until the loading is false.
+    // We wait until the auth state is determined.
     if (!loading) {
       // If there is a user, we redirect to the dashboard.
       if (user) {
