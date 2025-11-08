@@ -52,7 +52,7 @@ export default function LoginPage() {
           title: t('toast.login.success.title'),
           description: t('toast.login.success.description'),
       });
-      router.push('/dashboard');
+      // Nukreipimas bus atliekamas iš src/app/page.tsx
     } catch (error: any) {
        console.error("Login error:", error);
         toast({
