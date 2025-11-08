@@ -12,7 +12,7 @@ import {
     onAuthStateChanged,
     type User as FirebaseUser
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, Timestamp } from "firebase/firestore";
+import { doc, setDoc, Timestamp } from "firebase/firestore";
 import * as storage from '@/lib/storage';
 import { useToast } from './use-toast';
 
@@ -29,39 +29,53 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
+  const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
     const { auth } = getFirebase();
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    const unsubscribe = onAuthStateChanged(auth, (fbUser) => {
+      setFirebaseUser(fbUser);
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
       if (firebaseUser) {
+        setLoading(true);
         try {
           const userProfile = await storage.getUserById(firebaseUser.uid);
           if (userProfile) {
             setUser(userProfile);
           } else {
-            console.warn("User authenticated, but no Firestore profile found. Logging out.");
-            await signOut(auth);
+            // This case can happen if a user is created in Auth but their Firestore doc fails to be created
+            // Or if a user is deleted from Firestore but not Auth
+            console.warn("User authenticated with Firebase, but no Firestore profile found.");
+            const { auth } = getFirebase();
+            await signOut(auth); // Log out to prevent inconsistent state
             setUser(null);
           }
         } catch (error) {
-           console.error("Error fetching user profile:", error);
-           toast({
-             variant: "destructive",
-             title: "Autentifikacijos Klaida",
-             description: "Nepavyko gauti vartotojo profilio. Bandykite perkrauti puslapį.",
-           });
-           setUser(null);
+          console.error("Error fetching user profile:", error);
+          toast({
+            variant: "destructive",
+            title: "Autentifikacijos Klaida",
+            description: "Nepavyko gauti vartotojo profilio. Bandykite perkrauti puslapį.",
+          });
+          setUser(null); // Ensure user is null on error
+        } finally {
+          setLoading(false);
         }
       } else {
         setUser(null);
       }
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, [toast]);
+    };
+    
+    fetchUserProfile();
+  }, [firebaseUser, toast]);
 
   const login = async (values: LoginFormValues) => {
     const { auth } = getFirebase();
@@ -72,7 +86,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signup = async (values: SignupFormValuesExtended) => {
     const { auth, db } = getFirebase();
     const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
-    const firebaseUser = userCredential.user;
+    const fbUser = userCredential.user;
 
     const newUserProfile: Omit<UserProfile, 'id'> = {
       email: values.email,
@@ -90,14 +104,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       subUsers: [],
     };
 
-    await setDoc(doc(db, "users", firebaseUser.uid), newUserProfile);
-    // onAuthStateChanged will handle setting the user state
+    await setDoc(doc(db, "users", fbUser.uid), newUserProfile);
+    // onAuthStateChanged will handle the state update
   };
 
   const logout = async () => {
     const { auth } = getFirebase();
     await signOut(auth);
     setUser(null);
+    setFirebaseUser(null);
   };
   
   const updateUserInContext = async (updatedUserData: UserProfile) => {
@@ -123,3 +138,4 @@ export const useAuth = (): AuthContextType => {
   }
   return context;
 };
+
