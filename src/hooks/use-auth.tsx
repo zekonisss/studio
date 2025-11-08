@@ -35,27 +35,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        try {
           const userProfile = await storage.getUserById(firebaseUser.uid);
           if (userProfile) {
             setUser(userProfile);
           } else {
-            // This case might happen if a user is authenticated in Firebase
-            // but their profile document doesn't exist in Firestore.
             setUser(null); 
             console.warn("User is authenticated, but no profile found in Firestore.");
           }
-        } catch (error: any) {
-          console.error("Failed to get document because the client is offline or other error:", error);
-          toast({
-            variant: "destructive",
-            title: "Diagnostikos Klaida: Firestore Nepasiekiama",
-            description: `Nepavyko gauti vartotojo profilio. Priežastis: ${error.message}. Tai tikriausiai reiškia, kad Firestore duomenų bazė nėra sukurta arba aktyvuota.`,
-            duration: 10000,
-          });
-          // Still set user to null and stop loading to prevent infinite loop
-          setUser(null);
-        }
       } else {
         setUser(null);
       }
