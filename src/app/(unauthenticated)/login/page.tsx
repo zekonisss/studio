@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useForm } from "react-hook-form";
@@ -52,7 +51,7 @@ export default function LoginPage() {
           title: t('toast.login.success.title'),
           description: t('toast.login.success.description'),
       });
-      // The redirect is now handled by the root page.tsx
+      router.push('/dashboard');
     } catch (error: any) {
        console.error("Login error:", error);
         toast({
