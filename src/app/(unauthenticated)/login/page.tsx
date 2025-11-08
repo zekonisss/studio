@@ -44,8 +44,8 @@ export default function LoginPage() {
     },
   });
 
+  // This effect handles redirection if a user is already logged in
   useEffect(() => {
-    // Redirect if user is logged in
     if (!loading && user) {
       router.push('/dashboard');
     }
@@ -55,7 +55,10 @@ export default function LoginPage() {
     setIsSubmitting(true);
     try {
       await login(values);
-      // Successful login will trigger the useEffect to redirect.
+      // After a successful login, the onAuthStateChanged in useAuth will update the user state.
+      // The useEffect above will then handle the redirection.
+      // For a faster perceived response, we can redirect immediately.
+      router.push('/dashboard');
     } catch (error: any) {
        console.error("Login error:", error);
         toast({
@@ -66,15 +69,12 @@ export default function LoginPage() {
             : error.message || t('toast.login.error.descriptionGeneric'),
         });
     } finally {
-        setIsSubmitting(false); // Always re-enable the form
+        // This is crucial: always re-enable the form after the attempt
+        setIsSubmitting(false); 
     }
   };
-
-  // The main loading state for the page before hydration is `loading` from useAuth
-  // `isSubmitting` is for when the user clicks the button
-  const isLoading = isSubmitting || loading;
-
-  // Don't render the form until the initial auth check is done
+  
+  // Do not render the form until we know if a user is logged in or not.
   if (loading) {
      return (
         <div className="flex h-screen w-full items-center justify-center bg-background">
@@ -82,6 +82,17 @@ export default function LoginPage() {
         </div>
       );
   }
+
+  // If initial check is done and there's already a user, this component will be redirecting
+  // but we can show a loader as well to avoid a flash of the login form.
+  if (user) {
+      return (
+        <div className="flex h-screen w-full items-center justify-center bg-background">
+          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        </div>
+      );
+  }
+
 
   return (
     <Card className="w-full max-w-md">
@@ -98,7 +109,7 @@ export default function LoginPage() {
                 <FormItem>
                   <FormLabel>{t('login.emailLabel')}</FormLabel>
                   <FormControl>
-                    <Input placeholder="jusu@imone.lt" {...field} disabled={isLoading} />
+                    <Input placeholder="jusu@imone.lt" {...field} disabled={isSubmitting} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -111,14 +122,14 @@ export default function LoginPage() {
                 <FormItem>
                   <FormLabel>{t('login.passwordLabel')}</FormLabel>
                   <FormControl>
-                    <Input type="password" {...field} disabled={isLoading} />
+                    <Input type="password" {...field} disabled={isSubmitting} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+            <Button type="submit" className="w-full" disabled={isSubmitting}>
+              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {t('login.loginButton')}
             </Button>
           </form>

@@ -19,8 +19,8 @@ import { useRouter } from 'next/navigation';
 
 interface AuthContextType {
   user: UserProfile | null;
-  loading: boolean;
-  userProfileLoading: boolean;
+  loading: boolean; // For initial auth state check (page load)
+  userProfileLoading: boolean; // For subsequent profile fetches
   login: (values: LoginFormValues) => Promise<FirebaseUser>;
   signup: (values: SignupFormValuesExtended) => Promise<void>;
   logout: () => Promise<void>;
@@ -32,7 +32,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true); // For initial auth state check
-  const [userProfileLoading, setUserProfileLoading] = useState(false); // For fetching firestore profile
+  const [userProfileLoading, setUserProfileLoading] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
 
@@ -46,13 +46,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           if (userProfile) {
             setUser(userProfile);
           } else {
-             // This case might happen if Firestore profile creation fails after signup
             console.warn("No Firestore profile found for authenticated user:", firebaseUser.uid);
             setUser(null);
-            await signOut(auth); // Log out the inconsistent user
+            await signOut(auth);
           }
         } catch (error) {
-          console.error("Error fetching user profile:", error);
+          console.error("Error fetching user profile during auth state change:", error);
           toast({
             variant: "destructive",
             title: "Autentifikacijos klaida",
@@ -73,9 +72,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [toast]);
 
 
-  const login = async (values: LoginFormValues) => {
+  const login = async (values: LoginFormValues): Promise<FirebaseUser> => {
     const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
-    // onAuthStateChanged will handle the rest
+    // onAuthStateChanged will handle setting the user profile state.
+    // We return the user credential to confirm success on the login page.
     return userCredential.user;
   };
 
@@ -101,6 +101,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     await setDoc(doc(db, "users", fbUser.uid), newUserProfile);
     // onAuthStateChanged will set the user state after this.
+    // For signup, we can optimistically set it to redirect faster.
+    setUser({ id: fbUser.uid, ...newUserProfile });
   };
 
   const logout = async () => {
