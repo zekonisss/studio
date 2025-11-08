@@ -55,7 +55,7 @@ export default function LoginPage() {
     setIsSubmitting(true);
     try {
       await login(values);
-      // Let the useEffect handle redirection
+      // The useEffect will handle redirection upon successful login and user state update.
     } catch (error: any) {
        console.error("Login error:", error);
         toast({
@@ -65,11 +65,11 @@ export default function LoginPage() {
             ? t('toast.login.error.invalidCredentials') 
             : error.message || t('toast.login.error.descriptionGeneric'),
         });
-    } finally {
-      setIsSubmitting(false);
+        setIsSubmitting(false); // Make sure to re-enable the form on error
     }
   };
 
+  // Combine all loading states to disable the form
   const isLoading = isSubmitting || loading || userProfileLoading;
 
   return (
