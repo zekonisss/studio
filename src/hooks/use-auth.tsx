@@ -1,9 +1,10 @@
+
 "use client";
 
 import type { UserProfile } from '@/types';
 import type { LoginFormValues, SignupFormValuesExtended } from '@/lib/schemas';
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { getFirebase } from '@/lib/firebase';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import { app, auth, db } from '@/lib/firebase';
 import { 
     createUserWithEmailAndPassword, 
     signInWithEmailAndPassword, 
@@ -11,14 +12,14 @@ import {
     onAuthStateChanged,
     type User as FirebaseUser
 } from 'firebase/auth';
-import { doc, setDoc, Timestamp } from "firebase/firestore";
-import * as storage from '@/lib/storage';
+import { doc, setDoc, Timestamp, getDoc } from "firebase/firestore";
+import * as storageApi from '@/lib/storage';
 import { useToast } from './use-toast';
 
 interface AuthContextType {
   user: UserProfile | null;
-  loading: boolean; // This is for the initial auth check
-  userProfileLoading: boolean; // This is for fetching the firestore document
+  loading: boolean;
+  userProfileLoading: boolean;
   login: (values: LoginFormValues) => Promise<void>;
   signup: (values: SignupFormValuesExtended) => Promise<void>;
   logout: () => Promise<void>;
@@ -29,53 +30,64 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true); // For initial auth state check
-  const [userProfileLoading, setUserProfileLoading] = useState(false); // For fetching the profile doc
+  const [loading, setLoading] = useState(true);
+  const [userProfileLoading, setUserProfileLoading] = useState(false);
+  const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
-    const { auth } = getFirebase();
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      setLoading(true);
-      setUserProfileLoading(true);
-      if (firebaseUser) {
-        try {
-          const userProfile = await storage.getUserById(firebaseUser.uid);
-          if (userProfile) {
-            setUser(userProfile);
-          } else {
-             // This can happen if user exists in Auth but not in Firestore
-            console.warn("User authenticated with Firebase, but no Firestore profile found.");
-            setUser(null);
-            await signOut(auth); // Log out to prevent inconsistent state
-          }
-        } catch (error) {
-          console.error("Error fetching user profile:", error);
-          toast({
-            variant: "destructive",
-            title: "Autentifikacijos Klaida",
-            description: "Nepavyko gauti vartotojo profilio. Bandykite perkrauti puslapį.",
-          });
-          setUser(null);
-        }
-      } else {
-        setUser(null);
-      }
-      setUserProfileLoading(false);
+    const unsubscribe = onAuthStateChanged(auth, (fbUser) => {
+      setFirebaseUser(fbUser);
       setLoading(false);
     });
-
     return () => unsubscribe();
+  }, []);
+
+  const fetchUserProfile = useCallback(async (fbUser: FirebaseUser) => {
+    setUserProfileLoading(true);
+    try {
+      const userProfile = await storageApi.getUserById(fbUser.uid);
+      if (userProfile) {
+        setUser(userProfile);
+      } else {
+        console.warn("User authenticated with Firebase, but no Firestore profile found.");
+        toast({
+          variant: "destructive",
+          title: "Profilio Klaida",
+          description: "Jūsų profilis nerastas duomenų bazėje. Prašome susisiekti su palaikymo komanda.",
+        });
+        await signOut(auth);
+        setUser(null);
+      }
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+      toast({
+        variant: "destructive",
+        title: "Autentifikacijos Klaida",
+        description: "Nepavyko gauti vartotojo profilio. Bandykite perkrauti puslapį.",
+      });
+      setUser(null);
+    } finally {
+      setUserProfileLoading(false);
+    }
   }, [toast]);
 
+  useEffect(() => {
+    if (firebaseUser) {
+      fetchUserProfile(firebaseUser);
+    } else {
+      setUser(null);
+      setUserProfileLoading(false);
+    }
+  }, [firebaseUser, fetchUserProfile]);
+
+
   const login = async (values: LoginFormValues) => {
-    const { auth } = getFirebase();
     await signInWithEmailAndPassword(auth, values.email, values.password);
     // onAuthStateChanged will handle the rest
   };
 
   const signup = async (values: SignupFormValuesExtended) => {
-    const { auth, db } = getFirebase();
     const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
     const fbUser = userCredential.user;
 
@@ -100,15 +112,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = async () => {
-    const { auth } = getFirebase();
     await signOut(auth);
     setUser(null);
+    setFirebaseUser(null);
   };
   
   const updateUserInContext = async (updatedUserData: UserProfile) => {
     setUser(updatedUserData);
     if (updatedUserData.id) {
-        await storage.updateUserProfile(updatedUserData.id, updatedUserData);
+        await storageApi.updateUserProfile(updatedUserData.id, updatedUserData);
     }
   };
 

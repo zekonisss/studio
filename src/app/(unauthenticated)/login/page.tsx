@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useForm } from "react-hook-form";
@@ -29,7 +30,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
-  const { login, user, loading } = useAuth();
+  const { login, user, loading, userProfileLoading } = useAuth();
   const { t } = useLanguage();
   const { toast } = useToast();
   const router = useRouter();
@@ -44,31 +45,32 @@ export default function LoginPage() {
   });
 
   useEffect(() => {
-    if (!loading && user) {
+    // Redirect if user is logged in and all loading is complete
+    if (!loading && !userProfileLoading && user) {
       router.push('/dashboard');
     }
-  }, [user, loading, router]);
-
+  }, [user, loading, userProfileLoading, router]);
 
   const onSubmit = async (values: LoginFormValues) => {
     setIsSubmitting(true);
     try {
       await login(values);
-      // No need to show success toast here, redirection will happen via useEffect
-      // onAuthStateChanged will trigger the user state update.
+      // Let the useEffect handle redirection
     } catch (error: any) {
        console.error("Login error:", error);
         toast({
           variant: "destructive",
           title: t('toast.login.error.title'),
-          description: error.message || t('toast.login.error.invalidCredentials'),
+          description: error.code === 'auth/invalid-credential' 
+            ? t('toast.login.error.invalidCredentials') 
+            : error.message || t('toast.login.error.descriptionGeneric'),
         });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const isLoading = isSubmitting || loading;
+  const isLoading = isSubmitting || loading || userProfileLoading;
 
   return (
     <Card className="w-full max-w-md">
