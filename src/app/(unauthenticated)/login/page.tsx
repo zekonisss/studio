@@ -24,16 +24,16 @@ import { useAuth } from "@/hooks/use-auth";
 import Link from "next/link";
 import { useLanguage } from "@/contexts/language-context";
 import { Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
-  const { login } = useAuth();
+  const { login, user, loading } = useAuth();
   const { t } = useLanguage();
   const { toast } = useToast();
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(LoginSchema),
@@ -43,15 +43,19 @@ export default function LoginPage() {
     },
   });
 
+  useEffect(() => {
+    if (!loading && user) {
+      router.push('/dashboard');
+    }
+  }, [user, loading, router]);
+
+
   const onSubmit = async (values: LoginFormValues) => {
-    setIsLoading(true);
+    setIsSubmitting(true);
     try {
       await login(values);
-      toast({
-          title: t('toast.login.success.title'),
-          description: t('toast.login.success.description'),
-      });
-      router.push('/dashboard');
+      // No need to show success toast here, redirection will happen via useEffect
+      // onAuthStateChanged will trigger the user state update.
     } catch (error: any) {
        console.error("Login error:", error);
         toast({
@@ -60,9 +64,11 @@ export default function LoginPage() {
           description: error.message || t('toast.login.error.invalidCredentials'),
         });
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
+
+  const isLoading = isSubmitting || loading;
 
   return (
     <Card className="w-full max-w-md">
@@ -79,7 +85,7 @@ export default function LoginPage() {
                 <FormItem>
                   <FormLabel>{t('login.emailLabel')}</FormLabel>
                   <FormControl>
-                    <Input placeholder="jusu@imone.lt" {...field} />
+                    <Input placeholder="jusu@imone.lt" {...field} disabled={isLoading} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -92,7 +98,7 @@ export default function LoginPage() {
                 <FormItem>
                   <FormLabel>{t('login.passwordLabel')}</FormLabel>
                   <FormControl>
-                    <Input type="password" {...field} />
+                    <Input type="password" {...field} disabled={isLoading} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

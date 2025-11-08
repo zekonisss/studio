@@ -1,9 +1,8 @@
-
 "use client";
 
 import type { UserProfile } from '@/types';
 import type { LoginFormValues, SignupFormValuesExtended } from '@/lib/schemas';
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { getFirebase } from '@/lib/firebase';
 import { 
     createUserWithEmailAndPassword, 
@@ -18,7 +17,8 @@ import { useToast } from './use-toast';
 
 interface AuthContextType {
   user: UserProfile | null;
-  loading: boolean;
+  loading: boolean; // This is for the initial auth check
+  userProfileLoading: boolean; // This is for fetching the firestore document
   login: (values: LoginFormValues) => Promise<void>;
   signup: (values: SignupFormValuesExtended) => Promise<void>;
   logout: () => Promise<void>;
@@ -29,34 +29,25 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true); // For initial auth state check
+  const [userProfileLoading, setUserProfileLoading] = useState(false); // For fetching the profile doc
   const { toast } = useToast();
 
   useEffect(() => {
     const { auth } = getFirebase();
-    const unsubscribe = onAuthStateChanged(auth, (fbUser) => {
-      setFirebaseUser(fbUser);
-      setLoading(false);
-    });
-    return () => unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    const fetchUserProfile = async () => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      setLoading(true);
+      setUserProfileLoading(true);
       if (firebaseUser) {
-        setLoading(true);
         try {
           const userProfile = await storage.getUserById(firebaseUser.uid);
           if (userProfile) {
             setUser(userProfile);
           } else {
-            // This case can happen if a user is created in Auth but their Firestore doc fails to be created
-            // Or if a user is deleted from Firestore but not Auth
+             // This can happen if user exists in Auth but not in Firestore
             console.warn("User authenticated with Firebase, but no Firestore profile found.");
-            const { auth } = getFirebase();
-            await signOut(auth); // Log out to prevent inconsistent state
             setUser(null);
+            await signOut(auth); // Log out to prevent inconsistent state
           }
         } catch (error) {
           console.error("Error fetching user profile:", error);
@@ -65,22 +56,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             title: "Autentifikacijos Klaida",
             description: "Nepavyko gauti vartotojo profilio. Bandykite perkrauti puslapį.",
           });
-          setUser(null); // Ensure user is null on error
-        } finally {
-          setLoading(false);
+          setUser(null);
         }
       } else {
         setUser(null);
       }
-    };
-    
-    fetchUserProfile();
-  }, [firebaseUser, toast]);
+      setUserProfileLoading(false);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [toast]);
 
   const login = async (values: LoginFormValues) => {
     const { auth } = getFirebase();
     await signInWithEmailAndPassword(auth, values.email, values.password);
-    // onAuthStateChanged will handle setting the user state
+    // onAuthStateChanged will handle the rest
   };
 
   const signup = async (values: SignupFormValuesExtended) => {
@@ -112,7 +103,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const { auth } = getFirebase();
     await signOut(auth);
     setUser(null);
-    setFirebaseUser(null);
   };
   
   const updateUserInContext = async (updatedUserData: UserProfile) => {
@@ -122,7 +112,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const value = { user, loading, login, signup, logout, updateUserInContext };
+  const value = { user, loading, userProfileLoading, login, signup, logout, updateUserInContext };
 
   return (
     <AuthContext.Provider value={value}>
@@ -138,4 +128,3 @@ export const useAuth = (): AuthContextType => {
   }
   return context;
 };
-
