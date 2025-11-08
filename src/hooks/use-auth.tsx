@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { UserProfile } from '@/types';
@@ -14,7 +15,6 @@ import {
     type User as FirebaseUser
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, Timestamp, updateDoc } from "firebase/firestore";
-import { useRouter } from 'next/navigation';
 import * as storage from '@/lib/storage';
 
 
@@ -34,38 +34,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { t } = useLanguage();
-  const router = useRouter();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-          try {
-            const userProfile = await storage.getUserById(firebaseUser.uid);
-            if (userProfile) {
-              setUser(userProfile);
-            } else {
-               console.warn("User document not found in Firestore. Logging out.");
-               await signOut(auth);
-               setUser(null);
-            }
-          } catch (error) {
-            console.error("Error fetching user profile:", error);
-            setUser(null);
-          } finally {
-            setLoading(false);
-          }
+        try {
+          const userProfile = await storage.getUserById(firebaseUser.uid);
+          setUser(userProfile);
+        } catch (error) {
+          console.error("Error fetching user profile:", error);
+          setUser(null);
+        }
       } else {
         setUser(null);
-        setLoading(false);
       }
+      setLoading(false);
     });
 
     return () => unsubscribe();
   }, []);
 
   const login = async (values: LoginFormValues) => {
-    await signInWithEmailAndPassword(auth, values.email, values.password);
-    // onAuthStateChanged will handle the rest
+     await signInWithEmailAndPassword(auth, values.email, values.password);
   };
 
   const signup = async (values: SignupFormValuesExtended) => {
@@ -89,17 +79,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     await setDoc(doc(db, "users", firebaseUser.uid), newUserProfile);
-    // onAuthStateChanged will set the user state after signup.
   };
 
   const logout = async () => {
     try {
       await signOut(auth);
-      // setUser(null) is handled by onAuthStateChanged
-      router.push("/login");
-      toast({
-        title: t('toast.logout.success.title'),
-      });
+      // Nukreipimas bus valdomas per `page.tsx` po būsenos pasikeitimo
     } catch (error) {
       console.error("Logout error:", error);
       toast({
@@ -116,7 +101,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (updatedUserData.id) {
         const userDocRef = doc(db, "users", updatedUserData.id);
         const { id, ...dataWithoutId } = updatedUserData;
-        // Firestore does not allow `id` field to be written
         const dataToUpdate = Object.fromEntries(Object.entries(dataWithoutId).map(([key, value]) => {
           if (value instanceof Date) {
             return [key, Timestamp.fromDate(value)];
@@ -128,7 +112,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     } catch (error) {
       console.error("Error updating user in Firestore:", error);
-      throw error; // Re-throw to be caught in UI
+      throw error; 
     }
   };
 
