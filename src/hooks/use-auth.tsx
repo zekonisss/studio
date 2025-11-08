@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { UserProfile } from '@/types';
@@ -140,7 +141,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.error("[SIGNUP] Error code:", error.code);
       console.error("[SIGNUP] Error message:", error.message);
       
-      let errorMessage = t('toast.signup.error.descriptionGeneric');
+      let errorMessage = error.message || t('toast.signup.error.descriptionGeneric');
       
       if (error.code) {
         switch (error.code) {
@@ -153,8 +154,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           case 'auth/invalid-email':
             errorMessage = t('toast.signup.error.invalidEmail');
             break;
-          default:
-            errorMessage = error.message || t('toast.signup.error.descriptionGeneric');
         }
       }
 
