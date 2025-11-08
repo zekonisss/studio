@@ -1,9 +1,9 @@
 "use client";
 
-import { initializeApp, getApp, getApps } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
-import { getStorage } from 'firebase/storage';
+import { initializeApp, getApp, getApps, type FirebaseApp } from 'firebase/app';
+import { getAuth, type Auth } from 'firebase/auth';
+import { getFirestore, type Firestore } from 'firebase/firestore';
+import { getStorage, type FirebaseStorage } from 'firebase/storage';
 
 const firebaseConfig = {
   apiKey: "AIzaSyBusklRtrpm-gfnwCdmi2yj5vTumqLte3c",
@@ -15,10 +15,26 @@ const firebaseConfig = {
   measurementId: "G-BKJYEF2X6Y"
 };
 
-// Initialize Firebase
-const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
-const storage = getStorage(app);
+interface FirebaseInstances {
+  app: FirebaseApp;
+  auth: Auth;
+  db: Firestore;
+  storage: FirebaseStorage;
+}
 
-export { app, db, auth, storage };
+let firebaseInstances: FirebaseInstances | null = null;
+
+export const getFirebase = (): FirebaseInstances => {
+  if (!firebaseInstances) {
+    const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
+    firebaseInstances = { app, auth, db, storage };
+  }
+  return firebaseInstances;
+};
+
+// You can still export individual instances if needed elsewhere, but getFirebase() is preferred.
+const { app, auth, db, storage } = getFirebase();
+export { app, auth, db, storage };

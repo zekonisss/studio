@@ -3,7 +3,7 @@
 import type { UserProfile } from '@/types';
 import type { LoginFormValues, SignupFormValuesExtended } from '@/lib/schemas';
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { auth, db } from '@/lib/firebase';
+import { getFirebase } from '@/lib/firebase';
 import { 
     createUserWithEmailAndPassword, 
     signInWithEmailAndPassword, 
@@ -33,8 +33,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
 
   useEffect(() => {
+    const { auth } = getFirebase();
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
+        try {
           const userProfile = await storage.getUserById(firebaseUser.uid);
           if (userProfile) {
             setUser(userProfile);
@@ -42,6 +44,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setUser(null); 
             console.warn("User is authenticated, but no profile found in Firestore.");
           }
+        } catch (error) {
+          console.error("Error fetching user profile:", error);
+          // This toast will inform the user if Firestore is unreachable
+          toast({
+            variant: "destructive",
+            title: "Duomenų Bazės Klaida",
+            description: "Nepavyko gauti vartotojo profilio. Patikrinkite interneto ryšį arba susisiekite su palaikymo komanda.",
+          });
+          setUser(null);
+        }
       } else {
         setUser(null);
       }
@@ -52,10 +64,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [toast]);
 
   const login = async (values: LoginFormValues) => {
+    const { auth } = getFirebase();
     await signInWithEmailAndPassword(auth, values.email, values.password);
   };
 
   const signup = async (values: SignupFormValuesExtended) => {
+    const { auth, db } = getFirebase();
     const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
     const firebaseUser = userCredential.user;
 
@@ -79,6 +93,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = async () => {
+    const { auth } = getFirebase();
     await signOut(auth);
     setUser(null);
   };
