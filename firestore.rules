@@ -2,29 +2,40 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Vartotojai gali pasiekti savo profilius
+
+    // Users can read/write their own profile, but not others'.
+    // Admins can read any profile.
     match /users/{userId} {
-      allow read, write: if request.auth != null;
+      allow read: if request.auth != null && (request.auth.uid == userId || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true);
+      allow write: if request.auth != null && request.auth.uid == userId;
+      // Admin write access is handled through backend functions for safety.
     }
 
-    // Įrašus gali kurti, skaityti ir atnaujinti tik prisijungę vartotojai
+    // Reports can be created by any authenticated user.
+    // Reports can only be read by their creator or an admin.
+    // Reports can only be updated/deleted by their creator or an admin.
     match /reports/{reportId} {
-      allow read, create, update: if request.auth != null;
+      allow create: if request.auth != null;
+      allow read: if request.auth != null && (resource.data.reporterId == request.auth.uid || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true);
+      allow update, delete: if request.auth != null && (resource.data.reporterId == request.auth.uid || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true);
     }
 
-    // Paieškos žurnalus gali kurti tik prisijungę vartotojai
+    // Search logs can only be created and read by the user who owns them.
     match /searchLogs/{logId} {
-        allow create: if request.auth != null;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
     }
 
-    // Audito žurnalus gali pasiekti tik prisijungę vartotojai
+    // Audit logs can only be created and read by admins.
     match /auditLogs/{logId} {
-        allow read, create: if request.auth != null;
+      allow read, create: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
     
-    // Pranešimus gali pasiekti tik prisijungę vartotojai
+    // Notifications can be created by the system (via admin/backend function).
+    // Users can only read and update their own notifications.
     match /notifications/{notificationId} {
-        allow read, create, update: if request.auth != null;
+      allow create: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true; // System/admin creates notifications
+      allow read, update: if request.auth != null && resource.data.userId == request.auth.uid;
     }
   }
 }
