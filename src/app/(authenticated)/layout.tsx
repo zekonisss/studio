@@ -20,12 +20,13 @@ export default function AuthenticatedLayout({
   const router = useRouter();
 
   useEffect(() => {
+    // Redirect to login only when loading is complete and there is no user
     if (!loading && !user) {
       router.replace('/login');
     }
   }, [user, loading, router]);
   
-  // While loading or if there's no user, show a full-screen loader.
+  // While the initial auth state is loading, show a full-screen loader.
   // This prevents rendering the layout for a split second before redirecting.
   if (loading || !user) {
     return (
@@ -37,12 +38,12 @@ export default function AuthenticatedLayout({
   
   // Once loading is complete and we have a user, render the actual layout.
   return (
-    <div className="flex min-h-screen w-full bg-background">
-      <div className="hidden border-r bg-muted/40 md:block md:w-72">
+    <div className="flex min-h-screen w-full bg-muted/40">
+      <div className="hidden border-r bg-card md:block md:w-72">
         <SidebarNav isInSheet={false} />
       </div>
       <div className="flex flex-1 flex-col">
-        <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-card px-4 shadow-sm">
+        <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-card px-4 shadow-sm sm:px-6">
           <div className="md:hidden">
             <Sheet>
               <SheetTrigger asChild>
@@ -63,7 +64,7 @@ export default function AuthenticatedLayout({
             <UserNav />
           </div>
         </header>
-        <main className="flex-1 p-4 md:p-8 overflow-auto">
+        <main className="flex-1 p-4 md:p-8 overflow-y-auto">
           {children}
         </main>
       </div>
