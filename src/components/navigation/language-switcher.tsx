@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useLanguage } from "@/contexts/language-context";
@@ -17,7 +16,7 @@ export function LanguageSwitcher() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
+        <Button variant="ghost" size="icon" className="text-foreground hover:bg-accent/50">
           <Globe className="h-5 w-5" />
           <span className="sr-only">Change language</span>
         </Button>
