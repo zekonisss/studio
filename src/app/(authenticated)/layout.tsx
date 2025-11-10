@@ -27,7 +27,7 @@ export default function AuthenticatedLayout({
   return (
     <TooltipProvider>
       <div className="flex min-h-screen w-full bg-muted/40">
-        <aside className="hidden w-72 flex-col border-r bg-background md:flex">
+        <aside className="w-72 flex-col border-r bg-background md:flex">
           <SidebarNav />
         </aside>
         <div className="flex flex-1 flex-col">
