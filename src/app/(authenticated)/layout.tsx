@@ -3,7 +3,7 @@
 import { SidebarNav } from '@/components/navigation/sidebar-nav';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { Menu, Loader2, LogOut } from 'lucide-react';
+import { Menu, Loader2 } from 'lucide-react';
 import { LanguageSwitcher } from '@/components/navigation/language-switcher';
 import { ThemeToggle } from '@/components/navigation/theme-toggle';
 import { useAuth } from '@/hooks/use-auth';
@@ -16,7 +16,7 @@ export default function AuthenticatedLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, loading, logout } = useAuth();
+  const { user, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -25,6 +25,8 @@ export default function AuthenticatedLayout({
     }
   }, [user, loading, router]);
   
+  // While loading or if there's no user, show a full-screen loader.
+  // This prevents rendering the layout for a split second before redirecting.
   if (loading || !user) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
@@ -33,9 +35,10 @@ export default function AuthenticatedLayout({
     );
   }
   
+  // Once loading is complete and we have a user, render the actual layout.
   return (
     <div className="flex min-h-screen w-full bg-background">
-      <div className="hidden md:block md:w-72">
+      <div className="hidden border-r bg-muted/40 md:block md:w-72">
         <SidebarNav isInSheet={false} />
       </div>
       <div className="flex flex-1 flex-col">

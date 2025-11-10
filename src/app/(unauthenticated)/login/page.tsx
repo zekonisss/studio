@@ -44,7 +44,7 @@ export default function LoginPage() {
     },
   });
 
-  // Redirect if user is already logged in
+  // Redirect if user is already logged in and auth is not loading
   useEffect(() => {
     if (!loading && user) {
       router.replace('/dashboard');
@@ -77,14 +77,17 @@ export default function LoginPage() {
     }
   };
   
-  if (loading || user) {
+  // Show a loader while we are checking for an existing session
+  if (loading) {
      return (
         <div className="flex h-screen w-full items-center justify-center bg-background">
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
         </div>
       );
   }
-
+  
+  // If user is already logged in, this component will be replaced by the loader/redirect logic above
+  // This form is only for non-logged-in users
   return (
     <Card className="w-full max-w-md">
       <CardHeader>
