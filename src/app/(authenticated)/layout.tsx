@@ -3,7 +3,7 @@
 
 import { SidebarNav } from '@/components/navigation/sidebar-nav';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
 import { LogOut, Menu } from 'lucide-react';
 import { LanguageSwitcher } from '@/components/navigation/language-switcher';
 import { ThemeToggle } from '@/components/navigation/theme-toggle';
@@ -21,9 +21,9 @@ export default function AuthenticatedLayout({
 
   return (
     <div className="flex min-h-screen w-full bg-muted/40">
-      <aside className="hidden w-72 flex-col border-r bg-background md:flex">
+      <div className="hidden w-72 flex-col border-r bg-background md:flex">
         <SidebarNav />
-      </aside>
+      </div>
       <div className="flex flex-1 flex-col">
         <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-background px-4 sm:px-6">
           <div className="md:hidden">
@@ -43,10 +43,6 @@ export default function AuthenticatedLayout({
           <div className="flex flex-1 items-center justify-end gap-2">
             <ThemeToggle />
             <LanguageSwitcher />
-            <Button variant="ghost" size="icon" onClick={logout} className="text-foreground hover:bg-accent/50" title={t('sidebar.logout')}>
-              <LogOut className="h-5 w-5" />
-              <span className="sr-only">{t('sidebar.logout')}</span>
-            </Button>
             <UserNav />
           </div>
         </header>
