@@ -22,7 +22,6 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 import type { ReactNode } from "react";
 import { useLanguage } from "@/contexts/language-context"; 
-import { LanguageSwitcher } from "./language-switcher"; 
 
 const mainNavItemsBase = [
   { href: "/dashboard", labelKey: "sidebar.dashboard", icon: LayoutDashboard },
