@@ -63,6 +63,10 @@ export default function AccountPage() {
   }, [user]);
 
   useEffect(() => {
+    if (!authLoading && !user) {
+        router.replace('/login');
+        return;
+    }
     if (user) {
       console.log("AccountPage: useEffect triggered with user.");
       setFormData({
@@ -81,7 +85,7 @@ export default function AccountPage() {
     if (tab && ["details", "reports", "payment", "notifications"].includes(tab)) {
         setActiveTab(tab);
     }
-  }, [user, searchParams, fetchNotifications, fetchUserReports]);
+  }, [user, authLoading, searchParams, fetchNotifications, fetchUserReports, router]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
