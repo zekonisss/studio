@@ -15,7 +15,7 @@ export default function AuthenticatedLayout({
 }) {
   return (
     <div className="flex min-h-screen w-full bg-background">
-      <div className="hidden md:block md:w-72">
+      <div className="hidden border-r bg-sidebar text-sidebar-foreground md:block md:w-72">
         <SidebarNav isInSheet={false} />
       </div>
       <div className="flex flex-1 flex-col">
