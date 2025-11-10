@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { SheetClose } from "@/components/ui/sheet";
 import {
   LayoutDashboard,
   Search,
@@ -45,11 +44,7 @@ const adminNavItemsBase = [
   { href: "/admin/user-import", labelKey: "usersImport.title", icon: FileSpreadsheet}
 ];
 
-interface SidebarNavProps {
-  isInSheet?: boolean;
-}
-
-export function SidebarNav({ isInSheet = false }: SidebarNavProps) {
+export function SidebarNav() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
   const { t } = useLanguage(); 
@@ -61,22 +56,13 @@ export function SidebarNav({ isInSheet = false }: SidebarNavProps) {
 
   if (!user) return null;
 
-  const NavLinkWrapper = ({ children }: { children: ReactNode }) => {
-    if (isInSheet) {
-      return <SheetClose asChild>{children}</SheetClose>;
-    }
-    return <>{children}</>;
-  };
-
   return (
     <div className="flex h-full flex-col">
       <div className="p-4 border-b flex justify-between items-center">
-        <NavLinkWrapper>
-          <Link href="/dashboard" className="flex items-center space-x-3">
-              <UserSearch className="h-8 w-8 text-primary" />
-            <h1 className="text-2xl font-bold text-primary">{t('app.name')}</h1>
-          </Link>
-        </NavLinkWrapper>
+        <Link href="/dashboard" className="flex items-center space-x-3">
+          <UserSearch className="h-8 w-8 text-primary" />
+          <h1 className="text-2xl font-bold text-primary">{t('app.name')}</h1>
+        </Link>
       </div>
 
       <ScrollArea className="flex-1">
@@ -84,54 +70,51 @@ export function SidebarNav({ isInSheet = false }: SidebarNavProps) {
           <div>
             <h3 className="mb-1 px-2 text-xs font-semibold uppercase text-muted-foreground tracking-wider">{t('sidebar.section.main')}</h3>
             {mainNavItems.map((item) => (
-              <NavLinkWrapper key={item.href}>
-                <Link
-                  href={item.href}
-                  className={cn(
-                    buttonVariants({ variant: pathname === item.href ? "secondary" : "ghost" , size: "default"}),
-                    "w-full justify-start rounded-md text-base font-medium h-10"
-                  )}
-                >
-                  <item.icon className="mr-3 h-5 w-5 flex-shrink-0" />
-                  {item.label}
-                </Link>
-              </NavLinkWrapper>
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  buttonVariants({ variant: pathname === item.href ? "secondary" : "ghost" , size: "default"}),
+                  "w-full justify-start rounded-md text-base font-medium h-10"
+                )}
+              >
+                <item.icon className="mr-3 h-5 w-5 flex-shrink-0" />
+                {item.label}
+              </Link>
             ))}
           </div>
 
           <div className="mt-4">
             <h3 className="mb-1 px-2 text-xs font-semibold uppercase text-muted-foreground tracking-wider">{t('sidebar.section.history')}</h3>
             {historyNavItems.map((item) => (
-              <NavLinkWrapper key={item.href}>
-                <Link
-                  href={item.href}
-                  className={cn(
-                    buttonVariants({ variant: pathname === item.href ? "secondary" : "ghost", size: "default" }),
-                    "w-full justify-start rounded-md text-base font-medium h-10"
-                  )}
-                >
-                  <item.icon className="mr-3 h-5 w-5 flex-shrink-0" />
-                  {item.label}
-                </Link>
-              </NavLinkWrapper>
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  buttonVariants({ variant: pathname === item.href ? "secondary" : "ghost", size: "default" }),
+                  "w-full justify-start rounded-md text-base font-medium h-10"
+                )}
+              >
+                <item.icon className="mr-3 h-5 w-5 flex-shrink-0" />
+                {item.label}
+              </Link>
             ))}
           </div>
           
           <div className="mt-4">
             <h3 className="mb-1 px-2 text-xs font-semibold uppercase text-muted-foreground tracking-wider">{t('sidebar.section.account')}</h3>
             {accountNavItems.map((item) => (
-               <NavLinkWrapper key={item.href}>
-                <Link
-                  href={item.href}
-                  className={cn(
-                    buttonVariants({ variant: pathname.startsWith(item.href) && (item.href !== '/support' || pathname === '/support') ? "secondary" : "ghost", size: "default" }),
-                    "w-full justify-start rounded-md text-base font-medium h-10"
-                  )}
-                >
-                  <item.icon className="mr-3 h-5 w-5 flex-shrink-0" />
-                  {item.label}
-                </Link>
-              </NavLinkWrapper>
+               <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  buttonVariants({ variant: pathname.startsWith(item.href) && (item.href !== '/support' || pathname === '/support') ? "secondary" : "ghost", size: "default" }),
+                  "w-full justify-start rounded-md text-base font-medium h-10"
+                )}
+              >
+                <item.icon className="mr-3 h-5 w-5 flex-shrink-0" />
+                {item.label}
+              </Link>
             ))}
           </div>
 
@@ -139,18 +122,17 @@ export function SidebarNav({ isInSheet = false }: SidebarNavProps) {
             <div className="mt-4">
               <h3 className="mb-1 px-2 text-xs font-semibold uppercase text-muted-foreground tracking-wider">{t('sidebar.section.admin')}</h3>
               {adminNavItems.map((item) => (
-                <NavLinkWrapper key={item.href}>
-                  <Link
-                    href={item.href}
-                    className={cn(
-                      buttonVariants({ variant: pathname.startsWith(item.href) ? "secondary" : "ghost", size: "default" }),
-                      "w-full justify-start rounded-md text-base font-medium h-10"
-                    )}
-                  >
-                    <item.icon className="mr-3 h-5 w-5 flex-shrink-0" />
-                    {item.label}
-                  </Link>
-                </NavLinkWrapper>
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    buttonVariants({ variant: pathname.startsWith(item.href) ? "secondary" : "ghost", size: "default" }),
+                    "w-full justify-start rounded-md text-base font-medium h-10"
+                  )}
+                >
+                  <item.icon className="mr-3 h-5 w-5 flex-shrink-0" />
+                  {item.label}
+                </Link>
               ))}
             </div>
           )}
