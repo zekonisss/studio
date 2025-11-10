@@ -139,7 +139,7 @@ export function SidebarNav() {
           )}
         </nav>
       </ScrollArea>
-      <div className="p-4 mt-auto border-t">
+      <div className="p-4 mt-auto border-t md:hidden">
           <Button variant="ghost" className="w-full justify-start text-base h-10" onClick={logout}>
               <LogOut className="mr-3 h-5 w-5" />
               {t('sidebar.logout')}

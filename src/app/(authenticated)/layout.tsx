@@ -44,6 +44,10 @@ export default function AuthenticatedLayout({
             <ThemeToggle />
             <LanguageSwitcher />
             <UserNav />
+             <Button variant="ghost" size="icon" onClick={logout} className="text-foreground hover:bg-accent/50">
+                <LogOut className="h-5 w-5" />
+                <span className="sr-only">{t('sidebar.logout')}</span>
+            </Button>
           </div>
         </header>
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8">
