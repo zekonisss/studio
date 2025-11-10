@@ -35,46 +35,51 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
   const router = useRouter();
 
+  const fetchAndSetUser = useCallback(async (firebaseUser: FirebaseUser | null) => {
+    if (firebaseUser) {
+      setUserProfileLoading(true);
+      try {
+        const userProfile = await storageApi.getUserById(firebaseUser.uid);
+        if (userProfile) {
+          setUser(userProfile);
+          return userProfile;
+        } else {
+          console.warn("No Firestore profile found for authenticated user:", firebaseUser.uid);
+          await signOut(auth); // Sign out user without a profile
+          setUser(null);
+        }
+      } catch (error) {
+        console.error("Error fetching user profile:", error);
+        setUser(null);
+      } finally {
+        setUserProfileLoading(false);
+      }
+    } else {
+      setUser(null);
+    }
+    return null;
+  }, []);
+
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setLoading(true);
-      if (firebaseUser) {
-        setUserProfileLoading(true);
-        try {
-          const userProfile = await storageApi.getUserById(firebaseUser.uid);
-          if (userProfile) {
-            setUser(userProfile);
-          } else {
-            console.warn("No Firestore profile found for authenticated user:", firebaseUser.uid);
-            setUser(null);
-            await signOut(auth);
-          }
-        } catch (error) {
-          console.error("Error fetching user profile during auth state change:", error);
-          toast({
-            variant: "destructive",
-            title: "Autentifikacijos klaida",
-            description: "Nepavyko gauti vartotojo profilio. Bandykite perkrauti puslapį.",
-          });
-          // Don't sign out, just leave the user state as null for now
-          setUser(null);
-        } finally {
-          setUserProfileLoading(false);
-        }
-      } else {
-        setUser(null);
-        setUserProfileLoading(false);
-      }
+      await fetchAndSetUser(firebaseUser);
       setLoading(false);
     });
 
     return () => unsubscribe();
-  }, [toast]);
+  }, [fetchAndSetUser]);
 
 
   const login = async (values: LoginFormValues): Promise<FirebaseUser> => {
     const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
-    return userCredential.user;
+    const firebaseUser = userCredential.user;
+    if (firebaseUser) {
+        // Fetch and set user immediately after login to prevent layout shifts/redirects
+        await fetchAndSetUser(firebaseUser);
+    }
+    return firebaseUser;
   };
 
   const signup = async (values: SignupFormValuesExtended) => {

@@ -44,6 +44,14 @@ export default function LoginPage() {
     },
   });
 
+  // Redirect if user is already logged in
+  useEffect(() => {
+    if (!loading && user) {
+      router.replace('/dashboard');
+    }
+  }, [user, loading, router]);
+
+
   const onSubmit = async (values: LoginFormValues) => {
     setIsSubmitting(true);
     try {
@@ -52,6 +60,8 @@ export default function LoginPage() {
           title: t('toast.login.success.title'),
           description: t('toast.login.success.description'),
       });
+      // The redirection will now be handled by the useEffect hook
+      // as the user state updates. We can also push it here for faster feel.
       router.push('/dashboard');
     } catch (error: any) {
        console.error("Login error:", error);
@@ -67,23 +77,13 @@ export default function LoginPage() {
     }
   };
   
-  if (loading) {
+  if (loading || user) {
      return (
         <div className="flex h-screen w-full items-center justify-center bg-background">
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
         </div>
       );
   }
-
-  if (user) {
-      router.replace('/dashboard');
-      return (
-        <div className="flex h-screen w-full items-center justify-center bg-background">
-          <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        </div>
-      );
-  }
-
 
   return (
     <Card className="w-full max-w-md">
