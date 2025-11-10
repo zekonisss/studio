@@ -69,12 +69,12 @@ export function SidebarNav({ isInSheet = false }: SidebarNavProps) {
   };
 
   return (
-    <div className="flex h-full flex-col border-r bg-sidebar text-sidebar-foreground shadow-lg">
-      <div className="p-4 border-b border-sidebar-border flex justify-between items-center">
+    <div className="flex h-full flex-col">
+      <div className="p-4 border-b flex justify-between items-center">
         <NavLinkWrapper>
           <Link href="/dashboard" className="flex items-center space-x-3">
-              <UserSearch className="h-8 w-8 text-sidebar-primary" />
-            <h1 className="text-2xl font-bold text-sidebar-primary">{t('app.name')}</h1>
+              <UserSearch className="h-8 w-8 text-primary" />
+            <h1 className="text-2xl font-bold text-primary">{t('app.name')}</h1>
           </Link>
         </NavLinkWrapper>
       </div>
@@ -89,10 +89,7 @@ export function SidebarNav({ isInSheet = false }: SidebarNavProps) {
                   href={item.href}
                   className={cn(
                     buttonVariants({ variant: pathname === item.href ? "secondary" : "ghost" , size: "default"}),
-                    "w-full justify-start rounded-md text-sm font-medium h-9", 
-                    pathname === item.href
-                      ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                      : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                    "w-full justify-start rounded-md text-base font-medium h-10"
                   )}
                 >
                   <item.icon className="mr-3 h-5 w-5 flex-shrink-0" />
@@ -102,18 +99,15 @@ export function SidebarNav({ isInSheet = false }: SidebarNavProps) {
             ))}
           </div>
 
-          <div>
-            <h3 className="mb-1 mt-3 px-2 text-xs font-semibold uppercase text-muted-foreground tracking-wider">{t('sidebar.section.history')}</h3>
+          <div className="mt-4">
+            <h3 className="mb-1 px-2 text-xs font-semibold uppercase text-muted-foreground tracking-wider">{t('sidebar.section.history')}</h3>
             {historyNavItems.map((item) => (
               <NavLinkWrapper key={item.href}>
                 <Link
                   href={item.href}
                   className={cn(
                     buttonVariants({ variant: pathname === item.href ? "secondary" : "ghost", size: "default" }),
-                    "w-full justify-start rounded-md text-sm font-medium h-9", 
-                    pathname === item.href
-                      ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                      : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                    "w-full justify-start rounded-md text-base font-medium h-10"
                   )}
                 >
                   <item.icon className="mr-3 h-5 w-5 flex-shrink-0" />
@@ -123,18 +117,15 @@ export function SidebarNav({ isInSheet = false }: SidebarNavProps) {
             ))}
           </div>
           
-          <div>
-            <h3 className="mb-1 mt-3 px-2 text-xs font-semibold uppercase text-muted-foreground tracking-wider">{t('sidebar.section.account')}</h3>
+          <div className="mt-4">
+            <h3 className="mb-1 px-2 text-xs font-semibold uppercase text-muted-foreground tracking-wider">{t('sidebar.section.account')}</h3>
             {accountNavItems.map((item) => (
                <NavLinkWrapper key={item.href}>
                 <Link
                   href={item.href}
                   className={cn(
                     buttonVariants({ variant: pathname.startsWith(item.href) && (item.href !== '/support' || pathname === '/support') ? "secondary" : "ghost", size: "default" }),
-                    "w-full justify-start rounded-md text-sm font-medium h-9",
-                    pathname.startsWith(item.href) && (item.href !== '/support' || pathname === '/support') && !pathname.startsWith('/account/settings') 
-                      ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                      : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                    "w-full justify-start rounded-md text-base font-medium h-10"
                   )}
                 >
                   <item.icon className="mr-3 h-5 w-5 flex-shrink-0" />
@@ -145,18 +136,15 @@ export function SidebarNav({ isInSheet = false }: SidebarNavProps) {
           </div>
 
           {user?.isAdmin && (
-            <div>
-              <h3 className="mb-1 mt-3 px-2 text-xs font-semibold uppercase text-muted-foreground tracking-wider">{t('sidebar.section.admin')}</h3>
+            <div className="mt-4">
+              <h3 className="mb-1 px-2 text-xs font-semibold uppercase text-muted-foreground tracking-wider">{t('sidebar.section.admin')}</h3>
               {adminNavItems.map((item) => (
                 <NavLinkWrapper key={item.href}>
                   <Link
                     href={item.href}
                     className={cn(
                       buttonVariants({ variant: pathname.startsWith(item.href) ? "secondary" : "ghost", size: "default" }),
-                      "w-full justify-start rounded-md text-sm font-medium h-9",
-                      pathname.startsWith(item.href)
-                        ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                        : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                      "w-full justify-start rounded-md text-base font-medium h-10"
                     )}
                   >
                     <item.icon className="mr-3 h-5 w-5 flex-shrink-0" />
@@ -168,8 +156,8 @@ export function SidebarNav({ isInSheet = false }: SidebarNavProps) {
           )}
         </nav>
       </ScrollArea>
-      <div className="p-4 mt-auto border-t border-sidebar-border">
-          <Button variant="ghost" className="w-full justify-start" onClick={logout}>
+      <div className="p-4 mt-auto border-t">
+          <Button variant="ghost" className="w-full justify-start text-base h-10" onClick={logout}>
               <LogOut className="mr-3 h-5 w-5" />
               {t('sidebar.logout')}
           </Button>
