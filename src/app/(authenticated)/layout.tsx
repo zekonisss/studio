@@ -1,4 +1,3 @@
-
 "use client";
 
 import { SidebarNav } from '@/components/navigation/sidebar-nav';
@@ -21,11 +20,15 @@ export default function AuthenticatedLayout({
 
   return (
     <div className="flex min-h-screen w-full bg-muted/40">
+      {/* --- Stacionarus meniu dideliems ekranams --- */}
       <div className="hidden w-72 flex-col border-r bg-background md:flex">
         <SidebarNav />
       </div>
+
       <div className="flex flex-1 flex-col">
         <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-background px-4 sm:px-6">
+          
+          {/* --- Išskleidžiamas meniu mažiems ekranams --- */}
           <div className="md:hidden">
             <Sheet>
               <SheetTrigger asChild>
@@ -44,7 +47,7 @@ export default function AuthenticatedLayout({
             <ThemeToggle />
             <LanguageSwitcher />
             <UserNav />
-             <Button variant="ghost" size="icon" onClick={logout} className="text-foreground hover:bg-accent/50">
+             <Button variant="ghost" size="icon" onClick={logout} className="text-foreground hover:bg-accent/50 hidden md:inline-flex">
                 <LogOut className="h-5 w-5" />
                 <span className="sr-only">{t('sidebar.logout')}</span>
             </Button>

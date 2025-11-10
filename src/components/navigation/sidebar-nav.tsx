@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -20,7 +19,6 @@ import {
   LogOut
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import type { ReactNode } from "react";
 import { useLanguage } from "@/contexts/language-context"; 
 
 const mainNavItemsBase = [
