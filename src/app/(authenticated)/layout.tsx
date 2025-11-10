@@ -3,7 +3,7 @@
 
 import { SidebarNav } from '@/components/navigation/sidebar-nav';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { LogOut, Menu } from 'lucide-react';
 import { LanguageSwitcher } from '@/components/navigation/language-switcher';
 import { ThemeToggle } from '@/components/navigation/theme-toggle';
@@ -43,7 +43,7 @@ export default function AuthenticatedLayout({
           <div className="flex flex-1 items-center justify-end gap-2">
             <ThemeToggle />
             <LanguageSwitcher />
-            <Button variant="ghost" size="icon" onClick={logout} className="text-foreground hover:bg-accent/50">
+            <Button variant="ghost" size="icon" onClick={logout} className="text-foreground hover:bg-accent/50" title={t('sidebar.logout')}>
               <LogOut className="h-5 w-5" />
               <span className="sr-only">{t('sidebar.logout')}</span>
             </Button>
