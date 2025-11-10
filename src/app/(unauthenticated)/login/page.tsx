@@ -44,20 +44,14 @@ export default function LoginPage() {
     },
   });
 
-  // This effect handles redirection if a user is already logged in
-  useEffect(() => {
-    if (!loading && user) {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
-
   const onSubmit = async (values: LoginFormValues) => {
     setIsSubmitting(true);
     try {
       await login(values);
-      // After a successful login, the onAuthStateChanged in useAuth will update the user state.
-      // The useEffect above will then handle the redirection.
-      // For a faster perceived response, we can redirect immediately.
+      toast({
+          title: t('toast.login.success.title'),
+          description: t('toast.login.success.description'),
+      });
       router.push('/dashboard');
     } catch (error: any) {
        console.error("Login error:", error);
@@ -69,12 +63,10 @@ export default function LoginPage() {
             : error.message || t('toast.login.error.descriptionGeneric'),
         });
     } finally {
-        // This is crucial: always re-enable the form after the attempt
         setIsSubmitting(false); 
     }
   };
   
-  // Do not render the form until we know if a user is logged in or not.
   if (loading) {
      return (
         <div className="flex h-screen w-full items-center justify-center bg-background">
@@ -83,9 +75,8 @@ export default function LoginPage() {
       );
   }
 
-  // If initial check is done and there's already a user, this component will be redirecting
-  // but we can show a loader as well to avoid a flash of the login form.
   if (user) {
+      router.replace('/dashboard');
       return (
         <div className="flex h-screen w-full items-center justify-center bg-background">
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
