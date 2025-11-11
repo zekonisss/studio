@@ -20,15 +20,15 @@ export default function AuthenticatedLayout({
   const router = useRouter();
 
   useEffect(() => {
-    // Redirect to login only when loading is complete and there is no user
+    // Nukreipiame į prisijungimo puslapį TIK tada, kai baigėsi krovimas ir TIKRAI nėra vartotojo.
     if (!loading && !user) {
       router.replace('/login');
     }
   }, [user, loading, router]);
   
-  // While the initial auth state is loading, show a full-screen loader.
-  // This prevents rendering the layout for a split second before redirecting.
-  if (loading || !user) {
+  // Rodyti viso ekrano krovimo indikatorių, kol tikrinamas autentifikacijos statusas.
+  // Tai apsaugo nuo bet kokių bandymų atvaizduoti turinį ar nukreipti, kol nėra aiškios vartotojo būsenos.
+  if (loading) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -36,7 +36,13 @@ export default function AuthenticatedLayout({
     );
   }
   
-  // Once loading is complete and we have a user, render the actual layout.
+  // Jei baigėsi krovimas, bet vartotojo vis dar nėra, nerodome nieko (nes useEffect jau nukreipia).
+  // Tai apsaugo nuo trumpo išdėstymo pasirodymo prieš nukreipimą.
+  if (!user) {
+    return null;
+  }
+  
+  // Kai krovimas baigtas ir turime vartotoją, atvaizduojame pilną išdėstymą.
   return (
     <div className="flex min-h-screen w-full bg-muted/40">
       <div className="hidden border-r bg-card md:block md:w-72">
