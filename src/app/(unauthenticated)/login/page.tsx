@@ -87,7 +87,15 @@ export default function LoginPage() {
   }
   
   // If user is already logged in, this component will be replaced by the loader/redirect logic above
-  // This form is only for non-logged-in users
+  // This form is only for non-logged-in users. An extra check to prevent flashing the form.
+  if (user) {
+    return (
+       <div className="flex h-screen w-full items-center justify-center bg-background">
+         <Loader2 className="h-12 w-12 animate-spin text-primary" />
+       </div>
+     );
+  }
+
   return (
     <Card className="w-full max-w-md">
       <CardHeader>

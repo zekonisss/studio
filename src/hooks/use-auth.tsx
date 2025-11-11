@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { UserProfile } from '@/types';
@@ -63,8 +64,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      setLoading(true);
+      // Always set loading to true at the beginning of a state change check
+      setLoading(true); 
       await fetchAndSetUser(firebaseUser);
+      // Set loading to false only after the user profile has been fetched (or not found)
       setLoading(false);
     });
 
@@ -75,8 +78,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = async (values: LoginFormValues): Promise<FirebaseUser> => {
     const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
     const firebaseUser = userCredential.user;
+    // After successful login, immediately fetch and set the user in context.
+    // This will trigger a re-render in consumers of the context BEFORE the redirect happens.
     if (firebaseUser) {
-        // Fetch and set user immediately after login to prevent layout shifts/redirects
         await fetchAndSetUser(firebaseUser);
     }
     return firebaseUser;
@@ -103,12 +107,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     await setDoc(doc(db, "users", fbUser.uid), newUserProfile);
+    // Set user immediately after creating profile in DB
     setUser({ id: fbUser.uid, ...newUserProfile });
   };
 
   const logout = async () => {
     await signOut(auth);
     setUser(null);
+    // Force a hard redirect to the login page to clear any state.
     router.push('/login');
   };
   
