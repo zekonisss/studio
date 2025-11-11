@@ -44,7 +44,6 @@ export default function LoginPage() {
     },
   });
 
-  // Redirect if user is already logged in and auth is not loading
   useEffect(() => {
     if (!loading && user) {
       router.replace('/dashboard');
@@ -60,8 +59,7 @@ export default function LoginPage() {
           title: t('toast.login.success.title'),
           description: t('toast.login.success.description'),
       });
-      // The redirection will now be handled by the useEffect hook
-      // as the user state updates. We can also push it here for faster feel.
+      // The context is now updated, so we can safely redirect.
       router.push('/dashboard');
     } catch (error: any) {
        console.error("Login error:", error);
@@ -77,23 +75,12 @@ export default function LoginPage() {
     }
   };
   
-  // Show a loader while we are checking for an existing session
-  if (loading) {
+  if (loading || user) {
      return (
         <div className="flex h-screen w-full items-center justify-center bg-background">
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
         </div>
       );
-  }
-  
-  // If user is already logged in, this component will be replaced by the loader/redirect logic above
-  // This form is only for non-logged-in users. An extra check to prevent flashing the form.
-  if (user) {
-    return (
-       <div className="flex h-screen w-full items-center justify-center bg-background">
-         <Loader2 className="h-12 w-12 animate-spin text-primary" />
-       </div>
-     );
   }
 
   return (

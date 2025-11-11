@@ -21,14 +21,14 @@ export default function AuthenticatedLayout({
   const router = useRouter();
 
   useEffect(() => {
-    // Redirect to login page ONLY when loading is finished and there is definitely no user.
+    // Only redirect when loading is finished and there's definitely no user
     if (!loading && !user) {
       router.replace('/login');
     }
   }, [user, loading, router]);
   
-  // Show a full-screen loading indicator while the authentication status is being checked.
-  // This prevents any rendering attempts or redirects before the user state is clear.
+  // Show a full-screen loader while we are determining the auth state.
+  // This is the key change to prevent rendering anything before we are sure.
   if (loading) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
@@ -37,14 +37,13 @@ export default function AuthenticatedLayout({
     );
   }
   
-  // If loading is finished but there is still no user, we render nothing,
-  // because the useEffect above is already handling the redirect.
-  // This prevents a brief flash of the layout before the redirect happens.
+  // If loading is done and there's no user, we render null. 
+  // The useEffect above is already handling the redirect. This prevents a flash of content.
   if (!user) {
     return null;
   }
   
-  // When loading is complete and we have a user, render the full layout.
+  // Only when loading is complete AND we have a user, render the full layout.
   return (
     <div className="flex min-h-screen w-full bg-muted/40">
       <div className="hidden border-r bg-card md:block md:w-72">
