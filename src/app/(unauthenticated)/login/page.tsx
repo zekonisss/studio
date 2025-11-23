@@ -27,13 +27,14 @@ import { useLanguage } from "@/contexts/language-context";
 import { Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function LoginPage() {
   const { login, user, loading } = useAuth();
   const { t } = useLanguage();
   const { toast } = useToast();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<LoginFormValues>({
@@ -44,11 +45,13 @@ export default function LoginPage() {
     },
   });
 
+  // Redirect if user is already logged in
   useEffect(() => {
     if (!loading && user) {
-      router.replace('/dashboard');
+      const redirectUrl = searchParams.get('redirect') || '/dashboard';
+      router.replace(redirectUrl);
     }
-  }, [user, loading, router]);
+  }, [user, loading, router, searchParams]);
 
 
   const onSubmit = async (values: LoginFormValues) => {
@@ -59,8 +62,7 @@ export default function LoginPage() {
           title: t('toast.login.success.title'),
           description: t('toast.login.success.description'),
       });
-      // The context is now updated, so we can safely redirect.
-      router.push('/dashboard');
+      // The useEffect hook will handle the redirect once the user state is confirmed.
     } catch (error: any) {
        console.error("Login error:", error);
         toast({
@@ -75,6 +77,7 @@ export default function LoginPage() {
     }
   };
   
+  // Show a loader while checking auth state or if a user object already exists (and we're about to redirect)
   if (loading || user) {
      return (
         <div className="flex h-screen w-full items-center justify-center bg-background">
@@ -83,6 +86,7 @@ export default function LoginPage() {
       );
   }
 
+  // Only render the login form if we are sure there is no user
   return (
     <Card className="w-full max-w-md">
       <CardHeader>

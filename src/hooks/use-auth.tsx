@@ -12,7 +12,7 @@ import {
     onAuthStateChanged,
     type User as FirebaseUser
 } from 'firebase/auth';
-import { doc, setDoc, Timestamp, getDoc } from "firebase/firestore";
+import { doc, setDoc, Timestamp, getDoc, serverTimestamp } from "firebase/firestore";
 import * as storageApi from '@/lib/storage';
 import { useToast } from './use-toast';
 import { useRouter } from 'next/navigation';
@@ -23,7 +23,7 @@ interface AuthContextType {
   login: (values: LoginFormValues) => Promise<FirebaseUser>;
   signup: (values: SignupFormValuesExtended) => Promise<void>;
   logout: () => Promise<void>;
-  updateUserInContext: (updatedUser: UserProfile) => Promise<void>;
+  updateUserInContext: (updatedUser: Partial<UserProfile>) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -36,12 +36,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      setLoading(true);
       if (firebaseUser) {
         try {
           const userProfile = await storageApi.getUserById(firebaseUser.uid);
           if (userProfile) {
             setUser(userProfile);
           } else {
+            // This case might happen if a user is in Firebase Auth but not in Firestore.
+            // Log them out to be safe.
             console.warn("No Firestore profile found for authenticated user:", firebaseUser.uid);
             await signOut(auth);
             setUser(null);
@@ -60,23 +63,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const login = async (values: LoginFormValues): Promise<FirebaseUser> => {
+    setLoading(true);
     const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
     const firebaseUser = userCredential.user;
-    if (firebaseUser) {
-      // Immediately fetch and set the user profile to update the context state
-      const userProfile = await storageApi.getUserById(firebaseUser.uid);
-       if (userProfile) {
-          setUser(userProfile);
-        } else {
-          // If no profile, throw error to be caught in login page
-          await signOut(auth);
-          throw new Error('No user profile found. Please contact support.');
-        }
-    }
+    
+    // The onAuthStateChanged listener will handle fetching the profile and setting the user state.
+    // This simplifies logic and avoids race conditions.
+    
     return firebaseUser;
   };
 
   const signup = async (values: SignupFormValuesExtended) => {
+    setLoading(true);
     const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
     const fbUser = userCredential.user;
 
@@ -91,30 +89,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       paymentStatus: 'pending_verification',
       isAdmin: false,
       agreeToTerms: values.agreeToTerms,
-      registeredAt: Timestamp.now(),
+      registeredAt: serverTimestamp(),
       accountActivatedAt: undefined,
       subUsers: [],
     };
 
     await setDoc(doc(db, "users", fbUser.uid), newUserProfile);
-    setUser({ id: fbUser.uid, ...newUserProfile });
+    
+    // The onAuthStateChanged listener will pick up the new user and set the state.
+    // We don't need to call setUser here directly.
   };
 
   const logout = async () => {
     await signOut(auth);
     setUser(null);
+    // Redirecting here ensures a clean state after logout.
     router.push('/login');
   };
   
-  const updateUserInContext = async (updatedUserData: UserProfile) => {
-    setUser(updatedUserData);
-    if (updatedUserData.id) {
-        await storageApi.updateUserProfile(updatedUserData.id, updatedUserData);
+  const updateUserInContext = async (updatedUserData: Partial<UserProfile>) => {
+    if (user) {
+        const newUserData = { ...user, ...updatedUserData };
+        setUser(newUserData);
+        await storageApi.updateUserProfile(user.id, updatedUserData);
     }
   };
 
   const value = { user, loading, login, signup, logout, updateUserInContext };
 
+  // Render children only when loading is complete to avoid flashes of incorrect content.
   return (
     <AuthContext.Provider value={value}>
       {children}
