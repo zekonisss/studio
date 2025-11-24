@@ -13,11 +13,11 @@ export default function HomePage() {
   useEffect(() => {
     // We only want to redirect once the loading is complete
     if (!loading) {
-      if (user) {
-        // If there's a user, go to the dashboard
+      if (user && user.paymentStatus === 'active') {
+        // If there's an active user, go to the dashboard
         router.replace('/dashboard');
       } else {
-        // If there's no user, go to the login page
+        // If there's no user, or user is not active, go to the login page
         router.replace('/login');
       }
     }
