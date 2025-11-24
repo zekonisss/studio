@@ -109,29 +109,20 @@ export default function AddReportPage() {
         dataAiHint = uploadResult.dataAiHint;
       }
       
-      const baseData: Partial<Report> = {
+      const reportData: Omit<Report, 'id' | 'createdAt' | 'deletedAt'> = {
         reporterId: user.id,
         reporterCompanyName: user.companyName ?? "",
         fullName: values.fullName,
         nationality: values.nationality,
+        birthYear: values.birthYear ? Number(values.birthYear) : null,
         category: values.category,
         tags: values.tags || [],
         comment: values.comment,
+        imageUrl: imageUrl ?? null,
+        dataAiHint: dataAiHint ?? null,
       };
-
-      if (values.birthYear) {
-        baseData.birthYear = Number(values.birthYear);
-      }
       
-      if (imageUrl) {
-        baseData.imageUrl = imageUrl;
-      }
-
-      if (dataAiHint) {
-        baseData.dataAiHint = dataAiHint;
-      }
-      
-      await storage.addReport(baseData as Omit<Report, 'id'>);
+      await storage.addReport(reportData as any);
 
       toast({
         title: t('reports.add.toast.success.title'),

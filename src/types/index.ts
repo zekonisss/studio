@@ -22,12 +22,12 @@ export interface Report {
   reporterCompanyName: string;
   fullName: string;
   nationality?: string;
-  birthYear?: number;
+  birthYear?: number | null;
   category: string;
   tags: string[];
   comment: string;
-  imageUrl?: string;
-  dataAiHint?: string;
+  imageUrl?: string | null;
+  dataAiHint?: string | null;
   createdAt: Date | string | any; // Changed to any to support serverTimestamp
   deletedAt?: (Date | string | any) | null; // Changed to any to support serverTimestamp
 }
