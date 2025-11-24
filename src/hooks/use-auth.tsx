@@ -90,7 +90,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       isAdmin: false,
       agreeToTerms: values.agreeToTerms,
       registeredAt: serverTimestamp(),
-      accountActivatedAt: undefined,
+      accountActivatedAt: null,
       subUsers: [],
     };
 
