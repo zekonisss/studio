@@ -99,7 +99,7 @@ export async function getAllReports(): Promise<Report[]> {
   return convertTimestamp(reportList);
 }
 
-export async function addReport(reportData: Omit<Report, 'id'>): Promise<void> {
+export async function addReport(reportData: Omit<Report, 'id' | 'createdAt' | 'deletedAt'>): Promise<void> {
   const reportsCol = collection(db, "reports");
   const dataWithTimestamp = {
     ...reportData,
