@@ -29,18 +29,12 @@ export default function AuthenticatedLayout({
   
   // Show a full-screen loader while we are determining the auth state.
   // This is the key change to prevent rendering anything before we are sure.
-  if (loading) {
+  if (loading || !user) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
       </div>
     );
-  }
-  
-  // If loading is done and there's no user, we render null. 
-  // The useEffect above is already handling the redirect. This prevents a flash of content.
-  if (!user) {
-    return null;
   }
   
   // Only when loading is complete AND we have a user, render the full layout.

@@ -27,14 +27,13 @@ import { useLanguage } from "@/contexts/language-context";
 import { Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
   const { login, user, loading } = useAuth();
   const { t } = useLanguage();
   const { toast } = useToast();
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<LoginFormValues>({
@@ -48,10 +47,9 @@ export default function LoginPage() {
   // Redirect if user is already logged in
   useEffect(() => {
     if (!loading && user) {
-      const redirectUrl = searchParams.get('redirect') || '/dashboard';
-      router.replace(redirectUrl);
+      router.replace('/dashboard');
     }
-  }, [user, loading, router, searchParams]);
+  }, [user, loading, router]);
 
 
   const onSubmit = async (values: LoginFormValues) => {
@@ -62,7 +60,11 @@ export default function LoginPage() {
           title: t('toast.login.success.title'),
           description: t('toast.login.success.description'),
       });
-      // The useEffect hook will handle the redirect once the user state is confirmed.
+      // After successful login, router.replace will be handled by the useEffect hook
+      // or by the root page.tsx which now correctly handles redirection.
+      // We manually trigger a navigation to the root to start the process.
+      router.push('/');
+
     } catch (error: any) {
        console.error("Login error:", error);
         toast({
