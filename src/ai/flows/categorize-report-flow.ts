@@ -46,11 +46,14 @@ export async function categorizeReport(input: CategorizeReportInput): Promise<Ca
   return categorizeReportFlow(input);
 }
 
-const categorizeReportPrompt = ai.definePrompt({
-  name: 'categorizeReportPrompt',
-  input: { schema: CategorizeReportInputSchema },
-  output: { schema: CategorizeReportOutputSchema },
-  prompt: `You are an expert assistant for a logistics and transportation company, specializing in categorizing driver incident reports.
+const categorizeReportFlow = ai.defineFlow(
+  {
+    name: 'categorizeReportFlow',
+    inputSchema: CategorizeReportInputSchema,
+    outputSchema: CategorizeReportOutputSchema,
+  },
+  async (input) => {
+    const prompt = `You are an expert assistant for a logistics and transportation company, specializing in categorizing driver incident reports.
 Analyze the provided incident comment, which may be in various languages (e.g., Lithuanian, Russian, English, Latvian, Polish, Estonian).
 Based on the comment, your task is to:
 
@@ -74,18 +77,15 @@ For example, if a comment states "Driver was caught stealing fuel and was also v
 Return your answer in the specified JSON format.
 Ensure 'categoryId' is exactly one of the allowed IDs.
 Ensure 'suggestedTags' only contains tag KEYS valid for the chosen 'categoryId'.
-`,
-});
-
-const categorizeReportFlow = ai.defineFlow(
-  {
-    name: 'categorizeReportFlow',
-    inputSchema: CategorizeReportInputSchema,
-    outputSchema: CategorizeReportOutputSchema,
-  },
-  async (input) => {
-    const { output } = await categorizeReportPrompt(input);
-
+`;
+    
+    const { output } = await ai.generate({
+        prompt: prompt,
+        model: 'googleai/gemini-2.0-flash',
+        output: { schema: CategorizeReportOutputSchema },
+        context: { comment: input.comment }
+    });
+    
     if (!output) {
       return { categoryId: 'other_category', suggestedTags: [] };
     }

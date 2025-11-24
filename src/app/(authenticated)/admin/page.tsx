@@ -81,13 +81,12 @@ export default function AdminPage() {
   const logAdminAction = useCallback(async (actionKey: string, details: Record<string, any> = {}) => {
     if (!adminUser) return;
     try {
-      const newLogEntry: Omit<AuditLogEntry, 'id' | 'timestamp'> = {
+      await storage.addAuditLogEntry({
         adminId: adminUser.id,
         adminName: adminUser.contactPerson || adminUser.email,
         actionKey,
         details,
-      };
-      await storage.addAuditLogEntry(newLogEntry);
+      });
       const updatedLogs = await storage.getAuditLogs();
       setAuditLogs(updatedLogs);
     } catch(error) {

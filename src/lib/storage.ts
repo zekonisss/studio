@@ -14,7 +14,8 @@ import {
   orderBy,
   Timestamp,
   getDoc,
-  writeBatch
+  writeBatch,
+  serverTimestamp
 } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
@@ -56,7 +57,7 @@ export async function addUsersBatch(usersData: Omit<UserProfile, 'id'>[]): Promi
         const newUserRef = doc(collection(db, "users")); // Auto-generate ID
         const finalUserData = {
           ...userData,
-          registeredAt: Timestamp.now()
+          registeredAt: serverTimestamp()
         };
         batch.set(newUserRef, finalUserData);
     });
@@ -102,7 +103,7 @@ export async function addReport(reportData: Omit<Report, 'id'>): Promise<void> {
   const reportsCol = collection(db, "reports");
   const dataWithTimestamp = {
     ...reportData,
-    createdAt: Timestamp.now(),
+    createdAt: serverTimestamp(),
     deletedAt: null,
   };
   await addDoc(reportsCol, dataWithTimestamp);
@@ -111,7 +112,7 @@ export async function addReport(reportData: Omit<Report, 'id'>): Promise<void> {
 export async function softDeleteReport(reportId: string): Promise<void> {
   const reportRef = doc(db, "reports", reportId);
   await updateDoc(reportRef, {
-    deletedAt: Timestamp.now()
+    deletedAt: serverTimestamp()
   });
 }
 
@@ -120,7 +121,7 @@ export async function softDeleteAllReports(): Promise<number> {
     const reportSnapshot = await getDocs(reportsCol);
     const batch = writeBatch(db);
     reportSnapshot.docs.forEach(document => {
-        batch.update(document.ref, { deletedAt: Timestamp.now() });
+        batch.update(document.ref, { deletedAt: serverTimestamp() });
     });
     await batch.commit();
     return reportSnapshot.size;
@@ -145,10 +146,10 @@ export async function getSearchLogs(userId?: string): Promise<SearchLog[]> {
   return logs;
 }
 
-export async function addSearchLog(logData: Omit<SearchLog, 'id'>): Promise<void> {
+export async function addSearchLog(logData: Omit<SearchLog, 'id' | 'timestamp'>): Promise<void> {
   const dataWithTimestamp = {
     ...logData,
-    timestamp: Timestamp.now(),
+    timestamp: serverTimestamp(),
   };
   await addDoc(collection(db, "searchLogs"), dataWithTimestamp);
 }
@@ -162,7 +163,7 @@ export async function getAuditLogs(): Promise<AuditLogEntry[]> {
 export async function addAuditLogEntry(entryData: Omit<AuditLogEntry, 'id' | 'timestamp'>): Promise<void> {
     const dataWithTimestamp = {
         ...entryData,
-        timestamp: Timestamp.now(),
+        timestamp: serverTimestamp(),
     };
     await addDoc(collection(db, "auditLogs"), dataWithTimestamp);
 }
@@ -180,7 +181,7 @@ export async function addUserNotification(userId: string, notificationData: Omit
         ...notificationData,
         userId,
         read: false,
-        createdAt: Timestamp.now(),
+        createdAt: serverTimestamp(),
     };
     await addDoc(collection(db, "notifications"), data);
 }
