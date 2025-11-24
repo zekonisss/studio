@@ -63,7 +63,7 @@ export default function SignupPage() {
         title: t('toast.signup.success.title'),
         description: t('toast.signup.success.description'),
       });
-      router.push('/dashboard');
+      router.push('/activation-pending');
     } catch (error: any) {
       console.error("[SIGNUP] Error:", error);
       
