@@ -1,4 +1,3 @@
-
 # Kaip Atsisiųsti Projektą į Savo Kompiuterį
 
 Šios instrukcijos paaiškina, kaip perkelti visus projekto failus iš `Firebase Studio` į savo asmeninį kompiuterį naudojant `Git` ir `GitHub`.
