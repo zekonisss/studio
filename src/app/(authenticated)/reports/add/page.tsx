@@ -94,40 +94,58 @@ export default function AddReportPage() {
 
   const onSubmit = async (values: ReportFormValues) => {
     if (!user) {
-      toast({ variant: 'destructive', title: t('reports.add.toast.notLoggedIn.title'), description: t('reports.add.toast.notLoggedIn.description') });
+      toast({
+        variant: 'destructive',
+        title: t('reports.add.toast.notLoggedIn.title'),
+        description: t('reports.add.toast.notLoggedIn.description'),
+      });
       return;
     }
+
     setIsSubmitting(true);
 
     try {
-      let imageUrl: string | undefined = undefined;
-      let dataAiHint: string | undefined = undefined;
+      let imageUrl: string | null = null;
+      let dataAiHint: string | null = null;
 
+      // Jei yra failas – įkeliame į Storage
       if (fileToUpload) {
         const uploadResult = await storage.uploadReportImage(fileToUpload);
         imageUrl = uploadResult.url;
         dataAiHint = uploadResult.dataAiHint;
       }
-      
-      const reportData: Omit<Report, 'id' | 'createdAt' | 'deletedAt'> = {
+
+      // Pagrindiniai (privalomi) laukai
+      const reportData: any = {
         reporterId: user.id,
-        reporterCompanyName: user.companyName ?? "",
+        reporterCompanyName: user.companyName ?? '',
         fullName: values.fullName,
         nationality: values.nationality,
-        birthYear: values.birthYear ? Number(values.birthYear) : null,
         category: values.category,
         tags: values.tags || [],
         comment: values.comment,
-        imageUrl: imageUrl ?? null,
-        dataAiHint: dataAiHint ?? null,
       };
 
-      await storage.addReport(reportData);
+      // Neprivalomi laukai – pridedami tik jei turi reikšmę
+      if (values.birthYear) {
+        reportData.birthYear = Number(values.birthYear);
+      }
+      if (imageUrl) {
+        reportData.imageUrl = imageUrl;
+      }
+      if (dataAiHint) {
+        reportData.dataAiHint = dataAiHint;
+      }
+
+      console.log('Report data before save:', reportData);
+
+      await storage.addReport(reportData as Omit<Report, 'id' | 'createdAt' | 'deletedAt'>);
 
       toast({
         title: t('reports.add.toast.success.title'),
         description: t('reports.add.toast.success.description', { fullName: values.fullName }),
       });
+
       router.push('/reports/history');
     } catch (error) {
       console.error("Failed to submit report:", error);
