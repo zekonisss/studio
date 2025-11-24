@@ -108,19 +108,22 @@ export default function AddReportPage() {
         imageUrl = uploadResult.url;
         dataAiHint = uploadResult.dataAiHint;
       }
-
-
-      const reportData: Omit<Report, 'id' | 'createdAt' | 'deletedAt'> = {
+      
+      const baseData = {
         reporterId: user.id,
-        reporterCompanyName: user.companyName,
+        reporterCompanyName: user.companyName ?? "",
         fullName: values.fullName,
         nationality: values.nationality,
-        birthYear: values.birthYear ? Number(values.birthYear) : undefined,
         category: values.category,
         tags: values.tags || [],
         comment: values.comment,
         imageUrl,
         dataAiHint,
+      };
+
+      const reportData: Omit<Report, 'id' | 'createdAt' | 'deletedAt'> = {
+        ...baseData,
+        ...(values.birthYear ? { birthYear: Number(values.birthYear) } : {}),
       };
 
       await storage.addReport(reportData);
