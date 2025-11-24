@@ -46,12 +46,14 @@ export default function LoginPage() {
 
   // Redirect if user is already logged in
   useEffect(() => {
-    if (!loading && user) {
-        if (user.paymentStatus === 'active') {
-            router.replace('/dashboard');
-        } else {
-            router.replace('/activation-pending');
-        }
+    if (loading || !user) {
+        return;
+    }
+
+    if (user.paymentStatus === 'active') {
+        router.replace('/dashboard');
+    } else {
+        router.replace('/activation-pending');
     }
   }, [user, loading, router]);
 
