@@ -159,7 +159,7 @@ export async function getAuditLogs(): Promise<AuditLogEntry[]> {
     return querySnapshot.docs.map(doc => convertTimestamp({ id: doc.id, ...doc.data() } as AuditLogEntry));
 }
 
-export async function addAuditLogEntry(entryData: Omit<AuditLogEntry, 'id'>): Promise<void> {
+export async function addAuditLogEntry(entryData: Omit<AuditLogEntry, 'id' | 'timestamp'>): Promise<void> {
     const dataWithTimestamp = {
         ...entryData,
         timestamp: Timestamp.now(),
