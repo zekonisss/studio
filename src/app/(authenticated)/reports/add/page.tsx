@@ -109,7 +109,7 @@ export default function AddReportPage() {
         dataAiHint = uploadResult.dataAiHint;
       }
       
-      const baseData = {
+      const baseData: Omit<Report, 'id' | 'createdAt' | 'deletedAt'> = {
         reporterId: user.id,
         reporterCompanyName: user.companyName ?? "",
         fullName: values.fullName,
@@ -117,16 +117,20 @@ export default function AddReportPage() {
         category: values.category,
         tags: values.tags || [],
         comment: values.comment,
-        imageUrl,
-        dataAiHint,
       };
 
-      const reportData: Omit<Report, 'id' | 'createdAt' | 'deletedAt'> = {
-        ...baseData,
-        ...(values.birthYear ? { birthYear: Number(values.birthYear) } : {}),
-      };
-
-      await storage.addReport(reportData);
+      if (values.birthYear) {
+        (baseData as any).birthYear = Number(values.birthYear);
+      }
+      
+      if (imageUrl) {
+        (baseData as any).imageUrl = imageUrl;
+      }
+      if (dataAiHint) {
+        (baseData as any).dataAiHint = dataAiHint;
+      }
+      
+      await storage.addReport(baseData);
 
       toast({
         title: t('reports.add.toast.success.title'),
