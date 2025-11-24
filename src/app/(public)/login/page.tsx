@@ -46,8 +46,12 @@ export default function LoginPage() {
 
   // Redirect if user is already logged in
   useEffect(() => {
-    if (!loading && user && user.paymentStatus === 'active') {
-      router.replace('/dashboard');
+    if (!loading && user) {
+        if (user.paymentStatus === 'active') {
+            router.replace('/dashboard');
+        } else {
+            router.replace('/activation-pending');
+        }
     }
   }, [user, loading, router]);
 
@@ -60,11 +64,8 @@ export default function LoginPage() {
           title: t('toast.login.success.title'),
           description: t('toast.login.success.description'),
       });
-      // After successful login, router.replace will be handled by the useEffect hook
-      // or by the root page.tsx which now correctly handles redirection.
-      // We manually trigger a navigation to the root to start the process.
-      router.push('/');
-
+      // The useEffect hook will handle redirection after successful login
+      // No need to manually push a route here
     } catch (error: any) {
        console.error("Login error:", error);
         toast({
@@ -79,8 +80,8 @@ export default function LoginPage() {
     }
   };
   
-  // Show a loader while checking auth state or if a user object already exists (and we're about to redirect)
-  if (loading || (user && user.paymentStatus === 'active')) {
+  // Show a loader while checking auth state or if we are about to redirect
+  if (loading || (!loading && user)) {
      return (
         <div className="flex h-screen w-full items-center justify-center bg-background">
           <Loader2 className="h-12 w-12 animate-spin text-primary" />

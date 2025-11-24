@@ -16,8 +16,12 @@ export default function HomePage() {
       if (user && user.paymentStatus === 'active') {
         // If there's an active user, go to the dashboard
         router.replace('/dashboard');
-      } else {
-        // If there's no user, or user is not active, go to the login page
+      } else if (user) {
+        // If there's a user but they are not active, go to the pending page
+        router.replace('/activation-pending');
+      }
+      else {
+        // If there's no user, go to the login page
         router.replace('/login');
       }
     }

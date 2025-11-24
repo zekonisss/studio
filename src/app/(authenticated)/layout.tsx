@@ -23,11 +23,22 @@ export default function AuthenticatedLayout({
     if (loading) {
       return;
     }
-    if (!user || user.paymentStatus !== 'active') {
+
+    // 1. Jei neprisijungęs – metam į login
+    if (!user) {
       router.replace('/login');
+      return;
     }
+    
+    // 2. Jei prisijungęs, bet neaktyvus – į laukimo langą
+    if (user.paymentStatus !== 'active') {
+      router.replace('/activation-pending');
+      return;
+    }
+
   }, [user, loading, router]);
   
+  // Kol tikrinam / redirectinam – rodome spinnerį
   if (loading || !user || user.paymentStatus !== 'active') {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
@@ -36,6 +47,7 @@ export default function AuthenticatedLayout({
     );
   }
   
+  // Jei čia atėjom – vartotojas aktyvus ir gali matyti apsaugotus puslapius
   return (
     <div className="flex min-h-screen w-full bg-muted/40">
       <div className="hidden border-r bg-card md:block md:w-72">
