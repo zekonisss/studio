@@ -121,8 +121,8 @@ export default function AddReportPage() {
         imageUrl: imageUrl ?? null,
         dataAiHint: dataAiHint ?? null,
       };
-      
-      await storage.addReport(reportData as any);
+
+      await storage.addReport(reportData);
 
       toast({
         title: t('reports.add.toast.success.title'),
