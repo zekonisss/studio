@@ -1,4 +1,3 @@
-
 "use client";
 
 import { SidebarNav } from '@/components/navigation/sidebar-nav';
@@ -21,15 +20,15 @@ export default function AuthenticatedLayout({
   const router = useRouter();
 
   useEffect(() => {
-    // Only redirect when loading is finished and there's definitely no user
-    if (!loading && !user) {
+    if (loading) {
+      return;
+    }
+    if (!user || user.paymentStatus !== 'active') {
       router.replace('/login');
     }
   }, [user, loading, router]);
   
-  // Show a full-screen loader while we are determining the auth state.
-  // This is the key change to prevent rendering anything before we are sure.
-  if (loading || !user) {
+  if (loading || !user || user.paymentStatus !== 'active') {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -37,7 +36,6 @@ export default function AuthenticatedLayout({
     );
   }
   
-  // Only when loading is complete AND we have a user, render the full layout.
   return (
     <div className="flex min-h-screen w-full bg-muted/40">
       <div className="hidden border-r bg-card md:block md:w-72">
