@@ -1,19 +1,17 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { UserSearch } from "lucide-react";
+import { UserSearch, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import { Loader2 } from 'lucide-react';
 
 export default function RootPage() {
     const { user, loading } = useAuth();
     const router = useRouter();
 
     useEffect(() => {
-        // Redirect logged-in users away from the landing page
         if (!loading && user) {
             if (user.paymentStatus === 'active') {
                 router.replace('/dashboard');
@@ -23,7 +21,6 @@ export default function RootPage() {
         }
     }, [user, loading, router]);
 
-    // Show a loader while checking auth state or if a redirect is imminent
     if (loading || user) {
         return (
             <div className="flex h-screen w-full items-center justify-center bg-background">
@@ -32,7 +29,6 @@ export default function RootPage() {
         );
     }
   
-  // Show the landing page content only if we're done loading and there's NO user.
   return (
     <div className="flex min-h-screen w-full flex-col items-center justify-center bg-background p-4 text-center">
         <div className="flex flex-col items-center gap-4">

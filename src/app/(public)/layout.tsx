@@ -1,12 +1,10 @@
 "use client";
 
-import { UserSearch } from "lucide-react";
+import { UserSearch, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { Loader2 } from "lucide-react";
-
 
 export default function PublicLayout({
     children,
@@ -17,8 +15,8 @@ export default function PublicLayout({
     const router = useRouter();
 
     useEffect(() => {
+        // If the user is logged in, redirect them away from public pages
         if (!loading && user) {
-            // If the user is logged in, redirect them away from public pages
             if (user.paymentStatus === 'active') {
                 router.replace('/dashboard');
             } else {
