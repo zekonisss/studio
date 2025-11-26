@@ -49,7 +49,7 @@ export default function AuthenticatedLayout({
   
   // Jei čia atėjom – vartotojas aktyvus ir gali matyti apsaugotus puslapius
   return (
-    <div className="flex min-h-screen w-full bg-muted/40">
+    <div className="flex min-h-screen w-full">
       <div className="hidden border-r bg-card md:block md:w-72">
         <SidebarNav isInSheet={false} />
       </div>
