@@ -22,17 +22,17 @@ export default function AuthenticatedLayout({
 
   useEffect(() => {
     if (loading) {
-      return;
+      return; // Do nothing while loading
     }
 
-    // 1. If not logged in, redirect to login
+    // If no user is found after loading, redirect to login
     if (!user) {
       router.replace('/login');
       return;
     }
     
-    // 2. If logged in but not active, redirect to activation pending
-    // Make sure we are not already on a page that is allowed for pending users
+    // If user exists but is not active, redirect to pending page
+    // (but allow access to the pending page itself)
     if (user.paymentStatus !== 'active' && pathname !== '/activation-pending') {
        router.replace('/activation-pending');
       return;
@@ -40,7 +40,7 @@ export default function AuthenticatedLayout({
 
   }, [user, loading, router, pathname]);
   
-  // While checking/redirecting, show a loader
+  // Show a loader while auth state is being determined OR if a redirect is imminent.
   if (loading || !user || (user.paymentStatus !== 'active' && pathname !== '/activation-pending')) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
@@ -49,7 +49,7 @@ export default function AuthenticatedLayout({
     );
   }
   
-  // If we're here, the user is active and can see the protected pages
+  // If we reach here, the user is authenticated and has the correct status for the page.
   return (
     <div className="flex min-h-screen w-full">
       <div className="hidden border-r bg-card md:block md:w-72">

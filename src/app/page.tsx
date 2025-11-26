@@ -13,8 +13,8 @@ export default function RootPage() {
     const router = useRouter();
 
     useEffect(() => {
+        // Redirect logged-in users away from the landing page
         if (!loading && user) {
-            // If the user is logged in, redirect them away from the landing page
             if (user.paymentStatus === 'active') {
                 router.replace('/dashboard');
             } else {
@@ -23,7 +23,7 @@ export default function RootPage() {
         }
     }, [user, loading, router]);
 
-    // If we're checking for a user, or if a user is found and we're about to redirect, show a loader.
+    // Show a loader while checking auth state or if a redirect is imminent
     if (loading || user) {
         return (
             <div className="flex h-screen w-full items-center justify-center bg-background">
@@ -32,7 +32,7 @@ export default function RootPage() {
         );
     }
   
-  // Only show the landing page content if we're done loading and there's no user.
+  // Show the landing page content only if we're done loading and there's NO user.
   return (
     <div className="flex min-h-screen w-full flex-col items-center justify-center bg-background p-4 text-center">
         <div className="flex flex-col items-center gap-4">
