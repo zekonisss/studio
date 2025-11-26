@@ -43,8 +43,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           if (userProfile) {
             setUser(userProfile);
           } else {
-            // This case might happen if a user is in Firebase Auth but not in Firestore.
-            // Log them out to be safe.
             console.warn("No Firestore profile found for authenticated user:", firebaseUser.uid);
             await signOut(auth);
             setUser(null);
@@ -67,8 +65,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
     const firebaseUser = userCredential.user;
     
-    // The onAuthStateChanged listener will handle fetching the profile and setting the user state.
-    // This simplifies logic and avoids race conditions.
+    // onAuthStateChanged listener will handle fetching the profile and setting the user state.
     
     return firebaseUser;
   };
@@ -96,14 +93,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     await setDoc(doc(db, "users", fbUser.uid), newUserProfile);
     
-    // The onAuthStateChanged listener will pick up the new user and set the state.
-    // We don't need to call setUser here directly.
+    // onAuthStateChanged listener will pick up the new user
   };
 
   const logout = async () => {
     await signOut(auth);
     setUser(null);
-    // Redirecting here ensures a clean state after logout.
     router.push('/login');
   };
   
@@ -117,7 +112,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const value = { user, loading, login, signup, logout, updateUserInContext };
 
-  // Render children only when loading is complete to avoid flashes of incorrect content.
   return (
     <AuthContext.Provider value={value}>
       {children}

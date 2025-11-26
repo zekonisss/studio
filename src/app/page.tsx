@@ -1,6 +1,7 @@
 import LoginPage from "./(public)/login/page";
 
 export default function HomePage() {
-  // Tiesiog rodome prisijungimo puslapį kaip pagrindinį
+  // Pagrindinis puslapis pagal nutylėjimą rodo prisijungimo formą.
+  // Apsaugos logika (guard) yra (authenticated) layout'e ir nukreips vartotoją, jei jis jau prisijungęs.
   return <LoginPage />;
 }

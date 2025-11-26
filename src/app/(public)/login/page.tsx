@@ -44,12 +44,13 @@ export default function LoginPage() {
     },
   });
 
-  // Redirect if user is already logged in
+  // Nukreipia vartotoją, jei jis jau prisijungęs
   useEffect(() => {
     if (loading || !user) {
-        return;
+        return; // Nieko nedarom, kol kraunasi arba nėra vartotojo
     }
 
+    // Vartotojas yra, tikrinam jo statusą
     if (user.paymentStatus === 'active') {
         router.replace('/dashboard');
     } else {
@@ -66,8 +67,7 @@ export default function LoginPage() {
           title: t('toast.login.success.title'),
           description: t('toast.login.success.description'),
       });
-      // The useEffect hook will handle redirection after successful login
-      // No need to manually push a route here
+      // Nukreipimas įvyks per useEffect
     } catch (error: any) {
        console.error("Login error:", error);
         toast({
@@ -82,7 +82,7 @@ export default function LoginPage() {
     }
   };
   
-  // Show a loader while checking auth state or if we are about to redirect
+  // Rodo spinnerį, kol tikrinamas prisijungimas arba jei jau tuoj būsim nukreipti
   if (loading || (!loading && user)) {
      return (
         <div className="flex h-screen w-full items-center justify-center bg-background">
@@ -91,7 +91,7 @@ export default function LoginPage() {
       );
   }
 
-  // Only render the login form if we are sure there is no user
+  // Rodo formą tik tada, kai esam tikri, kad vartotojas neprisijungęs
   return (
     <Card className="w-full max-w-md">
       <CardHeader>
