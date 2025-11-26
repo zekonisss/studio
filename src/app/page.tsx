@@ -23,6 +23,7 @@ export default function RootPage() {
         }
     }, [user, loading, router]);
 
+    // If we're checking for a user, or if a user is found and we're about to redirect, show a loader.
     if (loading || user) {
         return (
             <div className="flex h-screen w-full items-center justify-center bg-background">
@@ -31,6 +32,7 @@ export default function RootPage() {
         );
     }
   
+  // Only show the landing page content if we're done loading and there's no user.
   return (
     <div className="flex min-h-screen w-full flex-col items-center justify-center bg-background p-4 text-center">
         <div className="flex flex-col items-center gap-4">
