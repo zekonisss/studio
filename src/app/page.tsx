@@ -1,7 +1,7 @@
 import LoginPage from "./(public)/login/page";
 
 export default function HomePage() {
-  // Pagrindinis puslapis pagal nutylėjimą rodo prisijungimo formą.
-  // Apsaugos logika (guard) yra (authenticated) layout'e ir nukreips vartotoją, jei jis jau prisijungęs.
+  // The main page defaults to showing the login form.
+  // The guard logic in (authenticated) layout will redirect the user if they are already logged in.
   return <LoginPage />;
 }

@@ -1,7 +1,7 @@
 import { UserSearch } from "lucide-react";
 import Link from "next/link";
 
-export default function UnauthenticatedLayout({
+export default function PublicLayout({
     children,
 }: {
     children: React.ReactNode;
