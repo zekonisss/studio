@@ -7,7 +7,7 @@ import { Menu, Loader2 } from 'lucide-react';
 import { LanguageSwitcher } from '@/components/navigation/language-switcher';
 import { ThemeToggle } from '@/components/navigation/theme-toggle';
 import { useAuth } from '@/hooks/use-auth';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useEffect } from 'react';
 import { UserNav } from '@/components/navigation/user-nav';
 
@@ -18,6 +18,7 @@ export default function AuthenticatedLayout({
 }) {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     if (loading) {
@@ -31,15 +32,16 @@ export default function AuthenticatedLayout({
     }
     
     // 2. If logged in but not active, redirect to activation pending
-    if (user.paymentStatus !== 'active') {
-      router.replace('/activation-pending');
+    // Make sure we are not already on a page that is allowed for pending users
+    if (user.paymentStatus !== 'active' && pathname !== '/activation-pending') {
+       router.replace('/activation-pending');
       return;
     }
 
-  }, [user, loading, router]);
+  }, [user, loading, router, pathname]);
   
   // While checking/redirecting, show a loader
-  if (loading || !user || user.paymentStatus !== 'active') {
+  if (loading || !user || (user.paymentStatus !== 'active' && pathname !== '/activation-pending')) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
