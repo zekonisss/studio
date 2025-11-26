@@ -15,7 +15,6 @@ export default function PublicLayout({
     const router = useRouter();
 
     useEffect(() => {
-        // If the user is logged in, redirect them away from public pages
         if (!loading && user) {
             if (user.paymentStatus === 'active') {
                 router.replace('/dashboard');
@@ -25,7 +24,6 @@ export default function PublicLayout({
         }
     }, [user, loading, router]);
 
-    // While checking auth OR if a user exists (and is about to be redirected), show a loader
     if (loading || user) {
         return (
             <div className="flex min-h-screen w-full items-center justify-center bg-background">
@@ -34,7 +32,6 @@ export default function PublicLayout({
         );
     }
     
-    // If not loading and no user, show the public page
     return (
         <div className="flex min-h-screen w-full flex-col items-center justify-center bg-background p-4">
             <header className="absolute top-0 flex w-full items-center justify-center p-8">

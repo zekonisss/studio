@@ -12,7 +12,8 @@ export default function RootPage() {
     const router = useRouter();
 
     useEffect(() => {
-        if (!loading && user) {
+        if (loading) return;
+        if (user) {
             if (user.paymentStatus === 'active') {
                 router.replace('/dashboard');
             } else {

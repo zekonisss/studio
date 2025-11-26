@@ -22,7 +22,7 @@ export default function AuthenticatedLayout({
 
   useEffect(() => {
     if (loading) {
-      return; // Do nothing while loading
+      return; 
     }
 
     if (!user) {
@@ -37,7 +37,7 @@ export default function AuthenticatedLayout({
 
   }, [user, loading, router, pathname]);
   
-  if (loading || !user || (user.paymentStatus !== 'active' && pathname !== '/activation-pending')) {
+  if (loading || !user || (user.paymentStatus !== 'active' && pathname !== '/activation-pending' && pathname !== '/')) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
