@@ -24,6 +24,7 @@ export default function PublicLayout({
         }
     }, [user, loading, router]);
 
+    // While checking for user or if user exists (and we are redirecting), show loader.
     if (loading || user) {
         return (
             <div className="flex min-h-screen w-full items-center justify-center bg-background">
@@ -32,6 +33,7 @@ export default function PublicLayout({
         );
     }
     
+    // If no user and not loading, show the public page content.
     return (
         <div className="flex min-h-screen w-full flex-col items-center justify-center bg-background p-4">
             <header className="absolute top-0 flex w-full items-center justify-center p-8">

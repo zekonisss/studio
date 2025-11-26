@@ -12,8 +12,8 @@ export default function RootPage() {
     const router = useRouter();
 
     useEffect(() => {
-        if (loading) return;
-        if (user) {
+        // If we are not loading and a user is detected, redirect them.
+        if (!loading && user) {
             if (user.paymentStatus === 'active') {
                 router.replace('/dashboard');
             } else {
@@ -22,6 +22,7 @@ export default function RootPage() {
         }
     }, [user, loading, router]);
 
+    // While loading, or if a user is found (and we are about to redirect), show a spinner.
     if (loading || user) {
         return (
             <div className="flex h-screen w-full items-center justify-center bg-background">
@@ -30,6 +31,7 @@ export default function RootPage() {
         );
     }
   
+  // If not loading and no user, show the public landing page.
   return (
     <div className="flex min-h-screen w-full flex-col items-center justify-center bg-background p-4 text-center">
         <div className="flex flex-col items-center gap-4">
@@ -45,6 +47,11 @@ export default function RootPage() {
                 <Button variant="outline" asChild>
                     <Link href="/signup">Registruotis</Link>
                 </Button>
+            </div>
+             <div className="absolute bottom-8 flex gap-6 text-sm text-muted-foreground">
+                <Link href="/support" className="hover:text-primary transition-colors">Pagalba</Link>
+                <Link href="/privacy" className="hover:text-primary transition-colors">Privatumo Politika</Link>
+                <Link href="/terms" className="hover:text-primary transition-colors">Naudojimosi Taisyklės</Link>
             </div>
         </div>
     </div>

@@ -30,6 +30,8 @@ export default function AuthenticatedLayout({
       return;
     }
     
+    // If user is logged in, but their account is not active yet, 
+    // redirect them to the pending page, unless they are already there.
     if (user.paymentStatus !== 'active' && pathname !== '/activation-pending') {
        router.replace('/activation-pending');
       return;
@@ -37,7 +39,10 @@ export default function AuthenticatedLayout({
 
   }, [user, loading, router, pathname]);
   
-  if (loading || !user || (user.paymentStatus !== 'active' && pathname !== '/activation-pending' && pathname !== '/')) {
+  // While loading, or if no user object exists yet, show a spinner.
+  // Also, if the user's payment status is not active, but they are trying to access
+  // a page other than 'activation-pending', show a spinner while redirecting.
+  if (loading || !user || (user.paymentStatus !== 'active' && pathname !== '/activation-pending')) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -45,6 +50,7 @@ export default function AuthenticatedLayout({
     );
   }
   
+  // Render the proper layout for an authenticated user
   return (
     <div className="flex min-h-screen w-full">
       <div className="hidden border-r bg-card md:block md:w-72">
