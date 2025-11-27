@@ -41,7 +41,7 @@ import type { Report } from "@/types";
 import * as storage from "@/lib/storage";
 import { Loader2 } from "lucide-react";
 import { categorizeReport, type CategorizeReportInput } from '@/ai/flows/categorize-report-flow';
-import { Badge } from "@/components/ui/badge";
+import MultiFileUpload from "@/components/MultiFileUpload";
 
 export default function AddReportPage() {
   const { t } = useLanguage();
@@ -50,6 +50,7 @@ export default function AddReportPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isAiProcessing, setIsAiProcessing] = useState(false);
   const [availableTags, setAvailableTags] = useState<string[]>([]);
+  const [uploadedImageUrls, setUploadedImageUrls] = useState<string[]>([]);
 
   const form = useForm<ReportFormValues>({
     resolver: zodResolver(ReportSchema),
@@ -97,12 +98,10 @@ export default function AddReportPage() {
       if (result.categoryId) {
         form.setValue("category", result.categoryId, { shouldValidate: true });
         
-        // This will trigger the useEffect to update available tags
         const categoryDetails = detailedReportCategories.find(c => c.id === result.categoryId);
         const newAvailableTags = categoryDetails ? categoryDetails.tags : [];
         
         if (result.suggestedTags && result.suggestedTags.length > 0) {
-           // Filter AI tags to ensure they are valid for the selected category
            const validTags = result.suggestedTags.filter(tag => newAvailableTags.includes(tag));
            form.setValue("tags", validTags, { shouldValidate: true });
         } else {
@@ -148,14 +147,8 @@ export default function AddReportPage() {
             category: values.category,
             tags: values.tags || [],
             comment: values.comment,
+            imageUrls: uploadedImageUrls,
         };
-
-        if (values.image instanceof FileList && values.image.length > 0) {
-            const file = values.image[0];
-            const uploadResult = await storage.uploadReportImage(file);
-            newReport.imageUrl = uploadResult.url;
-            newReport.dataAiHint = uploadResult.dataAiHint;
-        }
 
         await storage.addReport(newReport);
 
@@ -164,6 +157,7 @@ export default function AddReportPage() {
             description: `Įrašas apie ${values.fullName} buvo išsaugotas.`,
         });
         form.reset();
+        setUploadedImageUrls([]);
     } catch (error) {
         console.error("Error submitting report:", error);
         toast({
@@ -181,8 +175,6 @@ export default function AddReportPage() {
     displayName: getCategoryNameForDisplay(cat.id, t)
   })), [t]);
   
-  const fileRef = form.register("image");
-
   return (
     <div>
       <div className="mb-8">
@@ -375,22 +367,14 @@ export default function AddReportPage() {
                 />
               )}
 
-              <FormField
-                control={form.control}
-                name="image"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t("reports.add.form.image.label")}</FormLabel>
-                    <FormControl>
-                      <Input type="file" accept="image/jpeg,image/png,application/pdf" {...fileRef} />
-                    </FormControl>
-                    <FormDescription>
-                      {t("reports.add.form.image.description")}
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <FormItem>
+                <FormLabel>{t("reports.add.form.image.label")}</FormLabel>
+                 <MultiFileUpload onUploadComplete={setUploadedImageUrls} />
+                <FormDescription>
+                  {t("reports.add.form.image.description")}
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
 
               <Button type="submit" disabled={isLoading} className="w-full md:w-auto">
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -403,4 +387,3 @@ export default function AddReportPage() {
     </div>
   );
 }
-

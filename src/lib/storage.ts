@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { Report, UserProfile, SearchLog, AuditLogEntry, UserNotification } from '@/types';
@@ -203,18 +204,15 @@ export async function markAllNotificationsAsRead(userId: string): Promise<void> 
 
 
 // --- File Management ---
-export async function uploadReportImage(file: File): Promise<{ url: string, dataAiHint: string }> {
-  const fileId = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-  const fileExtension = file.name.split('.').pop();
-  const storageRef = ref(fbStorage, `reports/${fileId}.${fileExtension}`);
+export async function uploadReportImage(file: File): Promise<{ url: string }> {
+    const fileId = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    const fileExtension = file.name.split('.').pop();
+    const storageRef = ref(fbStorage, `reports/${fileId}.${fileExtension}`);
 
-  await uploadBytes(storageRef, file);
-  const downloadURL = await getDownloadURL(storageRef);
+    await uploadBytes(storageRef, file);
+    const downloadURL = await getDownloadURL(storageRef);
 
-  const hint = file.name.split('.')[0].replace(/[^a-zA-Z\s]/g, '').substring(0, 20) || 'document scan';
-
-  return {
-    url: downloadURL,
-    dataAiHint: hint,
-  };
+    return {
+        url: downloadURL,
+    };
 }

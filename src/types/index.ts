@@ -26,8 +26,7 @@ export interface Report {
   category: string;
   tags: string[];
   comment: string;
-  imageUrl?: string | null;
-  dataAiHint?: string | null;
+  imageUrls?: string[] | null;
   createdAt: Date | string | any; // Changed to any to support serverTimestamp
   deletedAt?: (Date | string | any) | null; // Changed to any to support serverTimestamp
 }

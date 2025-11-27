@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useForm } from "react-hook-form";
@@ -223,15 +224,14 @@ export default function SearchPage() {
                         </div>
                          <div>
                             <h4 className="font-semibold mb-2">{t('search.results.attachedFile')}</h4>
-                            {report.imageUrl ? (
-                                <a href={report.imageUrl} target="_blank" rel="noopener noreferrer">
+                            {report.imageUrls && report.imageUrls.length > 0 ? (
+                                <a href={report.imageUrls[0]} target="_blank" rel="noopener noreferrer">
                                 <Image
-                                    src={report.imageUrl}
+                                    src={report.imageUrls[0]}
                                     alt={t('search.results.imageAlt', { fullName: report.fullName })}
                                     width={300}
                                     height={200}
                                     className="rounded-md object-cover border hover:opacity-80 transition-opacity"
-                                    data-ai-hint={report.dataAiHint || "document image"}
                                 />
                                 </a>
                             ) : (

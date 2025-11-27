@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useLanguage } from "@/contexts/language-context";
@@ -123,15 +124,14 @@ export default function ReportsHistoryPage() {
                                     ))}
                                 </div>
                                 <p className="text-sm text-foreground/80">{report.comment}</p>
-                                 {report.imageUrl && (
-                                     <a href={report.imageUrl} target="_blank" rel="noopener noreferrer" className="block w-fit">
+                                 {report.imageUrls && report.imageUrls.length > 0 && (
+                                     <a href={report.imageUrls[0]} target="_blank" rel="noopener noreferrer" className="block w-fit">
                                         <Image 
-                                            src={report.imageUrl} 
+                                            src={report.imageUrls[0]} 
                                             alt={t('search.results.imageAlt', { fullName: report.fullName })}
                                             width={150} 
                                             height={100}
                                             className="rounded-md object-cover border hover:opacity-80 transition-opacity"
-                                            data-ai-hint={report.dataAiHint || "document image"}
                                         />
                                      </a>
                                 )}
