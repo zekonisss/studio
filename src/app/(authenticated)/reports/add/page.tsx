@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useForm, Controller } from "react-hook-form";
@@ -138,16 +139,6 @@ export default function AddReportPage() {
     setIsLoading(true);
     
     try {
-        let imageUrl: string | undefined;
-        let dataAiHint: string | undefined;
-
-        if (values.image instanceof FileList && values.image.length > 0) {
-            const file = values.image[0];
-            const uploadResult = await storage.uploadReportImage(file);
-            imageUrl = uploadResult.url;
-            dataAiHint = uploadResult.dataAiHint;
-        }
-
         const newReport: Omit<Report, "id" | "createdAt"> = {
             reporterId: user.id,
             reporterCompanyName: user.companyName,
@@ -157,9 +148,14 @@ export default function AddReportPage() {
             category: values.category,
             tags: values.tags || [],
             comment: values.comment,
-            imageUrl,
-            dataAiHint,
         };
+
+        if (values.image instanceof FileList && values.image.length > 0) {
+            const file = values.image[0];
+            const uploadResult = await storage.uploadReportImage(file);
+            newReport.imageUrl = uploadResult.url;
+            newReport.dataAiHint = uploadResult.dataAiHint;
+        }
 
         await storage.addReport(newReport);
 
@@ -407,3 +403,4 @@ export default function AddReportPage() {
     </div>
   );
 }
+
