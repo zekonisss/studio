@@ -436,6 +436,10 @@
   "reports.import.toast.dailyQuotaReached.title": "Sasniegts Dienas AI Limits",
   "reports.import.toast.dailyQuotaReached.description": "Pārsniegta dienas AI apstrādes kvota. Turpmākās rindas šajā failā netiks analizētas ar AI. Lūdzu, mēģiniet rīt vai atjauniniet savu plānu.",
   "reports.import.toast.dailyQuotaReached.descriptionShort": "Sasniegts dienas AI limits.",
+  "activationPending.title": "Konts izveidots, gaida aktivizāciju",
+  "activationPending.description": "Jūsu konts ir veiksmīgi reģistrēts. Mūsu komanda pārbaudīs informāciju un aktivizēs piekļuvi pēc maksājuma. Jūs tiksiet informēts par aktivizāciju pa e-pastu.",
+  "activationPending.logoutPrompt": "Ja vēlaties pieteikties ar citu kontu - izrakstieties zemāk.",
+  "activationPending.logoutButton": "Izrakstīties un atgriezties pie pieteikšanās",
   "countries.AF": "Afganistāna",
   "countries.AX": "Olandes salas",
   "countries.AL": "Albānija",
@@ -725,5 +729,3 @@
   "support.contact.emailButton": "Sazināties pa E-pastu",
   "support.contact.emailLink": "mailto:support@drivercheck.eu"
 }
-
-    

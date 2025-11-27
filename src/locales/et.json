@@ -333,6 +333,10 @@
   "tags.buvo_teisinis_procesas_darbo_gincas": "Toimus õigusprotsess / töövaidlus",
   "tags.pakenkta_imones_reputacijai": "Ettevõtte maine kahjustatud",
   "tags.neteiseta_veikla_itariama": "Kahtlustatakse ebaseaduslikku tegevust",
+  "activationPending.title": "Konto on loodud, ootab aktiveerimist",
+  "activationPending.description": "Teie konto on edukalt registreeritud. Meie meeskond kontrollib teavet ja aktiveerib juurdepääsu pärast makse sooritamist. Aktiveerimisest teavitatakse teid e-posti teel.",
+  "activationPending.logoutPrompt": "Kui soovite sisse logida teise kontoga - logige allpool välja.",
+  "activationPending.logoutButton": "Logi välja ja mine tagasi sisselogimise juurde",
   "support.title": "Tugi ja Korduma Kippuvad Küsimused",
   "support.description": "Leia vastused levinud küsimustele DriverCheck platvormi kohta.",
   "support.faq.q1.question": "Kuidas registreeruda DriverCheck platvormil?",
@@ -352,5 +356,3 @@
   "support.contact.emailButton": "Võta ühendust e-posti teel",
   "support.contact.emailLink": "mailto:support@drivercheck.eu"
 }
-
-    

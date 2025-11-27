@@ -436,6 +436,10 @@
   "reports.import.toast.dailyQuotaReached.title": "Osiągnięto Dzienny Limit AI",
   "reports.import.toast.dailyQuotaReached.description": "Przekroczono dzienny limit przetwarzania AI. Kolejne wiersze w tym pliku nie będą analizowane przez AI. Spróbuj ponownie jutro lub zaktualizuj swój plan.",
   "reports.import.toast.dailyQuotaReached.descriptionShort": "Osiągnięto dzienny limit AI.",
+  "activationPending.title": "Konto utworzone, oczekiwanie na aktywację",
+  "activationPending.description": "Twoje konto zostało pomyślnie zarejestrowane. Nasz zespół zweryfikuje informacje i aktywuje dostęp po dokonaniu płatności. O aktywacji zostaniesz poinformowany e-mailem.",
+  "activationPending.logoutPrompt": "Jeśli chcesz zalogować się na inne konto - wyloguj się poniżej.",
+  "activationPending.logoutButton": "Wyloguj się i wróć do logowania",
   "countries.AF": "Afganistan",
   "countries.AX": "Wyspy Alandzkie",
   "countries.AL": "Albania",
@@ -725,5 +729,3 @@
   "support.contact.emailButton": "Skontaktuj się przez e-mail",
   "support.contact.emailLink": "mailto:support@drivercheck.eu"
 }
-
-    
