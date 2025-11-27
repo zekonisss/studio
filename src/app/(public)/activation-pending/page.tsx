@@ -20,7 +20,7 @@ export default function ActivationPendingPage() {
 
         <div className="flex flex-col items-center gap-4 mt-8 border-t pt-6">
           <p className="text-xs text-muted-foreground text-center">
-            Jei norite prisijungti su kita paskyra (pvz. administratoriaus) –
+            Jei norite prisijungti su kita paskyra –
             atsijunkite žemiau.
           </p>
           <Button variant="outline" onClick={logout}>
