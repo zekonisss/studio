@@ -141,7 +141,7 @@ export default function AddReportPage() {
         let imageUrl: string | undefined;
         let dataAiHint: string | undefined;
 
-        if (values.image && values.image.length > 0) {
+        if (values.image instanceof FileList && values.image.length > 0) {
             const file = values.image[0];
             const uploadResult = await storage.uploadReportImage(file);
             imageUrl = uploadResult.url;
