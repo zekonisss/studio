@@ -1,10 +1,8 @@
 import type { Metadata } from 'next';
 import { Inter, Roboto_Mono } from 'next/font/google';
 import './globals.css';
-import { Toaster } from "@/components/ui/toaster";
-import { LanguageProvider } from '@/contexts/language-context';
-import { ThemeProvider } from 'next-themes';
-import { AuthProvider } from '@/hooks/use-auth';
+import { Providers } from './providers';
+
 
 const inter = Inter({
   variable: '--font-sans',
@@ -29,19 +27,9 @@ export default function RootLayout({
   return (
     <html lang="lt" suppressHydrationWarning>
       <body className={`${inter.variable} ${roboto_mono.variable} font-sans antialiased`}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <LanguageProvider>
-            <AuthProvider>
-              {children}
-              <Toaster />
-            </AuthProvider>
-          </LanguageProvider>
-        </ThemeProvider>
+        <Providers>
+            {children}
+        </Providers>
       </body>
     </html>
   );

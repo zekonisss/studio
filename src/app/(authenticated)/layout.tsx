@@ -7,7 +7,7 @@ import { Menu, Loader2 } from 'lucide-react';
 import { LanguageSwitcher } from '@/components/navigation/language-switcher';
 import { ThemeToggle } from '@/components/navigation/theme-toggle';
 import { useAuth } from '@/hooks/use-auth';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { UserNav } from '@/components/navigation/user-nav';
 
@@ -18,26 +18,14 @@ export default function AuthenticatedLayout({
 }) {
   const { user, loading } = useAuth();
   const router = useRouter();
-  const pathname = usePathname();
 
   useEffect(() => {
-    if (loading) {
-      return; 
-    }
-
-    if (!user) {
+    if (!loading && !user) {
       router.replace('/login');
-      return;
     }
-    
-    if (user.paymentStatus !== 'active' && pathname !== '/activation-pending') {
-       router.replace('/activation-pending');
-      return;
-    }
-
-  }, [user, loading, router, pathname]);
+  }, [user, loading, router]);
   
-  if (loading) {
+  if (loading || !user) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -45,11 +33,17 @@ export default function AuthenticatedLayout({
     );
   }
   
-  // Do not render children if user is not available or not yet on the correct page
-  // to avoid flashing content during redirection.
-  if (!user || (user.paymentStatus !== 'active' && pathname !== '/activation-pending')) {
-    return null;
+  // This is a special case for users who have registered but are not yet active.
+  // We allow them to see a specific page, but nothing else.
+  if (user.paymentStatus !== 'active') {
+     router.replace('/activation-pending');
+     return (
+        <div className="flex h-screen w-full items-center justify-center bg-background">
+          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        </div>
+      );
   }
+
 
   return (
     <div className="flex min-h-screen w-full">

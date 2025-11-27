@@ -1,46 +1,8 @@
-"use client";
-
 import { Button } from "@/components/ui/button";
-import { UserSearch, Loader2 } from "lucide-react";
+import { UserSearch } from "lucide-react";
 import Link from "next/link";
-import { useAuth } from '@/hooks/use-auth';
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
 
 export default function RootPage() {
-    const { user, loading } = useAuth();
-    const router = useRouter();
-
-    useEffect(() => {
-        if (loading) {
-            return; // Wait until loading is finished
-        }
-        
-        if (user) {
-            if (user.paymentStatus === 'active') {
-                router.replace('/dashboard');
-            } else {
-                router.replace('/activation-pending');
-            }
-        }
-    }, [user, loading, router]);
-
-    // Only show the loader during the initial authentication check.
-    if (loading) {
-        return (
-            <div className="flex h-screen w-full items-center justify-center bg-background">
-                <Loader2 className="h-12 w-12 animate-spin text-primary" />
-            </div>
-        );
-    }
-    
-    // If a user object exists, we are in the process of redirecting.
-    // Return null to avoid flashing the landing page content.
-    if (user) {
-        return null;
-    }
-  
-  // If not loading and no user, show the public landing page.
   return (
     <div className="flex min-h-screen w-full flex-col items-center justify-center bg-background p-4 text-center">
         <div className="flex flex-col items-center gap-4">

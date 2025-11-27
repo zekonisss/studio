@@ -1,6 +1,6 @@
 "use client";
 
-import { UserSearch, Loader2 } from "lucide-react";
+import { UserSearch } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
@@ -15,33 +15,17 @@ export default function PublicLayout({
     const router = useRouter();
 
     useEffect(() => {
-        if (loading) {
-            return;
-        }
-        if (user) {
-            if (user.paymentStatus === 'active') {
-                router.replace('/dashboard');
-            } else {
-                router.replace('/activation-pending');
-            }
+        // If the user is logged in, redirect them away from public pages.
+        if (!loading && user) {
+            router.replace('/dashboard');
         }
     }, [user, loading, router]);
 
-    // Show loader only during the initial auth check.
-    if (loading) {
-        return (
-            <div className="flex min-h-screen w-full items-center justify-center bg-background">
-                <Loader2 className="h-12 w-12 animate-spin text-primary" />
-            </div>
-        );
-    }
-    
-    // If a user is found, we are redirecting, so don't render children to avoid flash.
+    // Don't render children if we are about to redirect
     if (user) {
-        return null;
+        return null; 
     }
     
-    // If no user and not loading, show the public page content.
     return (
         <div className="flex min-h-screen w-full flex-col items-center justify-center bg-background p-4">
             <header className="absolute top-0 flex w-full items-center justify-center p-8">
