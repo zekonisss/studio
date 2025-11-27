@@ -40,7 +40,6 @@ import { getCategoryNameForDisplay } from "@/lib/utils";
 import type { Report } from "@/types";
 import * as storage from "@/lib/storage";
 import { Loader2 } from "lucide-react";
-import { categorizeReport, type CategorizeReportInput } from '@/ai/flows/categorize-report-flow';
 import MultiFileUpload from "@/components/MultiFileUpload";
 
 export default function AddReportPage() {
@@ -48,7 +47,6 @@ export default function AddReportPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const [isAiProcessing, setIsAiProcessing] = useState(false);
   const [availableTags, setAvailableTags] = useState<string[]>([]);
   const [uploadedImageUrls, setUploadedImageUrls] = useState<string[]>([]);
 
@@ -79,53 +77,6 @@ export default function AddReportPage() {
     form.setValue("tags", []); // Reset tags when category changes
   }, [selectedCategory, form]);
 
-  const handleAiCategorize = async () => {
-    const comment = form.getValues("comment");
-    if (!comment || comment.trim().length < 10) {
-      toast({
-        variant: "destructive",
-        title: "Komentaras per trumpas",
-        description: "Įveskite bent 10 simbolių komentarą, kad veiktų AI analizė.",
-      });
-      return;
-    }
-
-    setIsAiProcessing(true);
-    try {
-      const input: CategorizeReportInput = { comment };
-      const result = await categorizeReport(input);
-
-      if (result.categoryId) {
-        form.setValue("category", result.categoryId, { shouldValidate: true });
-        
-        const categoryDetails = detailedReportCategories.find(c => c.id === result.categoryId);
-        const newAvailableTags = categoryDetails ? categoryDetails.tags : [];
-        
-        if (result.suggestedTags && result.suggestedTags.length > 0) {
-           const validTags = result.suggestedTags.filter(tag => newAvailableTags.includes(tag));
-           form.setValue("tags", validTags, { shouldValidate: true });
-        } else {
-          form.setValue("tags", [], { shouldValidate: true });
-        }
-      }
-      toast({
-        title: "AI analizė baigta",
-        description: "Kategorija ir žymos buvo parinktos automatiškai. Patikrinkite ir, jei reikia, pataisykite.",
-      });
-
-    } catch (error) {
-      console.error("AI categorization error:", error);
-      toast({
-        variant: "destructive",
-        title: "AI Analizės Klaida",
-        description: "Nepavyko automatiškai priskirti kategorijos. Pasirinkite rankiniu būdu.",
-      });
-    } finally {
-      setIsAiProcessing(false);
-    }
-  };
-
-
   const onSubmit = async (values: ReportFormValues) => {
     if (!user) {
       toast({
@@ -138,7 +89,7 @@ export default function AddReportPage() {
     setIsLoading(true);
     
     try {
-        const newReport: Omit<Report, "id" | "createdAt"> = {
+        const reportData: Omit<Report, "id" | "createdAt"> = {
             reporterId: user.id,
             reporterCompanyName: user.companyName,
             fullName: values.fullName,
@@ -147,10 +98,13 @@ export default function AddReportPage() {
             category: values.category,
             tags: values.tags || [],
             comment: values.comment,
-            imageUrls: uploadedImageUrls,
         };
 
-        await storage.addReport(newReport);
+        if (uploadedImageUrls && uploadedImageUrls.length > 0) {
+            reportData.imageUrls = uploadedImageUrls;
+        }
+
+        await storage.addReport(reportData);
 
         toast({
             title: "Įrašas sėkmingai pateiktas!",
@@ -266,13 +220,6 @@ export default function AddReportPage() {
                       />
                     </FormControl>
                     <FormMessage />
-                     <Button type="button" variant="outline" size="sm" onClick={handleAiCategorize} disabled={isAiProcessing} className="mt-2">
-                        {isAiProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Panaudoti AI
-                      </Button>
-                      <FormDescription>
-                        Užpildykite komentarą ir paspauskite mygtuką, kad dirbtinis intelektas automatiškai parinktų kategoriją ir žymas.
-                      </FormDescription>
                   </FormItem>
                 )}
               />
