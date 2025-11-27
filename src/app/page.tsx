@@ -12,8 +12,11 @@ export default function RootPage() {
     const router = useRouter();
 
     useEffect(() => {
-        // If we are not loading and a user is detected, redirect them.
-        if (!loading && user) {
+        if (loading) {
+            return; // Wait until loading is finished
+        }
+        
+        if (user) {
             if (user.paymentStatus === 'active') {
                 router.replace('/dashboard');
             } else {
@@ -22,13 +25,19 @@ export default function RootPage() {
         }
     }, [user, loading, router]);
 
-    // While loading, or if a user is found (and we are about to redirect), show a spinner.
-    if (loading || user) {
+    // Only show the loader during the initial authentication check.
+    if (loading) {
         return (
             <div className="flex h-screen w-full items-center justify-center bg-background">
                 <Loader2 className="h-12 w-12 animate-spin text-primary" />
             </div>
         );
+    }
+    
+    // If a user object exists, we are in the process of redirecting.
+    // Return null to avoid flashing the landing page content.
+    if (user) {
+        return null;
     }
   
   // If not loading and no user, show the public landing page.

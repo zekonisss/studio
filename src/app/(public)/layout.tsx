@@ -15,7 +15,10 @@ export default function PublicLayout({
     const router = useRouter();
 
     useEffect(() => {
-        if (!loading && user) {
+        if (loading) {
+            return;
+        }
+        if (user) {
             if (user.paymentStatus === 'active') {
                 router.replace('/dashboard');
             } else {
@@ -24,13 +27,18 @@ export default function PublicLayout({
         }
     }, [user, loading, router]);
 
-    // While checking for user or if user exists (and we are redirecting), show loader.
-    if (loading || user) {
+    // Show loader only during the initial auth check.
+    if (loading) {
         return (
             <div className="flex min-h-screen w-full items-center justify-center bg-background">
                 <Loader2 className="h-12 w-12 animate-spin text-primary" />
             </div>
         );
+    }
+    
+    // If a user is found, we are redirecting, so don't render children to avoid flash.
+    if (user) {
+        return null;
     }
     
     // If no user and not loading, show the public page content.
