@@ -33,7 +33,10 @@ export const ReportSchema = z.object({
   category: z.string().min(1, { message: "Pagrindinė kategorija yra privaloma." }), // Main category ID
   tags: z.array(z.string()).optional(),
   comment: z.string().min(10, { message: "Komentaras turi būti bent 10 simbolių ilgio." }),
-  image: z.any().optional(), // For file input
+  image: z.any()
+    .optional()
+    .refine((files) => files === undefined || files === null || (files instanceof FileList && files.length === 0) || (files instanceof FileList && files[0].size <= 5 * 1024 * 1024), `Maksimalus failo dydis yra 5MB.`)
+    .refine((files) => files === undefined || files === null || (files instanceof FileList && files.length === 0) || (files instanceof FileList && ['image/jpeg', 'image/png', 'application/pdf'].includes(files[0].type)), 'Netinkamas failo tipas. Leidžiami formatai: JPG, PNG, PDF.'),
 });
 
 export type ReportFormValues = z.infer<typeof ReportSchema>;

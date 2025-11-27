@@ -184,6 +184,8 @@ export default function AddReportPage() {
     id: cat.id,
     displayName: getCategoryNameForDisplay(cat.id, t)
   })), [t]);
+  
+  const fileRef = form.register("image");
 
   return (
     <div>
@@ -384,7 +386,7 @@ export default function AddReportPage() {
                   <FormItem>
                     <FormLabel>{t("reports.add.form.image.label")}</FormLabel>
                     <FormControl>
-                      <Input type="file" accept="image/jpeg,image/png,application/pdf" onChange={(e) => field.onChange(e.target.files)} />
+                      <Input type="file" accept="image/jpeg,image/png,application/pdf" {...fileRef} />
                     </FormControl>
                     <FormDescription>
                       {t("reports.add.form.image.description")}
