@@ -67,6 +67,13 @@ export function SidebarNav({ isInSheet = false }: SidebarNavProps) {
     }
     return <>{children}</>;
   };
+  
+  const isLinkActive = (href: string) => {
+    if (href === "/account") {
+      return pathname.startsWith("/account");
+    }
+    return pathname === href;
+  }
 
   return (
     <div className="flex h-full flex-col border-r bg-card text-card-foreground shadow-lg">
@@ -88,9 +95,9 @@ export function SidebarNav({ isInSheet = false }: SidebarNavProps) {
                 <Link
                   href={item.href}
                   className={cn(
-                    buttonVariants({ variant: pathname === item.href ? "secondary" : "ghost" , size: "default"}),
+                    buttonVariants({ variant: isLinkActive(item.href) ? "secondary" : "ghost" , size: "default"}),
                     "w-full justify-start rounded-md text-sm font-medium h-9", 
-                    pathname === item.href
+                    isLinkActive(item.href)
                       ? "bg-accent text-accent-foreground"
                       : "hover:bg-accent/80"
                   )}
@@ -109,9 +116,9 @@ export function SidebarNav({ isInSheet = false }: SidebarNavProps) {
                 <Link
                   href={item.href}
                   className={cn(
-                    buttonVariants({ variant: pathname === item.href ? "secondary" : "ghost", size: "default" }),
+                    buttonVariants({ variant: isLinkActive(item.href) ? "secondary" : "ghost", size: "default" }),
                     "w-full justify-start rounded-md text-sm font-medium h-9", 
-                    pathname === item.href
+                    isLinkActive(item.href)
                       ? "bg-accent text-accent-foreground"
                       : "hover:bg-accent/80"
                   )}
@@ -130,9 +137,9 @@ export function SidebarNav({ isInSheet = false }: SidebarNavProps) {
                 <Link
                   href={item.href}
                   className={cn(
-                    buttonVariants({ variant: pathname.startsWith(item.href) && (item.href !== '/support' || pathname === '/support') ? "secondary" : "ghost", size: "default" }),
+                    buttonVariants({ variant: isLinkActive(item.href) ? "secondary" : "ghost", size: "default" }),
                     "w-full justify-start rounded-md text-sm font-medium h-9",
-                    pathname.startsWith(item.href) && (item.href !== '/support' || pathname === '/support') && !pathname.startsWith('/account/settings') 
+                    isLinkActive(item.href)
                       ? "bg-accent text-accent-foreground"
                       : "hover:bg-accent/80"
                   )}
