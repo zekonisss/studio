@@ -43,8 +43,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           if (userProfile) {
             setUser(userProfile);
           } else {
-            // This can happen if the user is authenticated but the profile doesn't exist yet,
-            // or was deleted. Log them out.
             console.warn("No Firestore profile for authenticated user, logging out:", firebaseUser.uid);
             await signOut(auth);
             setUser(null);
@@ -64,7 +62,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (values: LoginFormValues): Promise<FirebaseUser> => {
     const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
-    // onAuthStateChanged will handle fetching the profile and setting the user state.
     return userCredential.user;
   };
 
@@ -91,7 +88,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Call server action to create the user profile in Firestore
     await actions.createUserProfile(fbUser.uid, newUserProfile);
     
-    // onAuthStateChanged will pick up the new user and their just-created profile.
   };
 
   const logout = async () => {

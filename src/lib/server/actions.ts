@@ -1,7 +1,7 @@
 "use server";
 
 import type { Report, UserProfile, SearchLog, AuditLogEntry, UserNotification } from '@/types';
-import { db } from '@/lib/server/firebase';
+import { db } from '@/lib/server/firebase'; // <--- USING SERVER DB
 import { 
   collection, 
   getDocs, 
