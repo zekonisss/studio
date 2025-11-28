@@ -61,11 +61,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const login = async (values: LoginFormValues): Promise<FirebaseUser> => {
-    setLoading(true);
     const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
     const firebaseUser = userCredential.user;
     
-    // onAuthStateChanged listener will handle fetching the profile and setting the user state.
+    // Fetch profile immediately after login to ensure context is updated promptly
+    const userProfile = await actions.getUserById(firebaseUser.uid);
+    if (userProfile) {
+      setUser(userProfile);
+    } else {
+      // This case should ideally not happen if signup guarantees a profile
+      await signOut(auth);
+      throw new Error("User profile not found after login.");
+    }
     
     return firebaseUser;
   };
