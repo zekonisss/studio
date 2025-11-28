@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useForm, Controller } from "react-hook-form";
@@ -59,7 +58,7 @@ export default function AddReportPage() {
       category: "",
       tags: [],
       comment: "",
-      image: undefined,
+      imageUrls: [],
     },
   });
 
@@ -98,11 +97,8 @@ export default function AddReportPage() {
             category: values.category,
             tags: values.tags || [],
             comment: values.comment,
+            imageUrls: uploadedImageUrls,
         };
-
-        if (uploadedImageUrls && uploadedImageUrls.length > 0) {
-            reportData.imageUrls = uploadedImageUrls;
-        }
 
         await addReport(reportData);
 

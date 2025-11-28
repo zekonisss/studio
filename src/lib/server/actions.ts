@@ -1,4 +1,3 @@
-
 "use server";
 
 import type { Report, UserProfile, SearchLog, AuditLogEntry, UserNotification } from '@/types';
@@ -100,7 +99,8 @@ export async function softDeleteReport(reportId: string): Promise<void> {
 
 export async function softDeleteAllReports(): Promise<number> {
     const reportsCol = collection(db, "reports");
-    const reportSnapshot = await getDocs(reportsCol);
+    const q = query(reportsCol, where("deletedAt", "==", null));
+    const reportSnapshot = await getDocs(q);
     const batch = writeBatch(db);
     reportSnapshot.docs.forEach(document => {
         batch.update(document.ref, { deletedAt: serverTimestamp() });

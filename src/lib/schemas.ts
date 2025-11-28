@@ -33,7 +33,7 @@ export const ReportSchema = z.object({
   category: z.string().min(1, { message: "Pagrindinė kategorija yra privaloma." }), // Main category ID
   tags: z.array(z.string()).optional(),
   comment: z.string().min(10, { message: "Komentaras turi būti bent 10 simbolių ilgio." }),
-  image: z.any().optional(), // This is now handled by the MultiFileUpload component
+  imageUrls: z.array(z.string()).optional(),
 });
 
 export type ReportFormValues = z.infer<typeof ReportSchema>;
