@@ -1,8 +1,9 @@
 "use server";
 
 import type { Report, UserProfile, SearchLog, AuditLogEntry, UserNotification } from '@/types';
-import { db } from '@/lib/firebase';
+import { app } from '@/lib/firebase'; // Import app instead of db
 import { 
+  getFirestore, // Import getFirestore
   collection, 
   getDocs, 
   addDoc, 
@@ -18,6 +19,8 @@ import {
 } from 'firebase/firestore';
 import { convertTimestamp } from './db';
 
+// Correctly initialize Firestore for server-side use
+const db = getFirestore(app);
 
 // --- User Management ---
 
