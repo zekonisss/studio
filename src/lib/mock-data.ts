@@ -104,9 +104,8 @@ const initialGeneralReports: Report[] = [
     category: "fuel_theft",
     tags: ["kuro_vagyste", "kita_tag"],
     comment: "Vairuotojas buvo pastebėtas neteisėtai nupylinėjantis kurą iš įmonės sunkvežimio. Tai jau antras kartas per pastaruosius 6 mėnesius. Taip pat gauta informacija apie pavojingą vairavimą mieste.",
-    imageUrl: "https://placehold.co/600x400.png",
-    createdAt: new Date("2023-10-15T10:30:00Z"),
-    dataAiHint: "truck fuel"
+    imageUrls: ["https://placehold.co/600x400.png"],
+    createdAt: new Date("2023-10-15T10:30:00Z")
   },
   {
     id: "report-general-2",
@@ -129,8 +128,7 @@ const initialGeneralReports: Report[] = [
     category: "discipline",
     tags: ["neatsakingas_poziuris_i_darba", "kita_tag"],
     comment: "Vėlavo pristatyti krovinį 2 valandas be pateisinamos priežasties, grubiai bendravo su sandėlio darbuotojais.",
-    imageUrl: "https://placehold.co/600x400.png",
-    dataAiHint: "angry driver",
+    imageUrls: ["https://placehold.co/600x400.png"],
     createdAt: new Date("2024-03-01T11:00:00Z"),
   },
   {
@@ -155,8 +153,7 @@ const initialGeneralReports: Report[] = [
     category: "behavior",
     tags: ["grasinimai_agresija", "konfliktiskas_asmuo"],
     comment: "Gautas skundas iš kliento Vokietijoje dėl agresyvaus elgesio ir grasinimų. Klientas atsisakė priimti krovinį, kol nebus atsiųstas kitas vairuotojas.",
-    imageUrl: "https://placehold.co/600x400.png",
-    dataAiHint: "angry man shouting",
+    imageUrls: ["https://placehold.co/600x400.png"],
     createdAt: new Date(new Date().setDate(new Date().getDate() - 10)),
   },
   {
@@ -246,8 +243,7 @@ export const MOCK_USER_REPORTS: Report[] = [
     category: "driving_safety",
     tags: ["avaringumas", "pavojingas_vairavimas", "kita_tag"],
     comment: "GPS duomenys rodo pakartotinį greičio viršijimą gyvenvietėse. Buvo įspėta, tačiau situacija kartojasi.",
-    imageUrl: "https://placehold.co/600x400.png",
-    dataAiHint: "speeding ticket document",
+    imageUrls: ["https://placehold.co/600x400.png"],
     createdAt: new Date("2024-01-10T16:45:00Z"),
   },
 ];
