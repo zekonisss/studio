@@ -1,8 +1,13 @@
-// SERVER-SIDE Firebase inicializacija – JOKIO "use client" čia!
+// SERVER-SIDE Firebase initialization – NO "use client" here!
 
-import { initializeApp, getApp, getApps } from "firebase/app";
-import { getFirestore, type Firestore } from "firebase/firestore";
+import { initializeApp, getApps, getApp } from "firebase/app";
+import {
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
+} from "firebase/firestore";
 
+// Your Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyBusklRtrpm-gfnwCdmi2yj5vTumqLte3c",
   authDomain: "drivershield.firebaseapp.com",
@@ -13,9 +18,12 @@ const firebaseConfig = {
   measurementId: "G-BKJYEF2X6Y",
 };
 
-// App inicializuojam atskirai serverio aplinkai.
-// getApps() saugo nuo "Firebase App named '[DEFAULT]' already exists" klaidų.
+// Initialize Firebase without creating duplicates
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 
-// Čia gaunam Firestore instanciją serveriui
-export const db: Firestore = getFirestore(app);
+// Initialize Firestore in SERVER MODE
+export const db = initializeFirestore(app, {
+  localCache: persistentLocalCache({
+    tabManager: persistentMultipleTabManager(),
+  }),
+});
