@@ -1,6 +1,4 @@
 
-"use client";
-
 import type { Report, UserProfile, SearchLog, AuditLogEntry, UserNotification } from '@/types';
 import { db, storage as fbStorage } from './firebase'; // Renamed to avoid name collision
 import { 
