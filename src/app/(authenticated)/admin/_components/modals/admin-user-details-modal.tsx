@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { updateUserProfile, addAuditLogEntry } from '@/lib/storage';
+import { updateUserProfile, addAuditLogEntry } from '@/lib/server/db';
 import { useAuth } from '@/hooks/use-auth';
 import { Loader2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -153,4 +153,3 @@ const InfoItem = ({ label, value, isEditing, name, onChange }: InfoItemProps) =>
     )}
   </div>
 );
-

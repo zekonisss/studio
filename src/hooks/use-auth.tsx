@@ -12,8 +12,8 @@ import {
     onAuthStateChanged,
     type User as FirebaseUser
 } from 'firebase/auth';
-import { doc, setDoc, Timestamp, getDoc, serverTimestamp } from "firebase/firestore";
-import * as storageApi from '@/lib/storage';
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import * as storageApi from '@/lib/server/db';
 import { useToast } from './use-toast';
 import { useRouter } from 'next/navigation';
 

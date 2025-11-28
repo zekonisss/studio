@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import type { AuditLogEntry } from '@/types';
-import { getAuditLogs } from '@/lib/storage';
+import { getAuditLogs } from '@/lib/server/db';
 import { useLanguage } from '@/contexts/language-context';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';

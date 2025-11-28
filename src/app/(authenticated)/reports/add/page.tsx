@@ -38,7 +38,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useState, useEffect, useMemo } from "react";
 import { getCategoryNameForDisplay } from "@/lib/utils";
 import type { Report } from "@/types";
-import * as storage from "@/lib/storage";
+import { addReport } from "@/lib/server/db";
 import { Loader2 } from "lucide-react";
 import MultiFileUpload from "@/components/MultiFileUpload";
 
@@ -104,7 +104,7 @@ export default function AddReportPage() {
             reportData.imageUrls = uploadedImageUrls;
         }
 
-        await storage.addReport(reportData);
+        await addReport(reportData);
 
         toast({
             title: "Įrašas sėkmingai pateiktas!",

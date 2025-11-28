@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import type { Report, UserProfile } from '@/types';
-import { getAllReports, getAllUsers } from '@/lib/storage';
+import { getAllReports, getAllUsers } from '@/lib/server/db';
 import { useLanguage } from '@/contexts/language-context';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';

@@ -8,7 +8,7 @@ import Link from "next/link";
 import { useAuth } from "@/hooks/use-auth";
 import { useState, useEffect } from 'react';
 import type { Report } from '@/types';
-import * as storage from '@/lib/storage';
+import { getUserReports, softDeleteReport } from '@/lib/server/db';
 import { Skeleton } from "@/components/ui/skeleton";
 import { FileWarning, FilePlus2 } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
@@ -29,7 +29,7 @@ export default function ReportsHistoryPage() {
         if (user) {
             setLoading(true);
             try {
-                const reports = await storage.getUserReports(user.id);
+                const reports = await getUserReports(user.id);
                 setUserReports(reports);
             } catch (error) {
                 console.error("Error fetching user reports:", error);
@@ -45,7 +45,7 @@ export default function ReportsHistoryPage() {
 
     const handleDelete = async (reportId: string, fullName: string) => {
         try {
-            await storage.softDeleteReport(reportId);
+            await softDeleteReport(reportId);
             toast({
                 title: t('reports.history.toast.deleted.title'),
                 description: t('reports.history.toast.deleted.description', { fullName }),
