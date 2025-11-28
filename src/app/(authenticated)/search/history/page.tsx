@@ -4,7 +4,7 @@ import { useLanguage } from '@/contexts/language-context';
 import { useAuth } from '@/hooks/use-auth';
 import { useState, useEffect } from 'react';
 import type { SearchLog } from '@/types';
-import { getSearchLogs } from '@/lib/server/db';
+import { getSearchLogs } from '@/lib/server/actions';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import type { Report } from '@/types';
-import { getAllReports, softDeleteReport, addAuditLogEntry, softDeleteAllReports } from '@/lib/server/db';
+import { getAllReports, softDeleteReport, addAuditLogEntry, softDeleteAllReports } from '@/lib/server/actions';
 import { useLanguage } from '@/contexts/language-context';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';

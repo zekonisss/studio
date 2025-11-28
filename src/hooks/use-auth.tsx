@@ -13,7 +13,7 @@ import {
     type User as FirebaseUser
 } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
-import * as storageApi from '@/lib/server/db';
+import * as actions from '@/lib/server/actions';
 import { useToast } from './use-toast';
 import { useRouter } from 'next/navigation';
 
@@ -39,7 +39,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setLoading(true);
       if (firebaseUser) {
         try {
-          const userProfile = await storageApi.getUserById(firebaseUser.uid);
+          const userProfile = await actions.getUserById(firebaseUser.uid);
           if (userProfile) {
             setUser(userProfile);
           } else {
@@ -106,7 +106,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (user) {
         const newUserData = { ...user, ...updatedUserData };
         setUser(newUserData);
-        await storageApi.updateUserProfile(user.id, updatedUserData);
+        await actions.updateUserProfile(user.id, updatedUserData);
     }
   };
 

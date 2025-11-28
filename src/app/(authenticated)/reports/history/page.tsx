@@ -8,7 +8,7 @@ import Link from "next/link";
 import { useAuth } from "@/hooks/use-auth";
 import { useState, useEffect } from 'react';
 import type { Report } from '@/types';
-import { getUserReports, softDeleteReport } from '@/lib/server/db';
+import { getUserReports, softDeleteReport } from '@/lib/server/actions';
 import { Skeleton } from "@/components/ui/skeleton";
 import { FileWarning, FilePlus2 } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";

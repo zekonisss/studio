@@ -25,7 +25,7 @@ import { Input } from "@/components/ui/input";
 import { useLanguage } from "@/contexts/language-context";
 import { useState, useEffect } from "react";
 import type { Report } from "@/types";
-import { getAllReports, addSearchLog } from "@/lib/server/db";
+import { getAllReports, addSearchLog } from "@/lib/server/actions";
 import { useAuth } from "@/hooks/use-auth";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SearchIcon, FileWarning } from "lucide-react";

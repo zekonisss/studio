@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import type { UserProfile } from '@/types';
-import { getAllUsers, updateUserProfile, addAuditLogEntry } from '@/lib/server/db';
+import { getAllUsers, updateUserProfile, addAuditLogEntry } from '@/lib/server/actions';
 import { useLanguage } from '@/contexts/language-context';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';

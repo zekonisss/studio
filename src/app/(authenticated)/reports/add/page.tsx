@@ -38,7 +38,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useState, useEffect, useMemo } from "react";
 import { getCategoryNameForDisplay } from "@/lib/utils";
 import type { Report } from "@/types";
-import { addReport } from "@/lib/server/db";
+import { addReport } from "@/lib/server/actions";
 import { Loader2 } from "lucide-react";
 import MultiFileUpload from "@/components/MultiFileUpload";
 
