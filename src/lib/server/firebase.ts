@@ -2,7 +2,7 @@
 // It should NOT have "use client" directive.
 
 import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
+import { initializeFirestore } from "firebase/firestore";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -16,4 +16,8 @@ const firebaseConfig = {
 
 // Initialize Firebase for the server
 const app: FirebaseApp = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-export const db = getFirestore(app);
+
+export const db = initializeFirestore(app, { 
+  experimentalForceLongPolling: true,
+  useFetchStreams: false,
+});
