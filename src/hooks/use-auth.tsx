@@ -3,8 +3,8 @@
 
 import type { UserProfile } from '@/types';
 import type { LoginFormValues, SignupFormValuesExtended } from '@/lib/schemas';
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { auth, db } from '@/lib/firebase';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { auth } from '@/lib/firebase';
 import { 
     createUserWithEmailAndPassword, 
     signInWithEmailAndPassword, 
@@ -12,10 +12,11 @@ import {
     onAuthStateChanged,
     type User as FirebaseUser
 } from 'firebase/auth';
-import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import * as actions from '@/lib/server/actions';
 import { useToast } from './use-toast';
 import { useRouter } from 'next/navigation';
+import { serverTimestamp } from 'firebase/firestore';
+
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -43,7 +44,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           if (userProfile) {
             setUser(userProfile);
           } else {
-            console.warn("No Firestore profile found for authenticated user:", firebaseUser.uid);
+            // This can happen if the user is authenticated but the profile doesn't exist yet,
+            // or was deleted. Log them out.
+            console.warn("No Firestore profile for authenticated user, logging out:", firebaseUser.uid);
             await signOut(auth);
             setUser(null);
           }
@@ -62,23 +65,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (values: LoginFormValues): Promise<FirebaseUser> => {
     const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
-    const firebaseUser = userCredential.user;
-    
-    // Fetch profile immediately after login to ensure context is updated promptly
-    const userProfile = await actions.getUserById(firebaseUser.uid);
-    if (userProfile) {
-      setUser(userProfile);
-    } else {
-      // This case should ideally not happen if signup guarantees a profile
-      await signOut(auth);
-      throw new Error("User profile not found after login.");
-    }
-    
-    return firebaseUser;
+    // onAuthStateChanged will handle fetching the profile and setting the user state.
+    return userCredential.user;
   };
 
   const signup = async (values: SignupFormValuesExtended) => {
-    setLoading(true);
     const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
     const fbUser = userCredential.user;
 
@@ -97,10 +88,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       accountActivatedAt: null,
       subUsers: [],
     };
-
-    await setDoc(doc(db, "users", fbUser.uid), newUserProfile);
     
-    // onAuthStateChanged listener will pick up the new user
+    // Call server action to create the user profile in Firestore
+    await actions.createUserProfile(fbUser.uid, newUserProfile);
+    
+    // onAuthStateChanged will pick up the new user and their just-created profile.
   };
 
   const logout = async () => {

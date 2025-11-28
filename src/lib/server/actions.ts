@@ -1,7 +1,8 @@
+
 "use server";
 
 import type { Report, UserProfile, SearchLog, AuditLogEntry, UserNotification } from '@/types';
-import { db } from '@/lib/server/firebase'; // Correctly import the server-side db instance
+import { db } from '@/lib/server/firebase';
 import { 
   collection, 
   getDocs, 
@@ -14,11 +15,16 @@ import {
   orderBy,
   getDoc,
   writeBatch,
-  serverTimestamp
+  serverTimestamp,
+  setDoc
 } from 'firebase/firestore';
 import { convertTimestamp } from './db';
 
 // --- User Management ---
+
+export async function createUserProfile(userId: string, userData: Omit<UserProfile, 'id'>): Promise<void> {
+    await setDoc(doc(db, "users", userId), userData);
+}
 
 export async function getAllUsers(): Promise<UserProfile[]> {
   const usersCol = collection(db, "users");
