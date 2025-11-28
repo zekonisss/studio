@@ -1,56 +1,54 @@
-# Kaip Atsisiųsti Projektą į Savo Kompiuterį
+# Kaip Atnaujinti ir Atsisiųsti Projektą į Savo Kompiuterį
 
-Šios instrukcijos paaiškina, kaip perkelti visus projekto failus iš `Firebase Studio` į savo asmeninį kompiuterį naudojant `Git` ir `GitHub`.
+Šios instrukcijos paaiškina, kaip perkelti visus projekto failus iš `Firebase Studio` į savo `GitHub` repozitoriją ir tuomet atsisiųsti juos į asmeninį kompiuterį.
 
-## Žingsniai
+## 1 Žingsnis: Projekto Išsiuntimas iš Firebase Studio į GitHub
 
-### 1. GitHub Repozitorijos Sukūrimas
-
-*   Nueikite į [github.com](https://github.com) ir prisijunkite.
-*   Spauskite **"New"** mygtuką, kad sukurtumėte naują repozitoriją.
-*   **Repository name:** `drivercheck-app` (arba kitas Jums patinkantis pavadinimas).
-*   Pasirinkite **"Private"** (privati), jei nenorite, kad kodas būtų viešas.
-*   **Svarbu:** NEPAŽYMĖKITE varnelių ties "Add a README file", "Add .gitignore", ar "Choose a license". Repozitorija turi būti visiškai tuščia.
-*   Spauskite **"Create repository"**.
-*   Naujame puslapyje, skiltyje "...or push an existing repository from the command line", nukopijuokite repozitorijos URL adresą. Jis atrodys maždaug taip: `https://github.com/JUSU_VARDAS/drivercheck-app.git`.
-
-### 2. Projekto Išsiuntimas iš Firebase Studio į GitHub
+Jūsų GitHub repozitorija yra `https://github.com/zekonisss/studio.git`.
 
 Atidarykite terminalą `Firebase Studio` aplinkoje ir nuosekliai vykdykite šias komandas:
 
 ```bash
-# 1. Inicijuokite Git repozitoriją projekto aplanke
-git init
-
-# 2. Pridėkite visus projekto failus
+# 1. Pridėkite visus projekto pakeitimus (naujus ir redaguotus failus)
 git add .
 
-# 3. Įrašykite pirminį failų "snapshot" (commit)
-git commit -m "Initial project commit from Firebase Studio"
+# 2. Įrašykite pakeitimus su prasmingu komentaru
+# Pakeiskite "Final code update" į savo norimą komentarą
+git commit -m "Final code update from Firebase Studio"
 
-# 4. Pakeiskite numatytąją šakos (branch) pavadinimą į "main"
-git branch -M main
+# 3. Pakeiskite numatytąją šakos (branch) pavadinimą į "master", jei to dar nepadarėte
+# Jūsų repozitorijoje pagrindinė šaka yra "master"
+git branch -M master
 
-# 5. Susiekite savo projektą su GitHub repozitorija
-# (Pakeiskite URL į tą, kurį nukopijavote iš GitHub)
-git remote add origin https://github.com/JUSU_VARDAS/drivercheck-app.git
+# 4. Susiekite savo projektą su GitHub repozitorija (jei dar nesusieta)
+# Pirmiausia patikrinkite, ar jau yra susiejimas:
+# git remote -v
+# Jei nieko nerodo arba rodo neteisingą adresą, įvykdykite šią komandą:
+# git remote add origin https://github.com/zekonisss/studio.git
 
-# 6. Išsiųskite visus failus į GitHub
-git push -u origin main
+# 5. Išsiųskite visus failus į GitHub "master" šaką
+# Naudokite --force, jei norite perrašyti istoriją (naudoti atsargiai)
+git push origin master
 ```
 
-*Kai vykdysite `git push` komandą, terminalas gali paprašyti Jūsų suvesti savo `GitHub` vartotojo vardą ir slaptažodį (arba *Personal Access Token*).*
+**Svarbu:** Kai vykdysite `git push` komandą, terminalas gali paprašyti jūsų suvesti savo `GitHub` vartotojo vardą ir slaptažodį (arba *Personal Access Token*, kuris dabar yra rekomenduojamas būdas).
 
-### 3. Projekto Atsisiuntimas (klonavimas) į Jūsų Kompiuterį
+## 2 Žingsnis: Projekto Atsisiuntimas (klonavimas) į Jūsų Kompiuterį
 
 Dabar, kai kodas yra `GitHub`, galite jį lengvai atsisiųsti į savo kompiuterį.
 
 *   Atidarykite terminalą (pvz., `Terminal`, `PowerShell`, `Git Bash`) savo kompiuteryje.
 *   Nueikite į aplanką, kuriame norite laikyti projektą (pvz., `cd Documents/Projects`).
-*   Vykdykite šią komandą (vėlgi, naudokite savo nukopijuotą URL):
+*   Vykdykite šią komandą:
 
 ```bash
-git clone https://github.com/JUSU_VARDAS/drivercheck-app.git
+git clone https://github.com/zekonisss/studio.git
 ```
 
-**Viskas!** Jūsų kompiuteryje, nurodytame aplanke, atsiras `drivercheck-app` katalogas su visais projekto failais.
+*   Jei jau turite seną projekto versiją, pirma nueikite į projekto aplanką (`cd studio`) ir įvykdykite komandą, kad atsisiųstumėte naujausius pakeitimus:
+
+```bash
+git pull origin master
+```
+
+**Viskas!** Jūsų kompiuteryje, nurodytame aplanke, atsiras `studio` katalogas su visais naujausiais projekto failais.
