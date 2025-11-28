@@ -1,10 +1,8 @@
-// This file is for server-side Firebase initialization only.
-// It should NOT have "use client" directive.
+// SERVER-SIDE Firebase inicializacija – JOKIO "use client" čia!
 
-import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
-import { initializeFirestore } from "firebase/firestore";
+import { initializeApp, getApp, getApps } from "firebase/app";
+import { getFirestore, type Firestore } from "firebase/firestore";
 
-// Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyBusklRtrpm-gfnwCdmi2yj5vTumqLte3c",
   authDomain: "drivershield.firebaseapp.com",
@@ -12,12 +10,12 @@ const firebaseConfig = {
   storageBucket: "drivershield.appspot.com",
   messagingSenderId: "688007961476",
   appId: "1:688007961476:web:0bf3aa76adba59f7781bd1",
+  measurementId: "G-BKJYEF2X6Y",
 };
 
-// Initialize Firebase for the server
-const app: FirebaseApp = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+// App inicializuojam atskirai serverio aplinkai.
+// getApps() saugo nuo "Firebase App named '[DEFAULT]' already exists" klaidų.
+const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 
-export const db = initializeFirestore(app, { 
-  experimentalForceLongPolling: true,
-  useFetchStreams: false,
-});
+// Čia gaunam Firestore instanciją serveriui
+export const db: Firestore = getFirestore(app);
