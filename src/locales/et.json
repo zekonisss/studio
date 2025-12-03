@@ -350,7 +350,8 @@
   "support.contact.title": "Ei leidnud vastust?",
   "support.contact.description": "Kui sul on rohkem küsimusi või vajad abi, võta ühendust meie tugimeeskonnaga.",
   "support.contact.emailButton": "Võta ühendust e-posti teel",
-  "support.contact.emailLink": "mailto:support@drivercheck.eu"
+  "support.contact.emailLink": "mailto:support@drivercheck.eu",
+  "usersImport.title": "Impordi kasutajad",
+  "usersImport.description": "Impordi uued kasutajad Exceli failist."
 }
-
     

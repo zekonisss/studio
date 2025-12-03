@@ -432,6 +432,8 @@
   "reports.import.toast.invalidFileType.description": "Please select an .xlsx file.",
   "reports.import.toast.emptyFile.title": "File Empty",
   "reports.import.toast.emptyFile.description": "No data found in the selected file.",
+  "reports.import.toast.missingHeaders.title": "Missing Headers",
+  "reports.import.toast.missingHeaders.description": "The file is missing required column headers: {headers}.",
   "reports.import.toast.parseError.title": "File Parse Error",
   "reports.import.toast.parseError.description": "Could not read or process the file.",
   "reports.import.toast.waitAi.title": "Please Wait",
@@ -732,5 +734,7 @@
   "support.contact.title": "Can't Find an Answer?",
   "support.contact.description": "If you have more questions or need help, contact our support team.",
   "support.contact.emailButton": "Contact via Email",
-  "support.contact.emailLink": "mailto:support@drivercheck.eu"
+  "support.contact.emailLink": "mailto:support@drivercheck.eu",
+  "usersImport.title": "Import Users",
+  "usersImport.description": "Import new users from an Excel file."
 }

@@ -734,5 +734,7 @@
   "support.contact.title": "Nerandate Atsakymo?",
   "support.contact.description": "Jei turite daugiau klausimų ar reikia pagalbos, susisiekite su mūsų palaikymo komanda.",
   "support.contact.emailButton": "Susisiekti El. Paštu",
-  "support.contact.emailLink": "mailto:pagalba@drivercheck.eu"
+  "support.contact.emailLink": "mailto:pagalba@drivercheck.eu",
+  "usersImport.title": "Importuoti Vartotojus",
+  "usersImport.description": "Importuoti naujus vartotojus iš Excel failo."
 }

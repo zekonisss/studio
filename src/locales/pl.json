@@ -723,7 +723,8 @@
   "support.contact.title": "Nie znalazłeś odpowiedzi?",
   "support.contact.description": "Jeśli masz więcej pytań lub potrzebujesz pomocy, skontaktuj się z naszym zespołem wsparcia.",
   "support.contact.emailButton": "Skontaktuj się przez e-mail",
-  "support.contact.emailLink": "mailto:support@drivercheck.eu"
+  "support.contact.emailLink": "mailto:support@drivercheck.eu",
+  "usersImport.title": "Importuj użytkowników",
+  "usersImport.description": "Importuj nowych użytkowników z pliku Excel."
 }
-
     

@@ -723,7 +723,8 @@
   "support.contact.title": "Neatradāt Atbildi?",
   "support.contact.description": "Ja jums ir vēl jautājumi vai nepieciešama palīdzība, sazinieties ar mūsu atbalsta komandu.",
   "support.contact.emailButton": "Sazināties pa E-pastu",
-  "support.contact.emailLink": "mailto:support@drivercheck.eu"
+  "support.contact.emailLink": "mailto:support@drivercheck.eu",
+  "usersImport.title": "Importēt lietotājus",
+  "usersImport.description": "Importēt jaunus lietotājus no Excel faila."
 }
-
     
