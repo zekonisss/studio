@@ -10,6 +10,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { UserNav } from '@/components/navigation/user-nav';
+import Link from 'next/link';
 
 export default function AuthenticatedLayout({
   children,
@@ -24,13 +25,11 @@ export default function AuthenticatedLayout({
       return;
     }
 
-    // 1. Jei neprisijungęs – metam į login
     if (!user) {
       router.replace('/login');
       return;
     }
     
-    // 2. Jei prisijungęs, bet neaktyvus – į laukimo langą
     if (user.paymentStatus !== 'active') {
       router.replace('/activation-pending');
       return;
@@ -38,7 +37,6 @@ export default function AuthenticatedLayout({
 
   }, [user, loading, router]);
   
-  // Kol tikrinam / redirectinam – rodome spinnerį
   if (loading || !user || user.paymentStatus !== 'active') {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
@@ -47,7 +45,6 @@ export default function AuthenticatedLayout({
     );
   }
   
-  // Jei čia atėjom – vartotojas aktyvus ir gali matyti apsaugotus puslapius
   return (
     <div className="flex min-h-screen w-full bg-muted/40">
       <div className="hidden border-r bg-card md:block md:w-72">
