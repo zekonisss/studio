@@ -45,38 +45,6 @@ export async function categorizeReport(input: CategorizeReportInput): Promise<Ca
   return categorizeReportFlow(input);
 }
 
-const prompt = ai.definePrompt({
-    name: 'categorizeReportPrompt',
-    inputSchema: CategorizeReportInputSchema,
-    outputSchema: CategorizeReportOutputSchema,
-    prompt: `You are an expert assistant for a logistics and transportation company, specializing in categorizing driver incident reports.
-Analyze the provided incident comment, which may be in various languages (e.g., Lithuanian, Russian, English, Latvian, Polish, Estonian).
-Based on the comment, your task is to:
-
-1.  Select the MOST appropriate 'categoryId'. The categoryId MUST be one of the following values:
-    ${allCategoryIds.join('\n    ')}
-    Here are descriptions for each categoryId to help you choose:
-    ${categoryDescriptionsForPrompt}
-
-    If the comment is vague, unclear, or doesn't fit well into any specific category, you MUST choose 'other_category'.
-
-2.  Based on the selected 'categoryId' AND the content of the comment, suggest a list of 'suggestedTags'.
-    Tags MUST be selected ONLY from the "available tag keys" associated with the chosen categoryId (as listed above).
-    If the chosen categoryId is 'other_category', or if it has no specific tag keys, or if none of its tag keys are relevant to the comment, return an empty array for 'suggestedTags'.
-
-Incident Comment:
-"{{{comment}}}"
-
-Consider the primary subject and severity of the incident. If multiple issues are mentioned, prioritize the most significant one.
-For example, if a comment states "Driver was caught stealing fuel and was also very rude to staff", "fuel_theft" is likely the primary category.
-
-Return your answer in the specified JSON format.
-Ensure 'categoryId' is exactly one of the allowed IDs.
-Ensure 'suggestedTags' only contains tag KEYS valid for the chosen 'categoryId'.
-`,
-});
-
-
 const categorizeReportFlow = ai.defineFlow(
   {
     name: 'categorizeReportFlow',
@@ -112,6 +80,7 @@ Return your answer in the specified JSON format.
 Ensure 'categoryId' is exactly one of the allowed IDs.
 Ensure 'suggestedTags' only contains tag KEYS valid for the chosen 'categoryId'.
 `,
+        input: input,
         output: { schema: CategorizeReportOutputSchema },
         config: {
           temperature: 0,

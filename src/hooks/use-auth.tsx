@@ -60,7 +60,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const login = async (values: LoginFormValues): Promise<FirebaseUser> => {
-    setLoading(true);
     const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
     const firebaseUser = userCredential.user;
     
@@ -71,7 +70,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signup = async (values: SignupFormValuesExtended) => {
-    setLoading(true);
     const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
     const fbUser = userCredential.user;
 
