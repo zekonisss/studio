@@ -38,7 +38,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useMemo, useCallback, useTransition } from "react";
 import { FilePlus2, Loader2, BrainCircuit } from "lucide-react";
-import { categorizeReport } from '@/ai/flows/categorize-report-flow';
+// import { categorizeReport } from '@/ai/flows/categorize-report-flow';
 
 export default function AddReportPage() {
   const { t } = useLanguage();
@@ -48,7 +48,7 @@ export default function AddReportPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [isAiCategorizing, setIsAiCategorizing] = useTransition();
+  // const [isAiCategorizing, setIsAiCategorizing] = useTransition();
 
   const form = useForm<ReportFormValues>({
     resolver: zodResolver(ReportSchema),
@@ -65,24 +65,24 @@ export default function AddReportPage() {
 
   const commentValue = form.watch('comment');
 
-  const handleAiCategorize = useCallback(() => {
-    if (!commentValue || commentValue.trim().length < 20) return;
+  // const handleAiCategorize = useCallback(() => {
+  //   if (!commentValue || commentValue.trim().length < 20) return;
 
-    setIsAiCategorizing(async () => {
-      try {
-        const result = await categorizeReport({ comment: commentValue });
-        if (result && result.categoryId) {
-          form.setValue('category', result.categoryId, { shouldValidate: true });
-          setSelectedCategory(result.categoryId); // Update selected category state
-          if (result.suggestedTags) {
-            form.setValue('tags', result.suggestedTags, { shouldValidate: true });
-          }
-        }
-      } catch (error) {
-        console.error("AI categorization error:", error);
-      }
-    });
-  }, [commentValue, form]);
+  //   setIsAiCategorizing(async () => {
+  //     try {
+  //       const result = await categorizeReport({ comment: commentValue });
+  //       if (result && result.categoryId) {
+  //         form.setValue('category', result.categoryId, { shouldValidate: true });
+  //         setSelectedCategory(result.categoryId); // Update selected category state
+  //         if (result.suggestedTags) {
+  //           form.setValue('tags', result.suggestedTags, { shouldValidate: true });
+  //         }
+  //       }
+  //     } catch (error) {
+  //       console.error("AI categorization error:", error);
+  //     }
+  //   });
+  // }, [commentValue, form]);
 
 
   const availableTags = useMemo(() => {
@@ -230,7 +230,7 @@ export default function AddReportPage() {
                     />
                   </FormControl>
                   <FormMessage />
-                  <div className="flex justify-end pt-2">
+                  {/* <div className="flex justify-end pt-2">
                     <Button
                       type="button"
                       variant="outline"
@@ -245,7 +245,7 @@ export default function AddReportPage() {
                       )}
                       Kategorizuoti su AI
                     </Button>
-                  </div>
+                  </div> */}
                 </FormItem>
               )}
             />
