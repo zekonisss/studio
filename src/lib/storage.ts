@@ -1,7 +1,7 @@
 "use client";
 
 import type { Report, UserProfile, SearchLog, AuditLogEntry, UserNotification } from '@/types';
-import { db, storage as fbStorage } from './firebase'; // Renamed to avoid name collision
+import { db, storage as fbStorage } from './firebase'; 
 import { 
   collection, 
   getDocs, 
@@ -17,7 +17,7 @@ import {
   writeBatch,
   serverTimestamp
 } from 'firebase/firestore';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 const isTimestamp = (value: any): value is Timestamp => {
   return value && typeof value.toDate === 'function';
@@ -29,10 +29,29 @@ const processDoc = <T extends { id: string }>(doc: any): T => {
 
   for (const key in data) {
     if (Object.prototype.hasOwnProperty.call(data, key)) {
-      if (isTimestamp(data[key])) {
-        processedData[key] = data[key].toDate().toISOString();
-      } else {
-        processedData[key] = data[key];
+      const value = data[key];
+      if (isTimestamp(value)) {
+        processedData[key] = value.toDate().toISOString();
+      } else if (value === null) {
+        processedData[key] = null;
+      } else if (typeof value === 'object' && !Array.isArray(value)) {
+        // This is a shallow conversion. If you have nested Timestamps, a recursive function would be needed.
+        // For the current structure, this is sufficient.
+        const nestedObject: { [key: string]: any } = {};
+        for (const nestedKey in value) {
+            if (Object.prototype.hasOwnProperty.call(value, nestedKey)) {
+                const nestedValue = value[nestedKey];
+                if (isTimestamp(nestedValue)) {
+                    nestedObject[nestedKey] = nestedValue.toDate().toISOString();
+                } else {
+                    nestedObject[nestedKey] = nestedValue;
+                }
+            }
+        }
+        processedData[key] = nestedObject;
+      }
+      else {
+        processedData[key] = value;
       }
     }
   }
