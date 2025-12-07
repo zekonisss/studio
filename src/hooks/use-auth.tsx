@@ -121,9 +121,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   
   const updateUserInContext = async (updatedUserData: Partial<UserProfile>) => {
     if (user) {
-        const newUserData = { ...user, ...updatedUserData };
-        setUser(newUserData);
-        await storageApi.updateUserProfile(user.id, updatedUserData);
+        try {
+            // 1. First, update Firestore
+            await storageApi.updateUserProfile(user.id, updatedUserData); 
+            
+            // 2. Only on success, update the local state
+            const newUserData = { ...user, ...updatedUserData };
+            setUser(newUserData);
+        } catch (error: any) {
+            console.error("Failed to update user context and Firestore:", error);
+            toast({
+                title: "Atnaujinimo klaida",
+                description: "Nepavyko išsaugoti pakeitimų serveryje.",
+                variant: "destructive",
+            });
+            throw error;
+        }
     }
   };
 
