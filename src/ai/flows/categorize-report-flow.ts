@@ -45,16 +45,11 @@ export async function categorizeReport(input: CategorizeReportInput): Promise<Ca
   return categorizeReportFlow(input);
 }
 
-const categorizeReportFlow = ai.defineFlow(
-  {
-    name: 'categorizeReportFlow',
-    inputSchema: CategorizeReportInputSchema,
-    outputSchema: CategorizeReportOutputSchema,
-  },
-  async (input) => {
-    
-    const response = await ai.generate({
-        prompt: `You are an expert assistant for a logistics and transportation company, specializing in categorizing driver incident reports.
+const prompt = ai.definePrompt({
+    name: 'categorizeReportPrompt',
+    input: { schema: CategorizeReportInputSchema },
+    output: { schema: CategorizeReportOutputSchema },
+    prompt: `You are an expert assistant for a logistics and transportation company, specializing in categorizing driver incident reports.
 Analyze the provided incident comment, which may be in various languages (e.g., Lithuanian, Russian, English, Latvian, Polish, Estonian).
 Based on the comment, your task is to:
 
@@ -79,16 +74,24 @@ Return your answer in the specified JSON format.
 Ensure 'categoryId' is exactly one of the allowed IDs.
 Ensure 'suggestedTags' only contains tag KEYS valid for the chosen 'categoryId'.
 `,
+});
+
+
+const categorizeReportFlow = ai.defineFlow(
+  {
+    name: 'categorizeReportFlow',
+    inputSchema: CategorizeReportInputSchema,
+    outputSchema: CategorizeReportOutputSchema,
+  },
+  async (input) => {
+    
+    const response = await ai.generate({
         model: 'gemini-pro',
+        prompt: (await prompt.render(input)).prompt,
         output: { schema: CategorizeReportOutputSchema },
-        config: {
-          custom: {
-            comment: input.comment,
-          }
-        },
     });
     
-    const output = response.output();
+    const output = response.output;
 
     if (!output) {
       return { categoryId: 'other_category', suggestedTags: [] };
