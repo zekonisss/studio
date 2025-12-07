@@ -36,14 +36,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      setLoading(true);
       if (firebaseUser) {
         try {
           const userProfile = await storageApi.getUserById(firebaseUser.uid);
           if (userProfile) {
             setUser(userProfile);
           } else {
+            // This case might happen if the Firestore user document creation fails after auth creation.
             console.warn("No Firestore profile found for authenticated user:", firebaseUser.uid);
-            await signOut(auth);
+            await signOut(auth); // Log out the user to prevent inconsistent state
             setUser(null);
           }
         } catch (error) {
@@ -58,6 +60,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     return () => unsubscribe();
   }, []);
+
 
   const login = async (values: LoginFormValues): Promise<FirebaseUser> => {
     const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
