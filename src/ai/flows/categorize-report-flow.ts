@@ -79,9 +79,13 @@ Return your answer in the specified JSON format.
 Ensure 'categoryId' is exactly one of the allowed IDs.
 Ensure 'suggestedTags' only contains tag KEYS valid for the chosen 'categoryId'.
 `,
-        model: 'googleai/gemini-2.0-flash',
+        model: 'gemini-pro',
         output: { schema: CategorizeReportOutputSchema },
-        context: { comment: input.comment }
+        config: {
+          custom: {
+            comment: input.comment,
+          }
+        },
     });
     
     const output = response.output();
