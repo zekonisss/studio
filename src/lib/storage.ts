@@ -19,36 +19,35 @@ import {
 } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
-const convertTimestamp = (data: any): any => {
-  if (data instanceof Timestamp) {
-    return data.toDate().toISOString();
-  }
-  if (Array.isArray(data)) {
-    return data.map(item => convertTimestamp(item));
-  }
-  if (typeof data === 'object' && data !== null) {
-    const newObj: { [key: string]: any } = {};
-    for (const key in data) {
-      if (Object.prototype.hasOwnProperty.call(data, key)) {
-        newObj[key] = convertTimestamp(data[key]);
-      }
-    }
-    return newObj;
-  }
-  return data;
+const isTimestamp = (value: any): value is Timestamp => {
+  return value && typeof value.toDate === 'function';
 };
 
+const processDoc = <T extends { id: string }>(doc: any): T => {
+  const data = doc.data();
+  const processedData: { [key: string]: any } = { id: doc.id };
+
+  for (const key in data) {
+    if (Object.prototype.hasOwnProperty.call(data, key)) {
+      if (isTimestamp(data[key])) {
+        processedData[key] = data[key].toDate().toISOString();
+      } else {
+        processedData[key] = data[key];
+      }
+    }
+  }
+  return processedData as T;
+};
 
 // --- User Management ---
 
 export async function getAllUsers(): Promise<UserProfile[]> {
   const usersCol = collection(db, "users");
   const userSnapshot = await getDocs(usersCol);
-  const userList = userSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserProfile));
-  return userList.map(u => convertTimestamp(u));
+  return userSnapshot.docs.map(doc => processDoc<UserProfile>(doc));
 }
 
-export async function addUsersBatch(usersData: Omit<UserProfile, 'id'>[]): Promise<void> {
+export async function addUsersBatch(usersData: Omit<UserProfile, 'id' | 'registeredAt'>[]): Promise<void> {
     const batch = writeBatch(db);
     usersData.forEach(userData => {
         const newUserRef = doc(collection(db, "users")); // Auto-generate ID
@@ -71,7 +70,7 @@ export async function findUserByEmail(email: string): Promise<UserProfile | null
     const querySnapshot = await getDocs(q);
     if (!querySnapshot.empty) {
         const userDoc = querySnapshot.docs[0];
-        return convertTimestamp({ id: userDoc.id, ...userDoc.data() } as UserProfile);
+        return processDoc<UserProfile>(userDoc);
     }
     return null;
 }
@@ -80,7 +79,7 @@ export async function getUserById(userId: string): Promise<UserProfile | null> {
     const docRef = doc(db, "users", userId);
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
-        return convertTimestamp({ id: docSnap.id, ...docSnap.data() } as UserProfile);
+        return processDoc<UserProfile>(docSnap);
     }
     return null;
 }
@@ -92,8 +91,7 @@ export async function getAllReports(): Promise<Report[]> {
   const reportsCol = collection(db, "reports");
   const q = query(reportsCol, orderBy("createdAt", "desc"));
   const reportSnapshot = await getDocs(q);
-  const reportList = reportSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Report));
-  return reportList.map(r => convertTimestamp(r));
+  return reportSnapshot.docs.map(doc => processDoc<Report>(doc));
 }
 
 export async function addReport(reportData: Omit<Report, 'id' | 'createdAt' | 'deletedAt'>): Promise<void> {
@@ -127,7 +125,7 @@ export async function softDeleteAllReports(): Promise<number> {
 export async function getUserReports(userId: string): Promise<{ active: Report[], deleted: Report[] }> {
   const q = query(collection(db, "reports"), where("reporterId", "==", userId), orderBy("createdAt", "desc"));
   const querySnapshot = await getDocs(q);
-  const reports = querySnapshot.docs.map(doc => convertTimestamp({ id: doc.id, ...doc.data() } as Report));
+  const reports = querySnapshot.docs.map(doc => processDoc<Report>(doc));
   const active = reports.filter(r => !r.deletedAt);
   const deleted = reports.filter(r => !!r.deletedAt);
   return { active, deleted };
@@ -139,8 +137,7 @@ export async function getSearchLogs(userId?: string): Promise<SearchLog[]> {
   if (!userId) return [];
   const q = query(collection(db, "searchLogs"), where("userId", "==", userId), orderBy("timestamp", "desc"), limit(50));
   const querySnapshot = await getDocs(q);
-  const logs = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SearchLog));
-  return logs.map(l => convertTimestamp(l));
+  return querySnapshot.docs.map(doc => processDoc<SearchLog>(doc));
 }
 
 export async function addSearchLog(logData: Omit<SearchLog, 'id' | 'timestamp'>): Promise<void> {
@@ -154,8 +151,7 @@ export async function addSearchLog(logData: Omit<SearchLog, 'id' | 'timestamp'>)
 export async function getAuditLogs(): Promise<AuditLogEntry[]> {
     const q = query(collection(db, "auditLogs"), orderBy("timestamp", "desc"), limit(100));
     const querySnapshot = await getDocs(q);
-    const logs = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AuditLogEntry));
-    return logs.map(l => convertTimestamp(l));
+    return querySnapshot.docs.map(doc => processDoc<AuditLogEntry>(doc));
 }
 
 export async function addAuditLogEntry(entryData: Omit<AuditLogEntry, 'id' | 'timestamp'>): Promise<void> {
@@ -171,8 +167,7 @@ export async function addAuditLogEntry(entryData: Omit<AuditLogEntry, 'id' | 'ti
 export async function getUserNotifications(userId: string): Promise<UserNotification[]> {
     const q = query(collection(db, "notifications"), where("userId", "==", userId), orderBy("createdAt", "desc"), limit(20));
     const querySnapshot = await getDocs(q);
-    const notifications = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserNotification));
-    return notifications.map(n => convertTimestamp(n));
+    return querySnapshot.docs.map(doc => processDoc<UserNotification>(doc));
 }
 
 export async function addUserNotification(userId: string, notificationData: Omit<UserNotification, 'id' | 'createdAt' | 'read' | 'userId'>): Promise<void> {
