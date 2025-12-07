@@ -85,13 +85,13 @@ const categorizeReportFlow = ai.defineFlow(
   },
   async (input) => {
     
-    const response = await ai.generate({
+    const llmResponse = await ai.generate({
         model: 'gemini-1.5-flash-latest',
         prompt: (await prompt.render(input)).prompt,
         output: { schema: CategorizeReportOutputSchema },
     });
     
-    const output = response.output;
+    const output = llmResponse.output();
 
     if (!output) {
       return { categoryId: 'other_category', suggestedTags: [] };
