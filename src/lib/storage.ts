@@ -19,26 +19,23 @@ import {
 } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
-const convertTimestamp = (data: any) => {
-  const convertValue = (value: any): any => {
-    if (value instanceof Timestamp) {
-      return value.toDate().toISOString();
+const convertTimestamp = (data: any): any => {
+  if (data instanceof Timestamp) {
+    return data.toDate().toISOString();
+  }
+  if (Array.isArray(data)) {
+    return data.map(convertTimestamp);
+  }
+  if (data !== null && typeof data === 'object' && !(data instanceof Date)) {
+    const newObj: { [key: string]: any } = {};
+    for (const key in data) {
+      if (Object.prototype.hasOwnProperty.call(data, key)) {
+        newObj[key] = convertTimestamp(data[key]);
+      }
     }
-    if (Array.isArray(value)) {
-      return value.map(convertValue);
-    }
-    if (value !== null && typeof value === 'object' && !Array.isArray(value) && !(value instanceof Date)) {
-        const newObj: { [key: string]: any } = {};
-        for (const key in value) {
-            if (Object.prototype.hasOwnProperty.call(value, key)) {
-                newObj[key] = convertValue(value[key]);
-            }
-        }
-        return newObj;
-    }
-    return value;
-  };
-  return convertValue(data);
+    return newObj;
+  }
+  return data;
 };
 
 
