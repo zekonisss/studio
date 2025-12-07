@@ -62,39 +62,54 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
 
   const login = async (values: LoginFormValues): Promise<FirebaseUser> => {
-    const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
-    const firebaseUser = userCredential.user;
-    
-    // The onAuthStateChanged listener will handle fetching the profile and setting the user state.
-    // This simplifies logic and avoids race conditions.
-    
-    return firebaseUser;
+    try {
+        const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
+        // The onAuthStateChanged listener will handle fetching the profile and setting the user state.
+        return userCredential.user;
+    } catch (error: any) {
+        console.error("Login failed:", error);
+        toast({
+            title: "Prisijungimo klaida",
+            description: error.message || "Patikrinkite el. paštą ir slaptažodį.",
+            variant: "destructive",
+        });
+        throw error;
+    }
   };
 
   const signup = async (values: SignupFormValuesExtended) => {
-    const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
-    const fbUser = userCredential.user;
+    try {
+        const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
+        const fbUser = userCredential.user;
 
-    const newUserProfile: Omit<UserProfile, 'id'> = {
-      email: values.email,
-      companyName: values.companyName,
-      companyCode: values.companyCode,
-      vatCode: values.vatCode || "",
-      address: values.address,
-      contactPerson: values.contactPerson,
-      phone: values.phone,
-      paymentStatus: 'pending_verification',
-      isAdmin: false,
-      agreeToTerms: values.agreeToTerms,
-      registeredAt: serverTimestamp(),
-      accountActivatedAt: null,
-      subUsers: [],
-    };
+        const newUserProfile: Omit<UserProfile, 'id'> = {
+        email: values.email,
+        companyName: values.companyName,
+        companyCode: values.companyCode,
+        vatCode: values.vatCode || "",
+        address: values.address,
+        contactPerson: values.contactPerson,
+        phone: values.phone,
+        paymentStatus: 'pending_verification',
+        isAdmin: false,
+        agreeToTerms: values.agreeToTerms,
+        registeredAt: serverTimestamp(),
+        accountActivatedAt: null,
+        subUsers: [],
+        };
 
-    await setDoc(doc(db, "users", fbUser.uid), newUserProfile);
-    
-    // The onAuthStateChanged listener will pick up the new user and set the state.
-    // We don't need to call setUser here directly.
+        await setDoc(doc(db, "users", fbUser.uid), newUserProfile);
+        
+        // The onAuthStateChanged listener will pick up the new user and set the state.
+    } catch (error: any) {
+        console.error("Signup failed:", error);
+        toast({
+            title: "Registracijos klaida",
+            description: error.message || "Nepavyko užregistruoti vartotojo.",
+            variant: "destructive",
+        });
+        throw error;
+    }
   };
 
   const logout = async () => {
