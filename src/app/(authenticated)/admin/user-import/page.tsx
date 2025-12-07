@@ -24,7 +24,3 @@ export default function UserImportPage() {
         </Card>
     );
 }
-
-// Add translations for this to all locale files
-// "usersImport.title": "Import Users",
-// "usersImport.description": "Import new users from an Excel file.",
