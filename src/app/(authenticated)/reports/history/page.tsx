@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ReportCard } from './_components/report-card';
 import { ReportDetailsModal } from './_components/report-details-modal';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -63,8 +63,9 @@ export default function ReportsHistoryPage() {
                 title: t('reports.history.toast.deleted.title'),
                 description: t('reports.history.toast.deleted.description'),
             });
+            const justDeletedReport = { ...reportToDelete, deletedAt: new Date().toISOString() };
             setActiveReports(prev => prev.filter(r => r.id !== reportToDelete.id));
-            setDeletedReports(prev => [reportToDelete, ...prev].sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+            setDeletedReports(prev => [justDeletedReport, ...prev].sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
         } catch (error) {
             console.error("Error deleting report:", error);
         } finally {
@@ -101,7 +102,7 @@ export default function ReportsHistoryPage() {
                 report={selectedReport}
             />
 
-            <AlertDialog open={!!reportToDelete} onOpenChange={() => setReportToDelete(null)}>
+            <AlertDialog open={!!reportToDelete} onOpenChange={(isOpen) => !isOpen && setReportToDelete(null)}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
                     <AlertDialogTitle>{t('reports.history.deleteDialog.title')}</AlertDialogTitle>
@@ -111,7 +112,7 @@ export default function ReportsHistoryPage() {
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                     <AlertDialogCancel disabled={isDeleting}>{t('common.cancel')}</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDeleteConfirm} disabled={isDeleting}>
+                    <AlertDialogAction onClick={handleDeleteConfirm} disabled={isDeleting} className="bg-destructive hover:bg-destructive/90">
                         {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         {t('reports.history.deleteDialog.confirmButton')}
                     </AlertDialogAction>
@@ -122,7 +123,7 @@ export default function ReportsHistoryPage() {
 
             <div className="space-y-6">
                 <Card>
-                    <CardHeader className="flex flex-row items-center justify-between">
+                    <CardHeader className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                         <div className="flex items-center gap-4">
                             <History className="h-8 w-8 text-primary" />
                             <div>

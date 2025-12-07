@@ -6,8 +6,7 @@ import { getCategoryNameForDisplay } from "@/lib/utils";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Eye, Trash2, Calendar, File, User, Globe, Hash } from "lucide-react";
-import Image from "next/image";
+import { Eye, Trash2, Calendar, Globe, User } from "lucide-react";
 import { DESTRUCTIVE_REPORT_MAIN_CATEGORIES } from "@/lib/constants";
 
 interface ReportCardProps {
@@ -39,7 +38,7 @@ export function ReportCard({ report, onViewDetails, onDelete, isDeleted = false 
         </div>
       </CardHeader>
       <CardContent className="flex-grow space-y-3">
-        <p className="text-sm text-muted-foreground line-clamp-3 h-[60px]">
+        <p className="text-sm text-muted-foreground line-clamp-3 min-h-[60px]">
           {report.comment}
         </p>
          {report.tags && report.tags.length > 0 && (
@@ -48,11 +47,11 @@ export function ReportCard({ report, onViewDetails, onDelete, isDeleted = false 
             </div>
         )}
       </CardContent>
-      <CardFooter className="flex-col items-start gap-4">
+      <CardFooter className="flex-col items-start gap-4 mt-auto">
         <div className="text-xs text-muted-foreground flex items-center gap-2 w-full border-t pt-4">
              <Calendar className="w-3 h-3"/>
              <span>{isDeleted ? t('account.entries.deletedOn') : t('reports.history.entry.submittedOn')}:</span>
-             <span className="font-semibold">{new Date(isDeleted ? report.deletedAt : report.createdAt).toLocaleDateString(t('common.localeForDate'))}</span>
+             <span className="font-semibold">{new Date(isDeleted && report.deletedAt ? report.deletedAt : report.createdAt).toLocaleDateString(t('common.localeForDate'))}</span>
         </div>
         <div className="flex justify-end gap-2 w-full">
           <Button variant="outline" size="sm" onClick={onViewDetails}>
