@@ -20,7 +20,7 @@ import {
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 const convertTimestamp = (data: any): any => {
-  if (!data) {
+  if (data === null || data === undefined) {
     return data;
   }
 
@@ -32,7 +32,7 @@ const convertTimestamp = (data: any): any => {
     return data.map(item => convertTimestamp(item));
   }
 
-  if (typeof data === 'object') {
+  if (typeof data === 'object' && data.constructor === Object) {
     const newObj: { [key: string]: any } = {};
     for (const key in data) {
       if (Object.prototype.hasOwnProperty.call(data, key)) {
