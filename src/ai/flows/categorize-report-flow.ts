@@ -47,8 +47,8 @@ export async function categorizeReport(input: CategorizeReportInput): Promise<Ca
 
 const prompt = ai.definePrompt({
     name: 'categorizeReportPrompt',
-    input: { schema: CategorizeReportInputSchema },
-    output: { schema: CategorizeReportOutputSchema },
+    inputSchema: CategorizeReportInputSchema,
+    outputSchema: CategorizeReportOutputSchema,
     prompt: `You are an expert assistant for a logistics and transportation company, specializing in categorizing driver incident reports.
 Analyze the provided incident comment, which may be in various languages (e.g., Lithuanian, Russian, English, Latvian, Polish, Estonian).
 Based on the comment, your task is to:
@@ -86,7 +86,7 @@ const categorizeReportFlow = ai.defineFlow(
   async (input) => {
     
     const response = await ai.generate({
-        model: 'gemini-pro',
+        model: 'gemini-1.5-flash-latest',
         prompt: (await prompt.render(input)).prompt,
         output: { schema: CategorizeReportOutputSchema },
     });
