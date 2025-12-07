@@ -21,6 +21,7 @@ export default function MyEntriesTab() {
         </CardDescription>
       </CardHeader>
       <CardContent>
+        {/* This content is now dynamically loaded on the history page */}
         <p className="text-muted-foreground">{t('account.entries.noEntries')}</p>
       </CardContent>
       <CardFooter className="border-t pt-6">
