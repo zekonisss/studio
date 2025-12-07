@@ -27,7 +27,7 @@ const convertTimestamp = (data: any) => {
     if (Array.isArray(value)) {
       return value.map(convertValue);
     }
-    if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
+    if (value !== null && typeof value === 'object' && !Array.isArray(value) && !(value instanceof Date)) {
         const newObj: { [key: string]: any } = {};
         for (const key in value) {
             if (Object.prototype.hasOwnProperty.call(value, key)) {
