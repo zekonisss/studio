@@ -8,7 +8,7 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
+import { z } from 'zod';
 import { detailedReportCategories } from '@/lib/constants';
 
 const allCategoryObjects = detailedReportCategories.map(cat => ({ id: cat.id, nameKey: cat.nameKey, tags: cat.tags }));
@@ -53,7 +53,9 @@ const categorizeReportFlow = ai.defineFlow(
     outputSchema: CategorizeReportOutputSchema,
   },
   async (input) => {
-    const prompt = `You are an expert assistant for a logistics and transportation company, specializing in categorizing driver incident reports.
+    
+    const { output } = await ai.generate({
+        prompt: `You are an expert assistant for a logistics and transportation company, specializing in categorizing driver incident reports.
 Analyze the provided incident comment, which may be in various languages (e.g., Lithuanian, Russian, English, Latvian, Polish, Estonian).
 Based on the comment, your task is to:
 
@@ -77,10 +79,7 @@ For example, if a comment states "Driver was caught stealing fuel and was also v
 Return your answer in the specified JSON format.
 Ensure 'categoryId' is exactly one of the allowed IDs.
 Ensure 'suggestedTags' only contains tag KEYS valid for the chosen 'categoryId'.
-`;
-    
-    const { output } = await ai.generate({
-        prompt: prompt,
+`,
         model: 'googleai/gemini-2.0-flash',
         output: { schema: CategorizeReportOutputSchema },
         context: { comment: input.comment }
