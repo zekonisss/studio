@@ -20,15 +20,18 @@ import {
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 const convertTimestamp = (data: any): any => {
-  if (data === null || data === undefined) {
+  if (!data) {
     return data;
   }
+
   if (data instanceof Timestamp) {
     return data.toDate().toISOString();
   }
+
   if (Array.isArray(data)) {
     return data.map(item => convertTimestamp(item));
   }
+
   if (typeof data === 'object') {
     const newObj: { [key: string]: any } = {};
     for (const key in data) {
@@ -38,6 +41,7 @@ const convertTimestamp = (data: any): any => {
     }
     return newObj;
   }
+  
   return data;
 };
 
