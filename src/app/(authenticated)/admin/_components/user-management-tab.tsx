@@ -22,9 +22,7 @@ export default function UserManagementTab() {
       setIsLoading(true);
       try {
         const userList = await getAllUsers();
-        // Sort users by registration date, newest first
-        const sortedUsers = userList.sort((a, b) => new Date(b.registeredAt).getTime() - new Date(a.registeredAt).getTime());
-        setUsers(sortedUsers);
+        setUsers(userList);
       } catch (error) {
         console.error("Error fetching users:", error);
       } finally {
