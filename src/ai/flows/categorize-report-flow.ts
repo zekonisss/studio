@@ -87,7 +87,7 @@ Ensure 'suggestedTags' only contains tag KEYS valid for the chosen 'categoryId'.
         },
     });
     
-    const output = llmResponse.output();
+    const output = llmResponse.output;
 
     if (!output) {
       return { categoryId: 'other_category', suggestedTags: [] };
