@@ -1,4 +1,3 @@
-
 'use server';
 /**
  * @fileOverview Analyzes an incident comment to categorize it and suggest relevant tags.
@@ -54,7 +53,7 @@ const categorizeReportFlow = ai.defineFlow(
   },
   async (input) => {
     
-    const { output } = await ai.generate({
+    const response = await ai.generate({
         prompt: `You are an expert assistant for a logistics and transportation company, specializing in categorizing driver incident reports.
 Analyze the provided incident comment, which may be in various languages (e.g., Lithuanian, Russian, English, Latvian, Polish, Estonian).
 Based on the comment, your task is to:
@@ -85,6 +84,8 @@ Ensure 'suggestedTags' only contains tag KEYS valid for the chosen 'categoryId'.
         context: { comment: input.comment }
     });
     
+    const output = response.output();
+
     if (!output) {
       return { categoryId: 'other_category', suggestedTags: [] };
     }
@@ -101,7 +102,7 @@ Ensure 'suggestedTags' only contains tag KEYS valid for the chosen 'categoryId'.
     // If category is 'other_category', tags should be empty
     if (finalCategoryId === 'other_category') {
         finalTags = [];
-    } else if (selectedCategoryDetails) {
+    } else if (selectedCategoryDetails && output.suggestedTags) {
       // Validate suggestedTags - ensure they belong to the selected category
       finalTags = output.suggestedTags.filter(tagKey => selectedCategoryDetails.includes(tagKey));
     }
