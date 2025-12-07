@@ -36,15 +36,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      setLoading(true);
       if (firebaseUser) {
         try {
           const userProfile = await storageApi.getUserById(firebaseUser.uid);
           if (userProfile) {
             setUser(userProfile);
           } else {
-            // This case might happen if a user is in Firebase Auth but not in Firestore.
-            // Log them out to be safe.
             console.warn("No Firestore profile found for authenticated user:", firebaseUser.uid);
             await signOut(auth);
             setUser(null);
