@@ -4,33 +4,33 @@
 
 @layer base {
   :root {
-    --background: 210 17% 93%; /* Light Gray (#ECEFF1) */
-    --foreground: 231 15% 25%; /* Darker Blue/Gray for text */
+    --background: 0 0% 100%;
+    --foreground: 224 71.4% 4.1%;
 
-    --card: 0 0% 100%; /* White */
-    --card-foreground: 231 15% 25%;
+    --card: 0 0% 100%;
+    --card-foreground: 224 71.4% 4.1%;
 
-    --popover: 0 0% 100%; /* White */
-    --popover-foreground: 231 15% 25%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 224 71.4% 4.1%;
 
-    --primary: 231 48% 54%; /* Deep Blue (#3F51B5) */
-    --primary-foreground: 0 0% 98%; /* White/Light Gray */
+    --primary: 220.9 39.3% 11%;
+    --primary-foreground: 210 20% 98%;
 
-    --secondary: 210 17% 88%; /* Slightly darker gray */
-    --secondary-foreground: 231 15% 25%;
+    --secondary: 220 13% 91%;
+    --secondary-foreground: 220.9 39.3% 11%;
 
-    --muted: 210 17% 80%; /* Even darker gray for muted */
-    --muted-foreground: 231 10% 45%;
+    --muted: 220 13% 91%;
+    --muted-foreground: 220 8.9% 46.1%;
 
-    --accent: 259 44% 66%; /* Muted Violet (#9575CD) */
-    --accent-foreground: 0 0% 98%; /* White/Light Gray */
+    --accent: 220 13% 91%;
+    --accent-foreground: 220.9 39.3% 11%;
 
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive-foreground: 210 20% 98%;
 
-    --border: 210 10% 80%;
-    --input: 210 10% 85%;
-    --ring: 231 48% 54%; /* Primary color for ring */
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 224 71.4% 4.1%;
 
     --radius: 0.5rem;
 
@@ -52,33 +52,33 @@
   }
 
   .dark {
-    --background: 231 15% 18%; /* Dark blue-gray */
-    --foreground: 210 17% 90%; /* Light gray */
+    --background: 224 71.4% 4.1%;
+    --foreground: 210 20% 98%;
 
-    --card: 231 15% 22%;
-    --card-foreground: 210 17% 90%;
+    --card: 224 71.4% 4.1%;
+    --card-foreground: 210 20% 98%;
 
-    --popover: 231 15% 22%;
-    --popover-foreground: 210 17% 90%;
+    --popover: 224 71.4% 4.1%;
+    --popover-foreground: 210 20% 98%;
 
-    --primary: 231 48% 64%; /* Lighter blue for dark mode */
-    --primary-foreground: 231 15% 10%;
+    --primary: 210 20% 98%;
+    --primary-foreground: 220.9 39.3% 11%;
 
-    --secondary: 231 15% 28%;
-    --secondary-foreground: 210 17% 90%;
+    --secondary: 215 27.9% 16.9%;
+    --secondary-foreground: 210 20% 98%;
 
-    --muted: 231 15% 32%;
-    --muted-foreground: 210 17% 60%;
+    --muted: 215 27.9% 16.9%;
+    --muted-foreground: 217.9 10.6% 64.9%;
 
-    --accent: 259 44% 70%; /* Lighter violet for dark mode */
-    --accent-foreground: 259 15% 10%;
+    --accent: 215 27.9% 16.9%;
+    --accent-foreground: 210 20% 98%;
 
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive-foreground: 210 20% 98%;
 
-    --border: 231 15% 30%;
-    --input: 231 15% 26%;
-    --ring: 231 48% 64%;
+    --border: 215 27.9% 16.9%;
+    --input: 215 27.9% 16.9%;
+    --ring: 216 12.2% 83.9%;
 
     /* Sidebar specific vars for dark mode */
     --sidebar-background: 231 15% 15%;
