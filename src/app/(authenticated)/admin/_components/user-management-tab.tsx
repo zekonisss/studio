@@ -23,24 +23,29 @@ export default function UserManagementTab() {
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchUsers = async () => {
-    if (!adminUser?.isAdmin) {
-      setIsLoading(false);
-      return;
-    };
     setIsLoading(true);
     try {
       const userList = await getAllUsers();
       setUsers(userList.sort((a, b) => new Date(b.registeredAt).getTime() - new Date(a.registeredAt).getTime()));
     } catch (error) {
       console.error("Error fetching users:", error);
+      toast({
+        variant: "destructive",
+        title: "Klaida",
+        description: "Nepavyko gauti vartotojų sąrašo. Patikrinkite saugumo taisykles.",
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchUsers();
-  }, [adminUser]);
+    if (adminUser?.isAdmin) {
+      fetchUsers();
+    } else {
+      setIsLoading(false);
+    }
+  }, [adminUser?.isAdmin]);
 
   const handleStatusChange = async (userToUpdate: UserProfile, newStatus: UserProfile['paymentStatus']) => {
     if (!adminUser || !adminUser.isAdmin) return;
@@ -73,9 +78,20 @@ export default function UserManagementTab() {
           }
       });
       
-      fetchUsers(); // Refresh the list
+      // Refresh the list by updating the state locally
+      setUsers(prevUsers => 
+        prevUsers.map(u => 
+          u.id === userToUpdate.id ? { ...u, paymentStatus: newStatus } : u
+        )
+      );
+
     } catch (error) {
         console.error("Error updating user status:", error);
+        toast({
+            variant: "destructive",
+            title: "Klaida",
+            description: "Nepavyko atnaujinti vartotojo būsenos.",
+        });
     }
   };
 
