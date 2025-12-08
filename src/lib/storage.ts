@@ -1,6 +1,6 @@
 "use client";
 
-import type { Report, UserProfile, SearchLog, AuditLogEntry, UserNotification } from '@/types';
+import type { Report, ReportFirestore, UserProfile, UserProfileFirestore, SearchLog, SearchLogFirestore, AuditLogEntry, AuditLogEntryFirestore, UserNotification, UserNotificationFirestore } from '@/types';
 import { db, storage as fbStorage } from './firebase'; 
 import { 
   collection, 
@@ -32,25 +32,7 @@ const processDoc = <T extends { id: string }>(doc: any): T => {
       const value = data[key];
       if (isTimestamp(value)) {
         processedData[key] = value.toDate().toISOString();
-      } else if (value === null) {
-        processedData[key] = null;
-      } else if (typeof value === 'object' && !Array.isArray(value)) {
-        // This is a shallow conversion. If you have nested Timestamps, a recursive function would be needed.
-        // For the current structure, this is sufficient.
-        const nestedObject: { [key: string]: any } = {};
-        for (const nestedKey in value) {
-            if (Object.prototype.hasOwnProperty.call(value, nestedKey)) {
-                const nestedValue = value[nestedKey];
-                if (isTimestamp(nestedValue)) {
-                    nestedObject[nestedKey] = nestedValue.toDate().toISOString();
-                } else {
-                    nestedObject[nestedKey] = nestedValue;
-                }
-            }
-        }
-        processedData[key] = nestedObject;
-      }
-      else {
+      } else {
         processedData[key] = value;
       }
     }
@@ -63,7 +45,10 @@ const processDoc = <T extends { id: string }>(doc: any): T => {
 export async function getAllUsers(): Promise<UserProfile[]> {
   const usersCol = collection(db, "users");
   const userSnapshot = await getDocs(usersCol);
-  return userSnapshot.docs.map(doc => processDoc<UserProfile>(doc));
+  return userSnapshot.docs.map(doc => {
+      const firestoreData = { id: doc.id, ...doc.data() } as UserProfileFirestore;
+      return processDoc<UserProfile>(firestoreData);
+  });
 }
 
 export async function addUsersBatch(usersData: Omit<UserProfile, 'id' | 'registeredAt'>[]): Promise<void> {
@@ -89,7 +74,8 @@ export async function findUserByEmail(email: string): Promise<UserProfile | null
     const querySnapshot = await getDocs(q);
     if (!querySnapshot.empty) {
         const userDoc = querySnapshot.docs[0];
-        return processDoc<UserProfile>(userDoc);
+        const firestoreData = { id: userDoc.id, ...userDoc.data() } as UserProfileFirestore;
+        return processDoc<UserProfile>({ data: () => firestoreData, id: userDoc.id });
     }
     return null;
 }
@@ -98,7 +84,8 @@ export async function getUserById(userId: string): Promise<UserProfile | null> {
     const docRef = doc(db, "users", userId);
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
-        return processDoc<UserProfile>(docSnap);
+        const firestoreData = { id: docSnap.id, ...docSnap.data() } as UserProfileFirestore;
+        return processDoc<UserProfile>({ data: () => firestoreData, id: docSnap.id });
     }
     return null;
 }
@@ -110,7 +97,10 @@ export async function getAllReports(): Promise<Report[]> {
   const reportsCol = collection(db, "reports");
   const q = query(reportsCol, orderBy("createdAt", "desc"));
   const reportSnapshot = await getDocs(q);
-  return reportSnapshot.docs.map(doc => processDoc<Report>(doc));
+  return reportSnapshot.docs.map(doc => {
+    const firestoreData = { id: doc.id, ...doc.data() } as ReportFirestore;
+    return processDoc<Report>({ data: () => firestoreData, id: doc.id });
+  });
 }
 
 export async function addReport(reportData: Omit<Report, 'id' | 'createdAt' | 'deletedAt'>): Promise<void> {
@@ -144,7 +134,10 @@ export async function softDeleteAllReports(): Promise<number> {
 export async function getUserReports(userId: string): Promise<{ active: Report[], deleted: Report[] }> {
   const q = query(collection(db, "reports"), where("reporterId", "==", userId), orderBy("createdAt", "desc"));
   const querySnapshot = await getDocs(q);
-  const reports = querySnapshot.docs.map(doc => processDoc<Report>(doc));
+  const reports = querySnapshot.docs.map(doc => {
+      const firestoreData = { id: doc.id, ...doc.data() } as ReportFirestore;
+      return processDoc<Report>({ data: () => firestoreData, id: doc.id });
+  });
   const active = reports.filter(r => !r.deletedAt);
   const deleted = reports.filter(r => !!r.deletedAt);
   return { active, deleted };
@@ -156,7 +149,10 @@ export async function getSearchLogs(userId?: string): Promise<SearchLog[]> {
   if (!userId) return [];
   const q = query(collection(db, "searchLogs"), where("userId", "==", userId), orderBy("timestamp", "desc"), limit(50));
   const querySnapshot = await getDocs(q);
-  return querySnapshot.docs.map(doc => processDoc<SearchLog>(doc));
+  return querySnapshot.docs.map(doc => {
+      const firestoreData = { id: doc.id, ...doc.data() } as SearchLogFirestore;
+      return processDoc<SearchLog>({ data: () => firestoreData, id: doc.id });
+  });
 }
 
 export async function addSearchLog(logData: Omit<SearchLog, 'id' | 'timestamp'>): Promise<void> {
@@ -170,7 +166,10 @@ export async function addSearchLog(logData: Omit<SearchLog, 'id' | 'timestamp'>)
 export async function getAuditLogs(): Promise<AuditLogEntry[]> {
     const q = query(collection(db, "auditLogs"), orderBy("timestamp", "desc"), limit(100));
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => processDoc<AuditLogEntry>(doc));
+    return querySnapshot.docs.map(doc => {
+      const firestoreData = { id: doc.id, ...doc.data() } as AuditLogEntryFirestore;
+      return processDoc<AuditLogEntry>({ data: () => firestoreData, id: doc.id });
+    });
 }
 
 export async function addAuditLogEntry(entryData: Omit<AuditLogEntry, 'id' | 'timestamp'>): Promise<void> {
@@ -186,7 +185,10 @@ export async function addAuditLogEntry(entryData: Omit<AuditLogEntry, 'id' | 'ti
 export async function getUserNotifications(userId: string): Promise<UserNotification[]> {
     const q = query(collection(db, "notifications"), where("userId", "==", userId), orderBy("createdAt", "desc"), limit(20));
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => processDoc<UserNotification>(doc));
+    return querySnapshot.docs.map(doc => {
+      const firestoreData = { id: doc.id, ...doc.data() } as UserNotificationFirestore;
+      return processDoc<UserNotification>({ data: () => firestoreData, id: doc.id });
+    });
 }
 
 export async function addUserNotification(userId: string, notificationData: Omit<UserNotification, 'id' | 'createdAt' | 'read' | 'userId'>): Promise<void> {
