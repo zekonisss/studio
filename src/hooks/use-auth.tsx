@@ -82,7 +82,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
         const fbUser = userCredential.user;
 
-        const newUserProfile: Omit<UserProfile, 'id'> = {
+        const newUserProfile: Omit<UserProfile, 'id' | 'registeredAt'> = {
         email: values.email,
         companyName: values.companyName,
         companyCode: values.companyCode,
@@ -93,12 +93,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         paymentStatus: 'pending_verification',
         isAdmin: false,
         agreeToTerms: values.agreeToTerms,
-        registeredAt: serverTimestamp(),
         accountActivatedAt: null,
         subUsers: [],
         };
 
-        await setDoc(doc(db, "users", fbUser.uid), newUserProfile);
+        await setDoc(doc(db, "users", fbUser.uid), {
+            ...newUserProfile,
+            registeredAt: serverTimestamp(),
+        });
         
         // The onAuthStateChanged listener will pick up the new user and set the state.
     } catch (error: any) {
@@ -145,7 +147,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Render children only when loading is complete to avoid flashes of incorrect content.
   return (
     <AuthContext.Provider value={value}>
-      {children}
+      {loading ? null : children}
     </AuthContext.Provider>
   );
 };
