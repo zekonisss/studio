@@ -18,15 +18,18 @@ const firebaseConfig = {
 let app: FirebaseApp;
 let db: Firestore;
 
+const databaseId = "drivercheck";
+
 if (!getApps().length) {
     app = initializeApp(firebaseConfig);
+    
     db = initializeFirestore(app, { 
         experimentalForceLongPolling: true, 
         localCache: { kind: 'memory' } 
-    });
+    }, databaseId);
 } else {
     app = getApp();
-    db = getFirestore(app); 
+    db = getFirestore(app, databaseId); 
 }
 
 const auth: Auth = getAuth(app);
