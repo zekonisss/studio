@@ -38,11 +38,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setLoading(true);
       if (firebaseUser) {
         try {
+          // Add a small delay to stabilize Firestore connection
+          await new Promise(resolve => setTimeout(resolve, 50));
+
           const userProfile = await storageApi.getUserById(firebaseUser.uid);
           if (userProfile) {
             setUser(userProfile);
           } else {
-            // This case might happen if the Firestore user document creation fails after auth creation.
             console.warn("No Firestore profile found for authenticated user:", firebaseUser.uid);
             await signOut(auth); // Log out the user to prevent inconsistent state
             setUser(null);
@@ -64,7 +66,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = async (values: LoginFormValues): Promise<FirebaseUser> => {
     try {
         const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
-        // The onAuthStateChanged listener will handle fetching the profile and setting the user state.
         return userCredential.user;
     } catch (error: any) {
         console.error("Login failed:", error);
@@ -82,27 +83,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
         const fbUser = userCredential.user;
 
-        const newUserProfile: Omit<UserProfile, 'id' | 'registeredAt'> = {
-        email: values.email,
-        companyName: values.companyName,
-        companyCode: values.companyCode,
-        vatCode: values.vatCode || "",
-        address: values.address,
-        contactPerson: values.contactPerson,
-        phone: values.phone,
-        paymentStatus: 'pending_verification',
-        isAdmin: false,
-        agreeToTerms: values.agreeToTerms,
-        accountActivatedAt: null,
-        subUsers: [],
+        const newUserProfile: Omit<UserProfile, 'id' | 'registeredAt' | 'accountActivatedAt'> = {
+          email: values.email,
+          companyName: values.companyName,
+          companyCode: values.companyCode,
+          vatCode: values.vatCode || "",
+          address: values.address,
+          contactPerson: values.contactPerson,
+          phone: values.phone,
+          paymentStatus: 'pending_verification',
+          isAdmin: false,
+          agreeToTerms: values.agreeToTerms,
+          subUsers: [],
         };
 
         await setDoc(doc(db, "users", fbUser.uid), {
             ...newUserProfile,
             registeredAt: serverTimestamp(),
+            accountActivatedAt: null,
         });
         
-        // The onAuthStateChanged listener will pick up the new user and set the state.
     } catch (error: any) {
         console.error("Signup failed:", error);
         toast({
@@ -117,7 +117,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = async () => {
     await signOut(auth);
     setUser(null);
-    // Redirecting here ensures a clean state after logout.
     router.push('/login');
   };
   
@@ -144,7 +143,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const value = { user, loading, login, signup, logout, updateUserInContext };
 
-  // Render children only when loading is complete to avoid flashes of incorrect content.
   return (
     <AuthContext.Provider value={value}>
       {loading ? null : children}
