@@ -23,6 +23,10 @@ export default function UserManagementTab() {
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchUsers = async () => {
+    if (!adminUser?.isAdmin) {
+      setIsLoading(false);
+      return;
+    };
     setIsLoading(true);
     try {
       const userList = await getAllUsers();
@@ -36,7 +40,7 @@ export default function UserManagementTab() {
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [adminUser]);
 
   const handleStatusChange = async (userToUpdate: UserProfile, newStatus: UserProfile['paymentStatus']) => {
     if (!adminUser || !adminUser.isAdmin) return;
@@ -89,6 +93,19 @@ export default function UserManagementTab() {
         return <Badge variant="outline">{status}</Badge>;
     }
   };
+
+  if (!adminUser?.isAdmin) {
+    return (
+         <Card className="mt-6">
+              <CardHeader>
+                  <CardTitle>Prieiga negalima</CardTitle>
+              </CardHeader>
+              <CardContent>
+                  <p>Šis skydelis yra prieinamas tik administratoriams.</p>
+              </CardContent>
+         </Card>
+    )
+}
 
   return (
     <Card className="mt-6">
