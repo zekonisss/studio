@@ -43,9 +43,9 @@ export default function UserManagementTab() {
     if (adminUser?.isAdmin) {
       fetchUsers();
     } else {
-      setIsLoading(false);
+        setIsLoading(false);
     }
-  }, [adminUser?.isAdmin]);
+  }, [adminUser]);
 
   const handleStatusChange = async (userToUpdate: UserProfile, newStatus: UserProfile['paymentStatus']) => {
     if (!adminUser || !adminUser.isAdmin) return;
