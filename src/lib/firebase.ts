@@ -15,12 +15,21 @@ const firebaseConfig = {
   measurementId: "G-BKJYEF2X6Y"
 };
 
-// Initialize Firebase
-const app: FirebaseApp = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+let app: FirebaseApp;
+let db: Firestore;
+
+if (!getApps().length) {
+    app = initializeApp(firebaseConfig);
+    db = initializeFirestore(app, { 
+        experimentalForceLongPolling: true, 
+        localCache: { kind: 'memory' } 
+    });
+} else {
+    app = getApp();
+    db = getFirestore(app); 
+}
+
 const auth: Auth = getAuth(app);
-const db: Firestore = !getApps().length 
-    ? initializeFirestore(app, { experimentalForceLongPolling: true, localCache: { kind: 'memory' } })
-    : getFirestore(app);
 const storage: FirebaseStorage = getStorage(app);
 
 export { app, auth, db, storage };
