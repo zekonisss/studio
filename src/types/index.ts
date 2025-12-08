@@ -1,4 +1,3 @@
-
 import { type Timestamp } from 'firebase/firestore';
 
 // --- Firestore Data Types ---

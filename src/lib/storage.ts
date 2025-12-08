@@ -23,9 +23,9 @@ const isTimestamp = (value: any): value is Timestamp => {
   return value && typeof value.toDate === 'function';
 };
 
-const processDoc = <T extends { id: string }>(doc: any): T => {
-  const data = doc.data();
-  const processedData: { [key: string]: any } = { id: doc.id };
+const processDoc = <T extends { id: string }>(firestoreData: any): T => {
+  const data = { ...firestoreData };
+  const processedData: { [key: string]: any } = { id: data.id };
 
   for (const key in data) {
     if (Object.prototype.hasOwnProperty.call(data, key)) {
@@ -75,7 +75,7 @@ export async function findUserByEmail(email: string): Promise<UserProfile | null
     if (!querySnapshot.empty) {
         const userDoc = querySnapshot.docs[0];
         const firestoreData = { id: userDoc.id, ...userDoc.data() } as UserProfileFirestore;
-        return processDoc<UserProfile>({ data: () => firestoreData, id: userDoc.id });
+        return processDoc<UserProfile>(firestoreData);
     }
     return null;
 }
@@ -85,7 +85,7 @@ export async function getUserById(userId: string): Promise<UserProfile | null> {
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
         const firestoreData = { id: docSnap.id, ...docSnap.data() } as UserProfileFirestore;
-        return processDoc<UserProfile>({ data: () => firestoreData, id: docSnap.id });
+        return processDoc<UserProfile>(firestoreData);
     }
     return null;
 }
@@ -99,7 +99,7 @@ export async function getAllReports(): Promise<Report[]> {
   const reportSnapshot = await getDocs(q);
   return reportSnapshot.docs.map(doc => {
     const firestoreData = { id: doc.id, ...doc.data() } as ReportFirestore;
-    return processDoc<Report>({ data: () => firestoreData, id: doc.id });
+    return processDoc<Report>(firestoreData);
   });
 }
 
@@ -136,7 +136,7 @@ export async function getUserReports(userId: string): Promise<{ active: Report[]
   const querySnapshot = await getDocs(q);
   const reports = querySnapshot.docs.map(doc => {
       const firestoreData = { id: doc.id, ...doc.data() } as ReportFirestore;
-      return processDoc<Report>({ data: () => firestoreData, id: doc.id });
+      return processDoc<Report>(firestoreData);
   });
   const active = reports.filter(r => !r.deletedAt);
   const deleted = reports.filter(r => !!r.deletedAt);
@@ -151,7 +151,7 @@ export async function getSearchLogs(userId?: string): Promise<SearchLog[]> {
   const querySnapshot = await getDocs(q);
   return querySnapshot.docs.map(doc => {
       const firestoreData = { id: doc.id, ...doc.data() } as SearchLogFirestore;
-      return processDoc<SearchLog>({ data: () => firestoreData, id: doc.id });
+      return processDoc<SearchLog>(firestoreData);
   });
 }
 
@@ -168,7 +168,7 @@ export async function getAuditLogs(): Promise<AuditLogEntry[]> {
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map(doc => {
       const firestoreData = { id: doc.id, ...doc.data() } as AuditLogEntryFirestore;
-      return processDoc<AuditLogEntry>({ data: () => firestoreData, id: doc.id });
+      return processDoc<AuditLogEntry>(firestoreData);
     });
 }
 
@@ -187,7 +187,7 @@ export async function getUserNotifications(userId: string): Promise<UserNotifica
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map(doc => {
       const firestoreData = { id: doc.id, ...doc.data() } as UserNotificationFirestore;
-      return processDoc<UserNotification>({ data: () => firestoreData, id: doc.id });
+      return processDoc<UserNotification>(firestoreData);
     });
 }
 

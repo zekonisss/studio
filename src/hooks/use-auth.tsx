@@ -83,7 +83,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
         const fbUser = userCredential.user;
 
-        const newUserProfile: Omit<UserProfile, 'id' | 'registeredAt' | 'accountActivatedAt'> = {
+        const newUserProfile = {
           email: values.email,
           companyName: values.companyName,
           companyCode: values.companyCode,
@@ -95,13 +95,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           isAdmin: false,
           agreeToTerms: values.agreeToTerms,
           subUsers: [],
+          registeredAt: serverTimestamp(),
+          accountActivatedAt: null,
         };
 
-        await setDoc(doc(db, "users", fbUser.uid), {
-            ...newUserProfile,
-            registeredAt: serverTimestamp(),
-            accountActivatedAt: null,
-        });
+        await setDoc(doc(db, "users", fbUser.uid), newUserProfile);
         
     } catch (error: any) {
         console.error("Signup failed:", error);
