@@ -4,14 +4,21 @@ import { useAuth } from '@/hooks/use-auth';
 import { useLanguage } from '@/contexts/language-context';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, BarChart, FileText, Search } from 'lucide-react';
+import { ArrowRight, BarChart, FileText, Search, Loader2 } from 'lucide-react';
 import { WelcomeModal } from '@/components/shared/welcome-modal';
 import Link from 'next/link';
+import { getUserReports, getSearchLogs, getAllReports } from '@/lib/storage';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function DashboardPage() {
   const { user } = useAuth();
   const { t } = useLanguage();
   const [isWelcomeModalOpen, setIsWelcomeModalOpen] = useState(false);
+
+  const [userReportsCount, setUserReportsCount] = useState(0);
+  const [userSearchesCount, setUserSearchesCount] = useState(0);
+  const [totalReportsCount, setTotalReportsCount] = useState(0);
+  const [isStatsLoading, setIsStatsLoading] = useState(true);
 
   useEffect(() => {
     const hasSeenWelcome = localStorage.getItem('hasSeenWelcomeModal');
@@ -20,6 +27,58 @@ export default function DashboardPage() {
       localStorage.setItem('hasSeenWelcomeModal', 'true');
     }
   }, []);
+
+  useEffect(() => {
+    async function fetchStats() {
+      if (!user) return;
+      setIsStatsLoading(true);
+      try {
+        const [userReportsData, userSearchLogs, allReports] = await Promise.all([
+          getUserReports(user.id),
+          getSearchLogs(user.id),
+          getAllReports()
+        ]);
+        
+        // User reports count
+        setUserReportsCount(userReportsData.active.length);
+
+        // User searches this month
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const searchesThisMonth = userSearchLogs.filter(log => new Date(log.timestamp) >= startOfMonth);
+        setUserSearchesCount(searchesThisMonth.length);
+        
+        // Total platform reports
+        setTotalReportsCount(allReports.filter(report => !report.deletedAt).length);
+
+      } catch (error) {
+        console.error("Failed to fetch dashboard stats:", error);
+      } finally {
+        setIsStatsLoading(false);
+      }
+    }
+
+    fetchStats();
+  }, [user]);
+
+  const StatCard = ({ title, value, icon: Icon, link, linkText, isLoading }: { title: string, value: number, icon: React.ElementType, link: string, linkText: string, isLoading: boolean }) => (
+     <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">{title}</CardTitle>
+            <Icon className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+            {isLoading ? (
+                <Skeleton className="h-8 w-16" />
+            ) : (
+                <div className="text-2xl font-bold">{value}</div>
+            )}
+            <Link href={link} className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1">
+                {linkText} <ArrowRight className="h-3 w-3"/>
+            </Link>
+        </CardContent>
+    </Card>
+  );
 
 
   return (
@@ -42,42 +101,30 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">{t('dashboard.overview.yourReports')}</CardTitle>
-                  <FileText className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">12</div>
-                  <Link href="/reports/history" className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1">
-                    {t('dashboard.overview.viewHistory')} <ArrowRight className="h-3 w-3"/>
-                  </Link>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">{t('dashboard.overview.yourSearches')}</CardTitle>
-                  <Search className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">58</div>
-                   <Link href="/search/history" className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1">
-                    {t('dashboard.overview.viewHistory')} <ArrowRight className="h-3 w-3"/>
-                  </Link>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">{t('dashboard.overview.totalPlatformReports')}</CardTitle>
-                  <BarChart className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">1,254</div>
-                  <Link href="/search" className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1">
-                    {t('dashboard.overview.viewAll')} <ArrowRight className="h-3 w-3"/>
-                  </Link>
-                </CardContent>
-              </Card>
+              <StatCard 
+                title={t('dashboard.overview.yourReports')}
+                value={userReportsCount}
+                icon={FileText}
+                link="/reports/history"
+                linkText={t('dashboard.overview.viewHistory')}
+                isLoading={isStatsLoading}
+              />
+               <StatCard 
+                title={t('dashboard.overview.yourSearches')}
+                value={userSearchesCount}
+                icon={Search}
+                link="/search/history"
+                linkText={t('dashboard.overview.viewHistory')}
+                isLoading={isStatsLoading}
+              />
+               <StatCard 
+                title={t('dashboard.overview.totalPlatformReports')}
+                value={totalReportsCount}
+                icon={BarChart}
+                link="/search"
+                linkText={t('dashboard.overview.viewAll')}
+                isLoading={isStatsLoading}
+              />
             </div>
           </CardContent>
         </Card>
