@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { UserProfile } from '@/types';
@@ -15,6 +16,7 @@ import { doc, setDoc, Timestamp, getDoc, serverTimestamp } from "firebase/firest
 import * as storageApi from '@/lib/storage';
 import { useToast } from './use-toast';
 import { useRouter } from 'next/navigation';
+import { Loader2 } from 'lucide-react';
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -141,9 +143,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const value = { user, loading, login, signup, logout, updateUserInContext };
 
+  if (loading) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-background">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
     <AuthContext.Provider value={value}>
-      {loading ? null : children}
+      {children}
     </AuthContext.Provider>
   );
 };
