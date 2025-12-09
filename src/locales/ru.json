@@ -295,9 +295,9 @@
   "toast.forgotPassword.success.title": "Ссылка (имитация) отправлена",
   "toast.forgotPassword.success.description": "Если аккаунт с эл. почтой {email} существует, ссылка для сброса пароля была отправлена.",
   "search.title": "Поиск Водителей",
-  "search.description": "Введите имя, фамилию, национальность, категорию, тег, код компании, ключевое слово записи или другую информацию.",
+  "search.description": "Введите имя и фамилию водителя.",
   "search.queryLabel": "Поисковый запрос",
-  "search.queryPlaceholder": "Имя Фамилия, национальность, категория, тег, ключевое слово...",
+  "search.queryPlaceholder": "Имя Фамилия",
   "search.searchButton": "Искать",
   "search.loading": "Поиск данных...",
   "search.noResults.title": "Результаты не найдены",
@@ -727,4 +727,3 @@
   "usersImport.title": "Импорт пользователей",
   "usersImport.description": "Импортировать новых пользователей из файла Excel."
 }
-    

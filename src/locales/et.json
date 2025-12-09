@@ -295,9 +295,9 @@
   "toast.forgotPassword.success.title": "Link (simuleeritud) saadetud",
   "toast.forgotPassword.success.description": "Kui e-postiga {email} konto eksisteerib, on parooli lähtestamise link saadetud.",
   "search.title": "Otsi juhte",
-  "search.description": "Sisesta juhi nimi, perekonnanimi, kodakondsus, kategooria, silt, ettevõtte kood, kirje märksõna või muu teave.",
+  "search.description": "Sisesta juhi nimi, perekonnanimi.",
   "search.queryLabel": "Otsingupäring",
-  "search.queryPlaceholder": "Nimi Perekonnanimi, kodakondsus, kategooria, silt, märksõna...",
+  "search.queryPlaceholder": "Nimi Perekonnanimi",
   "search.searchButton": "Otsi",
   "search.loading": "Otsin andmeid...",
   "search.noResults.title": "Tulemusi ei leitud",
@@ -354,4 +354,3 @@
   "usersImport.title": "Impordi kasutajad",
   "usersImport.description": "Impordi uued kasutajad Exceli failist."
 }
-    

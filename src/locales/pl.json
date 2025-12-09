@@ -295,9 +295,9 @@
   "toast.forgotPassword.success.title": "Link (Symulowany) Wysłany",
   "toast.forgotPassword.success.description": "Jeśli konto z adresem e-mail {email} istnieje, link do resetowania hasła został wysłany.",
   "search.title": "Szukaj Kierowców",
-  "search.description": "Wpisz imię, nazwisko kierowcy, narodowość, kategorię, tag, kod firmy, słowo kluczowe wpisu lub inne informacje.",
+  "search.description": "Wpisz imię i nazwisko kierowcy.",
   "search.queryLabel": "Zapytanie wyszukiwania",
-  "search.queryPlaceholder": "Jan Kowalski, narodowość, kategoria, tag, słowo kluczowe...",
+  "search.queryPlaceholder": "Imię Nazwisko",
   "search.searchButton": "Szukaj",
   "search.loading": "Wyszukiwanie danych...",
   "search.noResults.title": "Nie znaleziono wyników",
@@ -727,4 +727,3 @@
   "usersImport.title": "Importuj użytkowników",
   "usersImport.description": "Importuj nowych użytkowników z pliku Excel."
 }
-    

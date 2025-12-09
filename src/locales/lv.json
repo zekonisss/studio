@@ -295,9 +295,9 @@
   "toast.forgotPassword.success.title": "Saite (simulēta) nosūtīta",
   "toast.forgotPassword.success.description": "Ja konts ar e-pastu {email} pastāv, paroles atjaunošanas saite ir nosūtīta.",
   "search.title": "Meklēt Vadītājus",
-  "search.description": "Ievadiet vadītāja vārdu, uzvārdu, valstspiederību, kategoriju, tagu, uzņēmuma kodu, ieraksta atslēgvārdu vai citu informāciju.",
+  "search.description": "Ievadiet vadītāja vārdu, uzvārdu.",
   "search.queryLabel": "Meklēšanas vaicājums",
-  "search.queryPlaceholder": "Vārds Uzvārds, valstspiederība, kategorija, tags, atslēgvārds...",
+  "search.queryPlaceholder": "Vārds Uzvārds",
   "search.searchButton": "Meklēt",
   "search.loading": "Meklē datus...",
   "search.noResults.title": "Rezultāti nav atrasti",
@@ -727,4 +727,3 @@
   "usersImport.title": "Importēt lietotājus",
   "usersImport.description": "Importēt jaunus lietotājus no Excel faila."
 }
-    
