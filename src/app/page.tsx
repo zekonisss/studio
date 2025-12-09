@@ -1,6 +1,5 @@
-import LoginPage from "./(public)/login/page";
+import { redirect } from 'next/navigation';
 
 export default function HomePage() {
-  // Tiesiog rodome prisijungimo puslapį kaip pagrindinį
-  return <LoginPage />;
+  redirect('/login');
 }
