@@ -1,7 +1,7 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
+    
     function getUserDoc(userId) {
       return get(/databases/$(database)/documents/users/$(userId));
     }
@@ -13,39 +13,34 @@ service cloud.firestore {
     function isUserActive(userId) {
       return request.auth != null && getUserDoc(userId).data.paymentStatus == 'active';
     }
-
+    
     match /users/{userId} {
       allow create: if request.auth.uid == userId;
       allow get: if request.auth.uid == userId || isAdmin(request.auth.uid);
-      allow list: if isAdmin(request.auth.uid);
+      allow list: if isAdmin(request.auth.uid); 
       allow write: if request.auth.uid == userId;
     }
 
     match /reports/{reportId} {
-      allow create: if isUserActive(request.auth.uid);
-      allow read: if isAdmin(request.auth.uid) || (resource.data.reporterId == request.auth.uid);
-      allow update: if isAdmin(request.auth.uid) || (resource.data.reporterId == request.auth.uid);
-      allow delete: if isAdmin(request.auth.uid) || (resource.data.reporterId == request.auth.uid);
+      allow create: if isUserActive(request.auth.uid); 
+      allow read: if isAdmin(request.auth.uid) || (resource.data.reporterId == request.auth.uid); 
+      allow update, delete: if isAdmin(request.auth.uid) || (resource.data.reporterId == request.auth.uid);
     }
 
     match /searchLogs/{logId} {
       allow create: if isUserActive(request.auth.uid) && request.resource.data.userId == request.auth.uid;
       allow read: if isAdmin(request.auth.uid) || resource.data.userId == request.auth.uid;
-      allow update: if false;
-      allow delete: if false;
+      allow update, delete: if false; 
     }
 
     match /auditLogs/{logId} {
-      allow read: if isAdmin(request.auth.uid);
-      allow create: if isAdmin(request.auth.uid);
-      allow update: if false;
-      allow delete: if false;
+      allow read, create: if isAdmin(request.auth.uid);
+      allow update, delete: if false; 
     }
 
     match /notifications/{notificationId} {
       allow create: if isAdmin(request.auth.uid);
-      allow read: if resource.data.userId == request.auth.uid;
-      allow update: if resource.data.userId == request.auth.uid;
+      allow read, update: if resource.data.userId == request.auth.uid; 
       allow delete: if false;
     }
   }
