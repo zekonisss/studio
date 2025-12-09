@@ -1,47 +1,61 @@
 rules_version = '2';
 service cloud.firestore {
-  match /databases/{database}/documents {
-    
-    function getUserDoc(userId) {
-      return get(/databases/$(database)/documents/users/$(userId));
-    }
+  match /databases/{database}/documents {
 
-    function isAdmin(userId) {
-      return request.auth != null && getUserDoc(userId).data.isAdmin == true;
-    }
+    function getUserDoc(userId) {
+      return get(/databases/$(database)/documents/users/$(userId));
+    }
 
-    function isUserActive(userId) {
-      return request.auth != null && getUserDoc(userId).data.paymentStatus == 'active';
-    }
-    
-    match /users/{userId} {
-      allow create: if request.auth.uid == userId;
-      allow get: if request.auth.uid == userId || isAdmin(request.auth.uid);
-      allow list: if isAdmin(request.auth.uid); 
-      allow write: if request.auth.uid == userId;
-    }
+    function isAdmin(userId) {
+      return request.auth != null &&
+             getUserDoc(userId).data.isAdmin == true;
+    }
 
-    match /reports/{reportId} {
-      allow create: if isUserActive(request.auth.uid); 
-      allow read: if isAdmin(request.auth.uid) || (resource.data.reporterId == request.auth.uid); 
-      allow update, delete: if isAdmin(request.auth.uid) || (resource.data.reporterId == request.auth.uid);
-    }
+    function isUserActive(userId) {
+      return request.auth != null &&
+             getUserDoc(userId).data.paymentStatus == 'active';
+    }
 
-    match /searchLogs/{logId} {
-      allow create: if isUserActive(request.auth.uid) && request.resource.data.userId == request.auth.uid;
-      allow read: if isAdmin(request.auth.uid) || resource.data.userId == request.auth.uid;
-      allow update, delete: if false; 
-    }
+    // USERS
+    match /users/{userId} {
+      allow create: if request.auth.uid == userId;
 
-    match /auditLogs/{logId} {
-      allow read, create: if isAdmin(request.auth.uid);
-      allow update, delete: if false; 
-    }
+      allow read: if request.auth.uid == userId || isAdmin(request.auth.uid);
 
-    match /notifications/{notificationId} {
-      allow create: if isAdmin(request.auth.uid);
-      allow read, update: if resource.data.userId == request.auth.uid; 
-      allow delete: if false;
-    }
-  }
+      allow list: if isAdmin(request.auth.uid);
+
+      allow write: if request.auth.uid == userId || isAdmin(request.auth.uid);
+    }
+
+    // REPORTS
+    match /reports/{reportId} {
+      allow create: if isUserActive(request.auth.uid);
+      allow read: if isAdmin(request.auth.uid) ||
+                  resource.data.reporterId == request.auth.uid;
+      allow update, delete: if isAdmin(request.auth.uid) ||
+                            resource.data.reporterId == request.auth.uid;
+    }
+
+    // SEARCH LOGS
+    match /searchLogs/{logId} {
+      allow create: if isUserActive(request.auth.uid) &&
+                     request.resource.data.userId == request.auth.uid;
+      allow read: if isAdmin(request.auth.uid) ||
+                  resource.data.userId == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    // AUDIT LOGS
+    match /auditLogs/{logId} {
+      allow read, create: if isAdmin(request.auth.uid);
+      allow update, delete: if false;
+    }
+
+    // NOTIFICATIONS
+    match /notifications/{notificationId} {
+      allow create: if isAdmin(request.auth.uid);
+      allow read, update: if resource.data.userId == request.auth.uid;
+      allow delete: if false;
+    }
+  }
 }
