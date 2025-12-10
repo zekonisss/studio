@@ -2,7 +2,7 @@
 
 import { initializeApp, getApp, getApps, type FirebaseApp } from 'firebase/app';
 import { getAuth, type Auth } from 'firebase/auth';
-import { getFirestore, type Firestore, initializeFirestore } from 'firebase/firestore';
+import { getFirestore, type Firestore } from 'firebase/firestore';
 import { getStorage, type FirebaseStorage } from 'firebase/storage';
 
 const firebaseConfig = {
@@ -18,18 +18,12 @@ const firebaseConfig = {
 let app: FirebaseApp;
 let db: Firestore;
 
-const databaseId = "drivercheck";
-
 if (!getApps().length) {
     app = initializeApp(firebaseConfig);
-    
-    db = initializeFirestore(app, { 
-        experimentalForceLongPolling: true, 
-        localCache: { kind: 'memory' } 
-    }, databaseId);
+    db = getFirestore(app);
 } else {
     app = getApp();
-    db = getFirestore(app, databaseId); 
+    db = getFirestore(app); 
 }
 
 const auth: Auth = getAuth(app);
