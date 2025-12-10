@@ -208,7 +208,7 @@ export default function AddReportPage() {
                   <FormItem className="md:col-span-1">
                     <FormLabel>{t("reports.add.form.birthYear.label")}</FormLabel>
                     <FormControl>
-                      <Input type="number" placeholder={t("reports.add.form.birthYear.placeholder")} {...field} onChange={e => field.onChange(e.target.value === '' ? '' : Number(e.target.value))} />
+                      <Input type="number" placeholder={t("reports.add.form.birthYear.placeholder")} {...field} onChange={e => field.onChange(e.target.value === '' ? undefined : Number(e.target.value))} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
