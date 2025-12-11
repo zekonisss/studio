@@ -361,7 +361,7 @@
   "reports.history.noEntries.createFirstButton": "Sukurti Pirmą Įrašą",
   "reports.history.entry.submittedOn": "Pateikta",
   "reports.history.entry.attachedFileDemo": "Pridėtas failas (demonstracinė nuoroda)",
-  "reports.history.entry.viewDetailsButton": "Peržiūrėti (Detalės)",
+  "reports.history.entry.viewDetailsButton": "Detalės",
   "reports.history.entry.deleteButton": "Pašalinti",
   "reports.history.deleteDialog.title": "Ar tikrai norite pašalinti šį įrašą?",
   "reports.history.deleteDialog.description": "Šis veiksmas yra negrįžtamas. Įrašas apie {fullName} bus visam laikui pašalintas iš naršyklės atminties.",
@@ -738,3 +738,4 @@
   "usersImport.title": "Importuoti Vartotojus",
   "usersImport.description": "Importuoti naujus vartotojus iš Excel failo."
 }
+

@@ -22,14 +22,14 @@ export function ReportCard({ report, onViewDetails, onDelete, isDeleted = false 
   const isDestructive = DESTRUCTIVE_REPORT_MAIN_CATEGORIES.includes(report.category);
 
   return (
-    <Card className={`flex flex-col ${isDeleted ? 'opacity-60 bg-muted/50' : ''} ${isDestructive && !isDeleted ? 'border-destructive/30' : ''}`}>
+    <Card className={`flex flex-col ${isDeleted ? 'opacity-60 bg-muted/50' : ''} ${isDestructive && !isDeleted ? 'border-destructive/30 hover:border-destructive/50' : 'hover:bg-accent/10'}`}>
       <CardHeader>
         <div className="flex justify-between items-start gap-2">
             <div>
                  <CardTitle className="text-xl">{report.fullName}</CardTitle>
                  <CardDescription className="flex items-center gap-4 text-xs pt-1">
-                    {report.nationality && <span className="flex items-center gap-1"><Globe className="w-3 h-3" /> {t(`countries.${report.nationality}`)}</span>}
-                    {report.birthYear && <span className="flex items-center gap-1"><User className="w-3 h-3" /> {report.birthYear}</span>}
+                    {report.nationality && <span className="flex items-center gap-1.5"><Globe className="w-3 h-3" /> {t(`countries.${report.nationality}`)}</span>}
+                    {report.birthYear && <span className="flex items-center gap-1.5"><User className="w-3 h-3" /> {report.birthYear}</span>}
                  </CardDescription>
             </div>
             <Badge variant={isDestructive && !isDeleted ? 'destructive' : 'secondary'} className="text-center whitespace-nowrap">
@@ -38,7 +38,7 @@ export function ReportCard({ report, onViewDetails, onDelete, isDeleted = false 
         </div>
       </CardHeader>
       <CardContent className="flex-grow space-y-3">
-        <p className="text-sm text-muted-foreground line-clamp-3 min-h-[60px]">
+        <p className="text-sm text-muted-foreground line-clamp-3 min-h-[40px]">
           {report.comment}
         </p>
          {report.tags && report.tags.length > 0 && (
@@ -47,13 +47,13 @@ export function ReportCard({ report, onViewDetails, onDelete, isDeleted = false 
             </div>
         )}
       </CardContent>
-      <CardFooter className="flex-col items-start gap-4 mt-auto">
-        <div className="text-xs text-muted-foreground flex items-center gap-2 w-full border-t pt-4">
+      <CardFooter className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-auto border-t pt-4">
+        <div className="text-xs text-muted-foreground flex items-center gap-2">
              <Calendar className="w-3 h-3"/>
              <span>{isDeleted ? t('account.entries.deletedOn') : t('reports.history.entry.submittedOn')}:</span>
              <span className="font-semibold">{new Date(isDeleted && report.deletedAt ? report.deletedAt : report.createdAt).toLocaleDateString(t('common.localeForDate'))}</span>
         </div>
-        <div className="flex justify-end gap-2 w-full">
+        <div className="flex justify-end gap-2 w-full sm:w-auto">
           <Button variant="outline" size="sm" onClick={onViewDetails}>
             <Eye className="mr-2 h-4 w-4" />
             {t('reports.history.entry.viewDetailsButton')}
