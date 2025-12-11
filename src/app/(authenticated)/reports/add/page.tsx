@@ -108,8 +108,8 @@ export default function AddReportPage() {
     setIsSubmitting(true);
     
     try {
-      let imageUrl: string | undefined = undefined;
-      let dataAiHint: string | undefined = undefined;
+      let imageUrl: string | null = null;
+      let dataAiHint: string | null = null;
 
       if (imageFile) {
         const uploadResult = await uploadReportImage(imageFile);
