@@ -5,14 +5,18 @@ import { useAuth } from '@/hooks/use-auth';
 import type { Report } from '@/types';
 import { getUserReports, softDeleteReport } from '@/lib/storage';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { History, FilePlus2, Loader2, Inbox } from "lucide-react";
+import { History, FilePlus2, Loader2, Inbox, MoreHorizontal, Eye, Trash2 } from "lucide-react";
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ReportCard } from './_components/report-card';
 import { ReportDetailsModal } from './_components/report-details-modal';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from '@/components/ui/badge';
+import { getCategoryNameForDisplay } from '@/lib/utils';
+import { DESTRUCTIVE_REPORT_MAIN_CATEGORIES } from '@/lib/constants';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 
 export default function ReportsHistoryPage() {
@@ -94,6 +98,56 @@ export default function ReportsHistoryPage() {
         </div>
     );
 
+    const ReportsTable = ({ reports, isDeleted }: { reports: Report[], isDeleted: boolean }) => (
+      <Card className="mt-6">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>{t('admin.entries.table.personInEntry')}</TableHead>
+              <TableHead>{t('admin.entries.table.category')}</TableHead>
+              <TableHead>{isDeleted ? t('account.entries.deletedOn') : t('admin.entries.table.submissionDate')}</TableHead>
+              <TableHead className="text-right">{t('admin.entries.table.actions')}</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {reports.map((report) => (
+              <TableRow key={report.id}>
+                <TableCell className="font-medium">{report.fullName}</TableCell>
+                <TableCell>
+                  <Badge variant={DESTRUCTIVE_REPORT_MAIN_CATEGORIES.includes(report.category) ? 'destructive' : 'secondary'}>
+                    {getCategoryNameForDisplay(report.category, t)}
+                  </Badge>
+                </TableCell>
+                <TableCell>{new Date(isDeleted && report.deletedAt ? report.deletedAt : report.createdAt).toLocaleDateString(t('common.localeForDate'))}</TableCell>
+                <TableCell className="text-right">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="h-8 w-8 p-0">
+                        <span className="sr-only">Open menu</span>
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => handleViewDetails(report)}>
+                        <Eye className="mr-2 h-4 w-4" />
+                        <span>{t('reports.history.entry.viewDetailsButton')}</span>
+                      </DropdownMenuItem>
+                      {!isDeleted && (
+                        <DropdownMenuItem onClick={() => setReportToDelete(report)} className="text-destructive">
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          <span>{t('reports.history.entry.deleteButton')}</span>
+                        </DropdownMenuItem>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </Card>
+    );
+
     return (
         <>
             <ReportDetailsModal
@@ -151,32 +205,14 @@ export default function ReportsHistoryPage() {
                                 </TabsList>
                                 <TabsContent value="active">
                                    {activeReports.length > 0 ? (
-                                        <div className="grid gap-4 mt-6 md:grid-cols-2 lg:grid-cols-3">
-                                            {activeReports.map(report => (
-                                                <ReportCard 
-                                                    key={report.id} 
-                                                    report={report}
-                                                    onViewDetails={() => handleViewDetails(report)}
-                                                    onDelete={() => setReportToDelete(report)}
-                                                />
-                                            ))}
-                                        </div>
+                                        <ReportsTable reports={activeReports} isDeleted={false} />
                                     ) : (
                                         <NoEntriesView />
                                     )}
                                 </TabsContent>
                                 <TabsContent value="deleted">
                                     {deletedReports.length > 0 ? (
-                                        <div className="grid gap-4 mt-6 md:grid-cols-2 lg:grid-cols-3">
-                                            {deletedReports.map(report => (
-                                                <ReportCard 
-                                                    key={report.id} 
-                                                    report={report}
-                                                    onViewDetails={() => handleViewDetails(report)}
-                                                    isDeleted={true}
-                                                />
-                                            ))}
-                                        </div>
+                                        <ReportsTable reports={deletedReports} isDeleted={true} />
                                     ) : (
                                         <NoEntriesView isDeletedTab={true} />
                                     )}
