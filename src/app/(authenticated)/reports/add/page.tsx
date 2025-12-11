@@ -122,7 +122,7 @@ export default function AddReportPage() {
         reporterCompanyName: user.companyName,
         fullName: values.fullName,
         nationality: values.nationality,
-        birthYear: values.birthYear ? Number(values.birthYear) : undefined,
+        birthYear: values.birthYear ? Number(values.birthYear) : null,
         category: values.category,
         tags: values.tags || [],
         comment: values.comment,
