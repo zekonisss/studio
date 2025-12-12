@@ -7,15 +7,9 @@
  * - CategorizeReportOutput - Output type for the categorizeReport function.
  */
 
-import { genkit } from 'genkit';
-import { googleAI } from '@genkit-ai/google-genai';
-import { z } from 'zod';
+import {ai} from '@/ai/genkit';
+import {z} from 'genkit';
 import { detailedReportCategories } from '@/lib/constants';
-
-// Initialize genkit AI tool
-const ai = genkit({
-  plugins: [googleAI()],
-});
 
 const allCategoryObjects = detailedReportCategories.map(cat => ({ id: cat.id, nameKey: cat.nameKey, tags: cat.tags }));
 const allCategoryIds = allCategoryObjects.map(cat => cat.id);
@@ -56,15 +50,12 @@ export async function categorizeReport(input: CategorizeReportInput): Promise<Ca
   return categorizeReportFlow(input);
 }
 
-const categorizeReportFlow = ai.defineFlow(
-  {
-    name: 'categorizeReportFlow',
-    inputSchema: CategorizeReportInputSchema,
-    outputSchema: CategorizeReportOutputSchema,
-  },
-  async (input) => {
-    
-    const prompt = `Jūs esate griežtas ir tikslus profesionalios logistikos įmonės asistentas. Jūsų PAGRINDINĖ užduotis yra sėkmingai priskirti pateiktą komentarą TIKSLIAI VIENAI iš nurodytų kategorijų.
+
+const categorizePrompt = ai.definePrompt({
+  name: 'categorizeReportPrompt',
+  input: { schema: CategorizeReportInputSchema },
+  output: { schema: CategorizeReportOutputSchema },
+  prompt: `Jūs esate griežtas ir tikslus profesionalios logistikos įmonės asistentas. Jūsų PAGRINDINĖ užduotis yra sėkmingai priskirti pateiktą komentarą TIKSLIAI VIENAI iš nurodytų kategorijų.
 
 Komentarai gali būti įvairiomis kalbomis (pvz., lietuvių, rusų, anglų). Privalote juos išanalizuoti ir parinkti TIKSLIAUSIĄ 'categoryId'.
 
@@ -89,18 +80,30 @@ Incidento Komentaras:
 
 Grąžinkite atsakymą tik nurodytu JSON formatu.
 
-PRIVALOTE PARINKTI TIKSLIAUSIĄ KATEGORIJĄ.`;
+PRIVALOTE PARINKTI TIKSLIAUSIĄ KATEGORIJĄ.`
+});
 
+
+const categorizeReportFlow = ai.defineFlow(
+  {
+    name: 'categorizeReportFlow',
+    inputSchema: CategorizeReportInputSchema,
+    outputSchema: CategorizeReportOutputSchema,
+  },
+  async (input) => {
+    
     const llmResponse = await ai.generate({
-        model: 'googleai/gemini-1.5-flash',
-        prompt: prompt,
-        output: { schema: CategorizeReportOutputSchema },
+        prompt: {
+            prompt: categorizePrompt,
+            input,
+        },
+        model: 'gemini-1.5-flash',
         config: {
           temperature: 0,
         },
     });
     
-    const output = llmResponse.output;
+    const output = llmResponse.output();
 
     if (!output) {
       return { categoryId: 'other_category', suggestedTags: [] };
