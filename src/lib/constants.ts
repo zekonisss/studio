@@ -284,6 +284,7 @@ export const detailedReportCategories: DetailedCategory[] = [
       "netinkamas_elgesys_kolegu_atzvilgiu",
       "psichotropiniu_medziagu_vartojimas",
       "konfliktiskas_asmuo",
+      "neblaivus_darbo_metu",
       "kita_tag"
     ],
   },
@@ -291,7 +292,6 @@ export const detailedReportCategories: DetailedCategory[] = [
     id: "discipline",
     nameKey: "categories.discipline",
     tags: [
-      "neblaivus_darbo_metu",
       "neatvykimas_i_darba_be_pateisinamos_priezasties",
       "neatsakingas_poziuris_i_darba",
       "kita_tag"
@@ -325,3 +325,5 @@ export const detailedReportCategories: DetailedCategory[] = [
 ];
 
 export const DESTRUCTIVE_REPORT_MAIN_CATEGORIES: string[] = ['fuel_theft', 'discipline', 'technical_damage', 'driving_safety'];
+
+    
