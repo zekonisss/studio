@@ -1,14 +1,33 @@
 'use server';
-/**
- * @fileOverview A report categorization AI agent.
- *
- * - categorizeReport - A function that handles the report categorization process.
- * - CategorizeReportInput - The input type for the categorizeReport function.
- * - CategorizeReportOutput - The return type for the categorizeReport function.
- */
+/** * @fileOverview A report categorization AI agent. * * - categorizeReport - A function that handles the report categorization process. * - CategorizeReportInput - The input type for the categorizeReport function. * - CategorizeReportOutput - The return type for the categorizeReport function. */
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
+// Papildomi importai, reikalingi kintamųjų generavimui (reikia patikrinti jūsų kodo pradžią)
+import { detailedReportCategories } from '@/lib/constants'; // Būtina patikrinti
+
+const allCategoryObjects = detailedReportCategories.map(cat => ({ id: cat.id, nameKey: cat.nameKey, tags: cat.tags }));
+const allCategoryIds = allCategoryObjects.map(cat => cat.id);
+
+// Sukurti žymų žemėlapį
+const categoryTagKeysMap = allCategoryObjects.reduce((acc, cat) => {
+    acc[cat.id] = cat.tags;
+    return acc;
+}, {} as Record<string, string[]>);
+
+// Sugeneruoti aprašymus prompt'ui su PATAISYTA LOGIKA (disciplina)
+const categoryDescriptionsForPrompt = allCategoryObjects.map(cat => {
+    const englishNameApproximation = cat.nameKey.replace('categories.', '').replace(/_/g, ' ');
+    const availableTagKeys = cat.tags.length > 0 ? `available tag keys: ${cat.tags.join(', ')}` : 'no specific tag keys for this category';
+    let description = `${cat.id} ("${englishNameApproximation}" - ${availableTagKeys})`;
+    
+    // Pataisytas discipline (Drausmė) aprašymas po perkėlimo:
+    if (cat.id === 'discipline') {
+      description += ' - IMPORTANT: This category strictly relates to unauthorized absence, lateness, or poor general work ethic, NOT substance abuse.';
+    }
+    return description;
+}).join('; \n');
+
 
 const CategorizeReportInputSchema = z.object({
   comment: z
@@ -33,61 +52,71 @@ export async function categorizeReport(
   input: CategorizeReportInput
 ): Promise<CategorizeReportOutput> {
   const validatedInput = CategorizeReportInputSchema.parse(input);
+  
+  if (!validatedInput.comment || validatedInput.comment.trim() === "") {
+    return { categoryId: 'other_category', suggestedTags: [] };
+  }
 
-  const prompt = `You are an expert system for a transportation company. Your task is to categorize a report about a driver's incident based on the provided comment.
-  Your output MUST be a valid JSON object.
+  // PRITAIKYTAS GRIEŽTAS PROMPT'AS
+  const prompt = `Jūs esate griežtas ir tikslus profesionalios logistikos įmonės asistentas. Jūsų PAGRINDINĖ užduotis yra sėkmingai priskirti pateiktą komentarą TIKSLIAI VIENAI iš nurodytų kategorijų. Jūs neturite teisės atsisakyti kategorizavimo.
 
-  You MUST select ONE of the following category IDs that best fits the incident:
-  - fuel_theft
-  - driving_safety
-  - behavior
-  - discipline
-  - technical_damage
-  - legal_reputation
-  - other_category
+Komentarai gali būti įvairiomis kalbomis (pvz., lietuvių, rusų, anglų). Privalote juos išanalizuoti ir parinkti TIKSLIAUSIĄ 'categoryId'.
 
-  Additionally, you can suggest ZERO or MORE of the following tags based on the comment's content. Only use tags from this list:
-  - kuro_vagyste
-  - krovinio_vagyste
-  - imones_turto_vagyste
-  - avaringumas
-  - pavojingas_vairavimas
-  - dazni_ket_pazeidimai
-  - grasinimai_agresija
-  - netinkamas_elgesys_kolegu_atzvilgiu
-  - psichotropiniu_medziagu_vartojimas
-  - konfliktiskas_asmuo
-  - neblaivus_darbo_metu
-  - neatvykimas_i_darba_be_pateisinamos_priezasties
-  - neatsakingas_poziuris_i_darba
-  - techninis_neatsakingumas
-  - rizika_saugumui_ar_kroviniui
-  - dazni_transporto_priemones_pazeidimai
-  - buvo_teisinis_procesas_darbo_gincas
-  - pakenkta_imones_reputacijai
-  - neteiseta_veikla_itariama
-  - kita_tag
+Taisyklės:
+1.  **Kategorijos Parinkimas (PRIEŠTAUKAVIMO NĖRA):** Pasirinkite TIK VIENĄ 'categoryId' iš šio sąrašo:
+    ${allCategoryIds.join('\n    ')}
 
-  The final output MUST be a valid JSON object matching this schema: {"categoryId": "string", "suggestedTags": ["string", "string"]}.
-  If no specific tags apply, return an empty array for suggestedTags.
+2.  **Prioritetas:** Privalote parinkti konkrečią kategoriją, jei bent viena frazė komentare atitinka bet kurį iš aprašytų nusižengimų (pvz., "alkoholis" turi vesti į 'behavior', "avarija" – į 'driving_safety').
 
-  Here is the comment to analyze:
-  "${validatedInput.comment}"
-  `;
+3.  **Kategorijos Aprašymai (Jūsų vadovas):**
+    ${categoryDescriptionsForPrompt}
 
-  const result = await ai.generate({
-    model: "gemini-1.5-flash",
+4.  **Kada rinktis 'other_category':** Rinkitės 'other_category' TIK ir TIK tuo atveju, jei komentaras yra visiškai beprasmis, visiškai tuščias arba neaprašo **jokio** įvykio.
+    **Jei aprašomas bet koks nusižengimas, PRIVALOTE parinkti geriausiai atitinkančią kategoriją.**
+
+5.  **Žymos (Tags):** Parinkite tinkamiausias 'suggestedTags' TIK iš pasirinktos 'categoryId' leistinų žymų. Jei 'other_category' pasirinkta, grąžinkite tuščią masyvą.
+
+Incidento Komentaras:
+"{{{comment}}}"
+
+Grąžinkite atsakymą tik nurodytu JSON formatu.
+
+PRIVALOTE VADOVAUTIS TIK GRIEŽTAIS NURODYMAIS IR PARINKTI SPECIFIŠKĄ KATEGORIJĄ.`;
+
+  const llmResponse = await ai.generate({
+    // KRITINIS PATAISYMAS: Naudojame modelį, kuris turėtų veikti po genkit.ts ištaisymo
+    model: 'gemini-1.5-pro', 
     prompt: prompt,
-    output: {
-      format: 'json',
-      schema: CategorizeReportOutputSchema
+    output: { 
+        schema: CategorizeReportOutputSchema,
+        format: 'json'
+    },
+    config: {
+        temperature: 0,
     }
   });
 
-  const output = result.output;
+  const output = llmResponse.output;
+
   if (!output) {
-    throw new Error("AI did not return a valid response.");
+    // Patikrinti, ar API raktas veikia, jei grąžina tuščią atsakymą
+    throw new Error("AI did not return a valid response. Check API Key status.");
   }
 
-  return CategorizeReportOutputSchema.parse(output);
+  let finalCategoryId = output.categoryId;
+  let finalTags: string[] = [];
+
+  // Pridedame tagų filtravimo logiką
+  const isValidCategory = allCategoryIds.includes(finalCategoryId);
+
+  if (!isValidCategory) {
+      finalCategoryId = 'other_category';
+  }
+  
+  if (finalCategoryId !== 'other_category' && output.suggestedTags) {
+      const allowedTagsForCategory = categoryTagKeysMap[finalCategoryId] || [];
+      finalTags = output.suggestedTags.filter(tagKey => allowedTagsForCategory.includes(tagKey));
+  }
+
+  return { categoryId: finalCategoryId, suggestedTags: finalTags };
 }
