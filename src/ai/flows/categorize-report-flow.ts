@@ -93,10 +93,7 @@ PRIVALOTE PARINKTI TIKSLIAUSIĄ KATEGORIJĄ.`;
 
     const llmResponse = await ai.generate({
         model: 'googleai/gemini-1.5-flash',
-        prompt: [
-            { text: prompt },
-            { data: { comment: input.comment } }
-        ],
+        prompt: prompt,
         output: { schema: CategorizeReportOutputSchema },
         config: {
           temperature: 0,
