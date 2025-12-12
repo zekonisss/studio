@@ -40,6 +40,7 @@ export async function categorizeReport(
 const prompt = ai.definePrompt(
   {
     name: 'categorizeReportPrompt',
+    model: googleAI.model('gemini-1.5-pro'),
     input: {schema: CategorizeReportInputSchema},
     output: {schema: CategorizeReportOutputSchema},
     prompt: `You are an expert system for a transportation company. Your task is to categorize a report about a driver's incident based on the provided comment.
