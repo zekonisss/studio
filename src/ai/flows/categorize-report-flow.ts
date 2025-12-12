@@ -6,9 +6,15 @@
  * - CategorizeReportOutput - Output type for the categorizeReport function.
  */
 
-import { ai } from '@/ai/genkit';
+import { genkit } from 'genkit';
+import { googleAI } from '@genkit-ai/google-genai';
 import { z } from 'zod';
 import { detailedReportCategories } from '@/lib/constants';
+
+// Initialize genkit AI tool
+const ai = genkit({
+  plugins: [googleAI()],
+});
 
 const allCategoryObjects = detailedReportCategories.map(cat => ({ id: cat.id, nameKey: cat.nameKey, tags: cat.tags }));
 const allCategoryIds = allCategoryObjects.map(cat => cat.id);
