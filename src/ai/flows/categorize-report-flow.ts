@@ -14,13 +14,11 @@ import { detailedReportCategories } from '@/lib/constants';
 const allCategoryObjects = detailedReportCategories.map(cat => ({ id: cat.id, nameKey: cat.nameKey, tags: cat.tags }));
 const allCategoryIds = allCategoryObjects.map(cat => cat.id);
 
-// Create a mapping of categoryId to its available tag keys for the prompt
 const categoryTagKeysMap = allCategoryObjects.reduce((acc, cat) => {
   acc[cat.id] = cat.tags;
   return acc;
 }, {} as Record<string, string[]>);
 
-// Generate descriptions for the prompt, including available tag *keys* for each category
 const categoryDescriptionsForPrompt = allCategoryObjects.map(cat => {
     const englishNameApproximation = cat.nameKey.replace('categories.', '').replace(/_/g, ' ');
     const availableTagKeys = cat.tags.length > 0 ? `available tag keys: ${cat.tags.join(', ')}` : 'no specific tag keys for this category';
@@ -47,15 +45,8 @@ export async function categorizeReport(input: CategorizeReportInput): Promise<Ca
   if (!input.comment || input.comment.trim() === "") {
     return { categoryId: 'other_category', suggestedTags: [] };
   }
-  return categorizeReportFlow(input);
-}
 
-
-const categorizePrompt = ai.definePrompt({
-  name: 'categorizeReportPrompt',
-  input: { schema: CategorizeReportInputSchema },
-  output: { schema: CategorizeReportOutputSchema },
-  prompt: `Jūs esate griežtas ir tikslus profesionalios logistikos įmonės asistentas. Jūsų PAGRINDINĖ užduotis yra sėkmingai priskirti pateiktą komentarą TIKSLIAI VIENAI iš nurodytų kategorijų.
+  const prompt = `Jūs esate griežtas ir tikslus profesionalios logistikos įmonės asistentas. Jūsų PAGRINDINĖ užduotis yra sėkmingai priskirti pateiktą komentarą TIKSLIAI VIENAI iš nurodytų kategorijų.
 
 Komentarai gali būti įvairiomis kalbomis (pvz., lietuvių, rusų, anglų). Privalote juos išanalizuoti ir parinkti TIKSLIAUSIĄ 'categoryId'.
 
@@ -80,53 +71,39 @@ Incidento Komentaras:
 
 Grąžinkite atsakymą tik nurodytu JSON formatu.
 
-PRIVALOTE PARINKTI TIKSLIAUSIĄ KATEGORIJĄ.`
-});
+PRIVALOTE PARINKTI TIKSLIAUSIĄ KATEGORIJĄ.`;
 
+  const llmResponse = await ai.generate({
+      prompt: prompt.replace('{{{comment}}}', input.comment),
+      model: 'gemini-1.5-flash',
+      output: {
+          format: 'json',
+          schema: CategorizeReportOutputSchema
+      },
+      config: {
+        temperature: 0,
+      },
+  });
+  
+  const output = llmResponse.output();
 
-const categorizeReportFlow = ai.defineFlow(
-  {
-    name: 'categorizeReportFlow',
-    inputSchema: CategorizeReportInputSchema,
-    outputSchema: CategorizeReportOutputSchema,
-  },
-  async (input) => {
-    
-    const llmResponse = await ai.generate({
-        prompt: {
-            prompt: categorizePrompt,
-            input,
-        },
-        model: 'gemini-1.5-flash',
-        config: {
-          temperature: 0,
-        },
-    });
-    
-    const output = llmResponse.output();
-
-    if (!output) {
-      return { categoryId: 'other_category', suggestedTags: [] };
-    }
-
-    let finalCategoryId = output.categoryId;
-    let finalTags: string[] = [];
-
-    // Validate that the categoryId returned by the AI is one of the allowed ones.
-    const isValidCategory = allCategoryIds.includes(finalCategoryId);
-
-    if (!isValidCategory) {
-      // If the AI hallucinates a category, default to 'other_category'.
-      finalCategoryId = 'other_category';
-    }
-    
-    // If category is valid and not 'other_category', filter the tags.
-    if (finalCategoryId !== 'other_category' && output.suggestedTags) {
-      const allowedTagsForCategory = categoryTagKeysMap[finalCategoryId] || [];
-      // Filter out any tags that are not valid for the chosen category.
-      finalTags = output.suggestedTags.filter(tagKey => allowedTagsForCategory.includes(tagKey));
-    }
-
-    return { categoryId: finalCategoryId, suggestedTags: finalTags };
+  if (!output) {
+    return { categoryId: 'other_category', suggestedTags: [] };
   }
-);
+
+  let finalCategoryId = output.categoryId;
+  let finalTags: string[] = [];
+
+  const isValidCategory = allCategoryIds.includes(finalCategoryId);
+
+  if (!isValidCategory) {
+    finalCategoryId = 'other_category';
+  }
+  
+  if (finalCategoryId !== 'other_category' && output.suggestedTags) {
+    const allowedTagsForCategory = categoryTagKeysMap[finalCategoryId] || [];
+    finalTags = output.suggestedTags.filter(tagKey => allowedTagsForCategory.includes(tagKey));
+  }
+
+  return { categoryId: finalCategoryId, suggestedTags: finalTags };
+}
