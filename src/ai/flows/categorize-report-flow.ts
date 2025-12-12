@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview Analyzes an incident comment to categorize it and suggest relevant tags.
@@ -43,26 +44,8 @@ const CategorizeReportInputSchema = z.object({
 export type CategorizeReportInput = z.infer<typeof CategorizeReportInputSchema>;
 
 const CategorizeReportOutputSchema = z.object({
-  categoryId: z.string().describe(`Jūs esate griežtas ir tikslus profesionalios logistikos įmonės asistentas. Jūsų PAGRINDINĖ užduotis yra sėkmingai priskirti pateiktą komentarą TIKSLIAI VIENAI iš nurodytų kategorijų.
-
-Komentarai gali būti įvairiomis kalbomis (pvz., lietuvių, rusų, anglų). Privalote juos išanalizuoti ir parinkti TIKSLIAUSIĄ 'categoryId'.
-
-Taisyklės:
-1.  **Kategorijos Parinkimas (Privalomas):** Pasirinkite TIK VIENĄ 'categoryId' iš šio sąrašo:
-    ${allCategoryIds.join('\n    ')}
-
-2.  **Prioritetas:** Privalote parinkti konkrečią kategoriją, jei bent viena frazė komentare atitinka bet kurį iš aprašytų nusižengimų (pvz., alkoholio vartojimas, avarija, vagystė, nedisciplina).
-
-3.  **Kategorijos Aprašymai (Jūsų vadovas):**
-    ${categoryDescriptionsForPrompt}
-
-4.  **Kada rinktis 'other_category':** Jūs privalote rinktis 'other_category' TIK tuo atveju, jei:
-    a) Komentaras yra **visiškai beprasmis** arba
-    b) Komentaras visiškai neaprašo **jokio** nusižengimo ar incidento.
-    **Niekada** nesiūlykite 'other_category', jei yra bent minimalus atitikimas kitai kategorijai.
-    
-PRIVALOTE PARINKTI TIKSLIAUSIĄ KATEGORIJĄ.`),
-  suggestedTags: z.array(z.string()).describe("5. **Žymos (Tags):** Parinkite tinkamiausias 'suggestedTags' TIK iš pasirinktos 'categoryId' leistinų žymų. Jei 'other_category' pasirinkta, grąžinkite tuščią masyvą."),
+  categoryId: z.string(),
+  suggestedTags: z.array(z.string()),
 });
 export type CategorizeReportOutput = z.infer<typeof CategorizeReportOutputSchema>;
 
@@ -81,9 +64,39 @@ const categorizeReportFlow = ai.defineFlow(
   },
   async (input) => {
     
+    const prompt = `Jūs esate griežtas ir tikslus profesionalios logistikos įmonės asistentas. Jūsų PAGRINDINĖ užduotis yra sėkmingai priskirti pateiktą komentarą TIKSLIAI VIENAI iš nurodytų kategorijų.
+
+Komentarai gali būti įvairiomis kalbomis (pvz., lietuvių, rusų, anglų). Privalote juos išanalizuoti ir parinkti TIKSLIAUSIĄ 'categoryId'.
+
+Taisyklės:
+1.  **Kategorijos Parinkimas (Privalomas):** Pasirinkite TIK VIENĄ 'categoryId' iš šio sąrašo:
+    ${allCategoryIds.join('\n    ')}
+
+2.  **Prioritetas:** Privalote parinkti konkrečią kategoriją, jei bent viena frazė komentare atitinka bet kurį iš aprašytų nusižengimų (pvz., alkoholio vartojimas, avarija, vagystė, nedisciplina).
+
+3.  **Kategorijos Aprašymai (Jūsų vadovas):**
+    ${categoryDescriptionsForPrompt}
+
+4.  **Kada rinktis 'other_category':** Jūs privalote rinktis 'other_category' TIK tuo atveju, jei:
+    a) Komentaras yra **visiškai beprasmis** arba
+    b) Komentaras visiškai neaprašo **jokio** nusižengimo ar incidento.
+    **Niekada** nesiūlykite 'other_category', jei yra bent minimalus atitikimas kitai kategorijai.
+
+5.  **Žymos (Tags):** Parinkite tinkamiausias 'suggestedTags' TIK iš pasirinktos 'categoryId' leistinų žymų. Jei 'other_category' pasirinkta, grąžinkite tuščią masyvą.
+
+Incidento Komentaras:
+"{{{comment}}}"
+
+Grąžinkite atsakymą tik nurodytu JSON formatu.
+
+PRIVALOTE PARINKTI TIKSLIAUSIĄ KATEGORIJĄ.`;
+
     const llmResponse = await ai.generate({
-        model: 'googleai/gemini-2.5-flash',
-        prompt: `Incidento Komentaras:\n"{{{comment}}}"`,
+        model: 'googleai/gemini-1.5-flash',
+        prompt: [
+            { text: prompt },
+            { data: { comment: input.comment } }
+        ],
         output: { schema: CategorizeReportOutputSchema },
         config: {
           temperature: 0,
