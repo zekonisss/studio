@@ -736,6 +736,10 @@
   "support.contact.emailButton": "Susisiekti El. Paštu",
   "support.contact.emailLink": "mailto:pagalba@drivercheck.eu",
   "usersImport.title": "Importuoti Vartotojus",
-  "usersImport.description": "Importuoti naujus vartotojus iš Excel failo."
+  "usersImport.description": "Importuoti naujus vartotojus iš Excel failo.",
+  "session.timeout.title": "Sesija greitai baigsis",
+  "session.timeout.description": "Jūs buvote neaktyvus. Dėl saugumo priežasčių, jūs būsite automatiškai atjungtas.",
+  "session.timeout.logoutButton": "Atsijungti",
+  "session.timeout.stayButton": "Likti Prisijungus"
 }
 
