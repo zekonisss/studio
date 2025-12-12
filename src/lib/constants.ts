@@ -327,3 +327,5 @@ export const detailedReportCategories: DetailedCategory[] = [
 export const DESTRUCTIVE_REPORT_MAIN_CATEGORIES: string[] = ['fuel_theft', 'discipline', 'technical_damage', 'driving_safety'];
 
     
+
+    
