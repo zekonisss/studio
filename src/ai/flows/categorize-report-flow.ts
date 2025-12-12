@@ -41,55 +41,45 @@ const CategorizeReportOutputSchema = z.object({
 });
 export type CategorizeReportOutput = z.infer<typeof CategorizeReportOutputSchema>;
 
-const categorizePrompt = ai.definePrompt({
-    name: 'categorizeReportPrompt',
-    input: { schema: CategorizeReportInputSchema },
-    output: { schema: CategorizeReportOutputSchema },
-    prompt: `Jūs esate griežtas ir tikslus profesionalios logistikos įmonės asistentas. Jūsų PAGRINDINĖ užduotis yra sėkmingai priskirti pateiktą komentarą TIKSLIAI VIENAI iš nurodytų kategorijų.
-
-Komentarai gali būti įvairiomis kalbomis (pvz., lietuvių, rusų, anglų). Privalote juos išanalizuoti ir parinkti TIKSLIAUSIĄ 'categoryId'.
-
-Taisyklės:
-1.  **Kategorijos Parinkimas (Privalomas):** Pasirinkite TIK VIENĄ 'categoryId' iš šio sąrašo:
-    ${allCategoryIds.join('\n    ')}
-
-2.  **Prioritetas:** Privalote parinkti konkrečią kategoriją, jei bent viena frazė komentare atitinka bet kurį iš aprašytų nusižengimų (pvz., alkoholio vartojimas, avarija, vagystė, nedisciplina).
-
-3.  **Kategorijos Aprašymai (Jūsų vadovas):**
-    ${categoryDescriptionsForPrompt}
-
-4.  **Kada rinktis 'other_category':** Jūs privalote rinktis 'other_category' TIK tuo atveju, jei:
-    a) Komentaras yra **visiškai beprasmis** arba
-    b) Komentaras visiškai neaprašo **jokio** nusižengimo ar incidento.
-    **Niekada** nesiūlykite 'other_category', jei yra bent minimalus atitikimas kitai kategorijai.
-
-5.  **Žymos (Tags):** Parinkite tinkamiausias 'suggestedTags' TIK iš pasirinktos 'categoryId' leistinų žymų. Jei 'other_category' pasirinkta, grąžinkite tuščią masyvą.
-
-Incidento Komentaras:
-"{{{comment}}}"
-
-Grąžinkite atsakymą tik nurodytu JSON formatu.
-
-PRIVALOTE PARINKTI TIKSLIAUSIĄ KATEGORIJĄ.`,
-    config: {
-        model: 'gemini-1.5-flash',
-        temperature: 0,
-    }
-});
-
-
-const categorizeFlow = ai.defineFlow(
-  {
-    name: 'categorizeFlow',
-    inputSchema: CategorizeReportInputSchema,
-    outputSchema: CategorizeReportOutputSchema,
-  },
-  async (input) => {
+export async function categorizeReport(input: CategorizeReportInput): Promise<CategorizeReportOutput> {
     if (!input.comment || input.comment.trim() === "") {
         return { categoryId: 'other_category', suggestedTags: [] };
     }
     
-    const llmResponse = await categorizePrompt(input);
+    const llmResponse = await ai.generate({
+        model: 'gemini-1.5-flash',
+        prompt: `You are a strict and precise assistant for a professional logistics company. Your MAIN task is to successfully assign the provided comment to EXACTLY ONE of the specified categories.
+
+Comments can be in various languages (e.g., Lithuanian, Russian, English). You must analyze them and select the MOST ACCURATE 'categoryId'.
+
+Rules:
+1.  **Category Selection (Mandatory):** Choose ONLY ONE 'categoryId' from this list:
+    ${allCategoryIds.join('\n    ')}
+
+2.  **Priority:** You must select a specific category if at least one phrase in the comment matches any of the described offenses (e.g., alcohol consumption, accident, theft, indiscipline).
+
+3.  **Category Descriptions (Your guide):**
+    ${categoryDescriptionsForPrompt}
+
+4.  **When to choose 'other_category':** You must choose 'other_category' ONLY if:
+    a) The comment is **completely meaningless** or
+    b) The comment does not describe **any** offense or incident at all.
+    **Never** suggest 'other_category' if there is at least a minimal match to another category.
+
+5.  **Tags:** Select the most appropriate 'suggestedTags' ONLY from the allowed tags of the chosen 'categoryId'. If 'other_category' is selected, return an empty array.
+
+Incident Comment:
+"{{{comment}}}"
+
+Return the response only in the specified JSON format.
+
+YOU MUST SELECT THE MOST ACCURATE CATEGORY.`,
+        output: { schema: CategorizeReportOutputSchema },
+        config: {
+          temperature: 0,
+        },
+    });
+
     const output = llmResponse.output();
 
     if (!output) {
@@ -111,10 +101,4 @@ const categorizeFlow = ai.defineFlow(
     }
 
     return { categoryId: finalCategoryId, suggestedTags: finalTags };
-  }
-);
-
-
-export async function categorizeReport(input: CategorizeReportInput): Promise<CategorizeReportOutput> {
-    return await categorizeFlow(input);
 }
