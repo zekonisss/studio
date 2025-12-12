@@ -32,7 +32,7 @@ const categoryDescriptionsForPrompt = allCategoryObjects.map(cat => {
     const availableTagKeys = cat.tags.length > 0 ? `available tag keys: ${cat.tags.join(', ')}` : 'no specific tag keys for this category';
     let description = `${cat.id} ("${englishNameApproximation}" - ${availableTagKeys})`;
     if (cat.id === 'discipline') {
-      description += ' - IMPORTANT: This category also includes being drunk at work (use tag: neblaivus_darbo_metu).';
+      description += ' - IMPORTANT: This category focuses strictly on attendance and work ethic (e.g., failure to show up, irresponsibility).';
     }
     return description;
 }).join('; \n');
