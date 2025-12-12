@@ -60,7 +60,7 @@ const categorizeReportFlow = ai.defineFlow(
   async (input) => {
     
     const llmResponse = await ai.generate({
-        model: 'gemini-1.5-flash',
+        model: 'googleai/gemini-1.5-flash',
         prompt: `You are an expert assistant for a logistics and transportation company, specializing in categorizing driver incident reports.
 Analyze the provided incident comment, which may be in various languages (e.g., Lithuanian, Russian, English, Latvian, Polish, Estonian).
 Based on the comment, your task is to:
