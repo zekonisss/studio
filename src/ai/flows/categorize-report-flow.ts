@@ -10,7 +10,7 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import { detailedReportCategories } from '@/lib/constants';
-import { googleAI } from '@genkit-ai/google-genai';
+import { googleAI, listModels } from '@genkit-ai/google-genai';
 
 const allCategoryObjects = detailedReportCategories.map(cat => ({ id: cat.id, nameKey: cat.nameKey, tags: cat.tags }));
 const allCategoryIds = allCategoryObjects.map(cat => cat.id);
@@ -43,63 +43,17 @@ const CategorizeReportOutputSchema = z.object({
 export type CategorizeReportOutput = z.infer<typeof CategorizeReportOutputSchema>;
 
 export async function categorizeReport(input: CategorizeReportInput): Promise<CategorizeReportOutput> {
-    if (!input.comment || input.comment.trim() === "") {
-        return { categoryId: 'other_category', suggestedTags: [] };
-    }
     
-    const llmResponse = await ai.generate({
-        model: googleAI.model('gemini-1.5-pro'),
-        prompt: `You are a strict and precise assistant for a professional logistics company. Your MAIN task is to successfully assign the provided comment to EXACTLY ONE of the specified categories.
-
-Comments can be in various languages (e.g., Lithuanian, Russian, English). You must analyze them and select the MOST ACCURATE 'categoryId'.
-
-Rules:
-1.  **Category Selection (Mandatory):** Choose ONLY ONE 'categoryId' from this list:
-    ${allCategoryIds.join('\n    ')}
-
-2.  **Priority:** You must select a specific category if at least one phrase in the comment matches any of the described offenses (e.g., alcohol consumption, accident, theft, indiscipline).
-
-3.  **Category Descriptions (Your guide):**
-    ${categoryDescriptionsForPrompt}
-
-4.  **When to choose 'other_category':** You must choose 'other_category' ONLY if:
-    a) The comment is **completely meaningless** or
-    b) The comment does not describe **any** offense or incident at all.
-    **Never** suggest 'other_category' if there is at least a minimal match to another category.
-
-5.  **Tags:** Select the most appropriate 'suggestedTags' ONLY from the allowed tags of the chosen 'categoryId'. If 'other_category' is selected, return an empty array.
-
-Incident Comment:
-"{{{comment}}}"
-
-Return the response only in the specified JSON format.
-
-YOU MUST SELECT THE MOST ACCURATE CATEGORY.`,
-        output: { schema: CategorizeReportOutputSchema },
-        config: {
-          temperature: 0,
-        },
-    });
-
-    const output = llmResponse.output();
-
-    if (!output) {
-      return { categoryId: 'other_category', suggestedTags: [] };
+    // --- TEMPORARY DEBUGGING CODE TO LIST MODELS ---
+    try {
+        console.log('Attempting to list available models...');
+        const models = await listModels();
+        console.log('Available Google AI Models:', JSON.stringify(models, null, 2));
+    } catch (e: any) {
+        console.error('Error listing models:', e.message);
     }
+    // --- END OF TEMPORARY CODE ---
 
-    let finalCategoryId = output.categoryId;
-    let finalTags: string[] = [];
-
-    const isValidCategory = allCategoryIds.includes(finalCategoryId);
-
-    if (!isValidCategory) {
-      finalCategoryId = 'other_category';
-    }
-    
-    if (finalCategoryId !== 'other_category' && output.suggestedTags) {
-      const allowedTagsForCategory = categoryTagKeysMap[finalCategoryId] || [];
-      finalTags = output.suggestedTags.filter(tagKey => allowedTagsForCategory.includes(tagKey));
-    }
-
-    return { categoryId: finalCategoryId, suggestedTags: finalTags };
+    // Return a dummy response to avoid breaking the UI during debugging
+    return { categoryId: 'other_category', suggestedTags: [] };
 }
