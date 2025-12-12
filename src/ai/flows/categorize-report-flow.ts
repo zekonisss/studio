@@ -106,18 +106,19 @@ PRIVALOTE PARINKTI TIKSLIAUSIĄ KATEGORIJĄ.`,
     let finalCategoryId = output.categoryId;
     let finalTags: string[] = [];
 
-    // Validate categoryId
-    const selectedCategoryDetails = categoryTagKeysMap[finalCategoryId];
-    if (!selectedCategoryDetails) {
-      finalCategoryId = 'other_category'; 
+    // Validate that the categoryId returned by the AI is one of the allowed ones.
+    const isValidCategory = allCategoryIds.includes(finalCategoryId);
+
+    if (!isValidCategory) {
+      // If the AI hallucinates a category, default to 'other_category'.
+      finalCategoryId = 'other_category';
     }
     
-    // If category is 'other_category', tags should be empty
-    if (finalCategoryId === 'other_category') {
-        finalTags = [];
-    } else if (selectedCategoryDetails && output.suggestedTags) {
-      // Validate suggestedTags - ensure they belong to the selected category
-      finalTags = output.suggestedTags.filter(tagKey => selectedCategoryDetails.includes(tagKey));
+    // If category is valid and not 'other_category', filter the tags.
+    if (finalCategoryId !== 'other_category' && output.suggestedTags) {
+      const allowedTagsForCategory = categoryTagKeysMap[finalCategoryId] || [];
+      // Filter out any tags that are not valid for the chosen category.
+      finalTags = output.suggestedTags.filter(tagKey => allowedTagsForCategory.includes(tagKey));
     }
 
     return { categoryId: finalCategoryId, suggestedTags: finalTags };
