@@ -336,7 +336,7 @@
   "reports.add.form.comment.label": "Komentārs",
   "reports.add.form.comment.placeholder": "Detalizēti aprakstiet situāciju, pārkāpumu vai incidentu...",
   "reports.add.form.image.label": "Pievienot Attēlu vai Failu (neobligāti)",
-  "reports.add.form.image.description": "Varat pievienot fotoattēlu vai dokumentu (līdz 5 MB). Atļautie formāti: JPG, PNG, PDF. Šajā demonstrācijas versijā faili netiks saglabāti, bet tiks parādīts vietturis.",
+  "reports.add.form.image.description": "Varat pievienot fotoattēlu vai dokumentu (līdz 5 MB). Atļautie formāti: JPG, PNG, PDF.",
   "reports.add.form.submitButton": "Iesniegt Ierakstu",
   "reports.add.toast.notLoggedIn.title": "Kļūda",
   "reports.add.toast.notLoggedIn.description": "Lai iesniegtu ierakstu, jums jābūt pieteicies.",

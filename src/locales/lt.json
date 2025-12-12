@@ -347,7 +347,7 @@
   "reports.add.form.comment.label": "Komentaras",
   "reports.add.form.comment.placeholder": "Išsamiai aprašykite situaciją, pažeidimą ar įvykį...",
   "reports.add.form.image.label": "Pridėti Paveikslėlį ar Failą (nebūtina)",
-  "reports.add.form.image.description": "Galite pridėti nuotrauką ar dokumentą (iki 5MB). Leidžiami formatai: JPG, PNG, PDF. Šioje demo versijoje failai nebus išsaugomi, bet bus rodomas placeholder.",
+  "reports.add.form.image.description": "Galite pridėti nuotrauką ar dokumentą (iki 5MB). Leidžiami formatai: JPG, PNG, PDF.",
   "reports.add.form.submitButton": "Pateikti Įrašą",
   "reports.add.toast.notLoggedIn.title": "Klaida",
   "reports.add.toast.notLoggedIn.description": "Turite būti prisijungęs, kad galėtumėte pateikti įrašą.",
@@ -742,4 +742,3 @@
   "session.timeout.logoutButton": "Atsijungti",
   "session.timeout.stayButton": "Likti Prisijungus"
 }
-

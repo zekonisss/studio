@@ -336,7 +336,7 @@
   "reports.add.form.comment.label": "Комментарий",
   "reports.add.form.comment.placeholder": "Подробно опишите ситуацию, нарушение или инцидент...",
   "reports.add.form.image.label": "Добавить Изображение или Файл (необязательно)",
-  "reports.add.form.image.description": "Вы можете добавить фото или документ (до 5 МБ). Разрешенные форматы: JPG, PNG, PDF. В этой демо-версии файлы не будут сохранены, но будет показан заполнитель.",
+  "reports.add.form.image.description": "Вы можете добавить фото или документ (до 5 МБ). Разрешенные форматы: JPG, PNG, PDF.",
   "reports.add.form.submitButton": "Отправить Запись",
   "reports.add.toast.notLoggedIn.title": "Ошибка",
   "reports.add.toast.notLoggedIn.description": "Вы должны быть авторизованы, чтобы отправить запись.",

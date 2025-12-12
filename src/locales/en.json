@@ -347,7 +347,7 @@
   "reports.add.form.comment.label": "Comment",
   "reports.add.form.comment.placeholder": "Describe the situation, violation, or incident in detail...",
   "reports.add.form.image.label": "Add Image or File (optional)",
-  "reports.add.form.image.description": "You can add a photo or document (up to 5MB). Allowed formats: JPG, PNG, PDF. In this demo version, files will not be saved, but a placeholder will be shown.",
+  "reports.add.form.image.description": "You can add a photo or document (up to 5MB). Allowed formats: JPG, PNG, PDF.",
   "reports.add.form.submitButton": "Submit Entry",
   "reports.add.toast.notLoggedIn.title": "Error",
   "reports.add.toast.notLoggedIn.description": "You must be logged in to submit an entry.",

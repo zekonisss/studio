@@ -336,7 +336,7 @@
   "reports.add.form.comment.label": "Komentarz",
   "reports.add.form.comment.placeholder": "Szczegółowo opisz sytuację, naruszenie lub incydent...",
   "reports.add.form.image.label": "Dodaj Obrazek lub Plik (opcjonalnie)",
-  "reports.add.form.image.description": "Możesz dodać zdjęcie lub dokument (do 5 MB). Dozwolone formaty: JPG, PNG, PDF. W tej wersji demonstracyjnej pliki nie będą zapisywane, ale zostanie wyświetlony symbol zastępczy.",
+  "reports.add.form.image.description": "Możesz dodać zdjęcie lub dokument (do 5 MB). Dozwolone formaty: JPG, PNG, PDF.",
   "reports.add.form.submitButton": "Prześlij Wpis",
   "reports.add.toast.notLoggedIn.title": "Błąd",
   "reports.add.toast.notLoggedIn.description": "Musisz być zalogowany, aby przesłać wpis.",
