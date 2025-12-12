@@ -70,7 +70,7 @@ Based on the comment, your task is to:
     Here are descriptions for each categoryId to help you choose:
     ${categoryDescriptionsForPrompt}
 
-    If the comment is vague, unclear, or doesn't fit well into any specific category, you MUST choose 'other_category'.
+    If the comment is vague, unclear, or doesn't fit well into any specific category, you MUST choose 'other_category'. HOWEVER, if there is a clear mention of a topic (e.g., alcohol, theft, disrespect), you should prioritize the corresponding category over 'other_category'.
 
 2.  Based on the selected 'categoryId' AND the content of the comment, suggest a list of 'suggestedTags'.
     Tags MUST be selected ONLY from the "available tag keys" associated with the chosen categoryId (as listed above).
