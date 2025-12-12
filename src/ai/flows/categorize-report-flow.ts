@@ -65,32 +65,32 @@ const categorizeReportFlow = ai.defineFlow(
     
     const llmResponse = await ai.generate({
         model: 'googleai/gemini-2.5-flash',
-        prompt: `You are an expert assistant for a logistics and transportation company, specializing in categorizing driver incident reports.
-Analyze the provided incident comment, which may be in various languages (e.g., Lithuanian, Russian, English, Latvian, Polish, Estonian).
-Based on the comment, your task is to:
+        prompt: `Jūs esate griežtas ir tikslus profesionalios logistikos įmonės asistentas. Jūsų PAGRINDINĖ užduotis yra sėkmingai priskirti pateiktą komentarą TIKSLIAI VIENAI iš nurodytų kategorijų.
 
-1.  Select the MOST appropriate 'categoryId'. The categoryId MUST be one of the following values:
+Komentarai gali būti įvairiomis kalbomis (pvz., lietuvių, rusų, anglų). Privalote juos išanalizuoti ir parinkti TIKSLIAUSIĄ 'categoryId'.
+
+Taisyklės:
+1.  **Kategorijos Parinkimas (Privalomas):** Pasirinkite TIK VIENĄ 'categoryId' iš šio sąrašo:
     ${allCategoryIds.join('\n    ')}
-    Here are descriptions for each categoryId to help you choose:
+
+2.  **Prioritetas:** Privalote parinkti konkrečią kategoriją, jei bent viena frazė komentare atitinka bet kurį iš aprašytų nusižengimų (pvz., alkoholio vartojimas, avarija, vagystė, nedisciplina).
+
+3.  **Kategorijos Aprašymai (Jūsų vadovas):**
     ${categoryDescriptionsForPrompt}
 
-    If the comment is vague, unclear, or doesn't fit well into any specific category, you MUST choose 'other_category'. 
-    HOWEVER, if there is a clear mention of a topic (e.g., alcohol, theft, disrespect), you should prioritize the corresponding category over 'other_category'.
+4.  **Kada rinktis 'other_category':** Jūs privalote rinktis 'other_category' TIK tuo atveju, jei:
+    a) Komentaras yra **visiškai beprasmis** arba
+    b) Komentaras visiškai neaprašo **jokio** nusižengimo ar incidento.
+    **Niekada** nesiūlykite 'other_category', jei yra bent minimalus atitikimas kitai kategorijai.
 
-2.  Based on the selected 'categoryId' AND the content of the comment, suggest a list of 'suggestedTags'.
-    Tags MUST be selected ONLY from the "available tag keys" associated with the chosen categoryId (as listed above).
-    If the chosen categoryId is 'other_category', or if it has no specific tag keys, or if none of its tag keys are relevant to the comment, return an empty array for 'suggestedTags'.
+5.  **Žymos (Tags):** Parinkite tinkamiausias 'suggestedTags' TIK iš pasirinktos 'categoryId' leistinų žymų. Jei 'other_category' pasirinkta, grąžinkite tuščią masyvą.
 
-Incident Comment:
+Incidento Komentaras:
 "{{{comment}}}"
 
-Consider the primary subject and severity of the incident. If multiple issues are mentioned, prioritize the most significant one.
-For example, if a comment states "Driver was caught stealing fuel and was also very rude to staff", "fuel_theft" is likely the primary category.
+Grąžinkite atsakymą tik nurodytu JSON formatu.
 
-Return your answer in the specified JSON format.
-Ensure 'categoryId' is exactly one of the allowed IDs.
-Ensure 'suggestedTags' only contains tag KEYS valid for the chosen 'categoryId'.
-`,
+PRIVALOTE PARINKTI TIKSLIAUSIĄ KATEGORIJĄ.`,
         output: { schema: CategorizeReportOutputSchema },
         config: {
           temperature: 0,
