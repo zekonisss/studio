@@ -41,12 +41,11 @@ const CategorizeReportOutputSchema = z.object({
 });
 export type CategorizeReportOutput = z.infer<typeof CategorizeReportOutputSchema>;
 
-export async function categorizeReport(input: CategorizeReportInput): Promise<CategorizeReportOutput> {
-  if (!input.comment || input.comment.trim() === "") {
-    return { categoryId: 'other_category', suggestedTags: [] };
-  }
-
-  const prompt = `Jūs esate griežtas ir tikslus profesionalios logistikos įmonės asistentas. Jūsų PAGRINDINĖ užduotis yra sėkmingai priskirti pateiktą komentarą TIKSLIAI VIENAI iš nurodytų kategorijų.
+const categorizePrompt = ai.definePrompt({
+    name: 'categorizeReportPrompt',
+    input: { schema: CategorizeReportInputSchema },
+    output: { schema: CategorizeReportOutputSchema },
+    prompt: `Jūs esate griežtas ir tikslus profesionalios logistikos įmonės asistentas. Jūsų PAGRINDINĖ užduotis yra sėkmingai priskirti pateiktą komentarą TIKSLIAI VIENAI iš nurodytų kategorijų.
 
 Komentarai gali būti įvairiomis kalbomis (pvz., lietuvių, rusų, anglų). Privalote juos išanalizuoti ir parinkti TIKSLIAUSIĄ 'categoryId'.
 
@@ -71,39 +70,51 @@ Incidento Komentaras:
 
 Grąžinkite atsakymą tik nurodytu JSON formatu.
 
-PRIVALOTE PARINKTI TIKSLIAUSIĄ KATEGORIJĄ.`;
-
-  const llmResponse = await ai.generate({
-      prompt: prompt.replace('{{{comment}}}', input.comment),
-      model: 'gemini-1.5-flash',
-      output: {
-          format: 'json',
-          schema: CategorizeReportOutputSchema
-      },
-      config: {
+PRIVALOTE PARINKTI TIKSLIAUSIĄ KATEGORIJĄ.`,
+    config: {
+        model: 'gemini-1.5-flash',
         temperature: 0,
-      },
-  });
-  
-  const output = llmResponse.output();
+    }
+});
 
-  if (!output) {
-    return { categoryId: 'other_category', suggestedTags: [] };
+
+const categorizeFlow = ai.defineFlow(
+  {
+    name: 'categorizeFlow',
+    inputSchema: CategorizeReportInputSchema,
+    outputSchema: CategorizeReportOutputSchema,
+  },
+  async (input) => {
+    if (!input.comment || input.comment.trim() === "") {
+        return { categoryId: 'other_category', suggestedTags: [] };
+    }
+    
+    const llmResponse = await categorizePrompt(input);
+    const output = llmResponse.output();
+
+    if (!output) {
+      return { categoryId: 'other_category', suggestedTags: [] };
+    }
+
+    let finalCategoryId = output.categoryId;
+    let finalTags: string[] = [];
+
+    const isValidCategory = allCategoryIds.includes(finalCategoryId);
+
+    if (!isValidCategory) {
+      finalCategoryId = 'other_category';
+    }
+    
+    if (finalCategoryId !== 'other_category' && output.suggestedTags) {
+      const allowedTagsForCategory = categoryTagKeysMap[finalCategoryId] || [];
+      finalTags = output.suggestedTags.filter(tagKey => allowedTagsForCategory.includes(tagKey));
+    }
+
+    return { categoryId: finalCategoryId, suggestedTags: finalTags };
   }
+);
 
-  let finalCategoryId = output.categoryId;
-  let finalTags: string[] = [];
 
-  const isValidCategory = allCategoryIds.includes(finalCategoryId);
-
-  if (!isValidCategory) {
-    finalCategoryId = 'other_category';
-  }
-  
-  if (finalCategoryId !== 'other_category' && output.suggestedTags) {
-    const allowedTagsForCategory = categoryTagKeysMap[finalCategoryId] || [];
-    finalTags = output.suggestedTags.filter(tagKey => allowedTagsForCategory.includes(tagKey));
-  }
-
-  return { categoryId: finalCategoryId, suggestedTags: finalTags };
+export async function categorizeReport(input: CategorizeReportInput): Promise<CategorizeReportOutput> {
+    return await categorizeFlow(input);
 }
