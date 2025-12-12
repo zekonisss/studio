@@ -10,6 +10,7 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import { detailedReportCategories } from '@/lib/constants';
+import { googleAI } from '@genkit-ai/google-genai';
 
 const allCategoryObjects = detailedReportCategories.map(cat => ({ id: cat.id, nameKey: cat.nameKey, tags: cat.tags }));
 const allCategoryIds = allCategoryObjects.map(cat => cat.id);
@@ -47,7 +48,7 @@ export async function categorizeReport(input: CategorizeReportInput): Promise<Ca
     }
     
     const llmResponse = await ai.generate({
-        model: 'gemini-1.5-flash',
+        model: googleAI.model('gemini-1.5-flash'),
         prompt: `You are a strict and precise assistant for a professional logistics company. Your MAIN task is to successfully assign the provided comment to EXACTLY ONE of the specified categories.
 
 Comments can be in various languages (e.g., Lithuanian, Russian, English). You must analyze them and select the MOST ACCURATE 'categoryId'.
