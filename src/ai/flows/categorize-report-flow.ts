@@ -76,7 +76,7 @@ export async function categorizeReport(
   `;
 
   const result = await ai.generate({
-    model: "google:gemini-1.5-flash",
+    model: "gemini-1.5-flash",
     prompt: prompt,
     output: {
       format: 'json',
