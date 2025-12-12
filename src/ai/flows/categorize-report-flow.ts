@@ -57,6 +57,34 @@ export async function categorizeReport(input: CategorizeReportInput): Promise<Ca
     };
 }
 
+
+const prompt = ai.definePrompt({
+  name: 'categorizeReportPrompt',
+  input: {schema: CategorizeReportInputSchema},
+  output: {schema: CategorizeReportOutputSchema},
+  prompt: `
+      You are an expert system for categorizing driver incident reports for a logistics company. 
+      Your task is to analyze the user's comment and assign the most appropriate category and suggest relevant tags.
+
+      RULES:
+      1.  Analyze the provided comment: {{{comment}}}
+      2.  You MUST choose exactly one category from the following list.
+      3.  The chosen category MUST be one of these exact IDs: ${allCategoryIds.join(', ')}.
+      4.  Here are descriptions for each category to help you decide:
+          ${categoryDescriptionsForPrompt}
+      5.  Based on the chosen category, you can suggest one or more tags.
+      6.  Suggested tags MUST be chosen ONLY from the 'available tag keys' for that specific category.
+      7.  If no specific tag fits, you can suggest the "kita_tag".
+      8.  If you are absolutely unsure, use the "other_category".
+      9.  Your final output must be a JSON object with 'categoryId' and 'suggestedTags'.
+  `,
+  model: googleAI.model('gemini-1.5-pro'),
+  config: {
+    temperature: 0,
+  }
+});
+
+
 const categorizeReportFlow = ai.defineFlow(
   {
     name: 'categorizeReportFlow',
@@ -64,33 +92,8 @@ const categorizeReportFlow = ai.defineFlow(
     outputSchema: CategorizeReportOutputSchema,
   },
   async (input) => {
-    const llmResponse = await ai.generate({
-        model: googleAI.model('gemini-1.5-pro'),
-        prompt: `
-            You are an expert system for categorizing driver incident reports for a logistics company. 
-            Your task is to analyze the user's comment and assign the most appropriate category and suggest relevant tags.
-
-            RULES:
-            1.  Analyze the provided comment: ${input.comment}
-            2.  You MUST choose exactly one category from the following list.
-            3.  The chosen category MUST be one of these exact IDs: ${allCategoryIds.join(', ')}.
-            4.  Here are descriptions for each category to help you decide:
-                ${categoryDescriptionsForPrompt}
-            5.  Based on the chosen category, you can suggest one or more tags.
-            6.  Suggested tags MUST be chosen ONLY from the 'available tag keys' for that specific category.
-            7.  If no specific tag fits, you can suggest the "kita_tag".
-            8.  If you are absolutely unsure, use the "other_category".
-            9.  Your final output must be a JSON object with 'categoryId' and 'suggestedTags'.
-        `,
-        output: {
-            format: 'json',
-            schema: CategorizeReportOutputSchema
-        },
-        config: {
-            temperature: 0,
-        }
-    });
-
+    const llmResponse = await prompt(input);
+    
     const output = llmResponse.output();
     
     if (!output) {
