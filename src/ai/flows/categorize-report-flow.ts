@@ -10,7 +10,7 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import { detailedReportCategories } from '@/lib/constants';
-import { googleAI, listModels } from '@genkit-ai/google-genai';
+import { googleAI } from '@genkit-ai/google-genai';
 
 const allCategoryObjects = detailedReportCategories.map(cat => ({ id: cat.id, nameKey: cat.nameKey, tags: cat.tags }));
 const allCategoryIds = allCategoryObjects.map(cat => cat.id);
@@ -43,17 +43,71 @@ const CategorizeReportOutputSchema = z.object({
 export type CategorizeReportOutput = z.infer<typeof CategorizeReportOutputSchema>;
 
 export async function categorizeReport(input: CategorizeReportInput): Promise<CategorizeReportOutput> {
+    const result = await categorizeReportFlow(input);
     
-    // --- TEMPORARY DEBUGGING CODE TO LIST MODELS ---
-    try {
-        console.log('Attempting to list available models...');
-        const models = await listModels();
-        console.log('Available Google AI Models:', JSON.stringify(models, null, 2));
-    } catch (e: any) {
-        console.error('Error listing models:', e.message);
-    }
-    // --- END OF TEMPORARY CODE ---
+    // Validate the response
+    const validCategoryId = allCategoryIds.includes(result.categoryId) ? result.categoryId : 'other_category';
+    const validTags = result.suggestedTags.filter(tag => 
+        categoryTagKeysMap[validCategoryId]?.includes(tag)
+    );
 
-    // Return a dummy response to avoid breaking the UI during debugging
-    return { categoryId: 'other_category', suggestedTags: [] };
+    return {
+        categoryId: validCategoryId,
+        suggestedTags: validTags
+    };
 }
+
+
+const categorizeReportPrompt = ai.definePrompt({
+    name: "categorizeReportPrompt",
+    input: { schema: CategorizeReportInputSchema },
+    output: { schema: CategorizeReportOutputSchema },
+    prompt: `
+        You are an expert system for categorizing driver incident reports for a logistics company. 
+        Your task is to analyze the user's comment and assign the most appropriate category and suggest relevant tags.
+
+        RULES:
+        1.  Analyze the provided comment: {{{comment}}}
+        2.  You MUST choose exactly one category from the following list.
+        3.  The chosen category MUST be one of these exact IDs: ${allCategoryIds.join(', ')}.
+        4.  Here are descriptions for each category to help you decide:
+            ${categoryDescriptionsForPrompt}
+        5.  Based on the chosen category, you can suggest one or more tags.
+        6.  Suggested tags MUST be chosen ONLY from the 'available tag keys' for that specific category.
+        7.  If no specific tag fits, you can suggest the "kita_tag".
+        8.  If you are absolutely unsure, use the "other_category".
+        9.  Your final output must be a JSON object with 'categoryId' and 'suggestedTags'.
+    `,
+    config: {
+        temperature: 0,
+    }
+});
+
+
+const categorizeReportFlow = ai.defineFlow(
+  {
+    name: 'categorizeReportFlow',
+    inputSchema: CategorizeReportInputSchema,
+    outputSchema: CategorizeReportOutputSchema,
+  },
+  async (input) => {
+    
+    const llmResponse = await ai.generate({
+        model: 'gemini-1.5-flash-latest',
+        prompt: (await categorizeReportPrompt.render({input: input})).prompt,
+        output: {
+            format: 'json',
+            schema: CategorizeReportOutputSchema
+        }
+    });
+
+    const output = llmResponse.output();
+    
+    if (!output) {
+      console.error("AI did not return a valid structured response.");
+      return { categoryId: 'other_category', suggestedTags: [] };
+    }
+
+    return output;
+  }
+);
