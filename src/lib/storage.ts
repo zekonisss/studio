@@ -105,8 +105,14 @@ export async function getAllReports(): Promise<Report[]> {
 
 export async function addReport(reportData: Omit<Report, 'id' | 'createdAt' | 'deletedAt'>): Promise<void> {
   const reportsCol = collection(db, "reports");
+  
+  const cleanReportData = { ...reportData };
+  if ('birthYear' in cleanReportData && (cleanReportData as any).birthYear === undefined) {
+      delete (cleanReportData as any).birthYear;
+  }
+
   const dataWithTimestamp = {
-    ...reportData,
+    ...cleanReportData,
     createdAt: serverTimestamp(),
     deletedAt: null,
   };
