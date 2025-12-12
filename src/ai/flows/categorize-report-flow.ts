@@ -29,7 +29,11 @@ const categoryTagKeysMap = allCategoryObjects.reduce((acc, cat) => {
 const categoryDescriptionsForPrompt = allCategoryObjects.map(cat => {
     const englishNameApproximation = cat.nameKey.replace('categories.', '').replace(/_/g, ' ');
     const availableTagKeys = cat.tags.length > 0 ? `available tag keys: ${cat.tags.join(', ')}` : 'no specific tag keys for this category';
-    return `${cat.id} ("${englishNameApproximation}" - ${availableTagKeys})`;
+    let description = `${cat.id} ("${englishNameApproximation}" - ${availableTagKeys})`;
+    if (cat.id === 'discipline') {
+      description += ' - IMPORTANT: This category also includes being drunk at work (use tag: neblaivus_darbo_metu).';
+    }
+    return description;
 }).join('; \n');
 
 
@@ -70,7 +74,8 @@ Based on the comment, your task is to:
     Here are descriptions for each categoryId to help you choose:
     ${categoryDescriptionsForPrompt}
 
-    If the comment is vague, unclear, or doesn't fit well into any specific category, you MUST choose 'other_category'. HOWEVER, if there is a clear mention of a topic (e.g., alcohol, theft, disrespect), you should prioritize the corresponding category over 'other_category'.
+    If the comment is vague, unclear, or doesn't fit well into any specific category, you MUST choose 'other_category'. 
+    HOWEVER, if there is a clear mention of a topic (e.g., alcohol, theft, disrespect), you should prioritize the corresponding category over 'other_category'.
 
 2.  Based on the selected 'categoryId' AND the content of the comment, suggest a list of 'suggestedTags'.
     Tags MUST be selected ONLY from the "available tag keys" associated with the chosen categoryId (as listed above).
