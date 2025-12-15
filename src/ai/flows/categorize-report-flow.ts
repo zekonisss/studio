@@ -51,7 +51,13 @@ const categorizePrompt = ai.definePrompt({
   output: { schema: CategorizeReportOutputSchema },
   model: 'gemini-1.5-flash',
   config: {
-    temperature: 0,
+    temperature: 0.1,
+    safetySettings: [
+      {
+        category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
+        threshold: 'BLOCK_ONLY_HIGH',
+      },
+    ],
   },
   prompt: `Jūs esate griežtas ir tikslus profesionalios logistikos įmonės asistentas. Jūsų PAGRINDINĖ užduotis yra sėkmingai priskirti pateiktą komentarą TIKSLIAI VIENAI iš nurodytų kategorijų. Jūs neturite teisės atsisakyti kategorizavimo.
 
