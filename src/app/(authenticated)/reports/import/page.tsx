@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import * as xlsx from "xlsx";
+import * as ExcelJS from "exceljs";
 import { useLanguage } from "@/contexts/language-context";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -41,7 +41,7 @@ export default function ReportsImportPage() {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
       const selectedFile = event.target.files[0];
-      if (selectedFile && selectedFile.name.endsWith('.xlsx')) {
+      if (selectedFile && (selectedFile.name.endsWith('.xlsx') || selectedFile.name.endsWith('.xls'))) {
         setFile(selectedFile);
         setRecords([]);
       } else {
@@ -61,35 +61,66 @@ export default function ReportsImportPage() {
     const reader = new FileReader();
     reader.onload = async (e) => {
       try {
-        const data = new Uint8Array(e.target?.result as ArrayBuffer);
-        const workbook = xlsx.read(data, { type: 'array' });
-        const sheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[sheetName];
-        const json: any[] = xlsx.utils.sheet_to_json(worksheet);
-
-        if (json.length === 0) {
-            toast({ variant: "destructive", title: t('reports.import.toast.emptyFile.title'), description: t('reports.import.toast.emptyFile.description') });
-            return;
+        const buffer = e.target?.result as ArrayBuffer;
+        const workbook = new ExcelJS.Workbook();
+        await workbook.xlsx.load(buffer);
+        
+        const worksheet = workbook.worksheets[0];
+        if (!worksheet) {
+          toast({ variant: "destructive", title: t('reports.import.toast.emptyFile.title'), description: 'No worksheet found in the file.' });
+          setIsParsing(false);
+          return;
         }
 
+        const headerRow = worksheet.getRow(1);
+        const headers = (headerRow.values as string[]).reduce((acc, val, idx) => {
+          if (val) acc[val.toLowerCase().trim()] = idx;
+          return acc;
+        }, {} as Record<string, number>);
+
         const requiredHeaders = ['vardas, pavarde', 'komentaras'];
-        const fileHeaders = Object.keys(json[0]).map(h => h.toLowerCase());
-        const missingHeaders = requiredHeaders.filter(h => !fileHeaders.includes(h));
+        const missingHeaders = requiredHeaders.filter(h => headers[h] === undefined);
 
         if (missingHeaders.length > 0) {
             toast({ variant: "destructive", title: t('reports.import.toast.missingHeaders.title'), description: t('reports.import.toast.missingHeaders.description', { headers: missingHeaders.join(', ') }) });
+            setIsParsing(false);
             return;
         }
 
-        const parsedRecords: ParsedRecord[] = json.map((row, index) => ({
-          id: index,
-          fullName: row['Vardas, Pavardė'] || row['vardas, pavarde'] || t('reports.import.unknownDriver'),
-          comment: row['Komentaras'] || row['komentaras'] || '',
-          nationality: row['Pilietybė'] || row['pilietybe'],
-          birthYear: row['Gimimo metai'] ? Number(row['Gimimo metai']) : undefined,
-          createdAt: row['Data'] ? new Date(row['Data']).toISOString() : new Date().toISOString(),
-          status: 'pending',
-        }));
+        const parsedRecords: ParsedRecord[] = [];
+        worksheet.eachRow((row, rowNumber) => {
+            if (rowNumber === 1) return; // Skip header row
+
+            const fullName = row.getCell(headers['vardas, pavarde']).value as string || t('reports.import.unknownDriver');
+            const comment = row.getCell(headers['komentaras']).value as string || '';
+            
+            const nationalityCell = headers['pilietybė'] || headers['pilietybe'];
+            const nationality = nationalityCell ? row.getCell(nationalityCell).value as string : undefined;
+
+            const birthYearCell = headers['gimimo metai'];
+            const birthYearValue = birthYearCell ? row.getCell(birthYearCell).value : undefined;
+            const birthYear = typeof birthYearValue === 'number' ? birthYearValue : undefined;
+            
+            const dateCell = headers['data'];
+            const dateValue = dateCell ? row.getCell(dateCell).value : undefined;
+            const createdAt = dateValue instanceof Date ? dateValue.toISOString() : new Date().toISOString();
+
+            parsedRecords.push({
+                id: rowNumber,
+                fullName,
+                comment,
+                nationality,
+                birthYear,
+                createdAt,
+                status: 'pending'
+            });
+        });
+
+        if (parsedRecords.length === 0) {
+             toast({ variant: "destructive", title: t('reports.import.toast.emptyFile.title'), description: t('reports.import.toast.emptyFile.description') });
+             setIsParsing(false);
+             return;
+        }
 
         setRecords(parsedRecords);
         await processRecordsWithAI(parsedRecords);
@@ -201,7 +232,7 @@ export default function ReportsImportPage() {
       <CardContent className="space-y-6">
         <div className="flex flex-col sm:flex-row gap-4 items-start">
             <div className="w-full sm:w-auto flex-grow">
-                <Input type="file" accept=".xlsx" onChange={handleFileChange} disabled={isParsing} />
+                <Input type="file" accept=".xlsx, .xls" onChange={handleFileChange} disabled={isParsing} />
                 {file && <p className="text-sm text-muted-foreground mt-2">{t('reports.import.selectedFile')}: {file.name}</p>}
             </div>
             <Button onClick={parseFile} disabled={!file || isParsing} className="w-full sm:w-auto">
