@@ -393,7 +393,7 @@
   "searchHistory.table.header.dateTime": "Date and Time",
   "reports.import.title": "Import Entries from Excel",
   "reports.import.description": "Select an .xlsx file to upload driver entries. The system will attempt to automatically categorize and tag them based on comments.",
-  "reports.import.expectedHeaders": "The Excel file is expected to have at least these headers: \"{headers}\".",
+  "reports.import.expectedHeaders": "The Excel file is expected to have at least these headers: {headers}",
   "reports.import.optionalHeaders": "Other possible",
   "reports.import.selectedFile": "Selected file",
   "reports.import.button.parseFile": "Parse File",

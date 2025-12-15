@@ -393,7 +393,7 @@
   "searchHistory.table.header.dateTime": "Data ir Laikas",
   "reports.import.title": "Importuoti Įrašus iš Excel",
   "reports.import.description": "Pasirinkite .xlsx formato failą, kad įkeltumėte vairuotojų įrašus. Sistema automatiškai bandys priskirti kategorijas ir žymas pagal komentarus.",
-  "reports.import.expectedHeaders": "Tikimasi, kad Excel failas turės bent šias antraštes: \"{headers}\".",
+  "reports.import.expectedHeaders": "Tikimasi, kad Excel failas turės bent šias antraštes: {headers}.",
   "reports.import.optionalHeaders": "Kitos galimos",
   "reports.import.selectedFile": "Pasirinktas failas",
   "reports.import.button.parseFile": "Analizuoti Failą",

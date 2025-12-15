@@ -78,7 +78,7 @@ export default function ReportsImportPage() {
           return acc;
         }, {} as Record<string, number>);
 
-        const requiredHeaders = ['vardas, pavarde', 'komentaras'];
+        const requiredHeaders = ['vardas', 'pavarde', 'komentaras'];
         const missingHeaders = requiredHeaders.filter(h => headers[h] === undefined);
 
         if (missingHeaders.length > 0) {
@@ -91,7 +91,9 @@ export default function ReportsImportPage() {
         worksheet.eachRow((row, rowNumber) => {
             if (rowNumber === 1) return; // Skip header row
 
-            const fullName = row.getCell(headers['vardas, pavarde']).value as string || t('reports.import.unknownDriver');
+            const vardas = row.getCell(headers['vardas']).value as string || '';
+            const pavarde = row.getCell(headers['pavarde']).value as string || '';
+            const fullName = `${vardas} ${pavarde}`.trim() || t('reports.import.unknownDriver');
             const comment = row.getCell(headers['komentaras']).value as string || '';
             
             const nationalityCell = headers['pilietybė'] || headers['pilietybe'];
@@ -224,7 +226,7 @@ export default function ReportsImportPage() {
           <div>
             <CardTitle>{t('reports.import.title')}</CardTitle>
             <CardDescription>
-                {t('reports.import.description')} {t('reports.import.expectedHeaders', { headers: '"vardas, pavarde", "komentaras"' })}
+                {t('reports.import.description')} {t('reports.import.expectedHeaders', { headers: '"vardas", "pavarde", "komentaras"' })}
             </CardDescription>
           </div>
         </div>
