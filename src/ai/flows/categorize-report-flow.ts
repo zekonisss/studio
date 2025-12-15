@@ -48,6 +48,10 @@ const categorizePrompt = ai.definePrompt({
   name: 'categorizeReportPrompt',
   input: { schema: CategorizeReportInputSchema },
   output: { schema: CategorizeReportOutputSchema },
+  model: 'gemini-1.5-pro',
+  config: {
+    temperature: 0,
+  },
   prompt: `Jūs esate griežtas ir tikslus profesionalios logistikos įmonės asistentas. Jūsų PAGRINDINĖ užduotis yra sėkmingai priskirti pateiktą komentarą TIKSLIAI VIENAI iš nurodytų kategorijų. Jūs neturite teisės atsisakyti kategorizavimo.
 
 Komentarai gali būti įvairiomis kalbomis (pvz., lietuvių, rusų, anglų). Privalote juos išanalizuoti ir parinkti TIKSLIAUSIĄ 'categoryId'.
@@ -80,9 +84,6 @@ const categorizeFlow = ai.defineFlow(
       name: 'categorizeReportFlow',
       inputSchema: CategorizeReportInputSchema,
       outputSchema: CategorizeReportOutputSchema,
-      config: {
-        temperature: 0,
-      }
     },
     async (flowInput) => {
         const llmResponse = await categorizePrompt(flowInput);
