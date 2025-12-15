@@ -76,27 +76,28 @@ export default function ReportsImportPage() {
         const headers: Record<string, number> = {};
         headerRow.eachCell((cell, colNumber) => {
             if (cell.value) {
-                // Corrected: Do not convert to lower case to match exact headers like "Vardas Pavarde"
-                headers[String(cell.value).trim()] = colNumber;
+                headers[String(cell.value).toLowerCase().trim()] = colNumber;
             }
         });
 
-        const requiredHeaders = ['Vardas Pavarde', 'Komentaras', 'Data'];
+        const requiredHeaders = ['vardas', 'pavarde', 'komentaras', 'data'];
         const missingHeaders = requiredHeaders.filter(h => headers[h] === undefined);
-
+        
         if (missingHeaders.length > 0) {
             toast({ variant: "destructive", title: t('reports.import.toast.missingHeaders.title'), description: t('reports.import.toast.missingHeaders.description', { headers: missingHeaders.join(', ') }) });
             setIsParsing(false);
             return;
         }
-
+        
         const parsedRecords: ParsedRecord[] = [];
         worksheet.eachRow((row, rowNumber) => {
             if (rowNumber === 1) return;
 
-            const fullName = row.getCell(headers['Vardas Pavarde']).value as string || t('reports.import.unknownDriver');
-            const comment = row.getCell(headers['Komentaras']).value as string || '';
-            const dateValue = row.getCell(headers['Data']).value;
+            const vardas = row.getCell(headers['vardas']).value as string || '';
+            const pavarde = row.getCell(headers['pavarde']).value as string || '';
+            const fullName = `${vardas} ${pavarde}`.trim() || t('reports.import.unknownDriver');
+            const comment = row.getCell(headers['komentaras']).value as string || '';
+            const dateValue = row.getCell(headers['data']).value;
             const createdAt = dateValue instanceof Date ? dateValue.toISOString() : new Date().toISOString();
 
             parsedRecords.push({
@@ -216,7 +217,7 @@ export default function ReportsImportPage() {
           <div>
             <CardTitle>{t('reports.import.title')}</CardTitle>
             <CardDescription>
-                {t('reports.import.description')} Laukiame stulpelių: <strong>&quot;Vardas Pavarde&quot;</strong>, <strong>&quot;Komentaras&quot;</strong>, <strong>&quot;Data&quot;</strong>.
+                {t('reports.import.description')} Laukiame stulpelių: <strong>&quot;vardas&quot;</strong>, <strong>&quot;pavarde&quot;</strong>, <strong>&quot;komentaras&quot;</strong>, <strong>&quot;data&quot;</strong>.
             </CardDescription>
           </div>
         </div>
