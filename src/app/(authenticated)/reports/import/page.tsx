@@ -80,8 +80,7 @@ export default function ReportsImportPage() {
             }
         });
 
-
-        const requiredHeaders = ['vardas', 'pavarde', 'komentaras'];
+        const requiredHeaders = ['vardas pavarde', 'komentaras', 'data'];
         const missingHeaders = requiredHeaders.filter(h => headers[h] === undefined);
 
         if (missingHeaders.length > 0) {
@@ -92,30 +91,17 @@ export default function ReportsImportPage() {
 
         const parsedRecords: ParsedRecord[] = [];
         worksheet.eachRow((row, rowNumber) => {
-            if (rowNumber === 1) return; // Skip header row
+            if (rowNumber === 1) return;
 
-            const vardas = row.getCell(headers['vardas']).value as string || '';
-            const pavarde = row.getCell(headers['pavarde']).value as string || '';
-            const fullName = `${vardas} ${pavarde}`.trim() || t('reports.import.unknownDriver');
+            const fullName = row.getCell(headers['vardas pavarde']).value as string || t('reports.import.unknownDriver');
             const comment = row.getCell(headers['komentaras']).value as string || '';
-            
-            const nationalityCell = headers['pilietybė'] || headers['pilietybe'];
-            const nationality = nationalityCell ? row.getCell(nationalityCell).value as string : undefined;
-
-            const birthYearCell = headers['gimimo metai'];
-            const birthYearValue = birthYearCell ? row.getCell(birthYearCell).value : undefined;
-            const birthYear = typeof birthYearValue === 'number' ? birthYearValue : undefined;
-            
-            const dateCell = headers['data'];
-            const dateValue = dateCell ? row.getCell(dateCell).value : undefined;
+            const dateValue = row.getCell(headers['data']).value;
             const createdAt = dateValue instanceof Date ? dateValue.toISOString() : new Date().toISOString();
 
             parsedRecords.push({
                 id: rowNumber,
                 fullName,
                 comment,
-                nationality,
-                birthYear,
                 createdAt,
                 status: 'pending'
             });
@@ -229,7 +215,7 @@ export default function ReportsImportPage() {
           <div>
             <CardTitle>{t('reports.import.title')}</CardTitle>
             <CardDescription>
-                {t('reports.import.description')} {t('reports.import.expectedHeaders', { headers: '"vardas", "pavarde", "komentaras"' })}
+                {t('reports.import.description')} Laukiame stulpelių: <strong>&quot;Vardas Pavarde&quot;</strong>, <strong>&quot;Komentaras&quot;</strong>, <strong>&quot;Data&quot;</strong>.
             </CardDescription>
           </div>
         </div>
