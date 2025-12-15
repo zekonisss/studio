@@ -76,11 +76,12 @@ export default function ReportsImportPage() {
         const headers: Record<string, number> = {};
         headerRow.eachCell((cell, colNumber) => {
             if (cell.value) {
-                headers[String(cell.value).toLowerCase().trim()] = colNumber;
+                // Corrected: Do not convert to lower case to match exact headers like "Vardas Pavarde"
+                headers[String(cell.value).trim()] = colNumber;
             }
         });
 
-        const requiredHeaders = ['vardas pavarde', 'komentaras', 'data'];
+        const requiredHeaders = ['Vardas Pavarde', 'Komentaras', 'Data'];
         const missingHeaders = requiredHeaders.filter(h => headers[h] === undefined);
 
         if (missingHeaders.length > 0) {
@@ -93,9 +94,9 @@ export default function ReportsImportPage() {
         worksheet.eachRow((row, rowNumber) => {
             if (rowNumber === 1) return;
 
-            const fullName = row.getCell(headers['vardas pavarde']).value as string || t('reports.import.unknownDriver');
-            const comment = row.getCell(headers['komentaras']).value as string || '';
-            const dateValue = row.getCell(headers['data']).value;
+            const fullName = row.getCell(headers['Vardas Pavarde']).value as string || t('reports.import.unknownDriver');
+            const comment = row.getCell(headers['Komentaras']).value as string || '';
+            const dateValue = row.getCell(headers['Data']).value;
             const createdAt = dateValue instanceof Date ? dateValue.toISOString() : new Date().toISOString();
 
             parsedRecords.push({
