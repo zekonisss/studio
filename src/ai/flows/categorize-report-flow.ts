@@ -1,3 +1,4 @@
+
 'use server';
 /** * @fileOverview A report categorization AI agent. * * - categorizeReport - A function that handles the report categorization process. * - CategorizeReportInput - The input type for the categorizeReport function. * - CategorizeReportOutput - The return type for the categorizeReport function. */
 
@@ -48,7 +49,7 @@ const categorizePrompt = ai.definePrompt({
   name: 'categorizeReportPrompt',
   input: { schema: CategorizeReportInputSchema },
   output: { schema: CategorizeReportOutputSchema },
-  model: 'gemini-2.5-flash',
+  model: 'gemini-1.5-flash',
   config: {
     temperature: 0,
   },
@@ -87,7 +88,7 @@ const categorizeFlow = ai.defineFlow(
     },
     async (flowInput) => {
         const llmResponse = await categorizePrompt(flowInput);
-        const output = llmResponse.output();
+        const output = llmResponse.output;
 
         if (!output) {
             throw new Error("AI did not return a valid response. Check API Key status.");
