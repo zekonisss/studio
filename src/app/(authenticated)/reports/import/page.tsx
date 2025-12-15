@@ -73,10 +73,13 @@ export default function ReportsImportPage() {
         }
 
         const headerRow = worksheet.getRow(1);
-        const headers = (headerRow.values as string[]).reduce((acc, val, idx) => {
-          if (val) acc[val.toLowerCase().trim()] = idx;
-          return acc;
-        }, {} as Record<string, number>);
+        const headers: Record<string, number> = {};
+        headerRow.eachCell((cell, colNumber) => {
+            if (cell.value) {
+                headers[String(cell.value).toLowerCase().trim()] = colNumber;
+            }
+        });
+
 
         const requiredHeaders = ['vardas', 'pavarde', 'komentaras'];
         const missingHeaders = requiredHeaders.filter(h => headers[h] === undefined);
