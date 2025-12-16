@@ -1,4 +1,3 @@
-
 {
   "app.name": "DriverCheck",
   "sidebar.dashboard": "Valdymo Skydas",
@@ -352,7 +351,7 @@
   "reports.add.toast.notLoggedIn.title": "Klaida",
   "reports.add.toast.notLoggedIn.description": "Turite būti prisijungęs, kad galėtumėte pateikti įrašą.",
   "reports.add.toast.success.title": "Įrašas Sėkmingai Pateiktas!",
-  "reports.add.toast.success.description": "Įrašas apie {fullName} buvo įrašytas į naršyklės atmintį.",
+  "reports.add.toast.success.description": "Įrašas apie {fullName} buvo įrašytas į duomenų bazę.",
   "reports.history.pageTitle": "Mano Įrašų Istorija",
   "reports.history.pageDescription": "Peržiūrėkite ir tvarkykite savo pateiktus įrašus.",
   "reports.history.addNewButton": "Pridėti Naują Įrašą",
@@ -364,10 +363,10 @@
   "reports.history.entry.viewDetailsButton": "Detalės",
   "reports.history.entry.deleteButton": "Pašalinti",
   "reports.history.deleteDialog.title": "Ar tikrai norite pašalinti šį įrašą?",
-  "reports.history.deleteDialog.description": "Šis veiksmas yra negrįžtamas. Įrašas apie {fullName} bus visam laikui pašalintas iš naršyklės atminties.",
+  "reports.history.deleteDialog.description": "Šis veiksmas yra negrįžtamas. Įrašas apie {fullName} bus visam laikui pašalintas iš duomenų bazės.",
   "reports.history.deleteDialog.confirmButton": "Taip, pašalinti",
   "reports.history.toast.deleted.title": "Įrašas pašalintas",
-  "reports.history.toast.deleted.description": "Pasirinktas įrašas buvo sėkmingai pašalintas iš naršyklės atminties.",
+  "reports.history.toast.deleted.description": "Pasirinktas įrašas buvo sėkmingai pašalintas.",
   "reports.history.detailsModal.title": "Įrašo Detalės",
   "reports.history.detailsModal.description": "Išsami informacija apie įrašą.",
   "reports.history.detailsModal.driver": "Vairuotojas",
@@ -392,7 +391,7 @@
   "searchHistory.table.header.resultsCount": "Rezultatų Skaičius",
   "searchHistory.table.header.dateTime": "Data ir Laikas",
   "reports.import.title": "Importuoti Įrašus iš Excel",
-  "reports.import.description": "Pasirinkite .xlsx formato failą, kad įkeltumėte vairuotojų įrašus. Sistema automatiškai bandys priskirti kategorijas ir žymas pagal komentarus.",
+  "reports.import.description": "Pasirinkite .xlsx failą, kad įkeltumėte vairuotojų įrašus. Sistema automatiškai bandys priskirti kategorijas ir žymas pagal komentarus.",
   "reports.import.expectedHeaders": "Tikimasi, kad Excel failas turės bent šias antraštes: {headers}.",
   "reports.import.optionalHeaders": "Kitos galimos",
   "reports.import.selectedFile": "Pasirinktas failas",
@@ -742,3 +741,4 @@
   "session.timeout.logoutButton": "Atsijungti",
   "session.timeout.stayButton": "Likti Prisijungus"
 }
+    

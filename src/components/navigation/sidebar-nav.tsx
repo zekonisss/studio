@@ -49,7 +49,6 @@ const legalNavItemsBase = [
 const adminNavItemsBase = [
   { href: "/admin", labelKey: "sidebar.adminPanel", icon: ShieldAlert },
   { href: "/reports/import", labelKey: "sidebar.importReports", icon: FileSpreadsheet },
-  { href: "/admin/user-import", labelKey: "usersImport.title", icon: FileSpreadsheet}
 ];
 
 interface SidebarNavProps {
@@ -146,3 +145,5 @@ export function SidebarNav({ isInSheet = false }: SidebarNavProps) {
     </div>
   );
 }
+
+    

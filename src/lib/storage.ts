@@ -106,10 +106,16 @@ export async function getAllReports(): Promise<Report[]> {
 export async function addReport(reportData: Omit<Report, 'id' | 'createdAt' | 'deletedAt'>): Promise<void> {
   const reportsCol = collection(db, "reports");
   
-  const cleanReportData = { ...reportData };
-  if ('birthYear' in cleanReportData && (cleanReportData as any).birthYear === undefined) {
-      delete (cleanReportData as any).birthYear;
+  const cleanReportData: { [key: string]: any } = { ...reportData };
+
+  // Remove undefined or empty optional fields to keep Firestore clean
+  if (cleanReportData.birthYear === undefined || cleanReportData.birthYear === null) {
+      delete cleanReportData.birthYear;
   }
+  if (cleanReportData.nationality === undefined || cleanReportData.nationality === null) {
+      delete cleanReportData.nationality;
+  }
+
 
   const dataWithTimestamp = {
     ...cleanReportData,
@@ -239,3 +245,5 @@ export async function uploadReportImage(file: File): Promise<{ url: string, data
     dataAiHint: hint,
   };
 }
+
+    

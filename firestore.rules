@@ -29,7 +29,7 @@ service cloud.firestore {
 
     // REPORTS
     match /reports/{reportId} {
-      allow create: if isUserActive(request.auth.uid);
+      allow create: if isUserActive(request.auth.uid) || isAdmin(request.auth.uid);
       allow read: if isAdmin(request.auth.uid) ||
                   resource.data.reporterId == request.auth.uid;
       allow update, delete: if isAdmin(request.auth.uid) ||
@@ -59,3 +59,5 @@ service cloud.firestore {
     }
   }
 }
+
+    
