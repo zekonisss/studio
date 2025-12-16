@@ -39,7 +39,6 @@ export default function ReportsImportPage() {
   const [records, setRecords] = useState<ParsedRecord[]>([]);
   const [isParsing, setIsParsing] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
-  const [isCancelled, setIsCancelled] = useState(false);
   const isCancelledRef = useRef(false);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -73,7 +72,6 @@ export default function ReportsImportPage() {
     if (!file) return;
 
     setIsParsing(true);
-    setIsCancelled(false);
     isCancelledRef.current = false;
 
     const reader = new FileReader();
@@ -98,8 +96,8 @@ export default function ReportsImportPage() {
             }
         });
         
-        const fullNameCol = findHeader(headers, ['title', 'vardas pavardė', 'full name', 'name']);
-        const commentCol = findHeader(headers, ['comment', 'comments', 'komentaras']);
+        const fullNameCol = findHeader(headers, ['title']);
+        const commentCol = findHeader(headers, ['comment']);
         
         const missingHeaders: string[] = [];
         if (fullNameCol === undefined) missingHeaders.push('Title');
@@ -111,8 +109,8 @@ export default function ReportsImportPage() {
             return;
         }
 
-        const dateCol = findHeader(headers, ['date', 'data']);
-        const companyCol = findHeader(headers, ['company', 'įmonė']);
+        const dateCol = findHeader(headers, ['date']);
+        const companyCol = findHeader(headers, ['company']);
         
         const parsedRecords: ParsedRecord[] = [];
         worksheet.eachRow((row, rowNumber) => {
@@ -122,8 +120,24 @@ export default function ReportsImportPage() {
             const comment = commentCol ? (row.getCell(commentCol).value as string || '') : '';
             const company = companyCol ? row.getCell(companyCol)?.value as string | undefined : undefined;
             
-            const dateValue = dateCol ? row.getCell(dateCol)?.value : undefined;
-            const createdAt = dateValue instanceof Date ? dateValue.toISOString() : new Date().toISOString();
+            let createdAt: string;
+            if (dateCol) {
+                const dateValue = row.getCell(dateCol)?.value;
+                 if (dateValue instanceof Date) {
+                    createdAt = dateValue.toISOString();
+                } else if (typeof dateValue === 'string') {
+                    const parsedDate = new Date(dateValue);
+                    if (!isNaN(parsedDate.getTime())) {
+                        createdAt = parsedDate.toISOString();
+                    } else {
+                        createdAt = new Date().toISOString(); 
+                    }
+                } else {
+                    createdAt = new Date().toISOString();
+                }
+            } else {
+                createdAt = new Date().toISOString();
+            }
 
 
             if (fullName && comment) {
@@ -184,12 +198,12 @@ export default function ReportsImportPage() {
               });
           } catch (error: any) {
               console.error(`AI error for record ${record.id}:`, error);
-
+              
               if (error.message && error.message.includes('AI_QUOTA_EXCEEDED')) {
                   dailyQuotaReached = true;
                   toast({ variant: "destructive", title: t('reports.import.toast.dailyQuotaReached.title'), description: t('reports.import.toast.dailyQuotaReached.descriptionShort') });
                   updateRecordStatus(record.id, { status: 'skipped_quota' });
-                  continue;
+                  continue; 
               }
 
               const errorMessage = error.message || t('reports.import.error.aiGenericError');
@@ -249,7 +263,6 @@ export default function ReportsImportPage() {
   };
   
   const handleCancel = () => {
-    setIsCancelled(true);
     isCancelledRef.current = true;
     setRecords(prev => prev.map(r => r.status === 'processing' || r.status === 'pending' ? { ...r, status: 'error', error: 'Cancelled by user' } : r));
   };
