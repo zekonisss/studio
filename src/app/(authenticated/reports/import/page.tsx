@@ -166,7 +166,13 @@ export default function ReportsImportPage() {
               });
           } catch (error) {
               console.error(`AI error for record ${record.id}:`, error);
-              updateRecordStatus(record.id, { status: 'error', error: t('reports.import.error.aiGenericError') });
+              // Handle AI error gracefully: assign a default category and allow import
+              updateRecordStatus(record.id, { 
+                  status: 'completed', // Change status to 'completed' to allow import
+                  error: t('reports.import.error.aiGenericError'),
+                  aiCategory: 'other_category', // Assign default category
+                  aiTags: []
+              });
           }
       }
   };
@@ -216,11 +222,15 @@ export default function ReportsImportPage() {
     }
   };
   
-  const StatusIndicator = ({ status }: { status: ParsedRecord['status'] }) => {
+  const StatusIndicator = ({ status, error }: { status: ParsedRecord['status'], error?: string }) => {
       switch (status) {
           case 'pending': return <span className="flex items-center gap-2 text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" />{t('reports.import.status.pending')}</span>
           case 'processing': return <span className="flex items-center gap-2 text-blue-500"><BrainCircuit className="h-4 w-4 animate-spin" />{t('reports.import.status.processing')}</span>
-          case 'completed': return <span className="flex items-center gap-2 text-green-600"><CheckCircle2 className="h-4 w-4" />{t('reports.import.status.completed')}</span>
+          case 'completed': 
+            if (error) {
+                 return <span className="flex items-center gap-2 text-amber-600"><AlertTriangle className="h-4 w-4" />{t('reports.import.status.aiError')}</span>
+            }
+            return <span className="flex items-center gap-2 text-green-600"><CheckCircle2 className="h-4 w-4" />{t('reports.import.status.completed')}</span>
           case 'error': return <span className="flex items-center gap-2 text-destructive"><AlertTriangle className="h-4 w-4" />{t('reports.import.status.error')}</span>
           default: return null;
       }
@@ -255,10 +265,10 @@ export default function ReportsImportPage() {
       <CardContent className="space-y-6">
         <div className="flex flex-col sm:flex-row gap-4 items-start">
             <div className="w-full sm:w-auto flex-grow">
-                <Input type="file" accept=".xlsx, .xls" onChange={handleFileChange} disabled={isParsing} />
+                <Input type="file" accept=".xlsx, .xls" onChange={handleFileChange} disabled={isParsing || isImporting} />
                 {file && <p className="text-sm text-muted-foreground mt-2">{t('reports.import.selectedFile')}: {file.name}</p>}
             </div>
-            <Button onClick={parseFile} disabled={!file || isParsing} className="w-full sm:w-auto">
+            <Button onClick={parseFile} disabled={!file || isParsing || isImporting} className="w-full sm:w-auto">
                 {isParsing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <BrainCircuit className="mr-2 h-4 w-4" />}
                 {isParsing ? t('reports.import.button.parsing') : t('reports.import.button.parseFile')}
             </Button>
@@ -268,7 +278,7 @@ export default function ReportsImportPage() {
             <div className="space-y-4">
                 <div className="flex justify-between items-center">
                     <h3 className="text-lg font-semibold">{t('reports.import.previewTitle')} ({records.length} {t('reports.import.recordsFound')})</h3>
-                     <Button onClick={handleImportAll} disabled={isImporting || isParsing || records.every(r => r.status !== 'completed')}>
+                     <Button onClick={handleImportAll} disabled={isImporting || isParsing || records.some(r => r.status === 'processing' || r.status === 'pending')}>
                         {isImporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UploadCloud className="mr-2 h-4 w-4" />}
                         {isImporting ? t('reports.import.button.importing') : t('reports.import.button.importAll', { count: records.filter(r=>r.status==='completed').length })}
                     </Button>
@@ -292,7 +302,7 @@ export default function ReportsImportPage() {
                                     <TableCell>{record.company}</TableCell>
                                     <TableCell className="text-sm text-muted-foreground max-w-xs truncate">{record.comment}</TableCell>
                                     <TableCell>
-                                        {record.aiCategory && <Badge variant="secondary">{getCategoryNameForDisplay(record.aiCategory, t)}</Badge>}
+                                        {record.aiCategory && <Badge variant={record.error ? "destructive" : "secondary"}>{getCategoryNameForDisplay(record.aiCategory, t)}</Badge>}
                                     </TableCell>
                                     <TableCell>
                                         <div className="flex flex-wrap gap-1">
@@ -300,7 +310,7 @@ export default function ReportsImportPage() {
                                         </div>
                                     </TableCell>
                                     <TableCell className="text-right">
-                                        <StatusIndicator status={record.status}/>
+                                        <StatusIndicator status={record.status} error={record.error} />
                                     </TableCell>
                                 </TableRow>
                             ))}
