@@ -18,8 +18,7 @@ import { Badge } from "@/components/ui/badge";
 interface ParsedRecord {
   id: number;
   fullName: string;
-  nationality?: string;
-  birthYear?: number;
+  company?: string;
   comment: string;
   createdAt: string; 
   status: 'pending' | 'processing' | 'completed' | 'error';
@@ -53,15 +52,17 @@ export default function ReportsImportPage() {
       }
     }
   };
-
+  
   const findHeader = (headers: Record<string, number>, possibleNames: string[]): number | undefined => {
     for (const name of possibleNames) {
-      if (headers[name.toLowerCase()] !== undefined) {
-        return headers[name.toLowerCase()];
+      const colIndex = headers[name.trim().toLowerCase()];
+      if (colIndex !== undefined) {
+        return colIndex;
       }
     }
     return undefined;
   };
+
 
   const parseFile = async () => {
     if (!file) return;
@@ -89,28 +90,30 @@ export default function ReportsImportPage() {
             }
         });
         
-        const fullNameCol = findHeader(headers, ['vardas pavardė', 'full name', 'name', 'vardas']);
-        const commentCol = findHeader(headers, ['komentaras', 'comment', 'comments']);
+        const fullNameCol = findHeader(headers, ['title']);
+        const commentCol = findHeader(headers, ['comment']);
         
-        if (fullNameCol === undefined || commentCol === undefined) {
-            toast({ variant: "destructive", title: t('reports.import.toast.missingHeaders.title'), description: `Trūkstamų stulpelių: ${!fullNameCol ? '"Vardas Pavardė" ' : ''}${!commentCol ? '"Komentaras"' : ''}` });
+        const missingHeaders: string[] = [];
+        if (fullNameCol === undefined) missingHeaders.push('Title');
+        if (commentCol === undefined) missingHeaders.push('Comment');
+
+        if (missingHeaders.length > 0) {
+            toast({ variant: "destructive", title: t('reports.import.toast.missingHeaders.title'), description: `Trūkstamų stulpelių: ${missingHeaders.join(', ')}` });
             setIsParsing(false);
             return;
         }
 
-        const dateCol = findHeader(headers, ['data', 'date']);
-        const nationalityCol = findHeader(headers, ['tautybė', 'nationality']);
-        const birthYearCol = findHeader(headers, ['gimimo metai', 'birth year']);
+        const dateCol = findHeader(headers, ['date']);
+        const companyCol = findHeader(headers, ['company']);
         
         const parsedRecords: ParsedRecord[] = [];
         worksheet.eachRow((row, rowNumber) => {
             if (rowNumber === 1) return;
 
-            const fullName = row.getCell(fullNameCol).value as string || t('reports.import.unknownDriver');
-            const comment = row.getCell(commentCol).value as string || '';
-            const nationality = nationalityCol ? row.getCell(nationalityCol)?.value as string | undefined : undefined;
-            const birthYearValue = birthYearCol ? row.getCell(birthYearCol)?.value : undefined;
-            const birthYear = typeof birthYearValue === 'number' ? birthYearValue : undefined;
+            const fullName = fullNameCol ? (row.getCell(fullNameCol).value as string || t('reports.import.unknownDriver')) : t('reports.import.unknownDriver');
+            const comment = commentCol ? (row.getCell(commentCol).value as string || '') : '';
+            const company = companyCol ? row.getCell(companyCol)?.value as string | undefined : undefined;
+            
             const dateValue = dateCol ? row.getCell(dateCol)?.value : undefined;
             const createdAt = dateValue instanceof Date ? dateValue.toISOString() : new Date().toISOString();
 
@@ -119,8 +122,7 @@ export default function ReportsImportPage() {
                 parsedRecords.push({
                     id: rowNumber,
                     fullName,
-                    nationality,
-                    birthYear,
+                    company,
                     comment,
                     createdAt,
                     status: 'pending'
@@ -192,13 +194,9 @@ export default function ReportsImportPage() {
                 reporterId: user.id,
                 reporterCompanyName: user.companyName,
                 fullName: rec.fullName,
-                nationality: rec.nationality,
-                birthYear: rec.birthYear || null,
                 category: rec.aiCategory!,
                 tags: rec.aiTags || [],
                 comment: rec.comment,
-                imageUrl: null,
-                dataAiHint: null,
                 createdAt: new Date(rec.createdAt)
             };
             return addReport(reportData);
@@ -249,7 +247,7 @@ export default function ReportsImportPage() {
           <div>
             <CardTitle>{t('reports.import.title')}</CardTitle>
             <CardDescription>
-                {t('reports.import.description')} Privalomi stulpeliai: <strong>&quot;Vardas Pavardė&quot;</strong> ir <strong>&quot;Komentaras&quot;</strong>. Papildomi stulpeliai: <strong>&quot;Tautybė&quot;</strong>, <strong>&quot;Gimimo metai&quot;</strong>, <strong>&quot;Data&quot;</strong>.
+                {t('reports.import.description')} Privalomi stulpeliai: <strong>&quot;Title&quot;</strong> ir <strong>&quot;Comment&quot;</strong>. Papildomi stulpeliai: <strong>&quot;Company&quot;</strong>, <strong>&quot;Date&quot;</strong>.
             </CardDescription>
           </div>
         </div>
@@ -280,6 +278,7 @@ export default function ReportsImportPage() {
                         <TableHeader className="sticky top-0 bg-muted/50">
                             <TableRow>
                                 <TableHead className="w-[200px]">{t('reports.import.table.fullName')}</TableHead>
+                                <TableHead>Company</TableHead>
                                 <TableHead>{t('reports.import.table.comment')}</TableHead>
                                 <TableHead>{t('reports.import.table.categoryAI')}</TableHead>
                                 <TableHead>{t('reports.import.table.tagsAI')}</TableHead>
@@ -290,6 +289,7 @@ export default function ReportsImportPage() {
                             {records.map(record => (
                                 <TableRow key={record.id}>
                                     <TableCell className="font-medium">{record.fullName}</TableCell>
+                                    <TableCell>{record.company}</TableCell>
                                     <TableCell className="text-sm text-muted-foreground max-w-xs truncate">{record.comment}</TableCell>
                                     <TableCell>
                                         {record.aiCategory && <Badge variant="secondary">{getCategoryNameForDisplay(record.aiCategory, t)}</Badge>}
