@@ -18,9 +18,9 @@ import { Badge } from "@/components/ui/badge";
 interface ParsedRecord {
   id: number;
   fullName: string;
-  comment: string;
   nationality?: string;
   birthYear?: number;
+  comment: string;
   createdAt: string; 
   status: 'pending' | 'processing' | 'completed' | 'error';
   aiCategory?: string;
@@ -76,11 +76,11 @@ export default function ReportsImportPage() {
         const headers: Record<string, number> = {};
         headerRow.eachCell((cell, colNumber) => {
             if (cell.value) {
-                headers[String(cell.value).toLowerCase().trim()] = colNumber;
+                headers[String(cell.value).trim().toLowerCase()] = colNumber;
             }
         });
-
-        const requiredHeaders = ['vardas', 'pavarde', 'komentaras', 'data'];
+        
+        const requiredHeaders = ['vardas pavardė', 'komentaras'];
         const missingHeaders = requiredHeaders.filter(h => headers[h] === undefined);
         
         if (missingHeaders.length > 0) {
@@ -93,20 +93,26 @@ export default function ReportsImportPage() {
         worksheet.eachRow((row, rowNumber) => {
             if (rowNumber === 1) return;
 
-            const vardas = row.getCell(headers['vardas']).value as string || '';
-            const pavarde = row.getCell(headers['pavarde']).value as string || '';
-            const fullName = `${vardas} ${pavarde}`.trim() || t('reports.import.unknownDriver');
+            const fullName = row.getCell(headers['vardas pavardė']).value as string || t('reports.import.unknownDriver');
             const comment = row.getCell(headers['komentaras']).value as string || '';
-            const dateValue = row.getCell(headers['data']).value;
+            const nationality = row.getCell(headers['tautybė'])?.value as string | undefined;
+            const birthYearValue = row.getCell(headers['gimimo metai'])?.value;
+            const birthYear = typeof birthYearValue === 'number' ? birthYearValue : undefined;
+            const dateValue = row.getCell(headers['data'])?.value;
             const createdAt = dateValue instanceof Date ? dateValue.toISOString() : new Date().toISOString();
 
-            parsedRecords.push({
-                id: rowNumber,
-                fullName,
-                comment,
-                createdAt,
-                status: 'pending'
-            });
+
+            if (fullName && comment) {
+                parsedRecords.push({
+                    id: rowNumber,
+                    fullName,
+                    nationality,
+                    birthYear,
+                    comment,
+                    createdAt,
+                    status: 'pending'
+                });
+            }
         });
 
         if (parsedRecords.length === 0) {
@@ -173,7 +179,7 @@ export default function ReportsImportPage() {
                 reporterId: user.id,
                 reporterCompanyName: user.companyName,
                 fullName: rec.fullName,
-                nationality: rec.nationality || undefined,
+                nationality: rec.nationality,
                 birthYear: rec.birthYear || null,
                 category: rec.aiCategory!,
                 tags: rec.aiTags || [],
@@ -208,6 +214,18 @@ export default function ReportsImportPage() {
       }
   }
 
+  if (!user?.isAdmin) {
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Prieiga negalima</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <p>Šis puslapis prieinamas tik administratoriams.</p>
+            </CardContent>
+        </Card>
+    )
+  }
 
   return (
     <Card>
@@ -217,7 +235,7 @@ export default function ReportsImportPage() {
           <div>
             <CardTitle>{t('reports.import.title')}</CardTitle>
             <CardDescription>
-                {t('reports.import.description')} Laukiame stulpelių: <strong>&quot;vardas&quot;</strong>, <strong>&quot;pavarde&quot;</strong>, <strong>&quot;komentaras&quot;</strong>, <strong>&quot;data&quot;</strong>.
+                {t('reports.import.description')} Privalomi stulpeliai: <strong>&quot;Vardas Pavardė&quot;</strong> ir <strong>&quot;Komentaras&quot;</strong>. Kiti stulpeliai bus ignoruojami.
             </CardDescription>
           </div>
         </div>
