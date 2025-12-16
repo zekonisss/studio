@@ -49,7 +49,7 @@ const categorizePrompt = ai.definePrompt({
   name: 'categorizeReportPrompt',
   input: { schema: CategorizeReportInputSchema },
   output: { schema: CategorizeReportOutputSchema },
-  model: 'googleai/gemini-1.5-flash-preview-0514',
+  model: 'googleai/gemini-2.5-flash',
   config: {
     temperature: 0.1,
     safetySettings: [
