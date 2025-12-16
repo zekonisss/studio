@@ -18,8 +18,6 @@ import { Badge } from "@/components/ui/badge";
 interface ParsedRecord {
   id: number;
   fullName: string;
-  nationality?: string;
-  birthYear?: number;
   comment: string;
   createdAt: string; 
   status: 'pending' | 'processing' | 'completed' | 'error';
@@ -54,6 +52,16 @@ export default function ReportsImportPage() {
     }
   };
 
+  const findHeader = (headers: Record<string, number>, possibleNames: string[]): number | undefined => {
+    for (const name of possibleNames) {
+      const colIndex = headers[name.trim().toLowerCase()];
+      if (colIndex !== undefined) {
+        return colIndex;
+      }
+    }
+    return undefined;
+  };
+  
   const parseFile = async () => {
     if (!file) return;
 
@@ -80,34 +88,35 @@ export default function ReportsImportPage() {
             }
         });
         
-        const requiredHeaders = ['vardas pavardė', 'komentaras'];
-        const missingHeaders = requiredHeaders.filter(h => headers[h] === undefined);
-        
+        const fullNameCol = findHeader(headers, ['title']);
+        const commentCol = findHeader(headers, ['comment']);
+
+        const missingHeaders: string[] = [];
+        if (fullNameCol === undefined) missingHeaders.push('Title');
+        if (commentCol === undefined) missingHeaders.push('Comment');
+
         if (missingHeaders.length > 0) {
-            toast({ variant: "destructive", title: t('reports.import.toast.missingHeaders.title'), description: t('reports.import.toast.missingHeaders.description', { headers: missingHeaders.join(', ') }) });
+            toast({ variant: "destructive", title: t('reports.import.toast.missingHeaders.title'), description: `Trūkstamų stulpelių: ${missingHeaders.join(', ')}` });
             setIsParsing(false);
             return;
         }
+
+        const dateCol = findHeader(headers, ['date']);
         
         const parsedRecords: ParsedRecord[] = [];
         worksheet.eachRow((row, rowNumber) => {
             if (rowNumber === 1) return;
 
-            const fullName = row.getCell(headers['vardas pavardė']).value as string || t('reports.import.unknownDriver');
-            const comment = row.getCell(headers['komentaras']).value as string || '';
-            const nationality = row.getCell(headers['tautybė'])?.value as string | undefined;
-            const birthYearValue = row.getCell(headers['gimimo metai'])?.value;
-            const birthYear = typeof birthYearValue === 'number' ? birthYearValue : undefined;
-            const dateValue = row.getCell(headers['data'])?.value;
+            const fullName = row.getCell(fullNameCol!).value as string || t('reports.import.unknownDriver');
+            const comment = row.getCell(commentCol!).value as string || '';
+            
+            const dateValue = dateCol ? row.getCell(dateCol)?.value : undefined;
             const createdAt = dateValue instanceof Date ? dateValue.toISOString() : new Date().toISOString();
-
 
             if (fullName && comment) {
                 parsedRecords.push({
                     id: rowNumber,
                     fullName,
-                    nationality,
-                    birthYear,
                     comment,
                     createdAt,
                     status: 'pending'
@@ -179,13 +188,10 @@ export default function ReportsImportPage() {
                 reporterId: user.id,
                 reporterCompanyName: user.companyName,
                 fullName: rec.fullName,
-                nationality: rec.nationality,
-                birthYear: rec.birthYear || null,
                 category: rec.aiCategory!,
                 tags: rec.aiTags || [],
                 comment: rec.comment,
-                imageUrl: null,
-                dataAiHint: null,
+                createdAt: new Date(rec.createdAt)
             };
             return addReport(reportData);
         });
@@ -235,7 +241,7 @@ export default function ReportsImportPage() {
           <div>
             <CardTitle>{t('reports.import.title')}</CardTitle>
             <CardDescription>
-                {t('reports.import.description')} Privalomi stulpeliai: <strong>&quot;Vardas Pavardė&quot;</strong> ir <strong>&quot;Komentaras&quot;</strong>. Kiti stulpeliai bus ignoruojami.
+                {t('reports.import.description')} Privalomi stulpeliai: <strong>&quot;Title&quot;</strong> ir <strong>&quot;Comment&quot;</strong>. Papildomi stulpeliai: <strong>&quot;Date&quot;</strong>.
             </CardDescription>
           </div>
         </div>
@@ -311,3 +317,5 @@ export default function ReportsImportPage() {
     </Card>
   );
 }
+
+    
