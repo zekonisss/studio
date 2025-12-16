@@ -14,6 +14,8 @@ import { addReport } from "@/lib/storage";
 import { useAuth } from "@/hooks/use-auth";
 import { getCategoryNameForDisplay } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
 
 interface ParsedRecord {
   id: number;
@@ -95,8 +97,8 @@ export default function ReportsImportPage() {
             }
         });
         
-        const fullNameCol = findHeader(headers, ['title']);
-        const commentCol = findHeader(headers, ['comment']);
+        const fullNameCol = findHeader(headers, ['title', 'vardas pavardė', 'full name', 'name']);
+        const commentCol = findHeader(headers, ['comment', 'comments', 'komentaras']);
         
         const missingHeaders: string[] = [];
         if (fullNameCol === undefined) missingHeaders.push('Title');
@@ -108,8 +110,8 @@ export default function ReportsImportPage() {
             return;
         }
 
-        const dateCol = findHeader(headers, ['date']);
-        const companyCol = findHeader(headers, ['company']);
+        const dateCol = findHeader(headers, ['date', 'data']);
+        const companyCol = findHeader(headers, ['company', 'įmonė']);
         
         const parsedRecords: ParsedRecord[] = [];
         worksheet.eachRow((row, rowNumber) => {
@@ -173,13 +175,13 @@ export default function ReportsImportPage() {
                   aiCategory: result.categoryId,
                   aiTags: result.suggestedTags,
               });
-          } catch (error) {
+          } catch (error: any) {
               console.error(`AI error for record ${record.id}:`, error);
-              // Handle AI error gracefully: assign a default category and allow import
+              const errorMessage = error.message || t('reports.import.error.aiGenericError');
               updateRecordStatus(record.id, { 
-                  status: 'completed', // Change status to 'completed' to allow import
-                  error: t('reports.import.error.aiGenericError'),
-                  aiCategory: 'other_category', // Assign default category
+                  status: 'error',
+                  error: errorMessage,
+                  aiCategory: 'other_category',
                   aiTags: []
               });
           }
@@ -196,7 +198,7 @@ export default function ReportsImportPage() {
         return;
     }
 
-    const recordsToImport = records.filter(r => r.status === 'completed' && r.aiCategory);
+    const recordsToImport = records.filter(r => r.status === 'completed' || r.status === 'error');
     if (recordsToImport.length === 0) {
         toast({ variant: "destructive", title: t('reports.import.toast.noDataToImport.title'), description: t('reports.import.toast.noDataToImport.description') });
         return;
@@ -234,18 +236,30 @@ export default function ReportsImportPage() {
   const handleCancel = () => {
     setIsCancelled(true);
     isCancelledRef.current = true;
+    setRecords(prev => prev.map(r => r.status === 'processing' || r.status === 'pending' ? { ...r, status: 'error', error: 'Cancelled by user' } : r));
   };
   
   const StatusIndicator = ({ status, error }: { status: ParsedRecord['status'], error?: string }) => {
       switch (status) {
           case 'pending': return <span className="flex items-center gap-2 text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" />{t('reports.import.status.pending')}</span>
           case 'processing': return <span className="flex items-center gap-2 text-blue-500"><BrainCircuit className="h-4 w-4 animate-spin" />{t('reports.import.status.processing')}</span>
-          case 'completed': 
-            if (error) {
-                 return <span className="flex items-center gap-2 text-amber-600"><AlertTriangle className="h-4 w-4" />{t('reports.import.status.aiError')}</span>
-            }
-            return <span className="flex items-center gap-2 text-green-600"><CheckCircle2 className="h-4 w-4" />{t('reports.import.status.completed')}</span>
-          case 'error': return <span className="flex items-center gap-2 text-destructive"><AlertTriangle className="h-4 w-4" />{t('reports.import.status.error')}</span>
+          case 'completed': return <span className="flex items-center gap-2 text-green-600"><CheckCircle2 className="h-4 w-4" />{t('reports.import.status.completed')}</span>
+          case 'error': 
+            return (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <span className="flex items-center gap-2 text-destructive cursor-pointer">
+                      <AlertTriangle className="h-4 w-4" />
+                      {t('reports.import.status.aiError')}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="max-w-xs">{error}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )
           default: return null;
       }
   }
@@ -300,7 +314,7 @@ export default function ReportsImportPage() {
                     <h3 className="text-lg font-semibold">{t('reports.import.previewTitle')} ({records.length} {t('reports.import.recordsFound')})</h3>
                      <Button onClick={handleImportAll} disabled={isImporting || isParsing || records.some(r => r.status === 'processing' || r.status === 'pending')}>
                         {isImporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UploadCloud className="mr-2 h-4 w-4" />}
-                        {isImporting ? t('reports.import.button.importing') : t('reports.import.button.importAll', { count: records.filter(r=>r.status==='completed').length })}
+                        {isImporting ? t('reports.import.button.importing') : t('reports.import.button.importAll', { count: records.filter(r=>r.status ==='completed' || r.status === 'error').length })}
                     </Button>
                 </div>
                  <div className="border rounded-md max-h-[50vh] overflow-auto">
@@ -322,7 +336,7 @@ export default function ReportsImportPage() {
                                     <TableCell>{record.company}</TableCell>
                                     <TableCell className="text-sm text-muted-foreground max-w-xs truncate">{record.comment}</TableCell>
                                     <TableCell>
-                                        {record.aiCategory && <Badge variant={record.error ? "destructive" : "secondary"}>{getCategoryNameForDisplay(record.aiCategory, t)}</Badge>}
+                                        {record.aiCategory && <Badge variant={record.status === 'error' ? "destructive" : "secondary"}>{getCategoryNameForDisplay(record.aiCategory, t)}</Badge>}
                                     </TableCell>
                                     <TableCell>
                                         <div className="flex flex-wrap gap-1">
