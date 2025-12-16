@@ -103,7 +103,7 @@ export async function getAllReports(): Promise<Report[]> {
   });
 }
 
-export async function addReport(reportData: Omit<Report, 'id' | 'createdAt' | 'deletedAt'>): Promise<void> {
+export async function addReport(reportData: Omit<Report, 'id' | 'createdAt' | 'deletedAt'> & { createdAt?: Date }): Promise<void> {
   const reportsCol = collection(db, "reports");
   
   const cleanReportData: { [key: string]: any } = { ...reportData };
@@ -116,12 +116,19 @@ export async function addReport(reportData: Omit<Report, 'id' | 'createdAt' | 'd
       delete cleanReportData.nationality;
   }
 
-
   const dataWithTimestamp = {
     ...cleanReportData,
-    createdAt: serverTimestamp(),
+    createdAt: reportData.createdAt ? Timestamp.fromDate(reportData.createdAt) : serverTimestamp(),
     deletedAt: null,
   };
+  
+  if (reportData.createdAt) {
+      dataWithTimestamp.createdAt = Timestamp.fromDate(new Date(reportData.createdAt));
+  } else {
+      dataWithTimestamp.createdAt = serverTimestamp();
+  }
+
+
   await addDoc(reportsCol, dataWithTimestamp);
 }
 
