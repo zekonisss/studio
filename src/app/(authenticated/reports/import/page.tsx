@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import * as ExcelJS from "exceljs";
 import { useLanguage } from "@/contexts/language-context";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { FileSpreadsheet, BrainCircuit, Loader2, UploadCloud, CheckCircle2, AlertTriangle, FileX2 } from "lucide-react";
+import { FileSpreadsheet, BrainCircuit, Loader2, UploadCloud, CheckCircle2, AlertTriangle, FileX2, XCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { categorizeReport } from "@/ai/flows/categorize-report-flow";
 import { addReport } from "@/lib/storage";
@@ -36,6 +36,8 @@ export default function ReportsImportPage() {
   const [records, setRecords] = useState<ParsedRecord[]>([]);
   const [isParsing, setIsParsing] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+  const [isCancelled, setIsCancelled] = useState(false);
+  const isCancelledRef = useRef(false);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
@@ -55,7 +57,8 @@ export default function ReportsImportPage() {
   
   const findHeader = (headers: Record<string, number>, possibleNames: string[]): number | undefined => {
     for (const name of possibleNames) {
-      const colIndex = headers[name.trim().toLowerCase()];
+      const lowerCaseName = name.trim().toLowerCase();
+      const colIndex = headers[lowerCaseName];
       if (colIndex !== undefined) {
         return colIndex;
       }
@@ -63,11 +66,13 @@ export default function ReportsImportPage() {
     return undefined;
   };
 
-
   const parseFile = async () => {
     if (!file) return;
 
     setIsParsing(true);
+    setIsCancelled(false);
+    isCancelledRef.current = false;
+
     const reader = new FileReader();
     reader.onload = async (e) => {
       try {
@@ -151,6 +156,10 @@ export default function ReportsImportPage() {
   
   const processRecordsWithAI = async (recordsToProcess: ParsedRecord[]) => {
       for (const record of recordsToProcess) {
+          if (isCancelledRef.current) {
+            console.log("AI analysis cancelled by user.");
+            break; 
+          }
           if (!record.comment) {
               updateRecordStatus(record.id, { status: 'error', error: t('reports.import.error.noCommentForAi')});
               continue;
@@ -222,6 +231,11 @@ export default function ReportsImportPage() {
     }
   };
   
+  const handleCancel = () => {
+    setIsCancelled(true);
+    isCancelledRef.current = true;
+  };
+  
   const StatusIndicator = ({ status, error }: { status: ParsedRecord['status'], error?: string }) => {
       switch (status) {
           case 'pending': return <span className="flex items-center gap-2 text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" />{t('reports.import.status.pending')}</span>
@@ -272,6 +286,12 @@ export default function ReportsImportPage() {
                 {isParsing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <BrainCircuit className="mr-2 h-4 w-4" />}
                 {isParsing ? t('reports.import.button.parsing') : t('reports.import.button.parseFile')}
             </Button>
+            {isParsing && (
+              <Button onClick={handleCancel} variant="destructive" className="w-full sm:w-auto">
+                  <XCircle className="mr-2 h-4 w-4" />
+                  Stabdyti analizę
+              </Button>
+            )}
         </div>
 
         {records.length > 0 && (
