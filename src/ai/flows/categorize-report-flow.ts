@@ -93,6 +93,7 @@ const categorizeFlow = ai.defineFlow(
       outputSchema: CategorizeReportOutputSchema,
     },
     async (flowInput) => {
+      try {
         const llmResponse = await categorizePrompt(flowInput);
         const output = llmResponse.output;
 
@@ -115,6 +116,12 @@ const categorizeFlow = ai.defineFlow(
         }
 
         return { categoryId: finalCategoryId, suggestedTags: finalTags };
+      } catch (error: any) {
+        if (error.message && (error.message.includes('429') || error.message.toLowerCase().includes('quota exceeded'))) {
+          throw new Error(`AI_QUOTA_EXCEEDED: ${error.message}`);
+        }
+        throw error;
+      }
     }
 );
   

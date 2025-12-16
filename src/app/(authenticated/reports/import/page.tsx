@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { FileSpreadsheet, BrainCircuit, Loader2, UploadCloud, CheckCircle2, AlertTriangle, FileX2, XCircle } from "lucide-react";
+import { FileSpreadsheet, BrainCircuit, Loader2, UploadCloud, CheckCircle2, AlertTriangle, FileX2, XCircle, Info } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { categorizeReport } from "@/ai/flows/categorize-report-flow";
 import { addReport } from "@/lib/storage";
@@ -17,13 +17,14 @@ import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 
+type RecordStatus = 'pending' | 'processing' | 'completed' | 'error' | 'skipped_quota';
 interface ParsedRecord {
   id: number;
   fullName: string;
   company?: string;
   comment: string;
   createdAt: string; 
-  status: 'pending' | 'processing' | 'completed' | 'error';
+  status: RecordStatus;
   aiCategory?: string;
   aiTags?: string[];
   error?: string;
@@ -157,10 +158,16 @@ export default function ReportsImportPage() {
   };
   
   const processRecordsWithAI = async (recordsToProcess: ParsedRecord[]) => {
+      let dailyQuotaReached = false;
+
       for (const record of recordsToProcess) {
           if (isCancelledRef.current) {
             console.log("AI analysis cancelled by user.");
             break; 
+          }
+          if (dailyQuotaReached) {
+              updateRecordStatus(record.id, { status: 'skipped_quota' });
+              continue;
           }
           if (!record.comment) {
               updateRecordStatus(record.id, { status: 'error', error: t('reports.import.error.noCommentForAi')});
@@ -177,6 +184,14 @@ export default function ReportsImportPage() {
               });
           } catch (error: any) {
               console.error(`AI error for record ${record.id}:`, error);
+
+              if (error.message && error.message.includes('AI_QUOTA_EXCEEDED')) {
+                  dailyQuotaReached = true;
+                  toast({ variant: "destructive", title: t('reports.import.toast.dailyQuotaReached.title'), description: t('reports.import.toast.dailyQuotaReached.descriptionShort') });
+                  updateRecordStatus(record.id, { status: 'skipped_quota' });
+                  continue;
+              }
+
               const errorMessage = error.message || t('reports.import.error.aiGenericError');
               updateRecordStatus(record.id, { 
                   status: 'error',
@@ -198,7 +213,7 @@ export default function ReportsImportPage() {
         return;
     }
 
-    const recordsToImport = records.filter(r => r.status === 'completed' || r.status === 'error');
+    const recordsToImport = records.filter(r => r.status === 'completed' || r.status === 'error' || r.status === 'skipped_quota');
     if (recordsToImport.length === 0) {
         toast({ variant: "destructive", title: t('reports.import.toast.noDataToImport.title'), description: t('reports.import.toast.noDataToImport.description') });
         return;
@@ -211,7 +226,7 @@ export default function ReportsImportPage() {
                 reporterId: user.id,
                 reporterCompanyName: user.companyName,
                 fullName: rec.fullName,
-                category: rec.aiCategory!,
+                category: rec.aiCategory || 'other_category',
                 tags: rec.aiTags || [],
                 comment: rec.comment,
                 createdAt: new Date(rec.createdAt)
@@ -256,6 +271,22 @@ export default function ReportsImportPage() {
                   </TooltipTrigger>
                   <TooltipContent>
                     <p className="max-w-xs">{error}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )
+          case 'skipped_quota':
+              return (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <span className="flex items-center gap-2 text-amber-600 cursor-pointer">
+                      <Info className="h-4 w-4" />
+                      {t('reports.import.status.skippedQuota')}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="max-w-xs">{t('reports.import.status.skippedQuotaTooltip')}</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -314,7 +345,7 @@ export default function ReportsImportPage() {
                     <h3 className="text-lg font-semibold">{t('reports.import.previewTitle')} ({records.length} {t('reports.import.recordsFound')})</h3>
                      <Button onClick={handleImportAll} disabled={isImporting || isParsing || records.some(r => r.status === 'processing' || r.status === 'pending')}>
                         {isImporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UploadCloud className="mr-2 h-4 w-4" />}
-                        {isImporting ? t('reports.import.button.importing') : t('reports.import.button.importAll', { count: records.filter(r=>r.status ==='completed' || r.status === 'error').length })}
+                        {isImporting ? t('reports.import.button.importing') : t('reports.import.button.importAll', { count: records.filter(r=>r.status ==='completed' || r.status === 'error' || r.status === 'skipped_quota').length })}
                     </Button>
                 </div>
                  <div className="border rounded-md max-h-[50vh] overflow-auto">
