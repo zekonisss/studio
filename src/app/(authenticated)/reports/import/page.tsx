@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useRef } from "react";
-import * as ExcelJS from "exceljs";
 import { useLanguage } from "@/contexts/language-context";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -15,20 +14,17 @@ import { useAuth } from "@/hooks/use-auth";
 import { getCategoryNameForDisplay } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { parseExcelFile, type ParsedRecord } from "./actions";
 
 
 type RecordStatus = 'pending' | 'processing' | 'completed' | 'error' | 'skipped_quota';
-interface ParsedRecord {
-  id: number;
-  fullName: string;
-  company?: string;
-  comment: string;
-  createdAt: string; 
+export type ClientParsedRecord = ParsedRecord & {
   status: RecordStatus;
   aiCategory?: string;
   aiTags?: string[];
   error?: string;
-}
+};
+
 
 export default function ReportsImportPage() {
   const { t } = useLanguage();
@@ -36,10 +32,9 @@ export default function ReportsImportPage() {
   const { user } = useAuth();
   
   const [file, setFile] = useState<File | null>(null);
-  const [records, setRecords] = useState<ParsedRecord[]>([]);
+  const [records, setRecords] = useState<ClientParsedRecord[]>([]);
   const [isParsing, setIsParsing] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
-  const [isCancelled, setIsCancelled] = useState(false);
   const isCancelledRef = useRef(false);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -58,106 +53,42 @@ export default function ReportsImportPage() {
     }
   };
   
-  const findHeader = (headers: Record<string, number>, possibleNames: string[]): number | undefined => {
-    for (const name of possibleNames) {
-      const lowerCaseName = name.trim().toLowerCase();
-      const colIndex = headers[lowerCaseName];
-      if (colIndex !== undefined) {
-        return colIndex;
-      }
-    }
-    return undefined;
-  };
-
-  const parseFile = async () => {
+  const handleFileParse = async () => {
     if (!file) return;
 
     setIsParsing(true);
-    setIsCancelled(false);
     isCancelledRef.current = false;
 
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      try {
-        const buffer = e.target?.result as ArrayBuffer;
-        const workbook = new ExcelJS.Workbook();
-        await workbook.xlsx.load(buffer);
-        
-        const worksheet = workbook.worksheets[0];
-        if (!worksheet) {
-          toast({ variant: "destructive", title: t('reports.import.toast.emptyFile.title'), description: 'No worksheet found in the file.' });
-          setIsParsing(false);
-          return;
-        }
+    try {
+        const fileBuffer = await file.arrayBuffer();
+        const result = await parseExcelFile(fileBuffer);
 
-        const headerRow = worksheet.getRow(1);
-        const headers: Record<string, number> = {};
-        headerRow.eachCell((cell, colNumber) => {
-            if (cell.value) {
-                headers[String(cell.value).trim().toLowerCase()] = colNumber;
-            }
-        });
-        
-        const fullNameCol = findHeader(headers, ['title', 'vardas pavardė', 'full name', 'name']);
-        const commentCol = findHeader(headers, ['comment', 'comments', 'komentaras']);
-        
-        const missingHeaders: string[] = [];
-        if (fullNameCol === undefined) missingHeaders.push('Title');
-        if (commentCol === undefined) missingHeaders.push('Comment');
-
-        if (missingHeaders.length > 0) {
-            toast({ variant: "destructive", title: t('reports.import.toast.missingHeaders.title'), description: `Trūkstamų stulpelių: ${missingHeaders.join(', ')}` });
+        if (result.error) {
+            toast({ variant: "destructive", title: result.error.title, description: result.error.description });
             setIsParsing(false);
             return;
         }
 
-        const dateCol = findHeader(headers, ['date', 'data']);
-        const companyCol = findHeader(headers, ['company', 'įmonė']);
-        
-        const parsedRecords: ParsedRecord[] = [];
-        worksheet.eachRow((row, rowNumber) => {
-            if (rowNumber === 1) return;
+        const clientRecords: ClientParsedRecord[] = result.data!.map(rec => ({ ...rec, status: 'pending' }));
 
-            const fullName = fullNameCol ? (row.getCell(fullNameCol).value as string || t('reports.import.unknownDriver')) : t('reports.import.unknownDriver');
-            const comment = commentCol ? (row.getCell(commentCol).value as string || '') : '';
-            const company = companyCol ? row.getCell(companyCol)?.value as string | undefined : undefined;
-            
-            const dateValue = dateCol ? row.getCell(dateCol)?.value : undefined;
-            const createdAt = dateValue instanceof Date ? dateValue.toISOString() : new Date().toISOString();
-
-
-            if (fullName && comment) {
-                parsedRecords.push({
-                    id: rowNumber,
-                    fullName,
-                    company,
-                    comment,
-                    createdAt,
-                    status: 'pending'
-                });
-            }
-        });
-
-        if (parsedRecords.length === 0) {
-             toast({ variant: "destructive", title: t('reports.import.toast.emptyFile.title'), description: t('reports.import.toast.emptyFile.description') });
-             setIsParsing(false);
-             return;
+        if (clientRecords.length === 0) {
+            toast({ variant: "destructive", title: t('reports.import.toast.emptyFile.title'), description: t('reports.import.toast.emptyFile.description') });
+            setIsParsing(false);
+            return;
         }
 
-        setRecords(parsedRecords);
-        await processRecordsWithAI(parsedRecords);
+        setRecords(clientRecords);
+        await processRecordsWithAI(clientRecords);
 
-      } catch (error) {
+    } catch (error: any) {
         console.error(error);
-        toast({ variant: "destructive", title: t('reports.import.toast.parseError.title'), description: t('reports.import.toast.parseError.description') });
-      } finally {
+        toast({ variant: "destructive", title: t('reports.import.toast.parseError.title'), description: error.message || t('reports.import.toast.parseError.description') });
+    } finally {
         setIsParsing(false);
-      }
-    };
-    reader.readAsArrayBuffer(file);
+    }
   };
   
-  const processRecordsWithAI = async (recordsToProcess: ParsedRecord[]) => {
+  const processRecordsWithAI = async (recordsToProcess: ClientParsedRecord[]) => {
       let dailyQuotaReached = false;
 
       for (const record of recordsToProcess) {
@@ -203,7 +134,7 @@ export default function ReportsImportPage() {
       }
   };
 
-  const updateRecordStatus = (id: number, updates: Partial<ParsedRecord>) => {
+  const updateRecordStatus = (id: number, updates: Partial<ClientParsedRecord>) => {
       setRecords(prev => prev.map(r => r.id === id ? { ...r, ...updates } : r));
   };
   
@@ -249,12 +180,11 @@ export default function ReportsImportPage() {
   };
   
   const handleCancel = () => {
-    setIsCancelled(true);
     isCancelledRef.current = true;
     setRecords(prev => prev.map(r => r.status === 'processing' || r.status === 'pending' ? { ...r, status: 'error', error: 'Cancelled by user' } : r));
   };
   
-  const StatusIndicator = ({ status, error }: { status: ParsedRecord['status'], error?: string }) => {
+  const StatusIndicator = ({ status, error }: { status: ClientParsedRecord['status'], error?: string }) => {
       switch (status) {
           case 'pending': return <span className="flex items-center gap-2 text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" />{t('reports.import.status.pending')}</span>
           case 'processing': return <span className="flex items-center gap-2 text-blue-500"><BrainCircuit className="h-4 w-4 animate-spin" />{t('reports.import.status.processing')}</span>
@@ -327,7 +257,7 @@ export default function ReportsImportPage() {
                 <Input type="file" accept=".xlsx, .xls" onChange={handleFileChange} disabled={isParsing || isImporting} />
                 {file && <p className="text-sm text-muted-foreground mt-2">{t('reports.import.selectedFile')}: {file.name}</p>}
             </div>
-            <Button onClick={parseFile} disabled={!file || isParsing || isImporting} className="w-full sm:w-auto">
+            <Button onClick={handleFileParse} disabled={!file || isParsing || isImporting} className="w-full sm:w-auto">
                 {isParsing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <BrainCircuit className="mr-2 h-4 w-4" />}
                 {isParsing ? t('reports.import.button.parsing') : t('reports.import.button.parseFile')}
             </Button>
