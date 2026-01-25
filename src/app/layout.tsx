@@ -1,18 +1,29 @@
-"use client";
+import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
+import './globals.css';
+import { Providers } from '@/components/providers';
+import { Toaster } from "@/components/ui/toaster";
 
-import { AuthProvider } from "@/hooks/use-auth";
-import { ThemeProvider } from "@/components/theme-provider"; // Jei naudoji
-import { LanguageProvider } from "@/contexts/language-context"; // Jei naudoji
+const inter = Inter({ subsets: ['latin'] });
 
-export function Providers({ children }: { children: React.ReactNode }) {
+export const metadata: Metadata = {
+  title: 'DriverCheck',
+  description: 'DriverCheck Platform',
+};
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
-    <LanguageProvider>
-      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-        {/* AuthProvider turi būti čia, kad visi matytų vartotojo būseną */}
-        <AuthProvider>
+    <html lang="lt" suppressHydrationWarning>
+      <body className={inter.className}>
+        <Providers>
           {children}
-        </AuthProvider>
-      </ThemeProvider>
-    </LanguageProvider>
+          <Toaster />
+        </Providers>
+      </body>
+    </html>
   );
 }

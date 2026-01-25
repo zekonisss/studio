@@ -2,13 +2,21 @@
 
 import { AuthProvider } from "@/hooks/use-auth";
 import { LanguageProvider } from "@/contexts/language-context";
+import { ThemeProvider } from "@/components/theme-provider";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <LanguageProvider>
-      <AuthProvider>
-        {children}
-      </AuthProvider>
+      <ThemeProvider
+        attribute="class"
+        defaultTheme="system"
+        enableSystem
+        disableTransitionOnChange
+      >
+        <AuthProvider>
+          {children}
+        </AuthProvider>
+      </ThemeProvider>
     </LanguageProvider>
   );
 }

@@ -1,94 +1,68 @@
-// Tai nusako, kad naudojame JavaScript klientą
-generator client {
-  provider      = "prisma-client-js"
-  binaryTargets = ["native", "debian-openssl-1.1.x", "debian-openssl-3.0.x", "linux-musl", "linux-musl-openssl-3.0.x", "rhel-openssl-1.0.x", "rhel-openssl-3.0.x"]
-}
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Tavo duomenų bazės nustatymai (Neon DB / PostgreSQL)
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-// 1. ROLIŲ APIBRĖŽIMAS
-enum UserRole {
-  ADMIN       // Sistemos valdytojas
-  CARRIER     // Transporto įmonė (Vežėjas)
-  PARTNER     // Sandėlys, Ekspedicija arba terminalas
+generator client {
+  provider = "prisma-client-js"
 }
 
-// 2. PAPILDOMA BŪSENA (Apmokėjimui/Aktyvavimui valdyti)
-enum PaymentStatus {
-  PENDING
-  ACTIVE
-  SUSPENDED
-}
-
-// Vartotojo modelis
 model User {
-  id            String    @id @default(cuid())
-  name          String?   // Vadybininko vardas
-  email         String?   @unique
-  emailVerified DateTime?
-  image         String?
-  password      String?   // Užšifruotas slaptažodis
-
-  // ROLĖS IR STATUSAS
-  role          UserRole      @default(CARRIER)
-  paymentStatus PaymentStatus @default(PENDING) // Nauja registracija visada PENDING
-
-  // ĮMONĖS DUOMENYS
-  companyName   String?   // UAB "Pavyzdys"
-  companyCode   String?   // Įmonės kodas
-  vatCode       String?   // PVM kodas (aktualu vežėjams)
-  address       String?   // Registracijos adresas
-  phoneNumber   String?   // Kontaktinis telefonas
-
-  // LAIKO ŽYMOS
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
-  // RYŠIAI (NextAuth ir vidinė logika)
-  accounts      Account[]
-  sessions      Session[]
-  
-  // Čia vėliau susijungs tavo Excel importuoti duomenys
-  // reports       Report[]
+  id                 String    @id @default(cuid())
+  name               String?
+  email              String    @unique
+  password           String
+  role               String?   @default("CARRIER")
+  companyName        String?
+  companyCode        String?
+  vatCode            String?
+  address            String?
+  contactPerson      String?
+  phone              String?
+  paymentStatus      String    @default("PENDING")
+  isAdmin            Boolean   @default(false)
+  agreeToTerms       Boolean   @default(false)
+  registeredAt       DateTime  @default(now())
+  accountActivatedAt DateTime?
 }
 
-// --- STANDARTINIAI NEXTAUTH MODELIAI (Būtini, kad veiktų loginas) ---
-
-model Account {
-  id                 String  @id @default(cuid())
-  userId             String
-  type               String
-  provider           String
-  providerAccountId  String
-  refresh_token      String? @db.Text
-  access_token       String? @db.Text
-  expires_at         Int?
-  token_type         String?
-  scope              String?
-  id_token           String? @db.Text
-  session_state      String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([provider, providerAccountId])
+model Report {
+  id                  String     @id @default(cuid())
+  reporterId          String
+  reporterCompanyName String?
+  fullName            String
+  nationality         String?
+  birthYear           Int?
+  category            String
+  tags                String[]
+  comment             String
+  imageUrl            String?
+  dataAiHint          String?
+  createdAt           DateTime   @default(now())
+  status              String     @default("active") // 'active', 'pending_delete', 'deleted'
+  deleteRequestReason String?
+  adminRejectReason   String?
+  statusUpdatedAt     DateTime?  @updatedAt
+  deletedAt           DateTime?
+  subjectCompany      String?
 }
 
-model Session {
+model SearchLog {
   id           String   @id @default(cuid())
-  sessionToken String   @unique
   userId       String
-  expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  searchText   String
+  resultsCount Int
+  timestamp    DateTime @default(now())
 }
 
-model VerificationToken {
-  identifier String
-  token      String   @unique
-  expires    DateTime
-
-  @@unique([identifier, token])
+model AuditLogEntry {
+  id        String   @id @default(cuid())
+  adminId   String
+  adminName String
+  actionKey String
+  details   Json
+  timestamp DateTime @default(now())
 }
