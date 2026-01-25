@@ -1,0 +1,207 @@
+"use client";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useLanguage } from "@/contexts/language-context";
+import { useAuth } from "@/hooks/use-auth";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Search, Loader2, Frown, FileText, ExternalLink } from "lucide-react"; // Pridėjau ExternalLink
+import { SearchSchema, type SearchFormValues } from "@/lib/schemas";
+import { getAllReports, addSearchLog } from "@/lib/storage";
+import { getCategoryNameForDisplay } from "@/lib/utils";
+import type { Report } from "@/types";
+import { Badge } from "@/components/ui/badge";
+import Image from "next/image";
+import { DESTRUCTIVE_REPORT_MAIN_CATEGORIES } from "@/lib/constants";
+import { useToast } from "@/hooks/use-toast";
+
+export default function SearchPage() {
+    const { t, locale } = useLanguage();
+    const { user } = useAuth();
+    const { toast } = useToast();
+    const [searchResults, setSearchResults] = useState<Report[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [hasSearched, setHasSearched] = useState(false);
+    const [currentQuery, setCurrentQuery] = useState("");
+
+    const form = useForm<SearchFormValues>({
+        resolver: zodResolver(SearchSchema),
+        defaultValues: { query: "" },
+    });
+
+    // Funkcija nuotraukų atpažinimui
+    const isImageUrl = (url: string) => {
+        if (!url) return false;
+        return /\.(jpg|jpeg|png|gif|webp)$/i.test(url.split('?')[0]); // split pašalina Firebase token dalį tikrinimui
+    }
+
+    // Funkcija PDF atpažinimui
+    const isPdfUrl = (url: string) => {
+        if (!url) return false;
+        return /\.pdf/i.test(url.split('?')[0]);
+    }
+
+    const onSubmit = async (values: SearchFormValues) => {
+        setIsLoading(true);
+        setHasSearched(true);
+        setCurrentQuery(values.query);
+    
+        try {
+            const allReports = await getAllReports();
+            const filteredReports = allReports.filter(report => {
+                if (!report.fullName) return false;
+                if (report.status === 'deleted' || report.status === 'pending_delete') return false;
+                const query = values.query.toLowerCase().trim();
+                const fullName = (report.fullName || "").toString().toLowerCase();
+                return fullName.includes(query);
+            });
+    
+            setSearchResults(filteredReports);
+
+            if (user) {
+                await addSearchLog({
+                    userId: user.id,
+                    searchText: values.query,
+                    resultsCount: filteredReports.length
+                });
+            }
+        } catch (error: any) {
+            console.error("Error during search:", error);
+            toast({
+                variant: "destructive",
+                title: "Klaida",
+                description: "Nepavyko gauti duomenų.",
+            });
+            setSearchResults([]);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    return (
+        <div className="space-y-6">
+            <Card>
+                <CardHeader>
+                    <div className="flex items-center gap-4">
+                        <Search className="h-8 w-8 text-primary" />
+                        <div>
+                            <CardTitle>{t('search.title')}</CardTitle>
+                            <CardDescription>{t('search.description')}</CardDescription>
+                        </div>
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    <Form {...form}>
+                        <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col sm:flex-row items-start gap-4 mb-8">
+                            <FormField
+                                control={form.control}
+                                name="query"
+                                render={({ field }) => (
+                                    <FormItem className="flex-grow w-full">
+                                        <FormControl>
+                                            <Input placeholder={t('search.queryPlaceholder')} {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <Button type="submit" disabled={isLoading} className="w-full sm:w-auto">
+                                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Search className="mr-2 h-4 w-4" />}
+                                {t('search.searchButton')}
+                            </Button>
+                        </form>
+                    </Form>
+                    
+                    <div>
+                        {isLoading && (
+                            <div className="text-center py-10">
+                                <Loader2 className="mx-auto h-12 w-12 animate-spin text-primary" />
+                            </div>
+                        )}
+
+                        {!isLoading && hasSearched && searchResults.length > 0 && (
+                            <div className="space-y-4">
+                                <h3 className="text-xl font-semibold">{t('search.results.title', { count: searchResults.length })}</h3>
+                                {searchResults.map((report) => (
+                                    <Card key={report.id} className={`overflow-hidden ${DESTRUCTIVE_REPORT_MAIN_CATEGORIES.includes(report.category) ? 'border-destructive/40' : ''}`}>
+                                        <CardHeader>
+                                            <div className="flex justify-between items-start gap-4">
+                                                <div>
+                                                    <CardTitle className="text-2xl">{report.fullName}</CardTitle>
+                                                    <CardDescription>
+                                                        {report.nationality && `${t(`countries.${report.nationality}`)}`}
+                                                        {report.nationality && report.birthYear && ', '}
+                                                        {report.birthYear && `${t('search.results.birthYearPrefix')}${report.birthYear}`}
+                                                    </CardDescription>
+                                                </div>
+                                                <Badge variant={DESTRUCTIVE_REPORT_MAIN_CATEGORIES.includes(report.category) ? 'destructive' : 'secondary'}>{getCategoryNameForDisplay(report.category, t)}</Badge>
+                                            </div>
+                                        </CardHeader>
+                                        <CardContent className="space-y-4">
+                                            {report.tags && report.tags.length > 0 && (
+                                                <div className="flex flex-wrap gap-2">
+                                                    {report.tags.map(tag => <Badge key={tag} variant="outline">{t(`tags.${tag}`)}</Badge>)}
+                                                </div>
+                                            )}
+                                            <div>
+                                                <h4 className="font-semibold text-sm mb-1">{t('search.results.comment')}</h4>
+                                                <p className="text-sm text-muted-foreground whitespace-pre-wrap">{report.comment}</p>
+                                            </div>
+
+                                            {report.imageUrl && (
+                                                <div className="pt-2">
+                                                    <h4 className="font-semibold text-sm mb-2">{t('search.results.attachedFile')}</h4>
+                                                    
+                                                    {isImageUrl(report.imageUrl) ? (
+                                                        <a href={report.imageUrl} target="_blank" rel="noopener noreferrer" className="block relative h-64 w-full md:w-96 rounded-md overflow-hidden border group">
+                                                            <Image 
+                                                                src={report.imageUrl} 
+                                                                alt="Attachment" 
+                                                                fill
+                                                                className="object-cover transition-transform group-hover:scale-105"
+                                                            />
+                                                            <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                                                <ExternalLink className="text-white h-8 w-8" />
+                                                            </div>
+                                                        </a>
+                                                    ) : (
+                                                        <div className="flex flex-col gap-2">
+                                                            {/* Jei tai PDF, rodome didesnį, lengviau paspaudžiamą bloką */}
+                                                            <a 
+                                                                href={report.imageUrl} 
+                                                                target="_blank" 
+                                                                rel="noopener noreferrer"
+                                                                className="flex items-center gap-3 p-4 border rounded-lg bg-muted/30 hover:bg-muted/60 transition-colors w-full md:w-96"
+                                                            >
+                                                                <div className="p-2 bg-red-100 rounded-md">
+                                                                    <FileText className="h-6 w-6 text-red-600" />
+                                                                </div>
+                                                                <div className="flex flex-col">
+                                                                    <span className="text-sm font-medium">Dokumentas (PDF)</span>
+                                                                    <span className="text-xs text-muted-foreground">Spauskite, kad peržiūrėtumėte</span>
+                                                                </div>
+                                                                <ExternalLink className="h-4 w-4 ml-auto text-muted-foreground" />
+                                                            </a>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+                                            
+                                            <div className="text-xs text-muted-foreground pt-4 border-t mt-4 flex justify-between">
+                                                <span>{t('search.results.submittedBy')}: <strong>{report.reporterCompanyName}</strong></span>
+                                                <span>{t('search.results.date')}: <strong>{new Date(report.createdAt).toLocaleDateString(locale)}</strong></span>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </CardContent>
+            </Card>
+        </div>
+    );
+}

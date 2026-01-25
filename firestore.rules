@@ -1,0 +1,67 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function getUserDoc(userId) {
+      return get(/databases/$(database)/documents/users/$(userId));
+    }
+
+    function isAdmin(userId) {
+      let userDoc = getUserDoc(userId);
+      return request.auth != null &&
+             userDoc != null &&
+             userDoc.data.isAdmin == true;
+    }
+
+    function isUserActive(userId) {
+      return request.auth != null && 
+            exists(/databases/$(database)/documents/users/$(userId)) &&
+            get(/databases/$(database)/documents/users/$(userId)).data.paymentStatus == 'active';
+    }
+
+    // USERS
+    match /users/{userId} {
+      allow create: if request.auth.uid == userId;
+      allow get: if request.auth.uid == userId || isAdmin(request.auth.uid);
+      allow list: if isAdmin(request.auth.uid);
+      allow write: if request.auth.uid == userId || isAdmin(request.auth.uid);
+    }
+
+    // REPORTS
+    match /reports/{reportId} {
+      allow create: if isUserActive(request.auth.uid) || isAdmin(request.auth.uid);
+      allow read, list: if isAdmin(request.auth.uid) || isUserActive(request.auth.uid);
+
+      // 🛡️ User can ONLY update (not delete)
+      // Update is allowed only if they are the owner AND are changing the status to 'pending_delete'
+      allow update: if isAdmin(request.auth.uid) || 
+                    (resource.data.reporterId == request.auth.uid && 
+                     request.resource.data.status == 'pending_delete');
+
+      // 🚫 Actual deletion from the database is ONLY allowed for admins
+      allow delete: if isAdmin(request.auth.uid);
+    }
+
+    // SEARCH LOGS
+    match /searchLogs/{logId} {
+      allow create: if isUserActive(request.auth.uid) &&
+                     request.resource.data.userId == request.auth.uid;
+      allow read: if isAdmin(request.auth.uid) ||
+                  resource.data.userId == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    // AUDIT LOGS
+    match /auditLogs/{logId} {
+      allow read, create: if isAdmin(request.auth.uid);
+      allow update, delete: if false;
+    }
+
+    // NOTIFICATIONS
+    match /notifications/{notificationId} {
+      allow create: if isAdmin(request.auth.uid);
+      allow read, update: if resource.data.userId == request.auth.uid;
+      allow delete: if false;
+    }
+  }
+}

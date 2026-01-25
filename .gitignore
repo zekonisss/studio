@@ -1,0 +1,30 @@
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+.yarn/install-state.gz
+
+# next.js
+/.next/
+/.next_temp/
+/out/
+
+# firebase (ŠITO LABIAUSIAI REIKĖJO)
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+
+# production
+/build
+/dist
+
+# misc
+.DS_Store
+*.pem
+.env
+.env*.local
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts

@@ -1,0 +1,26 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Allow public read access to user avatars
+    match /avatars/{userId}/{fileName} {
+      allow read;
+    }
+
+    // Secure the reports folder
+    match /reports/{fileName} {
+      // Only authenticated users can upload (create) files.
+      // We can add more specific checks, e.g., file size, type, etc.
+      allow create: if request.auth != null;
+
+      // Allow anyone to read the files (e.g., to display images in the app).
+      // If reports are sensitive, this should be changed to:
+      // allow read: if request.auth != null;
+      allow read;
+
+      // Only the user who uploaded the file or an admin can delete it.
+      // This is a placeholder; you'd need a way to store the uploader's ID in metadata.
+      allow delete: if request.auth != null; 
+    }
+  }
+}
