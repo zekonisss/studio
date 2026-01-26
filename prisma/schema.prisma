@@ -12,57 +12,18 @@ generator client {
 
 model User {
   id                 String    @id @default(cuid())
-  name               String?
   email              String    @unique
   password           String
-  role               String?   @default("CARRIER")
+  name               String?
+  role               String
   companyName        String?
   companyCode        String?
   vatCode            String?
   address            String?
   contactPerson      String?
   phone              String?
-  paymentStatus      String    @default("PENDING")
-  isAdmin            Boolean   @default(false)
+  paymentStatus      String
   agreeToTerms       Boolean   @default(false)
   registeredAt       DateTime  @default(now())
   accountActivatedAt DateTime?
-}
-
-model Report {
-  id                  String     @id @default(cuid())
-  reporterId          String
-  reporterCompanyName String?
-  fullName            String
-  nationality         String?
-  birthYear           Int?
-  category            String
-  tags                String[]
-  comment             String
-  imageUrl            String?
-  dataAiHint          String?
-  createdAt           DateTime   @default(now())
-  status              String     @default("active") // 'active', 'pending_delete', 'deleted'
-  deleteRequestReason String?
-  adminRejectReason   String?
-  statusUpdatedAt     DateTime?  @updatedAt
-  deletedAt           DateTime?
-  subjectCompany      String?
-}
-
-model SearchLog {
-  id           String   @id @default(cuid())
-  userId       String
-  searchText   String
-  resultsCount Int
-  timestamp    DateTime @default(now())
-}
-
-model AuditLogEntry {
-  id        String   @id @default(cuid())
-  adminId   String
-  adminName String
-  actionKey String
-  details   Json
-  timestamp DateTime @default(now())
 }

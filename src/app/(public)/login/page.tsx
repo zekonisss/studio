@@ -29,7 +29,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
-  const { login, user, loading } = useAuth();
+  const { login, user, isLoading } = useAuth();
   const { t } = useLanguage();
   const { toast } = useToast();
   const router = useRouter();
@@ -43,33 +43,44 @@ export default function LoginPage() {
     },
   });
 
-  // Redirect if user is already logged in
+  // Nukreipimas, jei vartotojas jau yra prisijungęs (pvz., atidaro /login naršyklėje)
   useEffect(() => {
-    if (!loading && user) {
-        if (user.paymentStatus === 'active') {
+    if (!isLoading && user) {
+        if (user.role?.toUpperCase() === 'ADMIN') {
+            router.replace('/admin');
+        } else if (user.paymentStatus === 'active') {
             router.replace('/dashboard');
         } else {
             router.replace('/activation-pending');
         }
     }
-  }, [user, loading, router]);
+  }, [user, isLoading, router]);
 
 
   const onSubmit = async (values: LoginFormValues) => {
     setIsSubmitting(true);
     try {
-      await login(values);
+      const userData = await login(values); // login dabar grąžina vartotojo duomenis
+      
       toast({
           title: t('toast.login.success.title'),
           description: t('toast.login.success.description'),
       });
-      // The useEffect hook will handle redirection after successful login
+      
+      // Centralizuota nukreipimo logika
+      if (userData.role?.toUpperCase() === 'ADMIN') {
+        router.push('/admin');
+      } else if (userData.paymentStatus === 'active') {
+        router.push('/dashboard');
+      } else {
+        router.push('/activation-pending');
+      }
+
     } catch (error: any) {
        console.error("Login error:", error);
        
        let description = error.message || t('toast.login.error.descriptionGeneric');
-
-       if (error.code === 'auth/invalid-credential') {
+       if (error.message.includes("Neteisingi duomenys") || error.code === 'auth/invalid-credential') {
            description = t('toast.login.error.invalidCredentials');
        }
 
@@ -83,8 +94,8 @@ export default function LoginPage() {
     }
   };
   
-  // Show a loader while checking auth state or if we are about to redirect
-  if (loading || (!loading && user)) {
+  // Rodyti krovimosi ekraną, kol tikrinamas autorizacijos statusas
+  if (isLoading || (!isLoading && user)) {
      return (
         <div className="flex h-screen w-full items-center justify-center bg-background">
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -92,7 +103,6 @@ export default function LoginPage() {
       );
   }
 
-  // Only render the login form if we are sure there is no user
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="items-center text-center">
