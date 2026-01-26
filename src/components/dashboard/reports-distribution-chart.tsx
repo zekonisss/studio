@@ -32,7 +32,13 @@ export function ReportsDistributionChart({ reports }: { reports: any[] }) {
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Tooltip 
-                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                contentStyle={{ 
+                    borderRadius: '8px', 
+                    border: 'none', 
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                    backgroundColor: 'hsl(var(--card))',
+                    color: 'hsl(var(--card-foreground))'
+                }}
               />
               <Pie
                 data={data}
