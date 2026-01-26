@@ -6,10 +6,15 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/use-auth';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
+import { useState } from 'react';
+import { Loader2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 export default function PaymentsTab() {
   const { t } = useLanguage();
   const { user } = useAuth();
+  const { toast } = useToast();
+  const [isPortalLoading, setIsPortalLoading] = useState(false);
   
   const getStatusComponent = () => {
     if (!user) return null;
@@ -50,6 +55,36 @@ export default function PaymentsTab() {
     }
   };
 
+  const handleManageSubscription = async () => {
+    if (!user) return;
+
+    setIsPortalLoading(true);
+    try {
+        const response = await fetch('/api/stripe/create-portal-session', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ userId: user.id }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Nepavyko sukurti kliento portalo sesijos.');
+        }
+
+        const { url } = await response.json();
+        window.location.href = url;
+    } catch (error: any) {
+        toast({
+            variant: "destructive",
+            title: "Klaida",
+            description: error.message,
+        });
+        setIsPortalLoading(false);
+    }
+  };
+
   return (
     <Card className="mt-6 border-0 shadow-none">
       <CardHeader>
@@ -62,8 +97,9 @@ export default function PaymentsTab() {
             {getStatusComponent()}
           </CardHeader>
            <CardFooter className="flex flex-col items-start gap-4">
-               <Button asChild>
-                    <Link href="#" target="_blank">{t('account.payments.manageSubscriptionButton')}</Link>
+               <Button onClick={handleManageSubscription} disabled={isPortalLoading || user?.paymentStatus !== 'active'}>
+                    {isPortalLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    {t('account.payments.manageSubscriptionButton')}
                </Button>
                <p className="text-xs text-muted-foreground">{t('account.payments.manageSubscriptionNote')}</p>
            </CardFooter>
