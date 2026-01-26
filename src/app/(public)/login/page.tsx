@@ -45,14 +45,16 @@ export default function LoginPage() {
 
   // Nukreipimas, jei vartotojas jau yra prisijungęs (pvz., atidaro /login naršyklėje)
   useEffect(() => {
-    if (!isLoading && user) {
-        if (user.role?.toUpperCase() === 'ADMIN') {
-            router.replace('/admin');
-        } else if (user.paymentStatus === 'active') {
-            router.replace('/dashboard');
-        } else {
-            router.replace('/activation-pending');
-        }
+    if (isLoading) return;
+
+    if (user) {
+      if (user.isAdmin) {
+        router.replace('/admin');
+      } else if (user.paymentStatus === 'active') {
+        router.replace('/dashboard');
+      } else {
+        router.replace('/activation-pending');
+      }
     }
   }, [user, isLoading, router]);
 
@@ -68,7 +70,7 @@ export default function LoginPage() {
       });
       
       // Centralizuota nukreipimo logika
-      if (userData.role?.toUpperCase() === 'ADMIN') {
+      if (userData.isAdmin) {
         router.push('/admin');
       } else if (userData.paymentStatus === 'active') {
         router.push('/dashboard');
@@ -80,7 +82,7 @@ export default function LoginPage() {
        console.error("Login error:", error);
        
        let description = error.message || t('toast.login.error.descriptionGeneric');
-       if (error.message.includes("Neteisingi duomenys") || error.code === 'auth/invalid-credential') {
+       if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
            description = t('toast.login.error.invalidCredentials');
        }
 
@@ -104,7 +106,7 @@ export default function LoginPage() {
   }
 
   return (
-    <Card className="w-full max-w-md">
+    <Card className="w-full max-w-md transition-shadow duration-300 hover:shadow-glow-primary">
       <CardHeader className="items-center text-center">
         <Link href="/" className="flex items-center gap-2 text-lg font-semibold text-primary cursor-pointer mb-4">
             <UserSearch className="h-12 w-12" />

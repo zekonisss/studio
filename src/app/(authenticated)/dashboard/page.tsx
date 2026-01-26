@@ -73,7 +73,7 @@ export default function DashboardPage() {
   }, [user]);
 
   const StatCard = ({ title, value, icon: Icon, link, linkText, isLoading }: { title: string, value: number, icon: React.ElementType, link: string, linkText: string, isLoading: boolean }) => (
-     <Card>
+     <Card className="transition-shadow duration-300 hover:shadow-glow-primary">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">{title}</CardTitle>
             <Icon className="h-4 w-4 text-muted-foreground" />
@@ -144,7 +144,7 @@ export default function DashboardPage() {
             )}
           </div>
           
-          <Card className="lg:col-span-3 h-full">
+          <Card className="lg:col-span-3 h-full transition-shadow duration-300 hover:shadow-glow-primary">
             <CardHeader>
               <CardTitle className="text-lg">Paskutinė veikla</CardTitle>
               <CardDescription>Naujausi sistemoje užregistruoti nusižengimai</CardDescription>

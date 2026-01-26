@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Search, Loader2, Frown, FileText, ExternalLink } from "lucide-react"; // Pridėjau ExternalLink
 import { SearchSchema, type SearchFormValues } from "@/lib/schemas";
 import { getAllReports, addSearchLog } from "@/lib/storage";
-import { getCategoryNameForDisplay } from "@/lib/utils";
+import { getCategoryNameForDisplay, cn } from "@/lib/utils";
 import type { Report } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
@@ -126,7 +126,12 @@ export default function SearchPage() {
                             <div className="space-y-4">
                                 <h3 className="text-xl font-semibold">{t('search.results.title', { count: searchResults.length })}</h3>
                                 {searchResults.map((report) => (
-                                    <Card key={report.id} className={`overflow-hidden ${DESTRUCTIVE_REPORT_MAIN_CATEGORIES.includes(report.category) ? 'border-destructive/40' : ''}`}>
+                                    <Card key={report.id} className={cn(
+                                        "overflow-hidden transition-shadow duration-300",
+                                        DESTRUCTIVE_REPORT_MAIN_CATEGORIES.includes(report.category) 
+                                            ? "shadow-glow-destructive" 
+                                            : "hover:shadow-glow-primary"
+                                    )}>
                                         <CardHeader>
                                             <div className="flex justify-between items-start gap-4">
                                                 <div>

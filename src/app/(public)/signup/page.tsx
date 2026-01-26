@@ -60,7 +60,7 @@ export default function SignupPage() {
   };
 
   return (
-    <Card className="w-full max-w-4xl">
+    <Card className="w-full max-w-4xl transition-shadow duration-300 hover:shadow-glow-primary">
         <CardHeader className="items-center text-center">
             <UserPlus className="h-10 w-10 text-primary mb-2" />
             <CardTitle className="text-2xl">{t('signup.title')}</CardTitle>

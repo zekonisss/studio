@@ -47,7 +47,7 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <Card className="w-full max-w-md">
+    <Card className="w-full max-w-md transition-shadow duration-300 hover:shadow-glow-primary">
       <CardHeader>
         <CardTitle className="text-2xl">{t('forgotPassword.title')}</CardTitle>
         <CardDescription>{t('forgotPassword.description')}</CardDescription>

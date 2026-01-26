@@ -13,6 +13,10 @@ export default {
             sans: ["Inter", "sans-serif"],
             mono: ["Roboto Mono", "monospace"],
         },
+        boxShadow: {
+          'glow-primary': '0 0 15px hsl(var(--primary) / 0.4)',
+          'glow-destructive': '0 0 15px hsl(var(--destructive) / 0.4)',
+        },
   		colors: {
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
