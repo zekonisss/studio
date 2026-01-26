@@ -8,10 +8,10 @@ import { ArrowRight, BarChart3, ShieldCheck, FileText } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { getAllReports } from "@/lib/storage";
 import { AnimatedCounter } from "@/components/shared/animated-counter";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UserSearch } from "lucide-react";
+import { getPublicReportCount } from "./page-actions";
 
 
 export default function HomePage() {
@@ -31,8 +31,8 @@ export default function HomePage() {
     async function fetchTotalReports() {
       setIsStatsLoading(true);
       try {
-        const reports = await getAllReports();
-        setTotalReports(reports.filter(r => r.status === 'active').length);
+        const count = await getPublicReportCount();
+        setTotalReports(count);
       } catch (error) {
         console.error("Failed to fetch total reports:", error);
       } finally {
