@@ -3,13 +3,15 @@
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, CreditCard } from "lucide-react";
+import { Loader2, CreditCard, ShieldCheck, AlertTriangle } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/contexts/language-context";
 
 export default function ActivationPendingPage() {
   const { user, logout } = useAuth();
   const { toast } = useToast();
+  const { t } = useLanguage();
   const [isPaymentLoading, setIsPaymentLoading] = useState(false);
 
   const handlePayment = async () => {
@@ -39,25 +41,31 @@ export default function ActivationPendingPage() {
     }
   };
 
-  const getStatusMessage = () => {
+  const getStatusComponent = () => {
     switch (user?.paymentStatus) {
         case 'pending_verification':
             return (
                 <>
-                    <CardTitle className="mb-4 text-3xl font-bold">Paskyra sukurta, laukiama patvirtinimo</CardTitle>
-                    <CardDescription className="text-muted-foreground text-center mb-6">
-                        Jūsų paskyra sėkmingai užregistruota. Mūsų komanda peržiūri informaciją. Kai tik Jūsų tapatybė bus patvirtinta, galėsite atlikti mokėjimą ir aktyvuoti paskyrą. Apie patvirtinimą būsite informuoti el. paštu.
+                    <div className="mx-auto bg-blue-100 dark:bg-blue-900/30 p-4 rounded-full w-fit mb-4">
+                        <ShieldCheck className="h-10 w-10 text-blue-500" />
+                    </div>
+                    <CardTitle className="text-2xl font-bold">Paskyra laukia patvirtinimo</CardTitle>
+                    <CardDescription className="text-muted-foreground text-center mt-2 max-w-sm mx-auto">
+                        Jūsų registracija gauta. Mūsų komanda peržiūri informaciją ir patvirtins jūsų tapatybę per 1 d.d. Apie patvirtinimą būsite informuoti el. paštu.
                     </CardDescription>
                 </>
             );
         case 'pending_payment':
             return (
                  <>
-                    <CardTitle className="mb-4 text-3xl font-bold">Paskyra patvirtinta, laukiama apmokėjimo</CardTitle>
-                    <CardDescription className="text-muted-foreground text-center mb-6">
-                        Jūsų tapatybė patvirtinta! Norėdami aktyvuoti paskyrą ir pradėti naudotis visomis funkcijomis, prašome atlikti metinės prenumeratos mokėjimą.
+                    <div className="mx-auto bg-green-100 dark:bg-green-900/30 p-4 rounded-full w-fit mb-4">
+                        <CreditCard className="h-10 w-10 text-green-500" />
+                    </div>
+                    <CardTitle className="text-2xl font-bold">Paskyra patvirtinta!</CardTitle>
+                    <CardDescription className="text-muted-foreground text-center mt-2 max-w-sm mx-auto">
+                        Norėdami aktyvuoti paskyrą ir pradėti naudotis visomis funkcijomis, apmokėkite metinę prenumeratą.
                     </CardDescription>
-                    <Button onClick={handlePayment} disabled={isPaymentLoading} size="lg" className="w-full max-w-xs mx-auto">
+                     <Button onClick={handlePayment} disabled={isPaymentLoading} size="lg" className="mt-6 w-full max-w-xs mx-auto">
                         {isPaymentLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CreditCard className="mr-2 h-4 w-4" />}
                         Apmokėti metinę prenumeratą
                     </Button>
@@ -66,11 +74,14 @@ export default function ActivationPendingPage() {
         default:
             return (
                  <>
-                    <CardTitle className="mb-4 text-3xl font-bold">Paskyra neaktyvi</CardTitle>
-                    <CardDescription className="text-muted-foreground text-center mb-6">
-                        Jūsų paskyra šiuo metu yra neaktyvi. Prašome susisiekti su palaikymo komanda arba atlikti mokėjimą.
+                    <div className="mx-auto bg-destructive/10 p-4 rounded-full w-fit mb-4">
+                        <AlertTriangle className="h-10 w-10 text-destructive" />
+                    </div>
+                    <CardTitle className="text-2xl font-bold">Paskyra neaktyvi</CardTitle>
+                    <CardDescription className="text-muted-foreground text-center mt-2 max-w-sm mx-auto">
+                        Jūsų paskyra šiuo metu yra neaktyvi. Prašome apmokėti prenumeratą arba susisiekti su palaikymo komanda.
                     </CardDescription>
-                     <Button onClick={handlePayment} disabled={isPaymentLoading} size="lg" className="w-full max-w-xs mx-auto">
+                     <Button onClick={handlePayment} disabled={isPaymentLoading} size="lg" className="mt-6 w-full max-w-xs mx-auto">
                         {isPaymentLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CreditCard className="mr-2 h-4 w-4" />}
                         Apmokėti ir aktyvuoti
                     </Button>
@@ -79,25 +90,21 @@ export default function ActivationPendingPage() {
     }
   }
 
-
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <Card className="max-w-xl rounded-xl border p-8 text-center shadow-glow-primary">
-        <CardHeader>
-           {getStatusMessage()}
-        </CardHeader>
-        <CardContent>
-             <div className="flex flex-col items-center gap-4 mt-8 border-t pt-6">
-                <p className="text-xs text-muted-foreground text-center">
-                    Jei norite prisijungti su kita paskyra (pvz. administratoriaus) –
-                    atsijunkite žemiau.
-                </p>
-                <Button variant="outline" onClick={logout}>
-                    Atsijungti ir grįžti į prisijungimą
-                </Button>
-            </div>
-        </CardContent>
-      </Card>
-    </div>
+    <Card className="w-full max-w-lg rounded-xl border p-6 sm:p-8 text-center shadow-glow-primary bg-card/80 dark:bg-card/40 backdrop-blur-sm">
+      <CardHeader className="p-0">
+         {getStatusComponent()}
+      </CardHeader>
+      <CardContent className="p-0">
+           <div className="flex flex-col items-center gap-4 mt-8 border-t pt-6">
+              <p className="text-xs text-muted-foreground text-center max-w-xs">
+                  Jei norite prisijungti su kita paskyra (pvz., administratoriaus) – atsijunkite.
+              </p>
+              <Button variant="outline" onClick={logout}>
+                  Atsijungti ir grįžti į prisijungimą
+              </Button>
+          </div>
+      </CardContent>
+    </Card>
   );
 }

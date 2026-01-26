@@ -1,6 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  distDir: '.next_temp',
   experimental: {
     serverComponentsExternalPackages: [
       "@genkit-ai/core", 
