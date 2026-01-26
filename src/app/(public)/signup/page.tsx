@@ -1,95 +1,170 @@
 "use client";
 
 import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuth } from "@/hooks/use-auth";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ShieldCheck, ArrowLeft } from "lucide-react";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Loader2, UserPlus } from "lucide-react";
+import Link from "next/link";
+import { useLanguage } from "@/contexts/language-context";
+import { useToast } from "@/hooks/use-toast";
+import { SignupFormSchema, type SignupFormValuesExtended } from "@/lib/schemas";
+
 
 export default function SignupPage() {
   const { signup, isLoading } = useAuth();
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const role = searchParams.get("role") || "CARRIER"; // Gauname rolę iš URL
+  const { toast } = useToast();
+  const { t } = useLanguage();
 
-  const { register, handleSubmit } = useForm();
+  const form = useForm<SignupFormValuesExtended>({
+    resolver: zodResolver(SignupFormSchema),
+    defaultValues: {
+        email: "",
+        password: "",
+        confirmPassword: "",
+        companyName: "",
+        companyCode: "",
+        vatCode: "",
+        address: "",
+        contactPerson: "",
+        phone: "",
+        agreeToTerms: false,
+    },
+  });
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: SignupFormValuesExtended) => {
     try {
-      await signup({ ...data, role });
-      router.push("/login?registered=true");
-    } catch (error) {
-      alert("Klaida: " + (error as Error).message);
+      await signup(data);
+      toast({
+        title: t('toast.signup.success.title'),
+        description: t('toast.signup.success.description'),
+      });
+      router.push("/activation-pending");
+    } catch (error: any) {
+       let description = t('toast.signup.error.descriptionGeneric');
+       if (error.code === 'auth/email-already-in-use') {
+           description = t('toast.signup.error.emailExists');
+       }
+       toast({
+        variant: "destructive",
+        title: t('toast.signup.error.title'),
+        description: description,
+      });
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-2xl shadow-xl border-slate-200">
-        <CardHeader className="space-y-1 text-center">
-          <div className="flex justify-center mb-2">
-            <div className="bg-blue-600 p-2 rounded-lg">
-              <ShieldCheck className="w-8 h-8 text-white" />
-            </div>
-          </div>
-          <CardTitle className="text-2xl font-bold">DriverCheck</CardTitle>
-          <CardDescription>
-            Registracija {role === "PARTNER" ? "partneriams" : "transporto įmonėms"}
-          </CardDescription>
+    <Card className="w-full max-w-4xl">
+        <CardHeader className="items-center text-center">
+            <UserPlus className="h-10 w-10 text-primary mb-2" />
+            <CardTitle className="text-2xl">{t('signup.title')}</CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Kairė stulpelė */}
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Vardas, Pavardė</Label>
-                  <Input {...register("name")} placeholder="Jonas Jonaitis" required />
-                </div>
-                <div className="space-y-2">
-                  <Label>El. paštas</Label>
-                  <Input {...register("email")} type="email" placeholder="jonas@imone.lt" required />
-                </div>
-                <div className="space-y-2">
-                  <Label>Slaptažodis</Label>
-                  <Input {...register("password")} type="password" required />
-                </div>
-              </div>
+            <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+                        <FormField control={form.control} name="companyName" render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>{t('signup.form.companyName.label')}</FormLabel>
+                                <FormControl><Input placeholder={t('signup.form.companyName.placeholder')} {...field} /></FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )} />
+                        <FormField control={form.control} name="companyCode" render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>{t('signup.form.companyCode.label')}</FormLabel>
+                                <FormControl><Input placeholder={t('signup.form.companyCode.placeholder')} {...field} /></FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )} />
+                        <FormField control={form.control} name="vatCode" render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>{t('signup.form.vatCode.label')}</FormLabel>
+                                <FormControl><Input placeholder={t('signup.form.vatCode.placeholder')} {...field} /></FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )} />
+                        <FormField control={form.control} name="address" render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>{t('signup.form.address.label')}</FormLabel>
+                                <FormControl><Input placeholder={t('signup.form.address.placeholder')} {...field} /></FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )} />
+                         <FormField control={form.control} name="contactPerson" render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>{t('signup.form.contactPerson.label')}</FormLabel>
+                                <FormControl><Input placeholder={t('signup.form.contactPerson.placeholder')} {...field} /></FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )} />
+                         <FormField control={form.control} name="phone" render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>{t('signup.form.phone.label')}</FormLabel>
+                                <FormControl><Input placeholder={t('signup.form.phone.placeholder')} {...field} /></FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )} />
+                        <FormField control={form.control} name="email" render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>{t('signup.form.email.label')}</FormLabel>
+                                <FormControl><Input type="email" placeholder={t('signup.form.email.placeholder')} {...field} /></FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )} />
+                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <FormField control={form.control} name="password" render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>{t('signup.form.password.label')}</FormLabel>
+                                    <FormControl><Input type="password" placeholder={t('signup.form.password.placeholder')} {...field} /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )} />
+                            <FormField control={form.control} name="confirmPassword" render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>{t('signup.form.confirmPassword.label')}</FormLabel>
+                                    <FormControl><Input type="password" placeholder={t('signup.form.confirmPassword.placeholder')} {...field} /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )} />
+                        </div>
+                    </div>
+                     <FormField control={form.control} name="agreeToTerms" render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow-sm">
+                            <FormControl>
+                                <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                                <FormLabel>
+                                    {t('signup.form.agreeToTerms.labelPart1')}
+                                    <Link href="/terms" target="_blank" className="underline text-primary hover:text-primary/80">
+                                        {t('signup.form.agreeToTerms.linkText')}
+                                    </Link>
+                                </FormLabel>
+                                <FormMessage />
+                            </div>
+                        </FormItem>
+                    )} />
 
-              {/* Dešinė stulpelė */}
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Įmonės pavadinimas</Label>
-                  <Input {...register("companyName")} placeholder="UAB Logistika" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Įmonės kodas</Label>
-                  <Input {...register("companyCode")} placeholder="123456789" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Telefono numeris</Label>
-                  <Input {...register("phoneNumber")} placeholder="+37060000000" />
-                </div>
-              </div>
+                    <Button type="submit" className="w-full" disabled={isLoading}>
+                        {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        {t('signup.form.submitButton')}
+                    </Button>
+                </form>
+            </Form>
+             <div className="mt-6 text-center text-sm">
+                {t('signup.form.alreadyHaveAccount')}
+                <Link href="/login" className="underline text-primary">
+                    {t('signup.form.loginLink')}
+                </Link>
             </div>
-
-            <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 h-12 text-lg" disabled={isLoading}>
-              {isLoading ? "Registruojama..." : "Sukurti paskyrą"}
-            </Button>
-
-            <button 
-              type="button"
-              onClick={() => router.push("/")}
-              className="flex items-center justify-center w-full text-sm text-slate-500 hover:text-slate-800 transition"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" /> Grįžti į pasirinkimą
-            </button>
-          </form>
         </CardContent>
-      </Card>
-    </div>
+    </Card>
   );
 }
