@@ -99,7 +99,7 @@ export default function HomePage() {
         {/* Stats Section */}
         <section className="py-12 bg-muted/50">
             <div className="container px-4 md:px-6">
-                <div className="flex flex-col items-center md:flex-row md:justify-around gap-8">
+                <div className="flex flex-col items-center md:flex-row flex-wrap justify-center gap-8 md:gap-16">
                     <Stat value={totalReports} label={t('landing.stats.totalReports')} icon={FileText} loading={isStatsLoading} />
                     <Stat value={150} label={t('landing.stats.activeCompanies')} icon={ShieldCheck} loading={isStatsLoading} />
                     <Stat value={98} label={t('landing.stats.positiveImpact')} icon={BarChart3} loading={isStatsLoading} />
