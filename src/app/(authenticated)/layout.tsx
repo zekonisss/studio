@@ -21,7 +21,7 @@ export default function AuthenticatedLayout({
   useEffect(() => {
     // 1. DEBUG: Pamatysi tikrąsias reikšmes naršyklės konsolėje (F12)
     console.log('AUTH DEBUG:', {
-      role: user?.role,
+      isAdmin: user?.isAdmin,
       paymentStatus: user?.paymentStatus,
       path: pathname
     });
@@ -34,11 +34,10 @@ export default function AuthenticatedLayout({
       return;
     }
 
-    const role = user.role?.toUpperCase();
     const status = user.paymentStatus?.toLowerCase();
 
     // 🔥 3. ADMIN TAISYKLĖ: Jei ADMIN, praleidžiam visur
-    if (role === 'ADMIN') {
+    if (user.isAdmin) {
       if (pathname === '/activation-pending') {
         router.replace('/dashboard'); // Arba /admin, priklauso nuo tavo struktūros
       }
@@ -70,11 +69,10 @@ export default function AuthenticatedLayout({
 
   // Jei vartotojas neturi teisių matyti turinio (ne adminas ir neaktyvus), 
   // bet bando būti ne pending puslapyje - neleidžiame renderinti vaikų
-  const role = user.role?.toUpperCase();
   const status = user.paymentStatus?.toLowerCase();
   const isActive = status === 'active' || status === 'paid' || status === 'trial';
   
-  if (role !== 'ADMIN' && !isActive && pathname !== '/activation-pending') {
+  if (!user.isAdmin && !isActive && pathname !== '/activation-pending') {
     return null; 
   }
 
