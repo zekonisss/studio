@@ -109,3 +109,47 @@
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
+
+@layer utilities {
+  .hero-aurora {
+    position: relative;
+    overflow: hidden;
+  }
+  .dark .hero-aurora::before,
+  .dark .hero-aurora::after {
+    content: '';
+    position: absolute;
+    z-index: 0;
+    filter: blur(100px);
+    opacity: 0.15;
+  }
+
+  .dark .hero-aurora::before {
+    width: 400px;
+    height: 350px;
+    border-radius: 50%;
+    background-color: hsl(var(--primary));
+    top: -100px;
+    left: -150px;
+    animation: move-aurora-1 25s infinite alternate ease-in-out;
+  }
+
+  .dark .hero-aurora::after {
+    width: 500px;
+    height: 400px;
+    border-radius: 50%;
+    background-color: hsl(var(--accent));
+    bottom: -150px;
+    right: -200px;
+    animation: move-aurora-2 30s infinite alternate-reverse ease-in-out;
+  }
+
+  @keyframes move-aurora-1 {
+    from { transform: translate(-50px, -50px) rotate(0deg); }
+    to { transform: translate(50px, 80px) rotate(180deg); }
+  }
+  @keyframes move-aurora-2 {
+    from { transform: translate(50px, 80px) rotate(0deg); }
+    to { transform: translate(-50px, -50px) rotate(180deg); }
+  }
+}

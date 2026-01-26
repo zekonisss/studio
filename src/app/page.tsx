@@ -75,16 +75,16 @@ export default function HomePage() {
 
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="py-20 md:py-32 text-center">
-          <div className="container px-4 md:px-6">
-            <h1 className="text-4xl md:text-6xl font-bold tracking-tighter mb-4 text-primary animate-fade-in-down">
+        <section className="py-20 md:py-32 text-center hero-aurora">
+          <div className="container px-4 md:px-6 relative z-10">
+            <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-4 animate-fade-in-down bg-gradient-to-b from-foreground to-muted-foreground bg-clip-text text-transparent">
               {t('landing.hero.title')}
             </h1>
             <p className="max-w-2xl mx-auto text-lg md:text-xl text-muted-foreground mb-8 animate-fade-in-up">
               {t('landing.hero.subtitle')}
             </p>
             <div className="flex justify-center gap-4 animate-fade-in">
-              <Button size="lg" asChild>
+              <Button size="lg" asChild className="shadow-md hover:shadow-glow-primary transition-shadow duration-300">
                 <Link href="/signup">
                   {t('landing.hero.ctaButton')} <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
@@ -115,17 +115,17 @@ export default function HomePage() {
                     <p className="max-w-xl mx-auto mt-4 text-muted-foreground">{t('landing.features.subtitle')}</p>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <Card className="text-center p-6">
+                    <Card className="text-center p-6 bg-card/80 dark:bg-card/40 backdrop-blur-sm border border-border/20 transition-all duration-300 hover:shadow-glow-primary hover:border-primary/40">
                         <ShieldCheck className="h-12 w-12 mx-auto text-primary mb-4" />
                         <h3 className="text-xl font-semibold mb-2">{t('landing.features.feature1.title')}</h3>
                         <p className="text-muted-foreground">{t('landing.features.feature1.description')}</p>
                     </Card>
-                     <Card className="text-center p-6">
+                     <Card className="text-center p-6 bg-card/80 dark:bg-card/40 backdrop-blur-sm border border-border/20 transition-all duration-300 hover:shadow-glow-primary hover:border-primary/40">
                         <FileText className="h-12 w-12 mx-auto text-primary mb-4" />
                         <h3 className="text-xl font-semibold mb-2">{t('landing.features.feature2.title')}</h3>
                         <p className="text-muted-foreground">{t('landing.features.feature2.description')}</p>
                     </Card>
-                     <Card className="text-center p-6">
+                     <Card className="text-center p-6 bg-card/80 dark:bg-card/40 backdrop-blur-sm border border-border/20 transition-all duration-300 hover:shadow-glow-primary hover:border-primary/40">
                         <BarChart3 className="h-12 w-12 mx-auto text-primary mb-4" />
                         <h3 className="text-xl font-semibold mb-2">{t('landing.features.feature3.title')}</h3>
                         <p className="text-muted-foreground">{t('landing.features.feature3.description')}</p>
