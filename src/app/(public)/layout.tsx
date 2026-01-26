@@ -1,8 +1,14 @@
 import { ReactNode } from "react";
+import { UserSearch } from "lucide-react";
+import Link from 'next/link';
 
 export default function PublicLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="flex min-h-screen w-full items-center justify-center bg-muted/40 p-4">
+    <div className="flex min-h-screen w-full flex-col items-center justify-center bg-muted/40 p-4">
+        <Link href="/" className="flex items-center gap-2 text-lg font-semibold text-primary cursor-pointer mb-6">
+            <UserSearch className="h-10 w-10" />
+            <span className="text-3xl font-bold">DriverCheck</span>
+        </Link>
         {children}
     </div>
   );

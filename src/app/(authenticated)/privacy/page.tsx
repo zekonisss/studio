@@ -87,7 +87,7 @@ export default function PrivacyPage() {
         <div className="flex gap-2">
             <Button variant="outline" onClick={handlePrint}>
                 <Printer className="mr-2 h-4 w-4" />
-                Print / PDF
+                Spausdinti / PDF
             </Button>
         </div>
       </div>
@@ -122,7 +122,7 @@ export default function PrivacyPage() {
                 ))}
                 
                  <div className="pt-8 text-xs text-muted-foreground text-center print:hidden">
-                    <p>© 2026 DriverCheck. Visos teisės saugomos.</p>
+                    <p>© {new Date().getFullYear()} DriverCheck. Visos teisės saugomos.</p>
                 </div>
             </div>
           </ScrollArea>

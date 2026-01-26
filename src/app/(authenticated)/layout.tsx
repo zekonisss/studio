@@ -3,27 +3,46 @@
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect } from 'react';
-import { Loader2, Menu } from 'lucide-react';
+import { Loader2, Menu, LogOut, Timer } from 'lucide-react';
 import { SidebarNav } from '@/components/navigation/sidebar-nav';
 import { UserNav } from '@/components/navigation/user-nav';
 import { ThemeToggle } from '@/components/navigation/theme-toggle';
 import { LanguageSwitcher } from '@/components/navigation/language-switcher';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { useIdle } from '@/hooks/use-idle';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useLanguage } from '@/contexts/language-context';
+
 
 export default function AuthenticatedLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const { t } = useLanguage();
+
+  const { isPromptVisible, reset } = useIdle({ 
+    onIdle: logout,
+    idleTime: 30,
+    promptTime: 2,
+  });
 
   useEffect(() => {
     if (isLoading) return;
 
-    // 2. Jei vartotojo nėra - į login
     if (!user) {
       router.replace('/login');
       return;
@@ -31,16 +50,14 @@ export default function AuthenticatedLayout({
 
     const status = user.paymentStatus?.toLowerCase();
 
-    // 🔥 3. ADMIN TAISYKLĖ: Jei ADMIN, praleidžiam visur
     if (user.isAdmin) {
       if (pathname === '/activation-pending') {
-        router.replace('/dashboard'); // Arba /admin, priklauso nuo tavo struktūros
+        router.replace('/dashboard');
       }
       return;
     }
 
-    // 🧠 4. PAPRASTŲ VARTOTOJŲ TAISYKLĖ
-    const isActive = status === 'active' || status === 'paid' || status === 'trial';
+    const isActive = status === 'active';
 
     if (!isActive) {
       if (pathname !== '/activation-pending') {
@@ -53,7 +70,6 @@ export default function AuthenticatedLayout({
     }
   }, [user, isLoading, pathname, router]);
 
-  // Kol nustatoma tapatybė, rodomas krovimosi ekranas
   if (isLoading || !user) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
@@ -62,46 +78,73 @@ export default function AuthenticatedLayout({
     );
   }
 
-  // Jei vartotojas neturi teisių matyti turinio (ne adminas ir neaktyvus), 
-  // bet bando būti ne pending puslapyje - neleidžiame renderinti vaikų
   const status = user.paymentStatus?.toLowerCase();
-  const isActive = status === 'active' || status === 'paid' || status === 'trial';
+  const isActive = status === 'active';
   
   if (!user.isAdmin && !isActive && pathname !== '/activation-pending') {
-    return null; 
+    return (
+        <div className="flex h-screen w-full items-center justify-center bg-background">
+            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        </div>
+    );
   }
 
   return (
-    <div className="flex min-h-screen w-full bg-muted/40">
-      <div className="hidden border-r bg-card md:block md:w-72">
-        <SidebarNav isInSheet={false} />
+    <>
+      <AlertDialog open={isPromptVisible}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+             <div className="flex justify-center mb-4">
+                <Timer className="h-16 w-16 text-amber-500" />
+            </div>
+            <AlertDialogTitle className="text-center">{t('session.timeout.title')}</AlertDialogTitle>
+            <AlertDialogDescription className="text-center">
+              {t('session.timeout.description')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="sm:justify-center">
+            <AlertDialogCancel onClick={logout} className="w-full sm:w-auto">
+                <LogOut className="mr-2 h-4 w-4" />
+                {t('session.timeout.logoutButton')}
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={reset} className="w-full sm:w-auto">
+                {t('session.timeout.stayButton')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <div className="flex min-h-screen w-full bg-muted/40">
+        <div className="hidden border-r bg-card md:block md:w-72">
+          <SidebarNav isInSheet={false} />
+        </div>
+        <div className="flex flex-1 flex-col">
+          <header className="sticky top-0 z-30 flex h-16 items-center border-b bg-card px-4 shadow-sm sm:px-6">
+            <div className="md:hidden">
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="outline" size="icon">
+                    <Menu className="h-6 w-6" />
+                    <span className="sr-only">Atidaryti meniu</span>
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="p-0 w-72">
+                  <SheetTitle className="sr-only">Navigacijos Meniu</SheetTitle>
+                  <SidebarNav isInSheet={true} />
+                </SheetContent>
+              </Sheet>
+            </div>
+            <div className="flex items-center gap-2 ml-auto">
+              <ThemeToggle />
+              <LanguageSwitcher />
+              <UserNav />
+            </div>
+          </header>
+          <main className="flex-1 p-4 md:p-8 overflow-y-auto">
+            {children}
+          </main>
+        </div>
       </div>
-      <div className="flex flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-16 items-center border-b bg-card px-4 shadow-sm sm:px-6">
-          <div className="md:hidden">
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="outline" size="icon">
-                  <Menu className="h-6 w-6" />
-                  <span className="sr-only">Atidaryti meniu</span>
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="p-0 w-72">
-                <SheetTitle className="sr-only">Navigacijos Meniu</SheetTitle>
-                <SidebarNav isInSheet={true} />
-              </SheetContent>
-            </Sheet>
-          </div>
-          <div className="flex items-center gap-2 ml-auto">
-            <ThemeToggle />
-            <LanguageSwitcher />
-            <UserNav />
-          </div>
-        </header>
-        <main className="flex-1 p-4 md:p-8 overflow-y-auto">
-          {children}
-        </main>
-      </div>
-    </div>
+    </>
   );
 }

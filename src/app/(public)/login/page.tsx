@@ -23,7 +23,7 @@ import { LoginSchema, type LoginFormValues } from "@/lib/schemas";
 import { useAuth } from "@/hooks/use-auth";
 import Link from "next/link";
 import { useLanguage } from "@/contexts/language-context";
-import { Loader2, UserSearch } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from 'next/navigation';
@@ -43,7 +43,6 @@ export default function LoginPage() {
     },
   });
 
-  // Nukreipimas, jei vartotojas jau yra prisijungęs (pvz., atidaro /login naršyklėje)
   useEffect(() => {
     if (isLoading) return;
 
@@ -62,14 +61,13 @@ export default function LoginPage() {
   const onSubmit = async (values: LoginFormValues) => {
     setIsSubmitting(true);
     try {
-      const userData = await login(values); // login dabar grąžina vartotojo duomenis
+      const userData = await login(values); 
       
       toast({
           title: t('toast.login.success.title'),
           description: t('toast.login.success.description'),
       });
       
-      // Centralizuota nukreipimo logika
       if (userData.isAdmin) {
         router.push('/admin');
       } else if (userData.paymentStatus === 'active') {
@@ -96,7 +94,6 @@ export default function LoginPage() {
     }
   };
   
-  // Rodyti krovimosi ekraną, kol tikrinamas autorizacijos statusas
   if (isLoading || (!isLoading && user)) {
      return (
         <div className="flex h-screen w-full items-center justify-center bg-background">
@@ -108,11 +105,7 @@ export default function LoginPage() {
   return (
     <Card className="w-full max-w-md transition-shadow duration-300 hover:shadow-glow-primary">
       <CardHeader className="items-center text-center">
-        <Link href="/" className="flex items-center gap-2 text-lg font-semibold text-primary cursor-pointer mb-4">
-            <UserSearch className="h-12 w-12" />
-            <span className="text-4xl font-bold">DriverCheck</span>
-        </Link>
-        <CardTitle className="text-2xl !mt-6">{t('login.title')}</CardTitle>
+        <CardTitle className="text-2xl">{t('login.title')}</CardTitle>
       </CardHeader>
       <CardContent>
         <Form {...form}>
