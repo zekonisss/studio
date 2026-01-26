@@ -59,9 +59,9 @@ export default function HomePage() {
   );
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#020617] text-white selection:bg-primary/30">
+    <div className="flex flex-col min-h-screen bg-background text-white selection:bg-primary/30">
       {/* HEADER */}
-      <header className="sticky top-0 z-50 w-full border-b border-white/5 bg-[#020617]/80 backdrop-blur-xl">
+      <header className="sticky top-0 z-50 w-full border-b border-white/5 bg-background/80 backdrop-blur-xl">
         <div className="container mx-auto flex h-20 items-center justify-between px-6">
           <Link href="/" className="flex items-center gap-2 group">
             <UserSearch className="h-8 w-8 text-primary transition-transform group-hover:rotate-12" />
@@ -88,7 +88,7 @@ export default function HomePage() {
           <div className="absolute bottom-0 right-1/4 -z-10 w-[400px] h-[400px] bg-blue-600/10 rounded-full blur-[100px] opacity-30" />
 
           <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-1000">
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tight leading-[1.05] text-white">
+            <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tight leading-[1.05] bg-gradient-to-b from-white to-gray-400 bg-clip-text text-transparent">
               {t('landing.hero.title')}
             </h1>
             <p className="max-w-2xl mx-auto text-lg md:text-xl text-gray-400 leading-relaxed">
@@ -119,7 +119,7 @@ export default function HomePage() {
         </section>
 
         {/* FEATURES SECTION */}
-        <section className="py-24 md:py-32 bg-[#020617]">
+        <section className="py-24 md:py-32 bg-background">
           <div className="container mx-auto px-6 text-center">
             <div className="max-w-2xl mx-auto mb-20">
               <h2 className="text-4xl md:text-5xl font-bold mb-6 text-white">{t('landing.features.title')}</h2>
@@ -132,7 +132,7 @@ export default function HomePage() {
                 { icon: FileText, title: t('landing.features.feature2.title'), desc: t('landing.features.feature2.description') },
                 { icon: BarChart3, title: t('landing.features.feature3.title'), desc: t('landing.features.feature3.description') }
               ].map((f, i) => (
-                <Card key={i} className="group p-8 bg-white/[0.03] border-white/5 backdrop-blur-xl transition-all hover:bg-white/[0.07] hover:border-primary/40 rounded-3xl">
+                <Card key={i} className="group p-8 bg-card/50 border-white/10 backdrop-blur-xl transition-all hover:bg-white/[0.07] hover:border-primary/40 rounded-3xl">
                   <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-6 mx-auto group-hover:scale-110 transition-transform">
                     <f.icon className="h-8 w-8 text-primary" />
                   </div>
@@ -145,7 +145,7 @@ export default function HomePage() {
         </section>
       </main>
 
-      <footer className="border-t border-white/5 py-12 bg-[#020617]">
+      <footer className="border-t border-white/5 py-12 bg-background">
         <div className="container mx-auto flex flex-col md:flex-row items-center justify-between gap-6 px-6 text-sm text-gray-500">
           <p>&copy; {new Date().getFullYear()} {t('app.name')}. {t('landing.footer.rights')}</p>
           <div className="flex gap-8">

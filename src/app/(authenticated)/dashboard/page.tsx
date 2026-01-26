@@ -177,9 +177,9 @@ export default function DashboardPage() {
         
         {/* Prenumeratos įspėjimas */}
         {showSubscriptionWarning && user?.paymentStatus === 'active' && (
-            <Card className="border-amber-500/50 bg-amber-50/20 dark:bg-amber-900/10">
+            <Card className="border-amber-500/50 bg-amber-500/10">
                 <CardHeader>
-                    <CardTitle className="text-amber-700 dark:text-amber-500">{t('dashboard.overview.subscriptionEndingSoon.title')}</CardTitle>
+                    <CardTitle className="text-amber-500">{t('dashboard.overview.subscriptionEndingSoon.title')}</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <p>{t('dashboard.overview.subscriptionEndingSoon.message', { endDate: subscriptionEndDate })}</p>

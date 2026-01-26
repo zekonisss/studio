@@ -114,7 +114,7 @@ export default function AuthenticatedLayout({
         </AlertDialogContent>
       </AlertDialog>
 
-      <div className="flex min-h-screen w-full bg-muted/40">
+      <div className="flex min-h-screen w-full bg-background">
         <div className="hidden border-r bg-card md:block md:w-72">
           <SidebarNav isInSheet={false} />
         </div>

@@ -37,7 +37,7 @@ export function AdminUserDetailsModal({ isOpen, onClose, user }: AdminUserDetail
   const getStatusBadge = (status: UserProfile['paymentStatus']) => {
     switch (status) {
       case 'active':
-        return <Badge variant="default" className="bg-green-600 hover:bg-green-700">{t('admin.users.status.active')}</Badge>;
+        return <Badge variant="default" className="bg-primary hover:bg-primary/80">{t('admin.users.status.active')}</Badge>;
       case 'pending_verification':
         return <Badge variant="secondary" className="bg-yellow-500 hover:bg-yellow-600">{t('admin.users.status.pending_verification')}</Badge>;
       case 'pending_payment':

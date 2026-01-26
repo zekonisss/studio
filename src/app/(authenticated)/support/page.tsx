@@ -135,7 +135,7 @@ export default function SupportPage() {
             ))}
           </Accordion>
 
-          <div className="mt-12 text-center bg-slate-50 dark:bg-slate-900/50 rounded-xl p-8 border border-slate-100 dark:border-slate-800">
+          <div className="mt-12 text-center bg-muted/50 rounded-xl p-8 border">
             <h3 className="text-xl font-semibold mb-2">
               {content.contact.title}
             </h3>

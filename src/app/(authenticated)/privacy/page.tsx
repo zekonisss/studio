@@ -92,10 +92,10 @@ export default function PrivacyPage() {
         </div>
       </div>
 
-      <Card className="border-t-4 border-t-blue-600 shadow-lg">
+      <Card className="border-t-4 border-t-primary shadow-lg">
         <CardHeader className="bg-muted/20 pb-6">
             <div className="flex items-center gap-3 mb-2">
-                <Lock className="h-8 w-8 text-blue-600" />
+                <Lock className="h-8 w-8 text-primary" />
                 <CardTitle className="text-2xl">{content.cardTitle}</CardTitle>
             </div>
             <CardDescription className="text-base">
@@ -115,7 +115,7 @@ export default function PrivacyPage() {
                         <h3 className="text-lg font-bold text-foreground mb-3">
                             {section.title}
                         </h3>
-                        <div className={`whitespace-pre-line ${section.highlight ? "bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-100 dark:border-blue-800" : ""}`}>
+                        <div className={`whitespace-pre-line ${section.highlight ? "bg-primary/10 p-4 rounded-lg border border-primary/20" : ""}`}>
                             {section.text}
                         </div>
                     </section>

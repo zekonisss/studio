@@ -134,7 +134,7 @@ export default function TermsPage() {
                         </h3>
                         <ul className="list-disc pl-5 space-y-2">
                             {section.items.map((item, i) => (
-                                <li key={i} className={item.highlight ? "bg-amber-50 dark:bg-amber-950/30 p-2 rounded border border-amber-200 dark:border-amber-800" : ""}>
+                                <li key={i} className={item.highlight ? "bg-amber-500/10 p-2 rounded border border-amber-500/20" : ""}>
                                     <strong>{item.label}</strong> {item.text}
                                 </li>
                             ))}

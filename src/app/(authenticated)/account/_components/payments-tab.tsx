@@ -80,7 +80,7 @@ export default function PaymentsTab() {
       case 'active':
         return (
           <>
-            <CardTitle className="text-green-600">{t('account.payments.status.active.title')}</CardTitle>
+            <CardTitle className="text-primary">{t('account.payments.status.active.title')}</CardTitle>
             <CardDescription>{t('account.payments.status.active.description')}</CardDescription>
             {user.subscriptionEndDate ? (
               <p className="text-sm pt-2">{t('account.payments.status.active.validUntil')}: <span className="font-semibold">{new Date(user.subscriptionEndDate).toLocaleDateString(locale)}</span></p>
@@ -91,21 +91,21 @@ export default function PaymentsTab() {
       case 'pending_payment':
         return (
           <>
-            <CardTitle className="text-amber-600">{t('account.payments.status.pending_payment.title')}</CardTitle>
+            <CardTitle className="text-amber-500">{t('account.payments.status.pending_payment.title')}</CardTitle>
             <CardDescription>{t('account.payments.status.pending_payment.description')}</CardDescription>
           </>
         );
        case 'pending_verification':
         return (
             <>
-                <CardTitle className="text-blue-600">{t('account.payments.status.pending_verification.title')}</CardTitle>
+                <CardTitle className="text-blue-500">{t('account.payments.status.pending_verification.title')}</CardTitle>
                 <CardDescription>{t('account.payments.status.pending_verification.description')}</CardDescription>
             </>
         );
       case 'inactive':
         return (
           <>
-            <CardTitle className="text-red-600">{t('account.payments.status.inactive.title')}</CardTitle>
+            <CardTitle className="text-destructive">{t('account.payments.status.inactive.title')}</CardTitle>
             <CardDescription>{t('account.payments.status.inactive.description')}</CardDescription>
           </>
         );

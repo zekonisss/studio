@@ -46,8 +46,8 @@ export default function ActivationPendingPage() {
         case 'pending_verification':
             return (
                 <>
-                    <div className="mx-auto bg-blue-100 dark:bg-blue-900/30 p-4 rounded-full w-fit mb-4">
-                        <ShieldCheck className="h-10 w-10 text-blue-500" />
+                    <div className="mx-auto bg-primary/10 p-4 rounded-full w-fit mb-4">
+                        <ShieldCheck className="h-10 w-10 text-primary" />
                     </div>
                     <CardTitle className="text-2xl font-bold">Paskyra laukia patvirtinimo</CardTitle>
                     <CardDescription className="text-muted-foreground text-center mt-2 max-w-sm mx-auto">
@@ -58,8 +58,8 @@ export default function ActivationPendingPage() {
         case 'pending_payment':
             return (
                  <>
-                    <div className="mx-auto bg-green-100 dark:bg-green-900/30 p-4 rounded-full w-fit mb-4">
-                        <CreditCard className="h-10 w-10 text-green-500" />
+                    <div className="mx-auto bg-primary/10 p-4 rounded-full w-fit mb-4">
+                        <CreditCard className="h-10 w-10 text-primary" />
                     </div>
                     <CardTitle className="text-2xl font-bold">Paskyra patvirtinta!</CardTitle>
                     <CardDescription className="text-muted-foreground text-center mt-2 max-w-sm mx-auto">
