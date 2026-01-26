@@ -77,16 +77,21 @@ export function SidebarNav({ isInSheet = false }: SidebarNavProps) {
 
   const renderLinks = (items: { href: string; label: string; icon: React.ElementType }[]) => {
     return items.map((item) => {
-      // For checking active link, we need to consider the full path with the group
-      const fullPath = `/authenticated${item.href}`;
+      let isActive: boolean;
+      if (item.href === '/search') {
+        isActive = pathname === '/search';
+      } else {
+        isActive = pathname.startsWith(item.href);
+      }
+
       return (
         <NavLinkWrapper key={item.href}>
           <Link
             href={item.href}
             className={cn(
-              buttonVariants({ variant: pathname.startsWith(fullPath) ? "secondary" : "ghost" , size: "default"}),
+              buttonVariants({ variant: isActive ? "secondary" : "ghost" , size: "default"}),
               "w-full justify-start rounded-md text-sm font-medium h-9", 
-              pathname.startsWith(fullPath)
+              isActive
                 ? "bg-accent text-accent-foreground"
                 : "hover:bg-accent hover:text-accent-foreground"
             )}
@@ -102,11 +107,13 @@ export function SidebarNav({ isInSheet = false }: SidebarNavProps) {
 
   return (
     <div className="flex h-full flex-col border-r bg-card text-card-foreground shadow-lg">
-      <div className="p-4 border-b border-border flex justify-between items-center">
+      <div className="p-4 border-b border-white/5 flex justify-between items-center">
         <NavLinkWrapper>
-          <Link href="/dashboard" className="flex items-center space-x-3">
-              <UserSearch className="h-8 w-8 text-primary" />
-            <h1 className="text-2xl font-bold text-primary">{t('app.name')}</h1>
+          <Link href="/dashboard" className="flex items-center gap-2 group">
+            <UserSearch className="h-8 w-8 text-primary transition-transform group-hover:rotate-12" />
+            <span className="text-2xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent italic">
+              {t('app.name')}
+            </span>
           </Link>
         </NavLinkWrapper>
       </div>
