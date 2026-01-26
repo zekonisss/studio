@@ -8,8 +8,8 @@ const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'DriverCheck',
-  description: 'Patikima vairuotojų patikros platforma vežėjams. Sumažinkite rizikas ir priimkite saugesnius sprendimus.',
-  keywords: ['vairuotojų patikra', 'vežėjai', 'rizikos valdymas', 'transportas', 'logistika', 'juodasis sąrašas'],
+  description: 'Patikima patikros platforma vežėjams. Sumažinkite rizikas ir priimkite saugesnius sprendimus.',
+  keywords: ['patikra', 'vežėjai', 'rizikos valdymas', 'transportas', 'logistika', 'duomenų bazė'],
 };
 
 export const viewport: Viewport = {
