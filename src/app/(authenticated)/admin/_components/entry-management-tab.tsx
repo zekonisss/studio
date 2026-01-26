@@ -2,13 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import type { Report } from '@/types';
-import { getAllReports, reviewDeletionRequest, addAuditLogEntry, deleteAllReports } from '@/lib/storage';
+import { getAllReports, reviewDeletionRequest, addAuditLogEntry, deleteAllReports, fixMissingStatus } from '@/lib/storage';
 import { useLanguage } from '@/contexts/language-context';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { MoreHorizontal, Loader2, Trash2 } from 'lucide-react';
+import { MoreHorizontal, Loader2, Trash2, Wrench } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { getCategoryNameForDisplay } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -39,6 +39,9 @@ export default function EntryManagementTab() {
   // State for details modal
   const [reportToView, setReportToView] = useState<Report | null>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+
+  // State for status fixing
+  const [isFixing, setIsFixing] = useState(false);
 
   const fetchReports = async () => {
     setIsLoading(true);
@@ -122,6 +125,22 @@ export default function EntryManagementTab() {
     }
   };
 
+  const handleFixStatus = async () => {
+    setIsFixing(true);
+    try {
+        await fixMissingStatus();
+        toast({
+            title: "Operacija sėkminga",
+            description: "Įrašų būsenos sėkmingai pataisytos. Atnaujinkite puslapį, kad matytumėte pokyčius.",
+        });
+    } catch (error) {
+        console.error("Error fixing statuses:", error);
+        toast({ variant: "destructive", title: "Klaida", description: "Nepavyko pataisyti įrašų būsenų." });
+    } finally {
+        setIsFixing(false);
+    }
+  }
+
   return (
     <>
       <AdminEntryDetailsModal 
@@ -144,19 +163,29 @@ export default function EntryManagementTab() {
       />
 
       <Card className="mt-6">
-        <CardHeader className="flex flex-row items-start justify-between">
+        <CardHeader className="flex flex-col md:flex-row items-start justify-between gap-4">
             <div>
               <CardTitle>{t('admin.entries.title')}</CardTitle>
               <CardDescription>Čia rodomi visi aktyvūs sistemos įrašai. Prašymai ištrinti ir ištrinti įrašai valdomi kituose skirtukuose.</CardDescription>
             </div>
-            <Button
-                variant="destructive"
-                onClick={() => setIsDeleteAllDialogOpen(true)}
-                disabled={isLoading || reports.length === 0}
-            >
-                <Trash2 className="mr-2 h-4 w-4" />
-                {t('admin.entries.actions.deleteAllEntries')}
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-2">
+                <Button
+                    variant="outline"
+                    onClick={handleFixStatus}
+                    disabled={isFixing}
+                >
+                    {isFixing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wrench className="mr-2 h-4 w-4" />}
+                    Taisyti įrašų būsenas
+                </Button>
+                <Button
+                    variant="destructive"
+                    onClick={() => setIsDeleteAllDialogOpen(true)}
+                    disabled={isLoading || reports.length === 0}
+                >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    {t('admin.entries.actions.deleteAllEntries')}
+                </Button>
+            </div>
         </CardHeader>
         <CardContent>
           <ScrollArea className="h-[400px]">

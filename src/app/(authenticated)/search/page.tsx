@@ -17,6 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
 import { DESTRUCTIVE_REPORT_MAIN_CATEGORIES } from "@/lib/constants";
 import { useToast } from "@/hooks/use-toast";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function SearchPage() {
     const { t, locale } = useLanguage();
@@ -117,8 +118,24 @@ export default function SearchPage() {
                     
                     <div>
                         {isLoading && (
-                            <div className="text-center py-10">
-                                <Loader2 className="mx-auto h-12 w-12 animate-spin text-primary" />
+                            <div className="space-y-4">
+                                {[...Array(3)].map((_, i) => (
+                                    <Card key={i}>
+                                        <CardHeader>
+                                            <div className="flex justify-between items-start gap-4">
+                                                <div>
+                                                    <Skeleton className="h-8 w-48 mb-2" />
+                                                    <Skeleton className="h-4 w-32" />
+                                                </div>
+                                                <Skeleton className="h-6 w-24" />
+                                            </div>
+                                        </CardHeader>
+                                        <CardContent className="space-y-4">
+                                            <Skeleton className="h-4 w-full" />
+                                            <Skeleton className="h-4 w-5/6" />
+                                        </CardContent>
+                                    </Card>
+                                ))}
                             </div>
                         )}
 
