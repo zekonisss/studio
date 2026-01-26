@@ -46,7 +46,7 @@ export default function DashboardPage() {
         ]);
         
         // Saugome visus pranešimus grafikams
-        const activeReports = allReports.filter(report => !report.deletedAt);
+        const activeReports = allReports.filter(report => report.status === 'active');
         setAllReportsData(activeReports);
 
         // Vartotojo ataskaitų kiekis
@@ -113,7 +113,7 @@ export default function DashboardPage() {
             title={t('dashboard.overview.yourReports')}
             value={userReportsCount}
             icon={FileText}
-            link="/reports/history"
+            link="/authenticated/reports/history"
             linkText={t('dashboard.overview.viewHistory')}
             isLoading={isStatsLoading}
           />
@@ -121,7 +121,7 @@ export default function DashboardPage() {
             title={t('dashboard.overview.yourSearches')}
             value={userSearchesCount}
             icon={Search}
-            link="/search/history"
+            link="/authenticated/search/history"
             linkText={t('dashboard.overview.viewHistory')}
             isLoading={isStatsLoading}
           />
@@ -129,7 +129,7 @@ export default function DashboardPage() {
             title={t('dashboard.overview.totalPlatformReports')}
             value={totalReportsCount}
             icon={BarChart}
-            link="/search"
+            link="/authenticated/search"
             linkText={t('dashboard.overview.viewAll')}
             isLoading={isStatsLoading}
           />
@@ -170,7 +170,7 @@ export default function DashboardPage() {
             <CardContent>
                 <p>{t('dashboard.overview.subscriptionEndingSoon.message', { endDate: '2024-12-31' })}</p>
                 <Button asChild size="sm" className="mt-4">
-                    <Link href="/account?tab=payment">{t('account.payments.manageSubscriptionButton')}</Link>
+                    <Link href="/authenticated/account?tab=payment">{t('account.payments.manageSubscriptionButton')}</Link>
                 </Button>
             </CardContent>
         </Card>

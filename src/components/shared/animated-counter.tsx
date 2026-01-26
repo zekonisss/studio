@@ -29,6 +29,7 @@ export function AnimatedCounter({ value, duration = 1000 }: AnimatedCounterProps
 
       if (frame === totalFrames) {
         clearInterval(counter);
+        setCount(end); // Ensure it ends on the exact value
       }
     }, 16);
 
