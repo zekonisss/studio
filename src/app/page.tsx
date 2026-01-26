@@ -43,7 +43,7 @@ export default function HomePage() {
   }, []);
 
   const Stat = ({ value, label, icon: Icon, loading }: { value: number, label: string, icon: React.ElementType, loading: boolean }) => (
-    <div className="flex items-center gap-4">
+    <div className="flex items-center justify-center md:justify-start gap-4">
       <div className="p-3 bg-primary/10 rounded-lg">
         <Icon className="h-6 w-6 text-primary" />
       </div>
@@ -99,7 +99,7 @@ export default function HomePage() {
         {/* Stats Section */}
         <section className="py-12 bg-muted/50">
             <div className="container px-4 md:px-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center md:text-left">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     <Stat value={totalReports} label={t('landing.stats.totalReports')} icon={FileText} loading={isStatsLoading} />
                     <Stat value={150} label={t('landing.stats.activeCompanies')} icon={ShieldCheck} loading={isStatsLoading} />
                     <Stat value={98} label={t('landing.stats.positiveImpact')} icon={BarChart3} loading={isStatsLoading} />
