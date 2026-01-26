@@ -17,6 +17,9 @@ export interface UserProfileFirestore {
   registeredAt: Timestamp;
   accountActivatedAt?: Timestamp | null;
   subUsers: string[];
+  stripeCustomerId?: string | null;
+  stripeSubscriptionId?: string | null;
+  stripePriceId?: string | null;
 }
 
 export interface ReportFirestore {
@@ -91,6 +94,9 @@ export interface UserProfile {
   registeredAt: string; 
   accountActivatedAt?: string | null;
   subUsers: string[];
+  stripeCustomerId?: string | null;
+  stripeSubscriptionId?: string | null;
+  stripePriceId?: string | null;
 }
 
 export interface Report {

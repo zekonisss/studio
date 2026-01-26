@@ -11,7 +11,8 @@ const nextConfig = {
       "@google-cloud/firestore", 
       "firebase-admin",
       "firebase-admin/app",
-      "@grpc/grpc-js"
+      "@grpc/grpc-js",
+      "stripe"
     ],
   },
   images: {
