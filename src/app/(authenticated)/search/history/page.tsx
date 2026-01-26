@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from '@/components/ui/button';
 import { ListChecks, Loader2, Search, Inbox } from "lucide-react";
 import Link from 'next/link';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function SearchHistoryPage() {
     const { t, locale } = useLanguage();
@@ -69,9 +70,32 @@ export default function SearchHistoryPage() {
                 </CardHeader>
                 <CardContent>
                     {isLoading ? (
-                        <div className="flex justify-center items-center h-64">
-                            <Loader2 className="h-12 w-12 animate-spin text-primary" />
-                        </div>
+                        <Card>
+                            <CardHeader>
+                                <CardTitle><Skeleton className="h-6 w-48" /></CardTitle>
+                                <CardDescription><Skeleton className="h-4 w-64" /></CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead><Skeleton className="h-5 w-40" /></TableHead>
+                                            <TableHead className="text-center"><Skeleton className="h-5 w-24 mx-auto" /></TableHead>
+                                            <TableHead className="text-right"><Skeleton className="h-5 w-32 ml-auto" /></TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {[...Array(5)].map((_, i) => (
+                                            <TableRow key={i}>
+                                                <TableCell><Skeleton className="h-5 w-48" /></TableCell>
+                                                <TableCell className="text-center"><Skeleton className="h-5 w-10 mx-auto" /></TableCell>
+                                                <TableCell className="text-right"><Skeleton className="h-5 w-40 ml-auto" /></TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </CardContent>
+                        </Card>
                     ) : logs.length === 0 ? (
                         <NoHistoryView />
                     ) : (

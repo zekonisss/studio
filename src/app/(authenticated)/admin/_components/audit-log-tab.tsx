@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function AuditLogTab() {
   const { t, locale } = useLanguage();
@@ -95,11 +96,13 @@ export default function AuditLogTab() {
                 </TableHeader>
                 <TableBody>
                    {isLoading ? (
-                        <TableRow>
-                            <TableCell colSpan={3} className="h-24 text-center">
-                                <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
-                            </TableCell>
-                        </TableRow>
+                        [...Array(10)].map((_, i) => (
+                            <TableRow key={i}>
+                                <TableCell><Skeleton className="h-5 w-36" /></TableCell>
+                                <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                                <TableCell><Skeleton className="h-5 w-full max-w-lg" /></TableCell>
+                            </TableRow>
+                        ))
                     ) : logs.length === 0 ? (
                         <TableRow>
                             <TableCell colSpan={3} className="h-24 text-center text-muted-foreground">

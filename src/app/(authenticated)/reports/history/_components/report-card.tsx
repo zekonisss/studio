@@ -28,7 +28,7 @@ export function ReportCard({ report, onViewDetails, onDelete, isDeleted = false 
 
   return (
     <Card className={cn(
-        "flex flex-col",
+        "flex flex-col transition-all duration-200",
         isDeleted ? "opacity-60 bg-muted/50" : "hover:bg-accent/10",
         isDestructive && !isDeleted && "border-destructive/30 hover:border-destructive/50"
     )}>

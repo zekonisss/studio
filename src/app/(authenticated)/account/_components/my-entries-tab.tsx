@@ -19,6 +19,7 @@ import { getCategoryNameForDisplay } from '@/lib/utils';
 import { DESTRUCTIVE_REPORT_MAIN_CATEGORIES } from '@/lib/constants';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Textarea } from '@/components/ui/textarea';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function MyEntriesTab() {
   const { t, locale } = useLanguage();
@@ -233,9 +234,12 @@ export default function MyEntriesTab() {
           </CardHeader>
           <CardContent>
             {isLoading ? (
-                  <div className="flex justify-center items-center h-64">
-                    <Loader2 className="h-12 w-12 animate-spin text-primary" />
-                </div>
+                  <div className="space-y-4 mt-6">
+                      <Skeleton className="h-10 w-full" /> 
+                      <div className="border rounded-lg p-4 space-y-4">
+                          {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
+                      </div>
+                  </div>
             ) : (
                   <Tabs defaultValue="active" className="w-full">
                     <TabsList className="grid w-full grid-cols-3">

@@ -18,6 +18,7 @@ import { getCategoryNameForDisplay } from '@/lib/utils';
 import { DESTRUCTIVE_REPORT_MAIN_CATEGORIES } from '@/lib/constants';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Textarea } from '@/components/ui/textarea';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function ReportsHistoryPage() {
     const { t, locale } = useLanguage();
@@ -243,9 +244,30 @@ export default function ReportsHistoryPage() {
                     </CardHeader>
                     <CardContent>
                         {isLoading ? (
-                             <div className="flex justify-center items-center h-64">
-                                <Loader2 className="h-12 w-12 animate-spin text-primary" />
-                            </div>
+                             <Card className="mt-6">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead><Skeleton className="h-5 w-32" /></TableHead>
+                                            <TableHead><Skeleton className="h-5 w-24" /></TableHead>
+                                            <TableHead><Skeleton className="h-5 w-28" /></TableHead>
+                                            <TableHead><Skeleton className="h-5 w-24" /></TableHead>
+                                            <TableHead className="text-right"><Skeleton className="h-8 w-8 ml-auto" /></TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {[...Array(5)].map((_, i) => (
+                                            <TableRow key={i}>
+                                                <TableCell><Skeleton className="h-5 w-28" /></TableCell>
+                                                <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                                                <TableCell><Skeleton className="h-5 w-32" /></TableCell>
+                                                <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                                                <TableCell className="text-right"><Skeleton className="h-8 w-8 ml-auto rounded-full" /></TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </Card>
                         ) : (
                              <Tabs defaultValue="active" className="w-full">
                                 <TabsList className="grid w-full grid-cols-3">

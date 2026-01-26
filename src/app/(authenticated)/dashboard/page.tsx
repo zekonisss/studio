@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useLanguage } from '@/contexts/language-context';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, BarChart, FileText, Search, Loader2 } from 'lucide-react';
+import { ArrowRight, BarChart, FileText, Search } from 'lucide-react';
 import { WelcomeModal } from '@/components/shared/welcome-modal';
 import Link from 'next/link';
 import { getUserReports, getSearchLogs, getAllReports } from '@/lib/storage';
@@ -13,6 +13,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 // Nauji importai grafikams ir veiklai
 import { ReportsDistributionChart } from "@/components/dashboard/reports-distribution-chart";
 import { RecentActivity } from "@/components/dashboard/recent-activity";
+import { AnimatedCounter } from '@/components/shared/animated-counter';
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -82,7 +83,7 @@ export default function DashboardPage() {
             {isLoading ? (
                 <Skeleton className="h-8 w-16" />
             ) : (
-                <div className="text-2xl font-bold">{value}</div>
+                <div className="text-2xl font-bold"><AnimatedCounter value={value} /></div>
             )}
             <Link href={link} className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1">
                 {linkText} <ArrowRight className="h-3 w-3"/>
