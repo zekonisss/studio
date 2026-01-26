@@ -1,4 +1,3 @@
-
 {
   "app.name": "DriverCheck",
   "sidebar.dashboard": "Juhtpaneel",
@@ -297,7 +296,7 @@
   "search.title": "Otsi juhte",
   "search.description": "Sisesta juhi nimi, perekonnanimi.",
   "search.queryLabel": "Otsingupäring",
-  "search.queryPlaceholder": "Nimi Perekonnanimi",
+  "search.queryPlaceholder": "Sisesta juhi nimi või perekonnanimi...",
   "search.searchButton": "Otsi",
   "search.loading": "Otsin andmeid...",
   "search.noResults.title": "Tulemusi ei leitud",

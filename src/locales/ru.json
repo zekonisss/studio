@@ -1,4 +1,3 @@
-
 {
   "app.name": "DriverCheck",
   "sidebar.dashboard": "Панель управления",
@@ -297,7 +296,7 @@
   "search.title": "Поиск Водителей",
   "search.description": "Введите имя и фамилию водителя.",
   "search.queryLabel": "Поисковый запрос",
-  "search.queryPlaceholder": "Имя Фамилия",
+  "search.queryPlaceholder": "Введите имя или фамилию водителя...",
   "search.searchButton": "Искать",
   "search.loading": "Поиск данных...",
   "search.noResults.title": "Результаты не найдены",

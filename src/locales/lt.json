@@ -308,7 +308,7 @@
   "search.title": "Vairuotojų Paieška",
   "search.description": "Įveskite vairuotojo vardą, pavardę.",
   "search.queryLabel": "Paieškos frazė",
-  "search.queryPlaceholder": "Vardas Pavardė",
+  "search.queryPlaceholder": "Įveskite vairuotojo vardą arba pavardę...",
   "search.searchButton": "Ieškoti",
   "search.loading": "Ieškoma duomenų...",
   "search.noResults.title": "Rezultatų Nerasta",

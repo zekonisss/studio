@@ -1,4 +1,3 @@
-
 {
   "app.name": "DriverCheck",
   "sidebar.dashboard": "Dashboard",
@@ -309,7 +308,7 @@
   "search.title": "Search Drivers",
   "search.description": "Enter driver's name, surname.",
   "search.queryLabel": "Search query",
-  "search.queryPlaceholder": "Name Surname",
+  "search.queryPlaceholder": "Enter driver's name or surname...",
   "search.searchButton": "Search",
   "search.loading": "Searching data...",
   "search.noResults.title": "No Results Found",

@@ -1,4 +1,3 @@
-
 {
   "app.name": "DriverCheck",
   "sidebar.dashboard": "Vadības panelis",
@@ -297,7 +296,7 @@
   "search.title": "Meklēt Vadītājus",
   "search.description": "Ievadiet vadītāja vārdu, uzvārdu.",
   "search.queryLabel": "Meklēšanas vaicājums",
-  "search.queryPlaceholder": "Vārds Uzvārds",
+  "search.queryPlaceholder": "Ievadiet vadītāja vārdu vai uzvārdu...",
   "search.searchButton": "Meklēt",
   "search.loading": "Meklē datus...",
   "search.noResults.title": "Rezultāti nav atrasti",

@@ -1,4 +1,3 @@
-
 {
   "app.name": "DriverCheck",
   "sidebar.dashboard": "Panel nawigacyjny",
@@ -297,7 +296,7 @@
   "search.title": "Szukaj Kierowców",
   "search.description": "Wpisz imię i nazwisko kierowcy.",
   "search.queryLabel": "Zapytanie wyszukiwania",
-  "search.queryPlaceholder": "Imię Nazwisko",
+  "search.queryPlaceholder": "Wpisz imię lub nazwisko kierowcy...",
   "search.searchButton": "Szukaj",
   "search.loading": "Wyszukiwanie danych...",
   "search.noResults.title": "Nie znaleziono wyników",

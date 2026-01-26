@@ -103,7 +103,10 @@ export default function SearchPage() {
                                 render={({ field }) => (
                                     <FormItem className="flex-grow w-full">
                                         <FormControl>
-                                            <Input placeholder={t('search.queryPlaceholder')} {...field} />
+                                            <div className="relative">
+                                                <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+                                                <Input placeholder={t('search.queryPlaceholder')} {...field} className="pl-10" />
+                                            </div>
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
