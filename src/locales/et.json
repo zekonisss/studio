@@ -351,5 +351,23 @@
   "support.contact.emailButton": "Võta ühendust e-posti teel",
   "support.contact.emailLink": "mailto:support@drivercheck.eu",
   "usersImport.title": "Impordi kasutajad",
-  "usersImport.description": "Impordi uued kasutajad Exceli failist."
+  "usersImport.description": "Impordi uued kasutajad Exceli failist.",
+  "landing.hero.title": "Usaldusväärne kontrollplatvorm",
+  "landing.hero.subtitle": "Vähendage riske ja tehke turvalisemaid otsuseid. Liituge kogukonnaga, mis jagab kogemusi.",
+  "landing.hero.ctaButton": "Alusta kohe",
+  "landing.hero.secondaryButton": "Lisateave",
+  "landing.stats.totalReports": "Kirjete koguarv andmebaasis",
+  "landing.stats.activeCompanies": "Aktiivsed ettevõtted",
+  "landing.stats.positiveImpact": "Riskide vähendamine (%)",
+  "landing.features.title": "Põhifunktsioonid",
+  "landing.features.subtitle": "Ühtne platvorm, mis aitab teil teha paremaid otsuseid.",
+  "landing.features.feature1.title": "Kiirkontroll",
+  "landing.features.feature1.description": "Kontrollige kiiresti potentsiaalseid kandidaate nime ja perekonnanime järgi ühises vedajate andmebaasis.",
+  "landing.features.feature2.title": "Turvaline andmete üleslaadimine",
+  "landing.features.feature2.description": "Lisage hõlpsalt ja turvaliselt intsidentide aruandeid, aidates kaasa läbipaistvama kogukonna loomisele.",
+  "landing.features.feature3.title": "Riskiennetus",
+  "landing.features.feature3.description": "Vältige potentsiaalseid kahjusi, mis on seotud kütusevarguse, varakahju või vastutustundetu käitumisega.",
+  "landing.footer.rights": "Kõik õigused kaitstud."
 }
+
+  

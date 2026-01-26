@@ -724,5 +724,23 @@
   "support.contact.emailButton": "Sazināties pa E-pastu",
   "support.contact.emailLink": "mailto:support@drivercheck.eu",
   "usersImport.title": "Importēt lietotājus",
-  "usersImport.description": "Importēt jaunus lietotājus no Excel faila."
+  "usersImport.description": "Importēt jaunus lietotājus no Excel faila.",
+  "landing.hero.title": "Uzticama pārbaudes platforma",
+  "landing.hero.subtitle": "Samaziniet riskus un pieņemiet drošākus lēmumus. Pievienojieties kopienai, kas dalās pieredzē.",
+  "landing.hero.ctaButton": "Sākt tagad",
+  "landing.hero.secondaryButton": "Uzzināt vairāk",
+  "landing.stats.totalReports": "Kopējais ierakstu skaits datu bāzē",
+  "landing.stats.activeCompanies": "Aktīvie uzņēmumi",
+  "landing.stats.positiveImpact": "Riska samazināšana (%)",
+  "landing.features.title": "Galvenās funkcijas",
+  "landing.features.subtitle": "Vienota platforma, kas paredzēta, lai palīdzētu jums pieņemt labākus lēmumus.",
+  "landing.features.feature1.title": "Tūlītēja pārbaude",
+  "landing.features.feature1.description": "Ātri pārbaudiet potenciālos kandidātus pēc vārda un uzvārda kopējā pārvadātāju datu bāzē.",
+  "landing.features.feature2.title": "Droša datu augšupielāde",
+  "landing.features.feature2.description": "Viegli un droši pievienojiet incidentu ziņojumus, veicinot pārredzamāku kopienu.",
+  "landing.features.feature3.title": "Riska novēršana",
+  "landing.features.feature3.description": "Izvairieties no potenciālajiem zaudējumiem, kas saistīti ar degvielas zādzībām, īpašuma bojājumiem vai bezatbildīgu uzvedību.",
+  "landing.footer.rights": "Visas tiesības aizsargātas."
 }
+
+  

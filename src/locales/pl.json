@@ -724,5 +724,23 @@
   "support.contact.emailButton": "Skontaktuj się przez e-mail",
   "support.contact.emailLink": "mailto:support@drivercheck.eu",
   "usersImport.title": "Importuj użytkowników",
-  "usersImport.description": "Importuj nowych użytkowników z pliku Excel."
+  "usersImport.description": "Importuj nowych użytkowników z pliku Excel.",
+  "landing.hero.title": "Niezawodna platforma weryfikacyjna",
+  "landing.hero.subtitle": "Zmniejszaj ryzyko i podejmuj bezpieczniejsze decyzje. Dołącz do społeczności, która dzieli się doświadczeniem.",
+  "landing.hero.ctaButton": "Zacznij teraz",
+  "landing.hero.secondaryButton": "Dowiedz się więcej",
+  "landing.stats.totalReports": "Całkowita liczba wpisów w bazie danych",
+  "landing.stats.activeCompanies": "Aktywne firmy",
+  "landing.stats.positiveImpact": "Redukcja ryzyka (%)",
+  "landing.features.title": "Kluczowe funkcje",
+  "landing.features.subtitle": "Zunifikowana platforma zaprojektowana, aby pomóc Ci podejmować lepsze decyzje.",
+  "landing.features.feature1.title": "Błyskawiczna weryfikacja",
+  "landing.features.feature1.description": "Szybko sprawdzaj potencjalnych kandydatów po imieniu i nazwisku we wspólnej bazie danych przewoźników.",
+  "landing.features.feature2.title": "Bezpieczne przesyłanie danych",
+  "landing.features.feature2.description": "Łatwo i bezpiecznie dodawaj raporty o incydentach, przyczyniając się do tworzenia bardziej przejrzystej społeczności.",
+  "landing.features.feature3.title": "Zapobieganie ryzyku",
+  "landing.features.feature3.description": "Unikaj potencjalnych strat związanych z kradzieżą paliwa, uszkodzeniem mienia lub nieodpowiedzialnym zachowaniem.",
+  "landing.footer.rights": "Wszelkie prawa zastrzeżone."
 }
+
+  

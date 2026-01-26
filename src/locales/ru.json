@@ -724,5 +724,23 @@
   "support.contact.emailButton": "Связаться по электронной почте",
   "support.contact.emailLink": "mailto:support@drivercheck.eu",
   "usersImport.title": "Импорт пользователей",
-  "usersImport.description": "Импортировать новых пользователей из файла Excel."
+  "usersImport.description": "Импортировать новых пользователей из файла Excel.",
+  "landing.hero.title": "Надежная платформа для проверки",
+  "landing.hero.subtitle": "Снижайте риски и принимайте более безопасные решения. Присоединяйтесь к сообществу, которое делится опытом.",
+  "landing.hero.ctaButton": "Начать сейчас",
+  "landing.hero.secondaryButton": "Узнать больше",
+  "landing.stats.totalReports": "Всего записей в базе данных",
+  "landing.stats.activeCompanies": "Активные компании",
+  "landing.stats.positiveImpact": "Снижение риска (%)",
+  "landing.features.title": "Ключевые возможности",
+  "landing.features.subtitle": "Единая платформа, призванная помочь вам принимать более взвешенные решения.",
+  "landing.features.feature1.title": "Мгновенная проверка",
+  "landing.features.feature1.description": "Быстро проверяйте потенциальных кандидатов по имени и фамилии в общей базе данных перевозчиков.",
+  "landing.features.feature2.title": "Безопасная загрузка данных",
+  "landing.features.feature2.description": "Легко и безопасно добавляйте отчеты об инцидентах, способствуя созданию более прозрачного сообщества.",
+  "landing.features.feature3.title": "Предотвращение рисков",
+  "landing.features.feature3.description": "Избегайте потенциальных потерь, связанных с кражей топлива, повреждением имущества или безответственным поведением.",
+  "landing.footer.rights": "Все права защищены."
 }
+
+  

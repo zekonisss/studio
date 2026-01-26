@@ -736,5 +736,23 @@
   "support.contact.emailButton": "Contact via Email",
   "support.contact.emailLink": "mailto:support@drivercheck.eu",
   "usersImport.title": "Import Users",
-  "usersImport.description": "Import new users from an Excel file."
+  "usersImport.description": "Import new users from an Excel file.",
+  "landing.hero.title": "Reliable verification platform",
+  "landing.hero.subtitle": "Reduce risks and make safer decisions. Join a community that shares experience.",
+  "landing.hero.ctaButton": "Get Started Now",
+  "landing.hero.secondaryButton": "Learn More",
+  "landing.stats.totalReports": "Total entries in the database",
+  "landing.stats.activeCompanies": "Active companies",
+  "landing.stats.positiveImpact": "Risk reduction (%)",
+  "landing.features.title": "Key Features",
+  "landing.features.subtitle": "A unified platform designed to help you make better decisions.",
+  "landing.features.feature1.title": "Instant Check",
+  "landing.features.feature1.description": "Quickly check potential candidates by name and surname in a common carrier database.",
+  "landing.features.feature2.title": "Secure Data Upload",
+  "landing.features.feature2.description": "Easily and securely add incident reports, contributing to a more transparent community.",
+  "landing.features.feature3.title": "Risk Prevention",
+  "landing.features.feature3.description": "Avoid potential losses related to fuel theft, property damage, or irresponsible behavior.",
+  "landing.footer.rights": "All rights reserved."
 }
+
+  
