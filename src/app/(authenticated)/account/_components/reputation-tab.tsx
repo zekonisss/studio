@@ -61,7 +61,7 @@ export function ReputationTab() {
                     <UserSearch className="h-5 w-5 text-primary" />
                     <div className="flex flex-col leading-none">
                         <span className="font-bold text-slate-800 text-sm">DriverCheck</span>
-                        <span className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">Trusted Partner {currentYear}</span>
+                        <span className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">Trusted Partner ${currentYear}</span>
                     </div>
                  </div>
               </div>
@@ -99,7 +99,7 @@ export function ReputationTab() {
                     
                     {/* 4. Apačioje PARTNER + METAI */}
                     <div className="absolute -bottom-3.5 bg-primary text-primary-foreground text-[10px] font-bold px-3 py-1 rounded-full shadow-md border-2 border-white dark:border-slate-900">
-                        PARTNER {currentYear}
+                        PARTNER ${currentYear}
                     </div>
                  </div>
 
