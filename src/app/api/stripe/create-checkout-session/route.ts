@@ -34,7 +34,7 @@ export async function POST(req: Request) {
       await userDocRef.update({ stripeCustomerId });
     }
 
-    const priceId = process.env.NEXT_PUBLIC_STRIPE_PRICE_ID;
+    const priceId = process.env.STRIPE_PRICE_ID;
     if (!priceId) {
         throw new Error('Stripe Price ID is not configured in environment variables.');
     }
