@@ -3,6 +3,7 @@ import { headers } from 'next/headers';
 import Stripe from 'stripe';
 import { stripe } from '@/lib/stripe';
 import { adminDb } from '@/lib/firebase-admin';
+import { Timestamp } from 'firebase-admin/firestore';
 
 // Helper to update subscription status in Firestore
 const manageSubscriptionStatusChange = async (subscriptionId: string, customerId: string) => {
@@ -27,11 +28,16 @@ const manageSubscriptionStatusChange = async (subscriptionId: string, customerId
 
     // Map Stripe status to our app's status
     const paymentStatus = (subscription.status === 'active' || subscription.status === 'trialing') ? 'active' : 'inactive';
+    
+    const subscriptionEndDate = subscription.current_period_end 
+        ? Timestamp.fromMillis(subscription.current_period_end * 1000) 
+        : null;
 
     await userDocRef.update({
         paymentStatus,
         stripeSubscriptionId: subscription.id,
         stripePriceId: subscription.items.data[0].price.id,
+        subscriptionEndDate,
     });
 };
 

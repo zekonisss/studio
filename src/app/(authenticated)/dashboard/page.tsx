@@ -17,7 +17,7 @@ import { AnimatedCounter } from '@/components/shared/animated-counter';
 
 export default function DashboardPage() {
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
   const [isWelcomeModalOpen, setIsWelcomeModalOpen] = useState(false);
 
   const [userReportsCount, setUserReportsCount] = useState(0);
@@ -25,6 +25,9 @@ export default function DashboardPage() {
   const [totalReportsCount, setTotalReportsCount] = useState(0);
   const [allReportsData, setAllReportsData] = useState<any[]>([]); // Saugome visus duomenis grafikui
   const [isStatsLoading, setIsStatsLoading] = useState(true);
+
+  const [showSubscriptionWarning, setShowSubscriptionWarning] = useState(false);
+  const [subscriptionEndDate, setSubscriptionEndDate] = useState('');
 
   useEffect(() => {
     const hasSeenWelcome = localStorage.getItem('hasSeenWelcomeModal');
@@ -61,6 +64,16 @@ export default function DashboardPage() {
         // Bendras platformos ataskaitų kiekis
         setTotalReportsCount(activeReports.length);
 
+        if (user.subscriptionEndDate) {
+            const endDate = new Date(user.subscriptionEndDate);
+            const today = new Date();
+            const daysUntilExpiry = (endDate.getTime() - today.getTime()) / (1000 * 3600 * 24);
+            setSubscriptionEndDate(endDate.toLocaleDateString(locale));
+            if (daysUntilExpiry < 30) {
+                setShowSubscriptionWarning(true);
+            }
+        }
+
       } catch (error) {
         console.error("Failed to fetch dashboard stats:", error);
       } finally {
@@ -71,7 +84,7 @@ export default function DashboardPage() {
     if (user) {
         fetchStats();
     }
-  }, [user]);
+  }, [user, locale]);
 
   const StatCard = ({ title, value, icon: Icon, link, linkText, isLoading }: { title: string, value: number, icon: React.ElementType, link: string, linkText: string, isLoading: boolean }) => (
      <Card className="transition-shadow duration-300 hover:shadow-glow-primary">
@@ -163,17 +176,19 @@ export default function DashboardPage() {
         </div>
         
         {/* Prenumeratos įspėjimas */}
-        <Card className="border-amber-500/50 bg-amber-50/20 dark:bg-amber-900/10">
-            <CardHeader>
-                <CardTitle className="text-amber-700 dark:text-amber-500">{t('dashboard.overview.subscriptionEndingSoon.title')}</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <p>{t('dashboard.overview.subscriptionEndingSoon.message', { endDate: '2024-12-31' })}</p>
-                <Button asChild size="sm" className="mt-4">
-                    <Link href="/authenticated/account?tab=payment">{t('account.payments.manageSubscriptionButton')}</Link>
-                </Button>
-            </CardContent>
-        </Card>
+        {showSubscriptionWarning && user?.paymentStatus === 'active' && (
+            <Card className="border-amber-500/50 bg-amber-50/20 dark:bg-amber-900/10">
+                <CardHeader>
+                    <CardTitle className="text-amber-700 dark:text-amber-500">{t('dashboard.overview.subscriptionEndingSoon.title')}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <p>{t('dashboard.overview.subscriptionEndingSoon.message', { endDate: subscriptionEndDate })}</p>
+                    <Button asChild size="sm" className="mt-4">
+                        <Link href="/authenticated/account?tab=payment">{t('account.payments.manageSubscriptionButton')}</Link>
+                    </Button>
+                </CardContent>
+            </Card>
+        )}
 
       </div>
     </>

@@ -19,13 +19,6 @@ export default function AuthenticatedLayout({
   const pathname = usePathname();
 
   useEffect(() => {
-    // 1. DEBUG: Pamatysi tikrąsias reikšmes naršyklės konsolėje (F12)
-    console.log('AUTH DEBUG:', {
-      isAdmin: user?.isAdmin,
-      paymentStatus: user?.paymentStatus,
-      path: pathname
-    });
-
     if (isLoading) return;
 
     // 2. Jei vartotojo nėra - į login

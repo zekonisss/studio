@@ -10,7 +10,7 @@ import { Loader2, CreditCard } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export default function PaymentsTab() {
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
   const { user } = useAuth();
   const { toast } = useToast();
   const [isPortalLoading, setIsPortalLoading] = useState(false);
@@ -82,7 +82,9 @@ export default function PaymentsTab() {
           <>
             <CardTitle className="text-green-600">{t('account.payments.status.active.title')}</CardTitle>
             <CardDescription>{t('account.payments.status.active.description')}</CardDescription>
-            <p className="text-sm pt-2">{t('account.payments.status.active.validUntil')}: <span className="font-semibold">2025-07-26</span></p>
+            {user.subscriptionEndDate ? (
+              <p className="text-sm pt-2">{t('account.payments.status.active.validUntil')}: <span className="font-semibold">{new Date(user.subscriptionEndDate).toLocaleDateString(locale)}</span></p>
+            ) : null}
              <p className="text-xs text-muted-foreground pt-1">{t('account.payments.status.active.priceInfo', { monthlyPrice: '29.99', annualPrice: '359.99' })}</p>
           </>
         );

@@ -20,6 +20,7 @@ export interface UserProfileFirestore {
   stripeCustomerId?: string | null;
   stripeSubscriptionId?: string | null;
   stripePriceId?: string | null;
+  subscriptionEndDate?: Timestamp | null;
 }
 
 export interface ReportFirestore {
@@ -97,6 +98,7 @@ export interface UserProfile {
   stripeCustomerId?: string | null;
   stripeSubscriptionId?: string | null;
   stripePriceId?: string | null;
+  subscriptionEndDate?: string | null;
 }
 
 export interface Report {
