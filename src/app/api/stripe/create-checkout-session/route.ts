@@ -27,7 +27,7 @@ export async function POST(req: Request) {
     
     let { stripeCustomerId, email } = userDoc.data()!;
 
-    // Create a Stripe customer if one doesn't exist
+    // Sukuriamas Stripe klientas, jei jo nėra
     if (!stripeCustomerId) {
       const customer = await stripe.customers.create({ email });
       stripeCustomerId = customer.id;
@@ -35,12 +35,21 @@ export async function POST(req: Request) {
     }
 
     const priceId = process.env.NEXT_PUBLIC_STRIPE_PRICE_ID;
-        if (!priceId) {
-        throw new Error('Stripe Price ID is not configured in environment variables.');
+    if (!priceId) {
+      throw new Error('Stripe Price ID is not configured in environment variables.');
     }
 
+    // Stripe Checkout sesijos kūrimas su kortele ir banko pavedimu
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
+      payment_method_types: ['card', 'customer_balance'], // Pridėta: customer_balance
+      payment_method_options: {
+        customer_balance: {
+          funding_type: 'bank_transfer',
+          bank_transfer: {
+            type: 'eu_bank_transfer', // SEPA banko pavedimams (Europa)
+          },
+        },
+      },
       mode: 'subscription',
       customer: stripeCustomerId,
       line_items: [{

@@ -3,14 +3,7 @@
 
 import type { Dispatch, ReactNode, SetStateAction } from 'react';
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import ltTranslations from '@/locales/lt.json';
-import enTranslations from '@/locales/en.json';
-import ruTranslations from '@/locales/ru.json';
-import lvTranslations from '@/locales/lv.json';
-import etTranslations from '@/locales/et.json';
-import plTranslations from '@/locales/pl.json';
-
-type Locale = 'lt' | 'en' | 'ru' | 'lv' | 'et' | 'pl';
+import { translationsMaster, type Locale } from '@/lib/translations-master';
 
 interface LanguageContextType {
   locale: Locale;
@@ -18,19 +11,12 @@ interface LanguageContextType {
   t: (key: string, params?: Record<string, string | number>) => string;
 }
 
-const translations: Record<Locale, Record<string, string>> = {
-  lt: ltTranslations,
-  en: enTranslations,
-  ru: ruTranslations,
-  lv: lvTranslations,
-  et: etTranslations,
-  pl: plTranslations,
-};
+const supportedLocales: Locale[] = ['lt', 'en', 'ru', 'lv', 'et', 'pl'];
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export const LanguageProvider = ({ children }: { children: ReactNode }) => {
-  const [locale, setLocale] = useState<Locale>('lt'); // Default to Lithuanian initially
+  const [locale, setLocale] = useState<Locale>('lt');
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
@@ -40,14 +26,14 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (isClient) {
       const storedLocale = localStorage.getItem('drivercheck-locale') as Locale | null;
-      if (storedLocale && translations.hasOwnProperty(storedLocale)) {
+      if (storedLocale && supportedLocales.includes(storedLocale)) {
         setLocale(storedLocale);
       } else {
         const browserLang = navigator.language.split('-')[0] as Locale;
-        if (translations.hasOwnProperty(browserLang)) {
+        if (supportedLocales.includes(browserLang)) {
           setLocale(browserLang);
         } else {
-          setLocale('lt'); // Fallback to Lithuanian if browser language not supported
+          setLocale('lt');
         }
       }
     }
@@ -61,16 +47,24 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
   }, [locale, isClient]);
 
   const t = useCallback((key: string, params?: Record<string, string | number>): string => {
-    let translation = translations[locale]?.[key] || translations['en']?.[key] || key; // Fallback to English, then key itself
+    const translationsForKey = translationsMaster[key];
+
+    if (!translationsForKey) {
+      return key; // Grąžiname raktą, jei vertimų išvis nėra
+    }
+
+    // Bandoma gauti vertimą pagal esamą lokalę, jei nepavyksta - pagal anglų, tada pirmą pasitaikiusį, galiausiai patį raktą.
+    let translation = translationsForKey[locale] ?? translationsForKey['en'] ?? Object.values(translationsForKey).find(Boolean) ?? key;
+
     if (params) {
       Object.keys(params).forEach(paramKey => {
         const value = params[paramKey];
         if (value !== null && value !== undefined) {
-          translation = translation.replace(`{${paramKey}}`, String(value));
+          translation = (translation as string).replace(`{${paramKey}}`, String(value));
         }
       });
     }
-    return translation;
+    return translation as string;
   }, [locale]);
 
   return (
