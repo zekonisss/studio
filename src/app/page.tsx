@@ -49,32 +49,32 @@ export default function HomePage() {
       </div>
       <div>
         {loading ? (
-          <Skeleton className="h-8 w-20 mx-auto mb-1 bg-white/10" />
+          <Skeleton className="h-8 w-20 mx-auto mb-1" />
         ) : (
-          <div className="text-3xl font-bold text-white tracking-tighter">
+          <div className="text-3xl font-bold tracking-tighter">
             <AnimatedCounter value={value} />
           </div>
         )}
-        <p className="text-sm text-gray-400 font-medium uppercase tracking-widest">{label}</p>
+        <p className="text-sm text-muted-foreground font-medium uppercase tracking-widest">{label}</p>
       </div>
     </div>
   );
 
   return (
-    <div className="flex flex-col min-h-screen bg-background text-white selection:bg-primary/30">
+    <div className="flex flex-col min-h-screen bg-background text-foreground selection:bg-primary/30">
       {/* HEADER */}
-      <header className="sticky top-0 z-50 w-full border-b border-white/5 bg-background/80 backdrop-blur-xl">
+      <header className="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur-xl">
         <div className="container mx-auto flex h-20 items-center justify-between px-6">
           <Link href="/" className="flex items-center gap-2 group">
             <UserSearch className="h-8 w-8 text-primary transition-transform group-hover:rotate-12" />
-            <span className="text-2xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent italic">
+            <span className="text-2xl font-bold bg-gradient-to-r from-slate-800 to-slate-500 dark:from-white dark:to-gray-400 bg-clip-text text-transparent italic">
               {t('app.name')}
             </span>
           </Link>
           <div className="flex items-center gap-2">
             <ThemeToggle />
             <LanguageSwitcher />
-            <Button variant="ghost" asChild className="text-gray-400 hover:text-white hover:bg-white/5">
+            <Button variant="ghost" asChild className="text-muted-foreground hover:text-foreground hover:bg-accent/50">
               <Link href="/login">{t('login.loginButton')}</Link>
             </Button>
             <Button asChild className="font-semibold shadow-glow-primary transition-all active:scale-95">
@@ -88,14 +88,14 @@ export default function HomePage() {
         {/* HERO SECTION */}
         <section className="relative overflow-hidden pt-24 pb-20 md:pt-40 md:pb-32 flex flex-col items-center justify-center text-center px-6">
           {/* Neon Glow Effects */}
-          <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -z-10 w-[600px] h-[300px] bg-primary/20 rounded-full blur-[120px] opacity-50" />
-          <div className="absolute bottom-0 right-1/4 -z-10 w-[400px] h-[400px] bg-blue-600/10 rounded-full blur-[100px] opacity-30" />
+          <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -z-10 w-[600px] h-[300px] bg-primary/20 rounded-full blur-[120px] opacity-50 dark:opacity-100" />
+          <div className="absolute bottom-0 right-1/4 -z-10 w-[400px] h-[400px] bg-blue-600/10 rounded-full blur-[100px] opacity-30 dark:opacity-50" />
 
           <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-1000">
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tight leading-[1.05] bg-gradient-to-b from-white to-gray-400 bg-clip-text text-transparent">
+            <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tight leading-[1.05] bg-gradient-to-b from-foreground to-muted-foreground bg-clip-text text-transparent">
               {t('landing.hero.title')}
             </h1>
-            <p className="max-w-2xl mx-auto text-lg md:text-xl text-gray-400 leading-relaxed">
+            <p className="max-w-2xl mx-auto text-lg md:text-xl text-muted-foreground leading-relaxed">
               {t('landing.hero.subtitle')}
             </p>
             <div className="flex flex-col sm:flex-row justify-center items-center gap-4 pt-4">
@@ -104,7 +104,7 @@ export default function HomePage() {
                   {t('landing.hero.ctaButton')} <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
-              <Button size="lg" variant="outline" asChild className="h-16 px-10 text-lg border-white/10 hover:bg-white/5 backdrop-blur-md">
+              <Button size="lg" variant="outline" asChild className="h-16 px-10 text-lg border-border hover:bg-accent backdrop-blur-md">
                 <Link href="/support">{t('landing.hero.secondaryButton')}</Link>
               </Button>
             </div>
@@ -112,22 +112,20 @@ export default function HomePage() {
         </section>
 
         {/* STATS SECTION */}
-        <section className="py-16 bg-white/[0.02] border-y border-white/5">
-          <div className="container mx-auto px-6">
-            <div className="flex flex-wrap justify-center gap-12 max-w-5xl mx-auto">
+        <section className="py-16 bg-accent/40 border-y border-border flex justify-center">
+            <div className="flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16">
               <Stat value={totalReports} label={t('landing.stats.totalReports')} icon={FileText} loading={isStatsLoading} />
               <Stat value={150} label={t('landing.stats.activeCompanies')} icon={ShieldCheck} loading={isStatsLoading} />
               <Stat value={98} label={t('landing.stats.positiveImpact')} icon={BarChart3} loading={isStatsLoading} />
             </div>
-          </div>
         </section>
 
         {/* FEATURES SECTION */}
         <section className="py-24 md:py-32 bg-background">
           <div className="container mx-auto px-6 text-center">
             <div className="max-w-2xl mx-auto mb-20">
-              <h2 className="text-4xl md:text-5xl font-bold mb-6 text-white">{t('landing.features.title')}</h2>
-              <p className="text-gray-400 text-lg">{t('landing.features.subtitle')}</p>
+              <h2 className="text-4xl md:text-5xl font-bold mb-6">{t('landing.features.title')}</h2>
+              <p className="text-muted-foreground text-lg">{t('landing.features.subtitle')}</p>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
@@ -136,12 +134,12 @@ export default function HomePage() {
                 { icon: FileText, title: t('landing.features.feature2.title'), desc: t('landing.features.feature2.description') },
                 { icon: BarChart3, title: t('landing.features.feature3.title'), desc: t('landing.features.feature3.description') }
               ].map((f, i) => (
-                <Card key={i} className="group p-8 bg-card/50 border-white/10 backdrop-blur-xl transition-all hover:bg-white/[0.07] hover:border-primary/40 rounded-3xl">
+                <Card key={i} className="group p-8 bg-card/50 border-border backdrop-blur-xl transition-all hover:bg-accent/50 hover:border-primary/40 rounded-3xl">
                   <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-6 mx-auto group-hover:scale-110 transition-transform">
                     <f.icon className="h-8 w-8 text-primary" />
                   </div>
-                  <h3 className="text-xl font-bold mb-3 text-white">{f.title}</h3>
-                  <p className="text-gray-400 leading-relaxed text-sm md:text-base">{f.desc}</p>
+                  <h3 className="text-xl font-bold mb-3">{f.title}</h3>
+                  <p className="text-muted-foreground leading-relaxed text-sm md:text-base">{f.desc}</p>
                 </Card>
               ))}
             </div>
@@ -149,8 +147,8 @@ export default function HomePage() {
         </section>
       </main>
 
-      <footer className="border-t border-white/5 py-12 bg-background">
-        <div className="container mx-auto flex flex-col md:flex-row items-center justify-between gap-6 px-6 text-sm text-gray-500">
+      <footer className="border-t border-border py-12 bg-background">
+        <div className="container mx-auto flex flex-col md:flex-row items-center justify-between gap-6 px-6 text-sm text-muted-foreground">
           <p>&copy; {new Date().getFullYear()} {t('app.name')}. {t('landing.footer.rights')}</p>
           <div className="flex gap-8">
             <Link href="/terms" className="hover:text-primary transition-colors">{t('sidebar.terms')}</Link>
