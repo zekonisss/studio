@@ -104,9 +104,6 @@ export default function HomePage() {
                   {t('landing.hero.ctaButton')} <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
-              <Button size="lg" variant="outline" asChild className="h-16 px-10 text-lg border-border hover:bg-accent backdrop-blur-md">
-                <Link href="/support">{t('landing.hero.secondaryButton')}</Link>
-              </Button>
             </div>
           </div>
         </section>
