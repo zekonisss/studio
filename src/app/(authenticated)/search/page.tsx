@@ -83,9 +83,11 @@ export default function SearchPage() {
             )}>
                 <div className={cn("w-full", !hasSearched ? 'max-w-2xl' : '')}>
                     {!hasSearched && (
-                        <div className="flex justify-center items-center gap-2 mb-6">
-                            <UserSearch className="h-16 w-16 text-primary" />
-                            <h1 className="text-5xl font-bold tracking-tighter">DriverCheck</h1>
+                        <div className="flex justify-center items-center gap-4 mb-6 group">
+                            <UserSearch className="h-16 w-16 text-primary transition-transform group-hover:rotate-12" />
+                            <h1 className="text-5xl font-bold bg-gradient-to-r from-slate-800 to-slate-500 dark:from-white dark:to-gray-400 bg-clip-text text-transparent italic">
+                                {t('app.name')}
+                            </h1>
                         </div>
                     )}
                     <Form {...form}>
