@@ -113,7 +113,7 @@ export default function DashboardPage() {
         {/* Pasveikinimo blokas */}
         <div className="bg-card border rounded-lg p-6 shadow-sm">
           <h1 className="text-2xl md:text-3xl font-bold text-primary">
-            {t('dashboard.greeting', { contactPerson: user?.contactPerson || user?.email || t('dashboard.defaultUser') })}
+            {t('dashboard.greeting', { contactPerson: user?.companyName || user?.email || t('dashboard.defaultUser') })}
           </h1>
           <p className="text-muted-foreground mt-1">
             {t('dashboard.platformDescription')}
