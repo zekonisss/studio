@@ -11,6 +11,8 @@ import { useEffect, useState } from "react";
 import { AnimatedCounter } from "@/components/shared/animated-counter";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getPublicReportCount } from "./page-actions";
+import { LanguageSwitcher } from "@/components/navigation/language-switcher";
+import { ThemeToggle } from "@/components/navigation/theme-toggle";
 
 export default function HomePage() {
   const { t } = useLanguage();
@@ -69,7 +71,9 @@ export default function HomePage() {
               {t('app.name')}
             </span>
           </Link>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <LanguageSwitcher />
             <Button variant="ghost" asChild className="text-gray-400 hover:text-white hover:bg-white/5">
               <Link href="/login">{t('login.loginButton')}</Link>
             </Button>
