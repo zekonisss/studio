@@ -22,6 +22,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useLanguage } from '@/contexts/language-context';
+import { cn } from '@/lib/utils';
+import Link from 'next/link';
+import { UserSearch } from 'lucide-react';
 
 
 export default function AuthenticatedLayout({
@@ -40,7 +43,14 @@ export default function AuthenticatedLayout({
     promptTime: 2,
   });
 
+  const isLegalPage = pathname === '/terms' || pathname === '/privacy';
+
   useEffect(() => {
+    // Don't perform auth checks on legal pages.
+    if (isLegalPage) {
+      return;
+    }
+    
     if (isLoading) return;
 
     if (!user) {
@@ -68,10 +78,38 @@ export default function AuthenticatedLayout({
         router.replace('/dashboard');
       }
     }
-  }, [user, isLoading, pathname, router]);
+  }, [user, isLoading, pathname, router, isLegalPage]);
 
-  if (isLoading || !user) {
+
+  // For unauthenticated users on legal pages, render a public-style layout
+  if (isLegalPage && !isLoading && !user) {
     return (
+      <div className={cn(
+        "flex min-h-screen w-full flex-col items-center bg-muted/40 p-4 relative",
+        "hero-aurora"
+      )}>
+        <div className="absolute top-4 right-4 flex items-center gap-2 z-10">
+            <ThemeToggle />
+            <LanguageSwitcher />
+        </div>
+        <main className="relative z-10 w-full max-w-4xl mt-20">
+          {children}
+        </main>
+      </div>
+    )
+  }
+  
+  if (isLoading || (!user && !isLegalPage)) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-background">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    // This should not be reached if logic is correct, but it's a safeguard.
+     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
       </div>
