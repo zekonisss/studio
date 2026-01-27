@@ -111,29 +111,29 @@ export default function SignupPage() {
                                 <FormMessage />
                             </FormItem>
                         )} />
-                        <FormField control={form.control} name="email" render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>{t('signup.form.email.label')}</FormLabel>
-                                <FormControl><Input type="email" placeholder={t('signup.form.email.placeholder')} {...field} /></FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )} />
-                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <FormField control={form.control} name="password" render={({ field }) => (
+                        <div className="md:col-span-2">
+                            <FormField control={form.control} name="email" render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>{t('signup.form.password.label')}</FormLabel>
-                                    <FormControl><Input type="password" placeholder={t('signup.form.password.placeholder')} {...field} /></FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )} />
-                            <FormField control={form.control} name="confirmPassword" render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>{t('signup.form.confirmPassword.label')}</FormLabel>
-                                    <FormControl><Input type="password" placeholder={t('signup.form.confirmPassword.placeholder')} {...field} /></FormControl>
+                                    <FormLabel>{t('signup.form.email.label')}</FormLabel>
+                                    <FormControl><Input type="email" placeholder={t('signup.form.email.placeholder')} {...field} /></FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )} />
                         </div>
+                        <FormField control={form.control} name="password" render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>{t('signup.form.password.label')}</FormLabel>
+                                <FormControl><Input type="password" placeholder={t('signup.form.password.placeholder')} {...field} /></FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )} />
+                        <FormField control={form.control} name="confirmPassword" render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>{t('signup.form.confirmPassword.label')}</FormLabel>
+                                <FormControl><Input type="password" placeholder={t('signup.form.confirmPassword.placeholder')} {...field} /></FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )} />
                     </div>
                      <FormField control={form.control} name="agreeToTerms" render={({ field }) => (
                         <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow-sm">
