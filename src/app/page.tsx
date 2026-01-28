@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AnimatedCounter } from "@/components/shared/animated-counter";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getPublicReportCount, getRecentActivity } from "./page-actions";
+import { getPublicReportCount } from "./page-actions";
 import { LanguageSwitcher } from "@/components/navigation/language-switcher";
 import { ThemeToggle } from "@/components/navigation/theme-toggle";
 
@@ -20,8 +20,6 @@ export default function HomePage() {
   const router = useRouter();
   const [totalReports, setTotalReports] = useState(0);
   const [isStatsLoading, setIsStatsLoading] = useState(true);
-  const [recentActivity, setRecentActivity] = useState<{id: string, text: string, time: string}[]>([]);
-  const [isActivityLoading, setIsActivityLoading] = useState(true);
 
   useEffect(() => {
     if (!isLoading && user) {
@@ -32,19 +30,13 @@ export default function HomePage() {
   useEffect(() => {
     async function fetchData() {
       setIsStatsLoading(true);
-      setIsActivityLoading(true);
       try {
-        const [count, activity] = await Promise.all([
-          getPublicReportCount(),
-          getRecentActivity()
-        ]);
+        const count = await getPublicReportCount();
         setTotalReports(count || 0);
-        setRecentActivity(activity);
       } catch (error) {
         console.error("Failed to fetch page data:", error);
       } finally {
         setIsStatsLoading(false);
-        setIsActivityLoading(false);
       }
     }
     fetchData();
@@ -113,27 +105,6 @@ export default function HomePage() {
                 </Link>
               </Button>
             </div>
-            
-            <div className="pt-12">
-              <h3 className="text-sm font-semibold uppercase text-muted-foreground tracking-widest mb-4">Paskutinė veikla</h3>
-              {isActivityLoading ? (
-                <div className="flex justify-center items-center gap-4">
-                  <Skeleton className="h-6 w-56" />
-                  <Skeleton className="h-6 w-56" />
-                </div>
-              ) : (
-                <div className="flex flex-wrap justify-center items-center gap-x-6 gap-y-2">
-                  {recentActivity.map((log) => (
-                    <div key={log.id} className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <p className="font-medium text-sm text-slate-900 dark:text-white truncate max-w-[200px] md:max-w-xs">
-                        Ieškota: <span className="font-bold text-orange-600 dark:text-orange-500">{log.text}</span>
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
           </div>
         </section>
 
