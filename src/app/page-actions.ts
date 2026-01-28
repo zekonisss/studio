@@ -34,13 +34,22 @@ export async function getRecentActivity() {
 
     return snapshot.docs.map(doc => {
       const data = doc.data();
-      // Rodome pilną vardą, kaip ir sutarėme
-      const fullName = data.searchText || "Nežinomas"; 
+      
+      // Išmanus vardo sukonstravimas
+      let displayName = "";
+
+      if (data.firstName || data.lastName) {
+        // Jei yra naujas formatas, sujungiam juos
+        displayName = `${data.firstName || ""} ${data.lastName || ""}`.trim();
+      } else if (data.searchText) {
+        // Jei tai senas įrašas su searchText
+        displayName = data.searchText;
+      }
 
       return {
         id: doc.id,
-        text: fullName,
-        // Konvertuojame datą saugiai
+        // Jei vis tiek tuščia, rašome "Anoniminė patikra"
+        text: displayName || "Anoniminė patikra",
         time: data.timestamp ? data.timestamp.toDate().toISOString() : new Date().toISOString(),
       };
     });

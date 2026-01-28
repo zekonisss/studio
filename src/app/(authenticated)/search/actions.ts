@@ -34,6 +34,7 @@ export async function logSearchActivity(data: LogSearchData) {
       driverHash,
       firstName: originalFirstName,
       lastName: originalLastName,
+      searchText: `${originalFirstName} ${originalLastName}`.trim(),
       birthDate: null,
       companyId: userId,
       timestamp: Timestamp.now(),
