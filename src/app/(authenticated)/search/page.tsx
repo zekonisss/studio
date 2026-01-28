@@ -20,6 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { logSearchActivity } from "./actions";
 import { LiveActivityFeed } from "@/components/shared/live-activity-feed";
+import { DriverSearchStats } from "@/components/search/driver-search-stats";
 
 export default function SearchPage() {
     const { t, locale } = useLanguage();
@@ -75,6 +76,14 @@ export default function SearchPage() {
         } finally {
             setIsLoading(false);
         }
+    };
+    
+    // Helper to get names for stats component
+    const getNames = (fullName: string): { firstName: string, lastName: string } => {
+        const nameParts = fullName.trim().split(/\s+/);
+        const firstName = nameParts[0] || "";
+        const lastName = nameParts.slice(1).join(" ");
+        return { firstName, lastName };
     };
 
     return (
@@ -153,83 +162,92 @@ export default function SearchPage() {
                             {!isLoading && hasSearched && searchResults.length > 0 && (
                                 <div className="space-y-4">
                                     <h3 className="text-xl font-semibold text-muted-foreground">{t('search.results.title', { count: searchResults.length })}</h3>
-                                    {searchResults.map((report) => (
-                                        <Card key={report.id} className={cn(
-                                            "overflow-hidden transition-shadow duration-300",
-                                            DESTRUCTIVE_REPORT_MAIN_CATEGORIES.includes(report.category) 
-                                                ? "shadow-glow-destructive" 
-                                                : "hover:shadow-glow-primary"
-                                        )}>
-                                            <CardHeader>
-                                                <div className="flex justify-between items-start gap-4">
-                                                    <div>
-                                                        <CardTitle className="text-2xl">{report.fullName}</CardTitle>
-                                                        <CardDescription>
-                                                            {report.nationality && `${t(`countries.${report.nationality}`)}`}
-                                                            {report.nationality && report.birthYear && ', '}
-                                                            {report.birthYear && `${t('search.results.birthYearPrefix')}${report.birthYear}`}
-                                                        </CardDescription>
+                                    {searchResults.map((report) => {
+                                        const { firstName, lastName } = getNames(report.fullName);
+                                        return (
+                                            <Card key={report.id} className={cn(
+                                                "overflow-hidden transition-shadow duration-300",
+                                                DESTRUCTIVE_REPORT_MAIN_CATEGORIES.includes(report.category) 
+                                                    ? "shadow-glow-destructive" 
+                                                    : "hover:shadow-glow-primary"
+                                            )}>
+                                                <CardHeader>
+                                                    <div className="flex justify-between items-start gap-4">
+                                                        <div>
+                                                            <CardTitle className="text-2xl">{report.fullName}</CardTitle>
+                                                            <CardDescription>
+                                                                {report.nationality && `${t(`countries.${report.nationality}`)}`}
+                                                                {report.nationality && report.birthYear && ', '}
+                                                                {report.birthYear && `${t('search.results.birthYearPrefix')}${report.birthYear}`}
+                                                            </CardDescription>
+                                                        </div>
+                                                        <Badge variant={DESTRUCTIVE_REPORT_MAIN_CATEGORIES.includes(report.category) ? 'destructive' : 'secondary'}>{getCategoryNameForDisplay(report.category, t)}</Badge>
                                                     </div>
-                                                    <Badge variant={DESTRUCTIVE_REPORT_MAIN_CATEGORIES.includes(report.category) ? 'destructive' : 'secondary'}>{getCategoryNameForDisplay(report.category, t)}</Badge>
-                                                </div>
-                                            </CardHeader>
-                                            <CardContent className="space-y-4">
-                                                {report.tags && report.tags.length > 0 && (
-                                                    <div className="flex flex-wrap gap-2">
-                                                        {report.tags.map(tag => <Badge key={tag} variant="outline">{t(`tags.${tag}`)}</Badge>)}
+                                                </CardHeader>
+                                                <CardContent className="space-y-4">
+                                                    
+                                                    <DriverSearchStats firstName={firstName} lastName={lastName} />
+                                                    
+                                                    {report.tags && report.tags.length > 0 && (
+                                                      <div className="pt-4 border-t">
+                                                        <h4 className="font-semibold text-sm mb-2">Žymos</h4>
+                                                        <div className="flex flex-wrap gap-2">
+                                                            {report.tags.map(tag => <Badge key={tag} variant="outline">{t(`tags.${tag}`)}</Badge>)}
+                                                        </div>
+                                                      </div>
+                                                    )}
+                                                    <div className="pt-4 border-t">
+                                                        <h4 className="font-semibold text-sm mb-1">{t('search.results.comment')}</h4>
+                                                        <p className="text-sm text-muted-foreground whitespace-pre-wrap">{report.comment}</p>
                                                     </div>
-                                                )}
-                                                <div>
-                                                    <h4 className="font-semibold text-sm mb-1">{t('search.results.comment')}</h4>
-                                                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">{report.comment}</p>
-                                                </div>
 
-                                                {report.imageUrl && (
-                                                    <div className="pt-2">
-                                                        <h4 className="font-semibold text-sm mb-2">{t('search.results.attachedFile')}</h4>
-                                                        
-                                                        {isImageUrl(report.imageUrl) ? (
-                                                            <a href={report.imageUrl} target="_blank" rel="noopener noreferrer" className="block relative h-64 w-full md:w-96 rounded-md overflow-hidden border group">
-                                                                <Image 
-                                                                    src={report.imageUrl} 
-                                                                    alt="Attachment" 
-                                                                    fill
-                                                                    style={{objectFit:'cover'}}
-                                                                    data-ai-hint={report.dataAiHint || ''}
-                                                                />
-                                                                <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                                                                    <ExternalLink className="text-white h-8 w-8" />
-                                                                </div>
-                                                            </a>
-                                                        ) : (
-                                                            <div className="flex flex-col gap-2">
-                                                                <a 
-                                                                    href={report.imageUrl} 
-                                                                    target="_blank" 
-                                                                    rel="noopener noreferrer"
-                                                                    className="flex items-center gap-3 p-4 border rounded-lg bg-muted/30 hover:bg-muted/60 transition-colors w-full md:w-96"
-                                                                >
-                                                                    <div className="p-2 bg-red-100 rounded-md">
-                                                                        <FileText className="h-6 w-6 text-red-600" />
+                                                    {report.imageUrl && (
+                                                        <div className="pt-4 border-t">
+                                                            <h4 className="font-semibold text-sm mb-2">{t('search.results.attachedFile')}</h4>
+                                                            
+                                                            {isImageUrl(report.imageUrl) ? (
+                                                                <a href={report.imageUrl} target="_blank" rel="noopener noreferrer" className="block relative h-64 w-full md:w-96 rounded-md overflow-hidden border group">
+                                                                    <Image 
+                                                                        src={report.imageUrl} 
+                                                                        alt="Attachment" 
+                                                                        fill
+                                                                        style={{objectFit:'cover'}}
+                                                                        data-ai-hint={report.dataAiHint || ''}
+                                                                    />
+                                                                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                                                        <ExternalLink className="text-white h-8 w-8" />
                                                                     </div>
-                                                                    <div className="flex flex-col">
-                                                                        <span className="text-sm font-medium">Dokumentas (PDF)</span>
-                                                                        <span className="text-xs text-muted-foreground">Spauskite, kad peržiūrėtumėte</span>
-                                                                    </div>
-                                                                    <ExternalLink className="h-4 w-4 ml-auto text-muted-foreground" />
                                                                 </a>
-                                                            </div>
-                                                        )}
+                                                            ) : (
+                                                                <div className="flex flex-col gap-2">
+                                                                    <a 
+                                                                        href={report.imageUrl} 
+                                                                        target="_blank" 
+                                                                        rel="noopener noreferrer"
+                                                                        className="flex items-center gap-3 p-4 border rounded-lg bg-muted/30 hover:bg-muted/60 transition-colors w-full md:w-96"
+                                                                    >
+                                                                        <div className="p-2 bg-red-100 rounded-md">
+                                                                            <FileText className="h-6 w-6 text-red-600" />
+                                                                        </div>
+                                                                        <div className="flex flex-col">
+                                                                            <span className="text-sm font-medium">Dokumentas (PDF)</span>
+                                                                            <span className="text-xs text-muted-foreground">Spauskite, kad peržiūrėtumėte</span>
+                                                                        </div>
+                                                                        <ExternalLink className="h-4 w-4 ml-auto text-muted-foreground" />
+                                                                    </a>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                    
+                                                    <div className="text-xs text-muted-foreground pt-4 border-t mt-4 flex justify-between">
+                                                        <span>{t('search.results.submittedBy')}: <strong>{report.reporterCompanyName}</strong></span>
+                                                        <span>{t('search.results.date')}: <strong>{new Date(report.createdAt).toLocaleDateString(locale)}</strong></span>
                                                     </div>
-                                                )}
-                                                
-                                                <div className="text-xs text-muted-foreground pt-4 border-t mt-4 flex justify-between">
-                                                    <span>{t('search.results.submittedBy')}: <strong>{report.reporterCompanyName}</strong></span>
-                                                    <span>{t('search.results.date')}: <strong>{new Date(report.createdAt).toLocaleDateString(locale)}</strong></span>
-                                                </div>
-                                            </CardContent>
-                                        </Card>
-                                    ))}
+                                                </CardContent>
+                                            </Card>
+                                        )
+                                    })}
                                 </div>
                             )}
                              {!isLoading && !hasSearched && (

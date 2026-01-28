@@ -1,6 +1,7 @@
 'use server';
 
 import { adminDb } from '@/lib/firebase-admin';
+import { Timestamp } from 'firebase-admin/firestore';
 
 // --- 1. ESAMA FUNKCIJA (PALIEKAME NIEKO NEKEITĘ) ---
 export async function getPublicReportCount(): Promise<number> {
@@ -11,15 +12,15 @@ export async function getPublicReportCount(): Promise<number> {
   try {
     const reportsRef = adminDb.collection('reports');
     // Viešame puslapyje skaičiuojame tik aktyvius įrašus
-    const snapshot = await reportsRef.where('status', '==', 'active').get();
-    return snapshot.size;
+    const snapshot = await reportsRef.where('status', '==', 'active').count().get();
+    return snapshot.data().count;
   } catch (error) {
     console.error("Error fetching public report count:", error);
     return 0; // Grąžiname 0 klaidos atveju
   }
 }
 
-// --- 2. NAUJA FUNKCIJA (PRIDEDAME APAČIOJE) ---
+// --- 2. ESAMA FUNKCIJA (PALIEKAME) ---
 export async function getRecentActivity() {
   if (!adminDb) {
     console.error("Klaida gaunant aktyvumą: Firebase Admin SDK neinicijuotas.");
@@ -57,4 +58,44 @@ export async function getRecentActivity() {
     console.error("Klaida gaunant aktyvumą:", error);
     return [];
   }
+}
+
+// --- 3. NAUJA FUNKCIJA (PRIDEDAME) ---
+export async function getDriverSearchStats(firstName: string, lastName: string): Promise<{ total: number; recent: number }> {
+    if (!adminDb) {
+        console.error("Admin DB not initialized, cannot get stats.");
+        return { total: 0, recent: 0 };
+    }
+    try {
+        const sixtyDaysAgo = new Date();
+        sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+        const sixtyDaysAgoTimestamp = Timestamp.fromDate(sixtyDaysAgo);
+
+        const logsRef = adminDb.collection('searchLogs');
+        
+        // Base query for the specific driver
+        const driverQuery = logsRef
+            .where("firstName", "==", firstName)
+            .where("lastName", "==", lastName);
+
+        // Query for total searches
+        const totalPromise = driverQuery.count().get();
+        
+        // Query for recent searches (last 60 days)
+        const recentPromise = driverQuery
+            .where("timestamp", ">=", sixtyDaysAgoTimestamp)
+            .count()
+            .get();
+
+        const [totalSnapshot, recentSnapshot] = await Promise.all([totalPromise, recentPromise]);
+        
+        return {
+            total: totalSnapshot.data().count,
+            recent: recentSnapshot.data().count
+        };
+    } catch (error) {
+        console.error(`Error fetching search stats for ${firstName} ${lastName}:`, error);
+        // This might fail due to missing index, but we shouldn't crash the app
+        return { total: 0, recent: 0 };
+    }
 }
