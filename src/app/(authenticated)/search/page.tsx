@@ -31,7 +31,7 @@ export default function SearchPage() {
 
     const form = useForm<SearchFormValues>({
         resolver: zodResolver(SearchSchema),
-        defaultValues: { query: "", birthDate: "" },
+        defaultValues: { query: "" },
     });
 
     const isImageUrl = (url: string) => {
@@ -47,7 +47,6 @@ export default function SearchPage() {
         if (user) {
             logSearchActivity({
                 query: values.query,
-                birthDate: values.birthDate,
                 userId: user.id
             });
         }
@@ -94,8 +93,8 @@ export default function SearchPage() {
                     )}
                     <Form {...form}>
                         <form onSubmit={form.handleSubmit(onSubmit)} className="w-full space-y-3">
-                            <div className="flex items-start gap-2">
-                                <div className="flex-grow space-y-2">
+                            <div className="flex items-center gap-2">
+                                <div className="flex-grow">
                                      <FormField
                                         control={form.control}
                                         name="query"
@@ -111,23 +110,8 @@ export default function SearchPage() {
                                             </FormItem>
                                         )}
                                     />
-                                     <FormField
-                                        control={form.control}
-                                        name="birthDate"
-                                        render={({ field }) => (
-                                            <FormItem className="px-4">
-                                                <FormControl>
-                                                     <Input type="date" {...field} className="h-9 text-muted-foreground" />
-                                                </FormControl>
-                                                <FormDescription>
-                                                    Rekomenduojama tikslumui.
-                                                </FormDescription>
-                                                 <FormMessage/>
-                                            </FormItem>
-                                        )}
-                                    />
                                 </div>
-                                <Button type="submit" disabled={isLoading} className="h-24 rounded-full px-6 shadow-lg">
+                                <Button type="submit" disabled={isLoading} className="h-12 rounded-full px-6 shadow-lg">
                                     {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Search className="h-5 w-5" />}
                                     <span className="hidden sm:inline ml-2">{t('search.searchButton')}</span>
                                 </Button>

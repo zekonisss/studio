@@ -5,7 +5,6 @@ import { Timestamp } from 'firebase-admin/firestore';
 
 interface LogSearchData {
   query: string;
-  birthDate?: string;
   userId: string;
 }
 
@@ -20,24 +19,22 @@ export async function logSearchActivity(data: LogSearchData) {
   }
 
   try {
-    const { query, birthDate, userId } = data;
+    const { query, userId } = data;
     const nameParts = query.trim().toLowerCase().split(/\s+/);
     const firstName = nameParts[0] || "";
     const lastName = nameParts.slice(1).join(" ") || "";
 
-    const driverHash = birthDate 
-      ? `${firstName}_${lastName}_${birthDate}` 
-      : `${firstName}_${lastName}`;
+    const driverHash = `${firstName}_${lastName}`;
 
     const originalNameParts = query.trim().split(/\s+/);
     const originalFirstName = originalNameParts[0] || "";
     const originalLastName = originalNameParts.slice(1).join(" ") || "";
 
-    await adminDb.collection('search_logs').add({
+    await adminDb.collection('searchLogs').add({
       driverHash,
       firstName: originalFirstName,
       lastName: originalLastName,
-      birthDate: birthDate || null,
+      birthDate: null,
       companyId: userId,
       timestamp: Timestamp.now(),
     });
