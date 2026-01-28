@@ -5,12 +5,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useLanguage } from "@/contexts/language-context";
 import { useAuth } from "@/hooks/use-auth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, Loader2, Frown, FileText, ExternalLink, UserSearch } from "lucide-react";
 import { SearchSchema, type SearchFormValues } from "@/lib/schemas";
-import { getAllReports, addSearchLog } from "@/lib/storage";
+import { getAllReports } from "@/lib/storage";
 import { getCategoryNameForDisplay, cn } from "@/lib/utils";
 import type { Report } from "@/types";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +18,7 @@ import Image from "next/image";
 import { DESTRUCTIVE_REPORT_MAIN_CATEGORIES } from "@/lib/constants";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
+import { logSearchActivity } from "./actions";
 
 export default function SearchPage() {
     const { t, locale } = useLanguage();
@@ -30,7 +31,7 @@ export default function SearchPage() {
 
     const form = useForm<SearchFormValues>({
         resolver: zodResolver(SearchSchema),
-        defaultValues: { query: "" },
+        defaultValues: { query: "", birthDate: "" },
     });
 
     const isImageUrl = (url: string) => {
@@ -42,6 +43,14 @@ export default function SearchPage() {
         setIsLoading(true);
         setHasSearched(true);
         setCurrentQuery(values.query);
+
+        if (user) {
+            logSearchActivity({
+                query: values.query,
+                birthDate: values.birthDate,
+                userId: user.id
+            });
+        }
     
         try {
             const allReports = await getAllReports();
@@ -55,13 +64,6 @@ export default function SearchPage() {
     
             setSearchResults(filteredReports);
 
-            if (user) {
-                await addSearchLog({
-                    userId: user.id,
-                    searchText: values.query,
-                    resultsCount: filteredReports.length
-                });
-            }
         } catch (error: any) {
             console.error("Error during search:", error);
             toast({
@@ -83,34 +85,53 @@ export default function SearchPage() {
             )}>
                 <div className={cn("w-full", !hasSearched ? 'max-w-2xl' : '')}>
                     {!hasSearched && (
-                        <div className="flex justify-center items-center gap-4 mb-6 group">
-                            <UserSearch className="h-16 w-16 text-primary transition-transform group-hover:rotate-12" />
-                            <h1 className="text-5xl font-bold bg-gradient-to-r from-slate-800 to-slate-500 dark:from-white dark:to-gray-400 bg-clip-text text-transparent italic">
-                                {t('app.name')}
-                            </h1>
+                        <div className="flex justify-center items-center gap-2 group cursor-pointer mb-6 z-10">
+                            <UserSearch className="h-10 w-10 text-primary transition-transform group-hover:rotate-12" />
+                            <span className="text-3xl font-bold bg-gradient-to-r from-slate-800 to-slate-500 dark:from-white dark:to-gray-400 bg-clip-text text-transparent italic">
+                                DriverCheck
+                            </span>
                         </div>
                     )}
                     <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onSubmit)} className="flex items-start gap-2">
-                            <FormField
-                                control={form.control}
-                                name="query"
-                                render={({ field }) => (
-                                    <FormItem className="flex-grow">
-                                        <FormControl>
-                                            <div className="relative">
-                                                <Search className="absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-                                                <Input placeholder={t('search.queryPlaceholder')} {...field} className="pl-12 h-12 text-base rounded-full shadow-lg" />
-                                            </div>
-                                        </FormControl>
-                                        <FormMessage className="pl-4" />
-                                    </FormItem>
-                                )}
-                            />
-                            <Button type="submit" disabled={isLoading} className="h-12 rounded-full px-6 shadow-lg">
-                                {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Search className="h-5 w-5" />}
-                                <span className="hidden sm:inline ml-2">{t('search.searchButton')}</span>
-                            </Button>
+                        <form onSubmit={form.handleSubmit(onSubmit)} className="w-full space-y-3">
+                            <div className="flex items-start gap-2">
+                                <div className="flex-grow space-y-2">
+                                     <FormField
+                                        control={form.control}
+                                        name="query"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormControl>
+                                                    <div className="relative">
+                                                        <Search className="absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+                                                        <Input placeholder={t('search.queryPlaceholder')} {...field} className="pl-12 h-12 text-base rounded-full shadow-lg" />
+                                                    </div>
+                                                </FormControl>
+                                                <FormMessage className="pl-4" />
+                                            </FormItem>
+                                        )}
+                                    />
+                                     <FormField
+                                        control={form.control}
+                                        name="birthDate"
+                                        render={({ field }) => (
+                                            <FormItem className="px-4">
+                                                <FormControl>
+                                                     <Input type="date" {...field} className="h-9 text-muted-foreground" />
+                                                </FormControl>
+                                                <FormDescription>
+                                                    Rekomenduojama tikslumui.
+                                                </FormDescription>
+                                                 <FormMessage/>
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                                <Button type="submit" disabled={isLoading} className="h-24 rounded-full px-6 shadow-lg">
+                                    {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Search className="h-5 w-5" />}
+                                    <span className="hidden sm:inline ml-2">{t('search.searchButton')}</span>
+                                </Button>
+                            </div>
                         </form>
                     </Form>
                 </div>

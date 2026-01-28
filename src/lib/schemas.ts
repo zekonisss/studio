@@ -43,6 +43,7 @@ export type ReportFormValues = z.infer<typeof ReportSchema>;
 
 export const SearchSchema = z.object({
   query: z.string().min(3, { message: "Paieškos frazė turi būti bent 3 simbolių ilgio." }),
+  birthDate: z.string().optional(),
 });
 
 export type SearchFormValues = z.infer<typeof SearchSchema>;
