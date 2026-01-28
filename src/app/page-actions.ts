@@ -17,3 +17,34 @@ export async function getPublicReportCount(): Promise<number> {
     return 0; // Return 0 on error
   }
 }
+
+export async function getRecentActivity() {
+  if (!adminDb) {
+    console.error("Klaida gaunant aktyvumą: Firebase Admin SDK neinicijuotas.");
+    return [];
+  }
+  try {
+    const snapshot = await adminDb
+      .collection("searchLogs")
+      .orderBy("timestamp", "desc")
+      .limit(5)
+      .get();
+
+    return snapshot.docs.map(doc => {
+      const data = doc.data();
+      
+      // JOKIO MASKAVIMO: Imame tiksliai tai, kas įrašyta į 'searchText'
+      // Jei nori, gali pridėti .toUpperCase(), kad visi vardai būtų DIDŽIOSIOMIS
+      const fullName = data.searchText || "Nežinomas"; 
+
+      return {
+        id: doc.id,
+        text: fullName, // Grąžiname pilną "Jonas Kukulis"
+        time: data.timestamp ? data.timestamp.toDate().toISOString() : new Date().toISOString(),
+      };
+    });
+  } catch (error) {
+    console.error("Klaida gaunant aktyvumą:", error);
+    return [];
+  }
+}
