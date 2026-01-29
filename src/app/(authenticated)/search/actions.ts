@@ -4,7 +4,8 @@ import { adminDb } from '@/lib/firebase-admin';
 import { Timestamp } from 'firebase-admin/firestore';
 
 interface LogSearchData {
-  query: string;
+  firstName: string;
+  lastName: string;
   userId: string;
 }
 
@@ -26,10 +27,7 @@ export async function logSearchActivity(data: LogSearchData) {
   };
 
   try {
-    const { query, userId } = data;
-    const nameParts = query.trim().split(/\s+/);
-    const firstName = nameParts[0] || "";
-    const lastName = nameParts.slice(1).join(" ");
+    const { firstName, lastName, userId } = data;
     
     const cleanFirst = cleanAndCapitalize(firstName);
     const cleanLast = cleanAndCapitalize(lastName);

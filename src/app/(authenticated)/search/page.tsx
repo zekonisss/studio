@@ -45,13 +45,6 @@ export default function SearchPage() {
         setIsLoading(true);
         setHasSearched(true);
         setCurrentQuery(values.query);
-
-        if (user) {
-            logSearchActivity({
-                query: values.query,
-                userId: user.id
-            });
-        }
     
         try {
             const allReports = await getAllReports();
@@ -64,6 +57,23 @@ export default function SearchPage() {
             });
     
             setSearchResults(filteredReports);
+
+            if (user) {
+              if (filteredReports.length > 0) {
+                // Log the name from the first found report
+                const foundReport = filteredReports[0];
+                const nameParts = (foundReport.fullName || '').trim().split(/\s+/);
+                const firstName = nameParts[0] || '';
+                const lastName = nameParts.slice(1).join(' ');
+                await logSearchActivity({ firstName, lastName, userId: user.id });
+              } else {
+                // Log the raw user input if nothing was found
+                const nameParts = values.query.trim().split(/\s+/);
+                const firstName = nameParts[0] || '';
+                const lastName = nameParts.slice(1).join(' ');
+                await logSearchActivity({ firstName, lastName, userId: user.id });
+              }
+            }
 
         } catch (error: any) {
             console.error("Error during search:", error);
