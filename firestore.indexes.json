@@ -28,7 +28,7 @@
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "driverHash", "order": "ASCENDING" },
-        { "fieldPath": "timestamp", "order": "DESCENDING" }
+        { "fieldPath": "timestamp", "order": "ASCENDING" }
       ]
     }
   ],
