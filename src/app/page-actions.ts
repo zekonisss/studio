@@ -60,19 +60,24 @@ export async function getRecentActivity() {
   }
 }
 
-// --- 3. NAUJA FUNKCIJA (PRIDEDAME) ---
+// --- 3. FUNKCIJA SU PATAISYMU ---
 export async function getDriverSearchStats(firstName: string, lastName: string): Promise<{ total: number; recent: number }> {
     if (!adminDb) {
         console.error("Admin DB not initialized, cannot get stats.");
         return { total: 0, recent: 0 };
     }
 
-    const clean = (str: string) => str?.trim().charAt(0).toUpperCase() + str?.trim().slice(1).toLowerCase() || "";
+    // Robust cleaning function that handles trim and capitalization safely.
+    const cleanAndCapitalize = (str: string) => {
+        const trimmed = str?.trim() || '';
+        if (!trimmed) return '';
+        return trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase();
+    };
 
-    const targetFirst = clean(firstName);
-    const targetLast = clean(lastName);
+    const targetFirst = cleanAndCapitalize(firstName);
+    const targetLast = cleanAndCapitalize(lastName);
 
-    // If names are empty after cleaning, no point in querying
+    // If first name is empty after cleaning, no point in querying
     if (!targetFirst) {
       return { total: 0, recent: 0 };
     }

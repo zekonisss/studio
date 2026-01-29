@@ -18,7 +18,12 @@ export async function logSearchActivity(data: LogSearchData) {
     return;
   }
 
-  const clean = (str: string) => str?.trim().charAt(0).toUpperCase() + str?.trim().slice(1).toLowerCase() || "";
+  // Robust cleaning function that handles trim and capitalization safely.
+  const cleanAndCapitalize = (str: string) => {
+    const trimmed = str?.trim() || '';
+    if (!trimmed) return '';
+    return trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase();
+  };
 
   try {
     const { query, userId } = data;
@@ -26,8 +31,8 @@ export async function logSearchActivity(data: LogSearchData) {
     const firstName = nameParts[0] || "";
     const lastName = nameParts.slice(1).join(" ");
     
-    const cleanFirst = clean(firstName);
-    const cleanLast = clean(lastName);
+    const cleanFirst = cleanAndCapitalize(firstName);
+    const cleanLast = cleanAndCapitalize(lastName);
 
     // If both names are empty after cleaning, don't log it.
     if (!cleanFirst && !cleanLast) {
