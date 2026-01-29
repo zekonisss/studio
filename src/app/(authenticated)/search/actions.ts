@@ -34,12 +34,10 @@ export async function getDriverSearchStats(
   firstName: string,
   lastName: string
 ): Promise<{ total: number; recent: number }> {
-  // Let's add a log right at the beginning to be sure it's called.
-  console.log(`\n\n--- [SERVER ACTION] getDriverSearchStats CALLED with: '${firstName}', '${lastName}' ---\n\n`);
+  console.log(`\n\n--- [SERVER ACTION] getDriverSearchStats CALLED with: '${firstName}', '${lastName}' ---`);
   
   if (!adminDb) {
     console.error("🔴 ADMIN DB NOT INITIALIZED! Check .env.local and restart the server.");
-    // Return a non-zero number to see if it reaches the UI, to differentiate from a successful zero.
     return { total: -1, recent: -1 };
   }
 
@@ -63,21 +61,28 @@ export async function getDriverSearchStats(
   const recentPromise = logsRef
     .where('driverHash', '==', driverHash)
     .where('timestamp', '>=', Timestamp.fromDate(sixtyDaysAgo))
+    .orderBy('timestamp', 'desc') 
     .count()
     .get();
   
-  const [totalSnapshot, recentSnapshot] = await Promise.all([
-    totalPromise,
-    recentPromise,
-  ]);
+  try {
+    const [totalSnapshot, recentSnapshot] = await Promise.all([
+      totalPromise,
+      recentPromise,
+    ]);
 
-  const total = totalSnapshot.data().count;
-  const recent = recentSnapshot.data().count;
-  
-  console.log(`\n\n--- [SERVER ACTION] getDriverSearchStats RESULT for '${driverHash}': Total=${total}, Recent=${recent} ---\n\n`);
+    const total = totalSnapshot.data().count;
+    const recent = recentSnapshot.data().count;
+    
+    console.log(`--- [SERVER ACTION] getDriverSearchStats RESULT for '${driverHash}': Total=${total}, Recent=${recent} ---`);
 
-  return {
-      total,
-      recent
-  };
+    return {
+        total,
+        recent
+    };
+  } catch (error) {
+      console.error("Klaida gaunant vairuotojo statistiką:", error);
+      // Grąžiname nulius klaidos atveju, kad UI "nesulūžtų"
+      return { total: 0, recent: 0 };
+  }
 }
