@@ -6,6 +6,7 @@ export function normalizeName(value: string): string {
   }
   
   export function buildDriverHash(firstName: string, lastName: string): string {
-    return `${normalizeName(firstName)}_${normalizeName(lastName)}`;
+    const hashParts = [normalizeName(firstName), normalizeName(lastName)].filter(Boolean);
+    return hashParts.join(" ");
   }
   
