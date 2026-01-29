@@ -68,7 +68,7 @@ export async function getDriverSearchStats(firstName: string, lastName: string):
     }
     
     const clean = (str: string) => str?.trim() || "";
-    const capitalize = (str: string) => str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+    const capitalize = (str: string) => (str ? str.charAt(0).toUpperCase() + str.slice(1).toLowerCase() : "");
 
     const targetFirst = capitalize(clean(firstName));
     const targetLast = capitalize(clean(lastName));
@@ -101,15 +101,19 @@ export async function getDriverSearchStats(firstName: string, lastName: string):
             total: totalSnapshot.data().count,
             recent: recentSnapshot.data().count
         };
-    } catch (error: any) { // Pridėk :any kad leistų pasiekti error savybes
-        console.error(`Kritinė klaida ieškant statistikos (${targetFirst} ${targetLast}):`, error);
+    } catch (error: any) {
+        // PAKEITIMAS: Išryškiname klaidą
+        console.log("\n\n🔴🔴🔴 KRITINĖ KLAIDA - SKAITYKITE ČIA 🔴🔴🔴");
+        console.log("Klaidos pranešimas:", error.message);
         
-        // Jei tai indekso klaida, terminale pamatysime nuorodą!
-        if (error.code === 'failed-precondition' || error.message?.includes('index')) {
-            console.log("--- TRŪKSTA INDEKSO! ---");
-            console.log(error.message);
+        // Jei tai indekso klaida, ji bus čia:
+        if (error.message && error.message.includes("index")) {
+            console.log("👇👇👇 SPAUSKITE ŠIĄ NUORODĄ, KAD SUKURTUMĖTE INDEKSĄ 👇👇👇");
+            // Ištraukiame nuorodą iš klaidos teksto (ji ten visada yra)
+            console.log(error.message.match(/https:\/\/[^\s]+/)?.[0]);
         }
-        
+        console.log("🔴🔴🔴🔴🔴🔴\n\n");
+
         return { total: 0, recent: 0 };
     }
 }
