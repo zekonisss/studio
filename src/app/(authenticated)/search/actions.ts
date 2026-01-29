@@ -44,7 +44,7 @@ export async function logSearchActivity(data: LogSearchData) {
       firstName: cleanFirst,
       lastName: cleanLast,
       searchText: `${cleanFirst} ${cleanLast}`.trim(),
-      companyId: userId,
+      userId: userId,
       timestamp: Timestamp.now(),
     });
   } catch (error) {
