@@ -2,7 +2,6 @@
 
 import { adminDb } from '@/lib/firebase-admin';
 import { Timestamp } from 'firebase-admin/firestore';
-import { buildDriverHash } from '@/lib/driverHash'; // <--- NAUJAS IMPORTAS
 
 // --- 1. VIEŠA STATISTIKA ---
 export async function getPublicReportCount(): Promise<number> {
@@ -54,49 +53,5 @@ export async function getRecentActivity() {
   } catch (error) {
     console.error("Klaida gaunant aktyvumą:", error);
     return [];
-  }
-}
-
-// --- 3. VAIRUOTOJO PAIEŠKOS STATISTIKA (HASH VERSIJA) ---
-export async function getDriverSearchStats(
-  firstName: string,
-  lastName: string
-): Promise<{ total: number; recent: number }> {
-
-  if (!adminDb) return { total: 0, recent: 0 };
-
-  // Čia visa magija - naudojame TĄ PAČIĄ funkciją kaip ir įrašyme
-  const driverHash = buildDriverHash(firstName, lastName);
-
-  if (driverHash === "_") return { total: 0, recent: 0 };
-
-  try {
-    const sixtyDaysAgo = new Date();
-    sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
-
-    const logsRef = adminDb
-      .collection("searchLogs")
-      .where("driverHash", "==", driverHash);
-
-    const totalPromise = logsRef.count().get();
-
-    const recentPromise = logsRef
-      .where("timestamp", ">=", Timestamp.fromDate(sixtyDaysAgo))
-      .count()
-      .get();
-
-    const [totalSnap, recentSnap] = await Promise.all([
-      totalPromise,
-      recentPromise,
-    ]);
-
-    return {
-      total: totalSnap.data().count,
-      recent: recentSnap.data().count,
-    };
-  } catch (err: any) {
-    console.error("KLAIDA SKAIČIUOJANT STATISTIKĄ:", err);
-    // Jei trūksta indekso, terminale pamatysite nuorodą
-    return { total: 0, recent: 0 };
   }
 }

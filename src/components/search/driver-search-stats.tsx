@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { getDriverSearchStats } from '@/app/page-actions';
+import { getDriverSearchStats } from '@/app/(authenticated)/search/actions';
 import { Skeleton } from '@/components/ui/skeleton';
 import { BarChart, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
