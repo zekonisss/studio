@@ -6,7 +6,9 @@ export function normalizeName(value: string): string {
   }
   
   export function buildDriverHash(firstName: string, lastName: string): string {
-    const hashParts = [normalizeName(firstName), normalizeName(lastName)].filter(Boolean);
+    // TEMPORARY DIAGNOSTIC: Only use the first name to create the hash
+    // to isolate if the issue is with the lastName or the join operation.
+    const hashParts = [normalizeName(firstName)].filter(Boolean);
     return hashParts.join(" ");
   }
   
