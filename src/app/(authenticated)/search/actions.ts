@@ -18,7 +18,7 @@ export async function logSearchActivity({
   const driverHash = buildDriverHash(firstName, lastName);
 
   // Don't log if both names are empty after normalization
-  if (driverHash === '_') return;
+  if (!driverHash) return;
 
   await adminDb.collection('searchLogs').add({
     userId: userId,
@@ -38,33 +38,38 @@ export async function getDriverSearchStats(
 
   const driverHash = buildDriverHash(firstName, lastName);
 
-  if (driverHash === '_') return { total: 0, recent: 0 };
+  if (!driverHash) return { total: 0, recent: 0 };
 
   try {
     const sixtyDaysAgo = new Date();
     sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
 
-    const logsRef = adminDb
-      .collection('searchLogs')
-      .where('driverHash', '==', driverHash);
+    const logsRef = adminDb.collection('searchLogs');
 
-    const totalPromise = logsRef.count().get();
-
+    // DIAGNOSTIC: Use get() and log size to check if the query finds anything
+    const totalPromise = logsRef
+      .where('driverHash', '==', driverHash)
+      .get();
+    
     const recentPromise = logsRef
+      .where('driverHash', '==', driverHash)
       .where('timestamp', '>=', Timestamp.fromDate(sixtyDaysAgo))
       .count()
       .get();
-
+    
     const [totalSnapshot, recentSnapshot] = await Promise.all([
       totalPromise,
       recentPromise,
     ]);
 
+    // DIAGNOSTIC LOG
+    console.log(`>>> DIAGNOSTIKA: Užklausa su hash '${driverHash}' rado ${totalSnapshot.size} dokumentų.`);
+
     return {
-      total: totalSnapshot.data().count,
+      total: totalSnapshot.size,
       recent: recentSnapshot.data().count,
     };
-  } catch (error: any) {
+} catch (error: any) {
     // PAKEITIMAS: Išryškiname klaidą
     console.log("\n\n🔴🔴🔴 KRITINĖ KLAIDA - SKAITYKITE ČIA 🔴🔴🔴");
     console.log("Klaidos pranešimas:", error.message);
