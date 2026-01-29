@@ -66,6 +66,17 @@ export async function getDriverSearchStats(firstName: string, lastName: string):
         console.error("Admin DB not initialized, cannot get stats.");
         return { total: 0, recent: 0 };
     }
+
+    const clean = (str: string) => str?.trim().charAt(0).toUpperCase() + str?.trim().slice(1).toLowerCase() || "";
+
+    const targetFirst = clean(firstName);
+    const targetLast = clean(lastName);
+
+    // If names are empty after cleaning, no point in querying
+    if (!targetFirst) {
+      return { total: 0, recent: 0 };
+    }
+
     try {
         const sixtyDaysAgo = new Date();
         sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
@@ -75,8 +86,8 @@ export async function getDriverSearchStats(firstName: string, lastName: string):
         
         // Base query for the specific driver
         const driverQuery = logsRef
-            .where("firstName", "==", firstName)
-            .where("lastName", "==", lastName);
+            .where("firstName", "==", targetFirst)
+            .where("lastName", "==", targetLast);
 
         // Query for total searches
         const totalPromise = driverQuery.count().get();
@@ -94,7 +105,7 @@ export async function getDriverSearchStats(firstName: string, lastName: string):
             recent: recentSnapshot.data().count
         };
     } catch (error) {
-        console.error(`Error fetching search stats for ${firstName} ${lastName}:`, error);
+        console.error(`Error fetching search stats for ${targetFirst} ${targetLast}:`, error);
         // This might fail due to missing index, but we shouldn't crash the app
         return { total: 0, recent: 0 };
     }

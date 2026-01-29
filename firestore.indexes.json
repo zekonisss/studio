@@ -4,29 +4,18 @@
       "collectionGroup": "searchLogs",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "timestamp",
-          "order": "DESCENDING"
-        }
+        { "fieldPath": "timestamp", "order": "DESCENDING" }
       ]
     },
     {
       "collectionGroup": "searchLogs",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "firstName",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "lastName",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "timestamp",
-          "order": "DESCENDING"
-        }
+        { "fieldPath": "firstName", "order": "ASCENDING" },
+        { "fieldPath": "lastName", "order": "ASCENDING" },
+        { "fieldPath": "timestamp", "order": "DESCENDING" }
       ]
     }
-  ]
+  ],
+  "fieldOverrides": []
 }

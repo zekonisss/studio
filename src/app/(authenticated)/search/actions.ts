@@ -18,24 +18,29 @@ export async function logSearchActivity(data: LogSearchData) {
     return;
   }
 
+  const clean = (str: string) => str?.trim().charAt(0).toUpperCase() + str?.trim().slice(1).toLowerCase() || "";
+
   try {
     const { query, userId } = data;
-    const nameParts = query.trim().toLowerCase().split(/\s+/);
+    const nameParts = query.trim().split(/\s+/);
     const firstName = nameParts[0] || "";
-    const lastName = nameParts.slice(1).join(" ") || "";
+    const lastName = nameParts.slice(1).join(" ");
+    
+    const cleanFirst = clean(firstName);
+    const cleanLast = clean(lastName);
 
-    const driverHash = `${firstName}_${lastName}`;
+    // If both names are empty after cleaning, don't log it.
+    if (!cleanFirst && !cleanLast) {
+        return;
+    }
 
-    const originalNameParts = query.trim().split(/\s+/);
-    const originalFirstName = originalNameParts[0] || "";
-    const originalLastName = originalNameParts.slice(1).join(" ") || "";
+    const driverHash = `${cleanFirst.toLowerCase()}_${cleanLast.toLowerCase()}`;
 
     await adminDb.collection('searchLogs').add({
       driverHash,
-      firstName: originalFirstName,
-      lastName: originalLastName,
-      searchText: `${originalFirstName} ${originalLastName}`.trim(),
-      birthDate: null,
+      firstName: cleanFirst,
+      lastName: cleanLast,
+      searchText: `${cleanFirst} ${cleanLast}`.trim(),
       companyId: userId,
       timestamp: Timestamp.now(),
     });
