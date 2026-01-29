@@ -1,54 +1,59 @@
+// src/app/page-actions.ts
 'use server';
 
 import { adminDb } from '@/lib/firebase-admin';
 import { Timestamp } from 'firebase-admin/firestore';
 
-interface LogSearchData {
-  firstName: string;
-  lastName: string;
-  userId: string;
-}
-
-export async function logSearchActivity(data: LogSearchData) {
+export async function getDriverSearchStats(
+  firstName: string,
+  lastName: string
+): Promise<{ total: number; recent: number }> {
   if (!adminDb) {
-    console.error("Admin DB not initialized, skipping search log.");
-    return;
-  }
-  if (!data.userId) {
-    console.error("User ID is missing, skipping search log.");
-    return;
+    console.error("Admin DB not initialized");
+    return { total: 0, recent: 0 };
   }
 
-  // Robust cleaning function that handles trim and capitalization safely.
-  const cleanAndCapitalize = (str: string) => {
-    const trimmed = str?.trim() || '';
-    if (!trimmed) return '';
-    return trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase();
-  };
+  const normalize = (str: string) =>
+    (str || '').trim().toLowerCase();
+
+  const cleanFirst = normalize(firstName);
+  const cleanLast = normalize(lastName);
+
+  if (!cleanFirst && !cleanLast) {
+    return { total: 0, recent: 0 };
+  }
+
+  const driverHash = `${cleanFirst}_${cleanLast}`;
 
   try {
-    const { firstName, lastName, userId } = data;
-    
-    const cleanFirst = cleanAndCapitalize(firstName);
-    const cleanLast = cleanAndCapitalize(lastName);
+    const logsRef = adminDb
+      .collection('searchLogs')
+      .where('driverHash', '==', driverHash);
 
-    // If both names are empty after cleaning, don't log it.
-    if (!cleanFirst && !cleanLast) {
-        return;
-    }
+    // total count
+    const totalPromise = logsRef.count().get();
 
-    const driverHash = `${cleanFirst.toLowerCase()}_${cleanLast.toLowerCase()}`;
+    // last 60 days
+    const sixtyDaysAgo = new Date();
+    sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+    const sixtyDaysAgoTimestamp = Timestamp.fromDate(sixtyDaysAgo);
 
-    await adminDb.collection('searchLogs').add({
-      driverHash,
-      firstName: cleanFirst,
-      lastName: cleanLast,
-      searchText: `${cleanFirst} ${cleanLast}`.trim(),
-      userId: userId,
-      timestamp: Timestamp.now(),
-    });
-  } catch (error) {
-    console.error("Error logging search activity:", error);
-    // Don't re-throw, as this is a "fire-and-forget" action
+    const recentPromise = logsRef
+      .where('timestamp', '>=', sixtyDaysAgoTimestamp)
+      .count()
+      .get();
+
+    const [totalSnap, recentSnap] = await Promise.all([
+      totalPromise,
+      recentPromise,
+    ]);
+
+    return {
+      total: totalSnap.data().count,
+      recent: recentSnap.data().count,
+    };
+  } catch (err) {
+    console.error('Error fetching driver search stats:', err);
+    return { total: 0, recent: 0 };
   }
 }
