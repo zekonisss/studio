@@ -46,9 +46,10 @@ export async function getDriverSearchStats(
 
     const logsRef = adminDb.collection('searchLogs');
 
-    // DIAGNOSTIC: Use get() and log size to check if the query finds anything
+    // Pakeista, kad naudotų count() efektyvumui
     const totalPromise = logsRef
       .where('driverHash', '==', driverHash)
+      .count()
       .get();
     
     const recentPromise = logsRef
@@ -62,12 +63,15 @@ export async function getDriverSearchStats(
       recentPromise,
     ]);
 
+    const totalCount = totalSnapshot.data().count;
+    const recentCount = recentSnapshot.data().count;
+
     // DIAGNOSTIC LOG
-    console.log(`>>> DIAGNOSTIKA: Užklausa su hash '${driverHash}' rado ${totalSnapshot.size} dokumentų.`);
+    console.log(`>>> DIAGNOSTIKA: Užklausa su hash '${driverHash}' rado ${totalCount} visų laikų ir ${recentCount} naujų dokumentų.`);
 
     return {
-      total: totalSnapshot.size,
-      recent: recentSnapshot.data().count,
+      total: totalCount,
+      recent: recentCount,
     };
 } catch (error: any) {
     // PAKEITIMAS: Išryškiname klaidą
