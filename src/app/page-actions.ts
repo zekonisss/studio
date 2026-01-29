@@ -66,15 +66,12 @@ export async function getDriverSearchStats(firstName: string, lastName: string):
         console.error("Admin DB not initialized, cannot get stats.");
         return { total: 0, recent: 0 };
     }
+    
+    const clean = (str: string) => str?.trim() || "";
+    const capitalize = (str: string) => str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 
-    const cleanAndCapitalize = (str: string) => {
-        const trimmed = str?.trim() || '';
-        if (!trimmed) return '';
-        return trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase();
-    };
-
-    const targetFirst = cleanAndCapitalize(firstName);
-    const targetLast = cleanAndCapitalize(lastName);
+    const targetFirst = capitalize(clean(firstName));
+    const targetLast = capitalize(clean(lastName));
 
     if (!targetFirst && !targetLast) {
       return { total: 0, recent: 0 };
@@ -87,8 +84,6 @@ export async function getDriverSearchStats(firstName: string, lastName: string):
 
         const logsRef = adminDb.collection('searchLogs');
         
-        // PATAISYMAS: `if` sąlyga pašalinta. Dabar užklausa visada naudos abu laukus (`firstName` ir `lastName`),
-        // net jei `lastName` yra tuščias. Tai leis `Firestore` teisingai panaudoti sudėtinį indeksą.
         const driverQuery = logsRef
             .where("firstName", "==", targetFirst)
             .where("lastName", "==", targetLast);
@@ -106,8 +101,15 @@ export async function getDriverSearchStats(firstName: string, lastName: string):
             total: totalSnapshot.data().count,
             recent: recentSnapshot.data().count
         };
-    } catch (error) {
-        console.error(`Error fetching search stats for ${targetFirst} ${targetLast}:`, error);
+    } catch (error: any) { // Pridėk :any kad leistų pasiekti error savybes
+        console.error(`Kritinė klaida ieškant statistikos (${targetFirst} ${targetLast}):`, error);
+        
+        // Jei tai indekso klaida, terminale pamatysime nuorodą!
+        if (error.code === 'failed-precondition' || error.message?.includes('index')) {
+            console.log("--- TRŪKSTA INDEKSO! ---");
+            console.log(error.message);
+        }
+        
         return { total: 0, recent: 0 };
     }
 }
