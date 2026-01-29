@@ -77,17 +77,20 @@ export async function getDriverSearchStats(
 
     console.log(`[SERVER] DIAGNOSTIKA: Užklausa su hash '${driverHash}' rado ${totalCount} visų laikų ir ${recentCount} naujų dokumentų.`);
 
-    return {
-      total: totalCount,
-      recent: recentCount,
-    };
+    // PRIEVARTINĖ KLAIDA DIAGNOSTIKAI
+    throw new Error(`FORCED CRASH! Hash: '${driverHash}'. Found Total: ${totalCount}. Found Recent: ${recentCount}. If you see this, the function IS running.`);
+
   } catch (error: any) {
-    console.error("\n\n🔴🔴🔴 [SERVER] KRITINĖ KLAIDA VYKDANT UŽKLAUSĄ 🔴🔴🔴");
+    // Jei pamatysime priverstinę klaidą, tai yra gerai. Jei pamatysime Firestore klaidą - dar geriau.
+    console.error("\n\n🔴🔴🔴 [SERVER] KLAIDA VYKDANT UŽKLAUSĄ 🔴🔴🔴");
     console.error("Klaidos pranešimas:", error.message);
     
     if (error.message && error.message.includes("index")) {
         console.error("👇👇👇 TRŪKSTA INDEKSO! SPAUSKITE ŠIĄ NUORODĄ, KAD JĮ SUKURTUMĖTE 👇👇👇");
         console.error(error.message.match(/https:\/\/[^\s]+/)?.[0] || "Nuorodos rasti nepavyko.");
+    }
+     if (error.message && error.message.includes("FORCED CRASH")) {
+        console.log("✅✅✅ DIAGNOSTIKA SĖKMINGA: Funkcija vykdoma, ryšys su DB veikia. Problema yra tame, kad užklausa grąžina 0.✅✅✅");
     }
     console.error("🔴🔴🔴🔴🔴🔴\n\n");
 
