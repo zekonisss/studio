@@ -34,66 +34,50 @@ export async function getDriverSearchStats(
   firstName: string,
   lastName: string
 ): Promise<{ total: number; recent: number }> {
-  console.log(`[SERVER] getDriverSearchStats iškviesta su: '${firstName}', '${lastName}'`);
+  // Let's add a log right at the beginning to be sure it's called.
+  console.log(`\n\n--- [SERVER ACTION] getDriverSearchStats CALLED with: '${firstName}', '${lastName}' ---\n\n`);
   
   if (!adminDb) {
-    console.error('[SERVER] KRITINĖ KLAIDA: adminDb yra null! Patikrinkite .env.local ir serverio paleidimo logus.');
-    return { total: 0, recent: 0 };
+    console.error("🔴 ADMIN DB NOT INITIALIZED! Check .env.local and restart the server.");
+    // Return a non-zero number to see if it reaches the UI, to differentiate from a successful zero.
+    return { total: -1, recent: -1 };
   }
 
   const driverHash = buildDriverHash(firstName, lastName);
 
   if (!driverHash) {
-    console.warn(`[SERVER] driverHash yra tuščias. Vardas: '${firstName}', Pavardė: '${lastName}'. Grąžinamas nulis.`);
+    console.warn("🟡 driverHash is empty. Returning 0.");
     return { total: 0, recent: 0 };
   }
   
-  console.log(`[SERVER] Sugeneruotas driverHash: '${driverHash}'`);
+  const sixtyDaysAgo = new Date();
+  sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
 
-  try {
-    const sixtyDaysAgo = new Date();
-    sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+  const logsRef = adminDb.collection('searchLogs');
 
-    const logsRef = adminDb.collection('searchLogs');
+  const totalPromise = logsRef
+    .where('driverHash', '==', driverHash)
+    .count()
+    .get();
+  
+  const recentPromise = logsRef
+    .where('driverHash', '==', driverHash)
+    .where('timestamp', '>=', Timestamp.fromDate(sixtyDaysAgo))
+    .count()
+    .get();
+  
+  const [totalSnapshot, recentSnapshot] = await Promise.all([
+    totalPromise,
+    recentPromise,
+  ]);
 
-    const totalPromise = logsRef
-      .where('driverHash', '==', driverHash)
-      .count()
-      .get();
-    
-    const recentPromise = logsRef
-      .where('driverHash', '==', driverHash)
-      .where('timestamp', '>=', Timestamp.fromDate(sixtyDaysAgo))
-      .count()
-      .get();
-    
-    const [totalSnapshot, recentSnapshot] = await Promise.all([
-      totalPromise,
-      recentPromise,
-    ]);
+  const total = totalSnapshot.data().count;
+  const recent = recentSnapshot.data().count;
+  
+  console.log(`\n\n--- [SERVER ACTION] getDriverSearchStats RESULT for '${driverHash}': Total=${total}, Recent=${recent} ---\n\n`);
 
-    const totalCount = totalSnapshot.data().count;
-    const recentCount = recentSnapshot.data().count;
-
-    console.log(`[SERVER] DIAGNOSTIKA: Užklausa su hash '${driverHash}' rado ${totalCount} visų laikų ir ${recentCount} naujų dokumentų.`);
-
-    // PRIEVARTINĖ KLAIDA DIAGNOSTIKAI
-    throw new Error(`FORCED CRASH! Hash: '${driverHash}'. Found Total: ${totalCount}. Found Recent: ${recentCount}. If you see this, the function IS running.`);
-
-  } catch (error: any) {
-    // Jei pamatysime priverstinę klaidą, tai yra gerai. Jei pamatysime Firestore klaidą - dar geriau.
-    console.error("\n\n🔴🔴🔴 [SERVER] KLAIDA VYKDANT UŽKLAUSĄ 🔴🔴🔴");
-    console.error("Klaidos pranešimas:", error.message);
-    
-    if (error.message && error.message.includes("index")) {
-        console.error("👇👇👇 TRŪKSTA INDEKSO! SPAUSKITE ŠIĄ NUORODĄ, KAD JĮ SUKURTUMĖTE 👇👇👇");
-        console.error(error.message.match(/https:\/\/[^\s]+/)?.[0] || "Nuorodos rasti nepavyko.");
-    }
-     if (error.message && error.message.includes("FORCED CRASH")) {
-        console.log("✅✅✅ DIAGNOSTIKA SĖKMINGA: Funkcija vykdoma, ryšys su DB veikia. Problema yra tame, kad užklausa grąžina 0.✅✅✅");
-    }
-    console.error("🔴🔴🔴🔴🔴🔴\n\n");
-
-    return { total: 0, recent: 0 };
-  }
+  return {
+      total,
+      recent
+  };
 }
