@@ -34,11 +34,21 @@ export async function getDriverSearchStats(
   firstName: string,
   lastName: string
 ): Promise<{ total: number; recent: number }> {
-  if (!adminDb) return { total: 0, recent: 0 };
+  console.log(`[SERVER] getDriverSearchStats iškviesta su: '${firstName}', '${lastName}'`);
+  
+  if (!adminDb) {
+    console.error('[SERVER] KRITINĖ KLAIDA: adminDb yra null! Patikrinkite .env.local ir serverio paleidimo logus.');
+    return { total: 0, recent: 0 };
+  }
 
   const driverHash = buildDriverHash(firstName, lastName);
 
-  if (!driverHash) return { total: 0, recent: 0 };
+  if (!driverHash) {
+    console.warn(`[SERVER] driverHash yra tuščias. Vardas: '${firstName}', Pavardė: '${lastName}'. Grąžinamas nulis.`);
+    return { total: 0, recent: 0 };
+  }
+  
+  console.log(`[SERVER] Sugeneruotas driverHash: '${driverHash}'`);
 
   try {
     const sixtyDaysAgo = new Date();
@@ -46,7 +56,6 @@ export async function getDriverSearchStats(
 
     const logsRef = adminDb.collection('searchLogs');
 
-    // Pakeista, kad naudotų count() efektyvumui
     const totalPromise = logsRef
       .where('driverHash', '==', driverHash)
       .count()
@@ -66,26 +75,22 @@ export async function getDriverSearchStats(
     const totalCount = totalSnapshot.data().count;
     const recentCount = recentSnapshot.data().count;
 
-    // DIAGNOSTIC LOG
-    console.log(`>>> DIAGNOSTIKA: Užklausa su hash '${driverHash}' rado ${totalCount} visų laikų ir ${recentCount} naujų dokumentų.`);
+    console.log(`[SERVER] DIAGNOSTIKA: Užklausa su hash '${driverHash}' rado ${totalCount} visų laikų ir ${recentCount} naujų dokumentų.`);
 
     return {
       total: totalCount,
       recent: recentCount,
     };
-} catch (error: any) {
-    // PAKEITIMAS: Išryškiname klaidą
-    console.log("\n\n🔴🔴🔴 KRITINĖ KLAIDA - SKAITYKITE ČIA 🔴🔴🔴");
-    console.log("Klaidos pranešimas:", error.message);
+  } catch (error: any) {
+    console.error("\n\n🔴🔴🔴 [SERVER] KRITINĖ KLAIDA VYKDANT UŽKLAUSĄ 🔴🔴🔴");
+    console.error("Klaidos pranešimas:", error.message);
     
-    // Jei tai indekso klaida, ji bus čia:
     if (error.message && error.message.includes("index")) {
-        console.log("👇👇👇 SPAUSKITE ŠIĄ NUORODĄ, KAD SUKURTUMĖTE INDEKSĄ 👇👇👇");
-        // Ištraukiame nuorodą iš klaidos teksto (ji ten visada yra)
-        console.log(error.message.match(/https:\/\/[^\s]+/)?.[0]);
+        console.error("👇👇👇 TRŪKSTA INDEKSO! SPAUSKITE ŠIĄ NUORODĄ, KAD JĮ SUKURTUMĖTE 👇👇👇");
+        console.error(error.message.match(/https:\/\/[^\s]+/)?.[0] || "Nuorodos rasti nepavyko.");
     }
-    console.log("🔴🔴🔴🔴🔴🔴\n\n");
+    console.error("🔴🔴🔴🔴🔴🔴\n\n");
 
     return { total: 0, recent: 0 };
-}
+  }
 }

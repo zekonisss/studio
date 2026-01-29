@@ -34,13 +34,17 @@ export function DriverSearchStats({ firstName, lastName }: DriverSearchStatsProp
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
+        // NAUJAS DIAGNOSTINIS PRANEŠIMAS (matomas naršyklės konsolėje)
+        console.log(`[DriverSearchStats] Komponentas gavo: firstName='${firstName}', lastName='${lastName}'`);
+
         const fetchStats = async () => {
             setIsLoading(true);
             try {
+                // Svarbu: perduodame gautus parametrus
                 const searchStats = await getDriverSearchStats(firstName, lastName);
                 setStats(searchStats);
             } catch (error) {
-                console.error("Failed to fetch driver stats:", error);
+                console.error("Klaida gaunant vairuotojo statistiką:", error);
                 setStats({ total: 0, recent: 0 }); // Fallback on error
             } finally {
                 setIsLoading(false);
@@ -50,6 +54,7 @@ export function DriverSearchStats({ firstName, lastName }: DriverSearchStatsProp
         if (firstName) {
             fetchStats();
         } else {
+            // Jei nėra vardo, nieko nedarome ir rodome nulius
             setIsLoading(false);
             setStats({ total: 0, recent: 0 });
         }
