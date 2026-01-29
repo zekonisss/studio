@@ -87,11 +87,11 @@ export async function getDriverSearchStats(firstName: string, lastName: string):
 
         const logsRef = adminDb.collection('searchLogs');
         
-        let driverQuery = logsRef.where("firstName", "==", targetFirst);
-        // Atkuriame filtravimą pagal pavardę
-        if (targetLast) {
-            driverQuery = driverQuery.where("lastName", "==", targetLast);
-        }
+        // PATAISYMAS: `if` sąlyga pašalinta. Dabar užklausa visada naudos abu laukus (`firstName` ir `lastName`),
+        // net jei `lastName` yra tuščias. Tai leis `Firestore` teisingai panaudoti sudėtinį indeksą.
+        const driverQuery = logsRef
+            .where("firstName", "==", targetFirst)
+            .where("lastName", "==", targetLast);
 
         const totalPromise = driverQuery.count().get();
         
