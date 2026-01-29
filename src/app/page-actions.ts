@@ -67,7 +67,6 @@ export async function getDriverSearchStats(firstName: string, lastName: string):
         return { total: 0, recent: 0 };
     }
 
-    // Robust cleaning function that handles trim and capitalization safely.
     const cleanAndCapitalize = (str: string) => {
         const trimmed = str?.trim() || '';
         if (!trimmed) return '';
@@ -75,9 +74,8 @@ export async function getDriverSearchStats(firstName: string, lastName: string):
     };
 
     const targetFirst = cleanAndCapitalize(firstName);
-    const targetLast = cleanAndCapitalize(lastName);
+    // const targetLast = cleanAndCapitalize(lastName); // Laikinai nenaudojame
 
-    // If first name is empty after cleaning, no point in querying
     if (!targetFirst) {
       return { total: 0, recent: 0 };
     }
@@ -89,15 +87,11 @@ export async function getDriverSearchStats(firstName: string, lastName: string):
 
         const logsRef = adminDb.collection('searchLogs');
         
-        // Base query for the specific driver
-        const driverQuery = logsRef
-            .where("firstName", "==", targetFirst)
-            .where("lastName", "==", targetLast);
+        // Laikinas diagnostinis pakeitimas: ieškome TIK pagal vardą
+        const driverQuery = logsRef.where("firstName", "==", targetFirst);
 
-        // Query for total searches
         const totalPromise = driverQuery.count().get();
         
-        // Query for recent searches (last 60 days)
         const recentPromise = driverQuery
             .where("timestamp", ">=", sixtyDaysAgoTimestamp)
             .count()
@@ -110,8 +104,7 @@ export async function getDriverSearchStats(firstName: string, lastName: string):
             recent: recentSnapshot.data().count
         };
     } catch (error) {
-        console.error(`Error fetching search stats for ${targetFirst} ${targetLast}:`, error);
-        // This might fail due to missing index, but we shouldn't crash the app
+        console.error(`Error fetching search stats for ${targetFirst}:`, error);
         return { total: 0, recent: 0 };
     }
 }
