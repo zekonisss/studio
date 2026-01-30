@@ -112,19 +112,23 @@ export default function ReportsHistoryPage() {
         const current = messages[tab];
 
         return (
-            <div className="text-center py-16 px-6 border-2 border-dashed rounded-lg mt-6">
-                <Inbox className="mx-auto h-12 w-12 text-muted-foreground" />
-                <h3 className="mt-4 text-lg font-semibold">{current.title}</h3>
-                <p className="mt-2 text-sm text-muted-foreground">{current.message}</p>
-                {current.showButton && (
-                  <Button asChild className="mt-6">
-                    <Link href="/authenticated/reports/add">
-                      <FilePlus2 className="mr-2 h-4 w-4" />
-                      {current.buttonText}
-                    </Link>
-                  </Button>
-                )}
-            </div>
+            <TableRow>
+                <TableCell colSpan={5} className="h-48 text-center">
+                    <div className="flex flex-col items-center gap-4">
+                         <Inbox className="h-12 w-12 text-muted-foreground" />
+                        <h3 className="mt-2 text-lg font-semibold">{current.title}</h3>
+                        <p className="text-sm text-muted-foreground">{current.message}</p>
+                        {current.showButton && (
+                        <Button asChild className="mt-4">
+                            <Link href="/authenticated/reports/add">
+                            <FilePlus2 className="mr-2 h-4 w-4" />
+                            {current.buttonText}
+                            </Link>
+                        </Button>
+                        )}
+                    </div>
+                </TableCell>
+            </TableRow>
         );
     };
     
@@ -140,57 +144,67 @@ export default function ReportsHistoryPage() {
     }
 
 
-    const ReportsTable = ({ reports }: { reports: Report[] }) => (
-      <Card className="mt-6">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>{t('admin.entries.table.personInEntry')}</TableHead>
-              <TableHead>Būsena</TableHead>
-              <TableHead>{t('admin.entries.table.category')}</TableHead>
-              <TableHead>Pateikimo Data</TableHead>
-              <TableHead className="text-right">{t('admin.entries.table.actions')}</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {reports.map((report) => (
-              <TableRow key={report.id}>
-                <TableCell className="font-medium">{report.fullName}</TableCell>
-                <TableCell>{getStatusBadge(report.status)}</TableCell>
-                <TableCell>
-                  <Badge variant={DESTRUCTIVE_REPORT_MAIN_CATEGORIES.includes(report.category) ? 'destructive' : 'secondary'}>
-                    {getCategoryNameForDisplay(report.category, t)}
-                  </Badge>
-                </TableCell>
-                <TableCell>{new Date(report.createdAt).toLocaleDateString(locale)}</TableCell>
-                <TableCell className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-8 w-8 p-0">
-                        <span className="sr-only">Open menu</span>
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => handleViewDetails(report)}>
-                        <Eye className="mr-2 h-4 w-4" />
-                        <span>{t('reports.history.entry.viewDetailsButton')}</span>
-                      </DropdownMenuItem>
-                      {report.status === 'active' && (
-                        <DropdownMenuItem onClick={() => setReportForDeletion(report)} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
-                          <Send className="mr-2 h-4 w-4" />
-                          <span>Pateikti trynimui</span>
-                        </DropdownMenuItem>
-                      )}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </Card>
-    );
+    const ReportsTableContent = ({ reports, status }: { reports: Report[], status: 'active' | 'deleted' | 'pending' }) => {
+        if (isLoading) {
+            return (
+                <>
+                 {[...Array(3)].map((_, i) => (
+                    <TableRow key={`skeleton-${i}`}>
+                        <TableCell><Skeleton className="h-5 w-32" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-28" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                        <TableCell className="text-right"><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
+                    </TableRow>
+                ))}
+                </>
+            );
+        }
+
+        if (reports.length === 0) {
+            return <NoEntriesView tab={status} />;
+        }
+        
+        return (
+            <>
+                {reports.map((report) => (
+                    <TableRow key={report.id}>
+                        <TableCell className="font-medium">{report.fullName}</TableCell>
+                        <TableCell>{getStatusBadge(report.status)}</TableCell>
+                        <TableCell>
+                        <Badge variant={DESTRUCTIVE_REPORT_MAIN_CATEGORIES.includes(report.category) ? 'destructive' : 'secondary'}>
+                            {getCategoryNameForDisplay(report.category, t)}
+                        </Badge>
+                        </TableCell>
+                        <TableCell>{new Date(report.createdAt).toLocaleDateString(locale)}</TableCell>
+                        <TableCell className="text-right">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                                <span className="sr-only">Open menu</span>
+                                <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleViewDetails(report)}>
+                                <Eye className="mr-2 h-4 w-4" />
+                                <span>{t('reports.history.entry.viewDetailsButton')}</span>
+                            </DropdownMenuItem>
+                            {report.status === 'active' && (
+                                <DropdownMenuItem onClick={() => setReportForDeletion(report)} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
+                                <Send className="mr-2 h-4 w-4" />
+                                <span>Pateikti trynimui</span>
+                                </DropdownMenuItem>
+                            )}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                        </TableCell>
+                    </TableRow>
+                ))}
+            </>
+        );
+    }
+
 
     return (
         <>
@@ -243,61 +257,37 @@ export default function ReportsHistoryPage() {
                         </Button>
                     </CardHeader>
                     <CardContent>
-                        {isLoading ? (
+                        <Tabs defaultValue="active" className="w-full">
+                            <TabsList className="grid w-full grid-cols-3">
+                                <TabsTrigger value="active">Aktyvūs ({activeReports.length})</TabsTrigger>
+                                <TabsTrigger value="pending">Laukiantys ištrynimo ({pendingReports.length})</TabsTrigger>
+                                <TabsTrigger value="deleted">Ištrinti ({deletedReports.length})</TabsTrigger>
+                            </TabsList>
                              <Card className="mt-6">
                                 <Table>
                                     <TableHeader>
-                                        <TableRow>
-                                            <TableHead><Skeleton className="h-5 w-32" /></TableHead>
-                                            <TableHead><Skeleton className="h-5 w-24" /></TableHead>
-                                            <TableHead><Skeleton className="h-5 w-28" /></TableHead>
-                                            <TableHead><Skeleton className="h-5 w-24" /></TableHead>
-                                            <TableHead className="text-right"><Skeleton className="h-8 w-8 ml-auto" /></TableHead>
-                                        </TableRow>
+                                    <TableRow>
+                                        <TableHead>{t('admin.entries.table.personInEntry')}</TableHead>
+                                        <TableHead>Būsena</TableHead>
+                                        <TableHead>{t('admin.entries.table.category')}</TableHead>
+                                        <TableHead>Pateikimo Data</TableHead>
+                                        <TableHead className="text-right">{t('admin.entries.table.actions')}</TableHead>
+                                    </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {[...Array(5)].map((_, i) => (
-                                            <TableRow key={i}>
-                                                <TableCell><Skeleton className="h-5 w-28" /></TableCell>
-                                                <TableCell><Skeleton className="h-5 w-20" /></TableCell>
-                                                <TableCell><Skeleton className="h-5 w-32" /></TableCell>
-                                                <TableCell><Skeleton className="h-5 w-24" /></TableCell>
-                                                <TableCell className="text-right"><Skeleton className="h-8 w-8 ml-auto rounded-full" /></TableCell>
-                                            </TableRow>
-                                        ))}
+                                        <TabsContent value="active" asChild>
+                                            <ReportsTableContent reports={activeReports} status="active" />
+                                        </TabsContent>
+                                        <TabsContent value="pending" asChild>
+                                             <ReportsTableContent reports={pendingReports} status="pending" />
+                                        </TabsContent>
+                                        <TabsContent value="deleted" asChild>
+                                             <ReportsTableContent reports={deletedReports} status="deleted" />
+                                        </TabsContent>
                                     </TableBody>
                                 </Table>
                             </Card>
-                        ) : (
-                             <Tabs defaultValue="active" className="w-full">
-                                <TabsList className="grid w-full grid-cols-3">
-                                    <TabsTrigger value="active">Aktyvūs ({activeReports.length})</TabsTrigger>
-                                    <TabsTrigger value="pending">Laukiantys ištrynimo ({pendingReports.length})</TabsTrigger>
-                                    <TabsTrigger value="deleted">Ištrinti ({deletedReports.length})</TabsTrigger>
-                                </TabsList>
-                                <TabsContent value="active">
-                                   {activeReports.length > 0 ? (
-                                        <ReportsTable reports={activeReports} />
-                                    ) : (
-                                        <NoEntriesView tab="active"/>
-                                    )}
-                                </TabsContent>
-                                <TabsContent value="pending">
-                                   {pendingReports.length > 0 ? (
-                                        <ReportsTable reports={pendingReports} />
-                                    ) : (
-                                        <NoEntriesView tab="pending"/>
-                                    )}
-                                </TabsContent>
-                                <TabsContent value="deleted">
-                                    {deletedReports.length > 0 ? (
-                                        <ReportsTable reports={deletedReports} />
-                                    ) : (
-                                        <NoEntriesView tab="deleted"/>
-                                    )}
-                                </TabsContent>
-                            </Tabs>
-                        )}
+                        </Tabs>
                     </CardContent>
                 </Card>
             </div>

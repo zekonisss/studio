@@ -16,7 +16,7 @@ interface ReportDetailsModalProps {
 }
 
 export function ReportDetailsModal({ isOpen, onClose, report }: ReportDetailsModalProps) {
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
   
   if (!report) return null;
 
@@ -83,7 +83,7 @@ export function ReportDetailsModal({ isOpen, onClose, report }: ReportDetailsMod
                 </div>
                  <div className="grid grid-cols-3 gap-4">
                     <div className="col-span-1 text-xs text-muted-foreground">{t('reports.history.detailsModal.submissionDate')}:</div>
-                    <div className="col-span-2 text-xs">{new Date(report.createdAt).toLocaleString(t('common.localeForDate'))}</div>
+                    <div className="col-span-2 text-xs">{new Date(report.createdAt).toLocaleString(locale)}</div>
                 </div>
             </div>
         </ScrollArea>
