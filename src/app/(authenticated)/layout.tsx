@@ -39,8 +39,8 @@ export default function AuthenticatedLayout({
 
   const { isPromptVisible, reset } = useIdle({ 
     onIdle: logout,
-    idleTime: 30,
-    promptTime: 2,
+    idleTime: 30, // in minutes
+    promptTime: 2, // in minutes
   });
 
   const isLegalPage = pathname === '/terms' || pathname === '/privacy';
@@ -68,12 +68,15 @@ export default function AuthenticatedLayout({
       return;
     }
 
-    // If user isn't allowed in the app AND they are not trying to access the account page
+    // If user isn't allowed in the app AND they are not trying to access the account page,
+    // send them to the activation pending page.
     if (!isAllowedInApp && !isAccountPage) {
       if (pathname !== '/activation-pending') {
         router.replace('/activation-pending');
       }
     } else if (isAllowedInApp) {
+      // If a user who IS allowed in the app somehow lands on activation-pending,
+      // send them to their dashboard.
       if (pathname === '/activation-pending') {
         router.replace('/dashboard');
       }
@@ -119,7 +122,8 @@ export default function AuthenticatedLayout({
   const status = user.paymentStatus?.toLowerCase();
   const isAllowedInApp = status === 'active' || status === 'trial';
   
-  // This is the loader screen that shows while redirecting. It must also allow access to the account page.
+  // This is the loader screen that shows while redirecting to activation-pending.
+  // It must also allow access to the account page to prevent a redirect loop.
   if (!user.isAdmin && !isAllowedInApp && pathname !== '/activation-pending' && !isAccountPage) {
     return (
         <div className="flex h-screen w-full items-center justify-center bg-background">

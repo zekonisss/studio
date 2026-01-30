@@ -138,7 +138,7 @@ export default function PaymentsTab() {
         )
     }
 
-    if (['inactive', 'pending_payment', 'trial'].includes(user.paymentStatus)) {
+    if (['inactive', 'pending_payment', 'pending_verification', 'trial'].includes(user.paymentStatus)) {
         return (
             <div className="space-y-4">
                 <p className="text-sm font-medium">Aktyvuokite metinę prenumeratą:</p>

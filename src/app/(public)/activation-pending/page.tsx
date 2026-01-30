@@ -7,6 +7,7 @@ import { Loader2, CreditCard, ShieldCheck, AlertTriangle, Banknote } from "lucid
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/language-context";
+import Link from 'next/link';
 
 type PaymentMethod = 'card' | 'bank_transfer';
 
@@ -76,7 +77,7 @@ export default function ActivationPendingPage() {
                     <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
                         <Button onClick={() => handlePayment('card')} disabled={!!loadingMethod} size="lg" className="w-full sm:w-auto">
                             {loadingMethod === 'card' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CreditCard className="mr-2 h-4 w-4" />}
-                            Mokėti kortele
+                            Mokėti kortele (prenumerata)
                         </Button>
                         <Button onClick={() => handlePayment('bank_transfer')} disabled={!!loadingMethod} size="lg" variant="outline" className="w-full sm:w-auto">
                             {loadingMethod === 'bank_transfer' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Banknote className="mr-2 h-4 w-4" />}
@@ -98,13 +99,19 @@ export default function ActivationPendingPage() {
   }
 
   return (
-    <Card className="w-full max-w-lg rounded-xl border p-6 sm:p-8 text-center shadow-glow-primary bg-card/80 dark:bg-card/40 backdrop-blur-sm">
+    <Card className="w-full max-w-2xl rounded-xl border p-6 sm:p-8 text-center shadow-glow-primary bg-card/80 dark:bg-card/40 backdrop-blur-sm">
       <CardHeader className="p-0">
          {getStatusComponent()}
       </CardHeader>
       <CardContent className="p-0">
            <div className="flex flex-col items-center gap-4 mt-8 border-t pt-6">
-              <p className="text-xs text-muted-foreground text-center max-w-xs">
+              <p className="text-sm text-muted-foreground">
+                  Norite peržiūrėti ar pakeisti paskyros duomenis?{' '}
+                  <Link href="/authenticated/account" className="font-semibold text-primary underline-offset-4 hover:underline">
+                      Eiti į paskyros valdymą
+                  </Link>
+              </p>
+              <p className="text-xs text-muted-foreground text-center max-w-xs mt-2">
                   Jei norite prisijungti su kita paskyra (pvz., administratoriaus) – atsijunkite.
               </p>
               <Button variant="outline" onClick={logout}>
