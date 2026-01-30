@@ -11,7 +11,7 @@ export interface UserProfileFirestore {
   address: string;
   contactPerson: string;
   phone: string;
-  paymentStatus: 'active' | 'inactive' | 'pending_verification' | 'pending_payment';
+  paymentStatus: 'active' | 'inactive' | 'pending_verification' | 'pending_payment' | 'trial';
   isAdmin: boolean;
   agreeToTerms: boolean;
   registeredAt: Timestamp;
@@ -21,6 +21,8 @@ export interface UserProfileFirestore {
   stripeSubscriptionId?: string | null;
   stripePriceId?: string | null;
   subscriptionEndDate?: Timestamp | null;
+  searchCredits?: number;
+  reportCredits?: number;
 }
 
 export interface ReportFirestore {
@@ -51,8 +53,9 @@ export interface ReportFirestore {
 export interface SearchLogFirestore {
   id: string;
   userId: string;
-  searchText: string;
-  resultsCount: number;
+  driverHash: string;
+  firstName: string;
+  lastName: string;
   timestamp: Timestamp;
 }
 
@@ -89,7 +92,7 @@ export interface UserProfile {
   address: string;
   contactPerson: string;
   phone: string;
-  paymentStatus: 'active' | 'inactive' | 'pending_verification' | 'pending_payment';
+  paymentStatus: 'active' | 'inactive' | 'pending_verification' | 'pending_payment' | 'trial';
   isAdmin: boolean;
   agreeToTerms: boolean;
   registeredAt: string; 
@@ -99,6 +102,8 @@ export interface UserProfile {
   stripeSubscriptionId?: string | null;
   stripePriceId?: string | null;
   subscriptionEndDate?: string | null;
+  searchCredits: number;
+  reportCredits: number;
 }
 
 export interface Report {
@@ -129,8 +134,9 @@ export interface Report {
 export interface SearchLog {
   id: string;
   userId: string;
-  searchText: string;
-  resultsCount: number;
+  driverHash: string;
+  firstName: string;
+  lastName: string;
   timestamp: string;
 }
 

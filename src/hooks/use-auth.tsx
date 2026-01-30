@@ -14,7 +14,7 @@ import {
   signOut,
   type User as FirebaseUser,
 } from 'firebase/auth';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import type { UserProfile, UserProfileFirestore, SignupFormValuesExtended } from '@/types';
 import { useRouter } from 'next/navigation';
@@ -29,6 +29,7 @@ interface AuthContextType {
   signup: (data: SignupFormValuesExtended) => Promise<void>;
   logout: () => void;
   updateUserInContext: (data: Partial<UserProfile>) => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -96,7 +97,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const userProfile = await getUserProfile(userCredential.user.uid);
 
     if (!userProfile) {
-      // This case should ideally not happen if signup is robust
       await signOut(auth);
       throw new Error("User profile not found in database.");
     }
@@ -129,9 +129,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         paymentStatus: 'pending_verification',
         isAdmin: false,
         agreeToTerms,
-        registeredAt: serverTimestamp() as any, // Cast because serverTimestamp is special
+        registeredAt: serverTimestamp() as any,
         accountActivatedAt: null,
         subUsers: [],
+        searchCredits: 3,
+        reportCredits: 1,
      };
 
      await setDoc(doc(db, "users", uid), newUserProfile);
@@ -143,14 +145,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (!user || !db) return;
       
       const userRef = doc(db, 'users', user.id);
-      await setDoc(userRef, data, { merge: true });
+      await updateDoc(userRef, data);
 
       const updatedProfile = await getUserProfile(user.id);
       setUser(updatedProfile);
   }
 
+  const refreshUser = async () => {
+    if (!firebaseUser) return;
+    const userProfile = await getUserProfile(firebaseUser.uid);
+    setUser(userProfile);
+  }
+
   return (
-    <AuthContext.Provider value={{ user, firebaseUser, isLoading, login, signup, logout, updateUserInContext }}>
+    <AuthContext.Provider value={{ user, firebaseUser, isLoading, login, signup, logout, updateUserInContext, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

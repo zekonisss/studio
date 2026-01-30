@@ -17,13 +17,15 @@ import { useAuth } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
 import { countries, detailedReportCategories } from "@/lib/constants";
 import { getCategoryNameForDisplay, cn } from "@/lib/utils";
-import { addReport, uploadReportImage } from "@/lib/storage";
-import { Loader2, BrainCircuit, FilePlus2, UploadCloud, X } from "lucide-react";
-import { categorizeReportAction } from "./actions";
+import { uploadReportImage } from "@/lib/storage";
+import { Loader2, BrainCircuit, FilePlus2, UploadCloud, X, ShieldAlert } from "lucide-react";
+import { categorizeReportAction, addReportWithCreditCheck } from "./actions";
+import Link from "next/link";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 export default function AddReportPage() {
   const { t } = useLanguage();
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
   
@@ -124,6 +126,11 @@ export default function AddReportPage() {
       toast({ variant: "destructive", title: t("reports.add.toast.notLoggedIn.title"), description: t("reports.add.toast.notLoggedIn.description") });
       return;
     }
+    if (user.paymentStatus === 'trial' && (!user.reportCredits || user.reportCredits <= 0)) {
+        toast({ variant: "destructive", title: "Kreditai baigėsi", description: "Jūs išnaudojote nemokamų įrašų limitą. Prašome aktyvuoti prenumeratą." });
+        return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -135,8 +142,8 @@ export default function AddReportPage() {
         imageUrl = uploadResult.url;
         dataAiHint = uploadResult.dataAiHint;
       }
-
-      await addReport({
+      
+      const reportData = {
         reporterId: user.id,
         reporterCompanyName: user.companyName,
         fullName: values.fullName,
@@ -147,15 +154,25 @@ export default function AddReportPage() {
         comment: values.comment,
         imageUrl,
         dataAiHint
-      });
+      };
 
-      toast({ title: t("reports.add.toast.success.title"), description: t("reports.add.toast.success.description", { fullName: values.fullName }) });
-      router.push("/authenticated/reports/history");
-    } catch (e) {
-      toast({ variant: "destructive", title: "Klaida", description: "Nepavyko išsaugoti įrašo." });
+      const result = await addReportWithCreditCheck(reportData, user.id);
+
+      if (result.success) {
+        toast({ title: t("reports.add.toast.success.title"), description: t("reports.add.toast.success.description", { fullName: values.fullName }) });
+        await refreshUser(); // Refresh user context to get updated credits
+        router.push("/authenticated/reports/history");
+      } else {
+        throw new Error(result.error || "Nepavyko išsaugoti įrašo.");
+      }
+
+    } catch (e: any) {
+      toast({ variant: "destructive", title: "Klaida", description: e.message || "Nepavyko išsaugoti įrašo." });
       console.error(e);
     } finally { setIsSubmitting(false); }
   };
+
+  const hasCredits = user && (user.paymentStatus === 'active' || (user.paymentStatus === 'trial' && user.reportCredits > 0));
 
   return (
     <Card>
@@ -169,157 +186,169 @@ export default function AddReportPage() {
         </div>
       </CardHeader>
       <CardContent>
+        {!hasCredits && (
+             <Alert variant="destructive" className="mb-6">
+                <ShieldAlert className="h-4 w-4" />
+                <AlertTitle>Kreditai baigėsi</AlertTitle>
+                <AlertDescription>
+                    Jūs išnaudojote nemokamų įrašų limitą. Norėdami tęsti, prašome{" "}
+                    <Link href="/authenticated/account?tab=payment" className="font-semibold underline">aktyvuoti prenumeratą</Link>.
+                </AlertDescription>
+            </Alert>
+        )}
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <FormField control={form.control} name="fullName" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("reports.add.form.fullName.label")}</FormLabel>
-                  <FormControl><Input placeholder={t("reports.add.form.fullName.placeholder")} {...field} /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )} />
+            <fieldset disabled={!hasCredits || isSubmitting} className="space-y-8">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <FormField control={form.control} name="fullName" render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>{t("reports.add.form.fullName.label")}</FormLabel>
+                    <FormControl><Input placeholder={t("reports.add.form.fullName.placeholder")} {...field} /></FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )} />
 
-              <FormField control={form.control} name="nationality" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("reports.add.form.nationality.label")}</FormLabel>
-                  <Select value={field.value} onValueChange={field.onChange}>
+                <FormField control={form.control} name="nationality" render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>{t("reports.add.form.nationality.label")}</FormLabel>
+                    <Select value={field.value} onValueChange={field.onChange}>
+                        <FormControl>
+                        <SelectTrigger><SelectValue placeholder={t("reports.add.form.nationality.placeholder")} /></SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                        {countries.map(c => <SelectItem key={c.value} value={c.value}>{t(`countries.${c.value}`)}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )} />
+
+                <FormField control={form.control} name="birthYear" render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>{t("reports.add.form.birthYear.label")}</FormLabel>
                     <FormControl>
-                      <SelectTrigger><SelectValue placeholder={t("reports.add.form.nationality.placeholder")} /></SelectTrigger>
+                        <Input 
+                            type="number" 
+                            placeholder={t("reports.add.form.birthYear.placeholder")} 
+                            {...field} 
+                            onChange={e => field.onChange(e.target.value === '' ? undefined : Number(e.target.value))}
+                            onKeyDown={(evt) => ["e", "E", "+", "-"].includes(evt.key) && evt.preventDefault()}
+                        />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )} />
+                </div>
+
+                <FormField control={form.control} name="comment" render={({ field }) => (
+                <FormItem>
+                    <FormLabel>{t("reports.add.form.comment.label")}</FormLabel>
+                    <FormControl><Textarea className="min-h-[120px]" {...field} /></FormControl>
+                    <FormMessage />
+                    <div className="flex justify-end pt-2">
+                    <Button type="button" variant="outline" size="sm" onClick={handleAiCategorize} disabled={isAiCategorizing || !commentValue || commentValue.trim().length < 20}>
+                        {isAiCategorizing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <BrainCircuit className="mr-2 h-4 w-4" />}
+                        Kategorizuoti su AI
+                    </Button>
+                    </div>
+                </FormItem>
+                )} />
+
+                <FormField control={form.control} name="category" render={({ field }) => (
+                <FormItem>
+                    <FormLabel>{t("reports.add.form.category.label")}</FormLabel>
+                    <Select value={field.value} onValueChange={v => { field.onChange(v); setSelectedCategory(v); }}>
+                    <FormControl>
+                        <SelectTrigger className={cn("transition-all", isAiHighlight && "ring-2 ring-primary bg-primary/5")}>
+                        <SelectValue placeholder={t("reports.add.form.category.placeholder")} />
+                        </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {countries.map(c => <SelectItem key={c.value} value={c.value}>{t(`countries.${c.value}`)}</SelectItem>)}
+                        {detailedReportCategories.map(cat => <SelectItem key={cat.id} value={cat.id}>{getCategoryNameForDisplay(cat.id, t)}</SelectItem>)}
                     </SelectContent>
-                  </Select>
-                  <FormMessage />
+                    </Select>
+                    <FormMessage />
                 </FormItem>
-              )} />
+                )} />
 
-              <FormField control={form.control} name="birthYear" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("reports.add.form.birthYear.label")}</FormLabel>
-                  <FormControl>
-                    <Input 
-                        type="number" 
-                        placeholder={t("reports.add.form.birthYear.placeholder")} 
-                        {...field} 
-                        onChange={e => field.onChange(e.target.value === '' ? undefined : Number(e.target.value))}
-                        onKeyDown={(evt) => ["e", "E", "+", "-"].includes(evt.key) && evt.preventDefault()}
+                {availableTags.length > 0 && (
+                <FormField control={form.control} name="tags" render={() => (
+                    <FormItem>
+                    <FormLabel>{t("reports.add.form.tags.label")}</FormLabel>
+                    <FormDescription>{t("reports.add.form.tags.description")}</FormDescription>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        {availableTags.map(tag => (
+                        <FormField key={tag} control={form.control} name="tags" render={({ field }) => (
+                            <FormItem className="flex items-start space-x-3">
+                            <FormControl>
+                                <Checkbox checked={field.value?.includes(tag)} onCheckedChange={checked => {
+                                const newValue = checked ? [...(field.value || []), tag] : field.value?.filter(v => v !== tag);
+                                field.onChange(newValue);
+                                }} />
+                            </FormControl>
+                            <FormLabel className="font-normal">{t(`tags.${tag}`)}</FormLabel>
+                            </FormItem>
+                        )} />
+                        ))}
+                    </div>
+                    <FormMessage />
+                    </FormItem>
+                )} />
+                )}
+
+                <div className="space-y-2">
+                <FormLabel>{t("reports.add.form.image.label")}</FormLabel>
+                <div 
+                    className={cn(
+                        "relative flex flex-col items-center justify-center w-full p-8 border-2 border-dashed rounded-lg cursor-pointer transition-colors",
+                        isDragging ? "border-primary bg-primary/10" : "border-border hover:border-primary/50 hover:bg-accent/50",
+                        imageFile && "border-primary bg-primary/5"
+                    )}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                    onClick={() => fileInputRef.current?.click()}
+                >
+                    <UploadCloud className="h-10 w-10 text-muted-foreground mb-3" />
+                    <p className="text-center font-medium">
+                        {imageFile ? imageFile.name : 'Tempkite failą čia arba paspauskite'}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                        {t("reports.add.form.image.description")}
+                    </p>
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        className="hidden"
+                        accept="image/png, image/jpeg, application/pdf"
+                        onChange={(e) => handleFileSelect(e.target.files?.[0] || null)}
                     />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )} />
-            </div>
-
-            <FormField control={form.control} name="comment" render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t("reports.add.form.comment.label")}</FormLabel>
-                <FormControl><Textarea className="min-h-[120px]" {...field} /></FormControl>
-                <FormMessage />
-                <div className="flex justify-end pt-2">
-                  <Button type="button" variant="outline" size="sm" onClick={handleAiCategorize} disabled={isAiCategorizing || !commentValue || commentValue.trim().length < 20}>
-                    {isAiCategorizing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <BrainCircuit className="mr-2 h-4 w-4" />}
-                    Kategorizuoti su AI
-                  </Button>
+                    {imageFile && (
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="absolute top-2 right-2 text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8 p-0"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleRemoveImage();
+                            }}
+                        >
+                            <X className="h-4 w-4" />
+                            <span className="sr-only">Pašalinti</span>
+                        </Button>
+                    )}
                 </div>
-              </FormItem>
-            )} />
-
-            <FormField control={form.control} name="category" render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t("reports.add.form.category.label")}</FormLabel>
-                <Select value={field.value} onValueChange={v => { field.onChange(v); setSelectedCategory(v); }}>
-                  <FormControl>
-                    <SelectTrigger className={cn("transition-all", isAiHighlight && "ring-2 ring-primary bg-primary/5")}>
-                      <SelectValue placeholder={t("reports.add.form.category.placeholder")} />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {detailedReportCategories.map(cat => <SelectItem key={cat.id} value={cat.id}>{getCategoryNameForDisplay(cat.id, t)}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )} />
-
-            {availableTags.length > 0 && (
-              <FormField control={form.control} name="tags" render={() => (
-                <FormItem>
-                  <FormLabel>{t("reports.add.form.tags.label")}</FormLabel>
-                  <FormDescription>{t("reports.add.form.tags.description")}</FormDescription>
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {availableTags.map(tag => (
-                      <FormField key={tag} control={form.control} name="tags" render={({ field }) => (
-                        <FormItem className="flex items-start space-x-3">
-                          <FormControl>
-                            <Checkbox checked={field.value?.includes(tag)} onCheckedChange={checked => {
-                              const newValue = checked ? [...(field.value || []), tag] : field.value?.filter(v => v !== tag);
-                              field.onChange(newValue);
-                            }} />
-                          </FormControl>
-                          <FormLabel className="font-normal">{t(`tags.${tag}`)}</FormLabel>
-                        </FormItem>
-                      )} />
-                    ))}
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )} />
-            )}
-
-            <div className="space-y-2">
-              <FormLabel>{t("reports.add.form.image.label")}</FormLabel>
-              <div 
-                  className={cn(
-                      "relative flex flex-col items-center justify-center w-full p-8 border-2 border-dashed rounded-lg cursor-pointer transition-colors",
-                      isDragging ? "border-primary bg-primary/10" : "border-border hover:border-primary/50 hover:bg-accent/50",
-                      imageFile && "border-primary bg-primary/5"
-                  )}
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
-                  onDrop={handleDrop}
-                  onClick={() => fileInputRef.current?.click()}
-              >
-                  <UploadCloud className="h-10 w-10 text-muted-foreground mb-3" />
-                  <p className="text-center font-medium">
-                      {imageFile ? imageFile.name : 'Tempkite failą čia arba paspauskite'}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                      {t("reports.add.form.image.description")}
-                  </p>
-                  <input
-                      ref={fileInputRef}
-                      type="file"
-                      className="hidden"
-                      accept="image/png, image/jpeg, application/pdf"
-                      onChange={(e) => handleFileSelect(e.target.files?.[0] || null)}
-                  />
-                  {imageFile && (
-                      <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="absolute top-2 right-2 text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8 p-0"
-                          onClick={(e) => {
-                              e.stopPropagation();
-                              handleRemoveImage();
-                          }}
-                      >
-                          <X className="h-4 w-4" />
-                          <span className="sr-only">Pašalinti</span>
-                      </Button>
-                  )}
-              </div>
-              <FormMessage>{form.formState.errors.image && String(form.formState.errors.image.message)}</FormMessage>
-            </div>
+                <FormMessage>{form.formState.errors.image && String(form.formState.errors.image.message)}</FormMessage>
+                </div>
 
 
-            <Button type="submit" disabled={isSubmitting} className="w-full md:w-auto">
-              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {t("reports.add.form.submitButton")}
-            </Button>
+                <Button type="submit" disabled={!hasCredits || isSubmitting} className="w-full md:w-auto">
+                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {t("reports.add.form.submitButton")}
+                </Button>
+            </fieldset>
           </form>
         </Form>
       </CardContent>

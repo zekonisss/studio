@@ -107,6 +107,8 @@ export default function UserManagementTab() {
     switch (status) {
       case 'active':
         return <Badge variant="default" className="bg-primary hover:bg-primary/80">{t('admin.users.status.active')}</Badge>;
+      case 'trial':
+        return <Badge variant="secondary" className="bg-blue-500 hover:bg-blue-600">{t('admin.users.status.trial')}</Badge>;
       case 'pending_verification':
         return <Badge variant="secondary" className="bg-yellow-500 hover:bg-yellow-600">{t('admin.users.status.pending_verification')}</Badge>;
       case 'pending_payment':
@@ -200,6 +202,9 @@ export default function UserManagementTab() {
                               <DropdownMenuLabel>{t('admin.users.actions.changeStatus')}</DropdownMenuLabel>
                                   <DropdownMenuItem onClick={() => handleStatusChange(user, 'active')} disabled={user.paymentStatus === 'active'}>
                                       {t('admin.users.status.active')}
+                                  </DropdownMenuItem>
+                                   <DropdownMenuItem onClick={() => handleStatusChange(user, 'trial')} disabled={user.paymentStatus === 'trial'}>
+                                      {t('admin.users.status.trial')}
                                   </DropdownMenuItem>
                                   <DropdownMenuItem onClick={() => handleStatusChange(user, 'pending_payment')} disabled={user.paymentStatus === 'pending_payment'}>
                                       {t('admin.users.status.pending_payment')}

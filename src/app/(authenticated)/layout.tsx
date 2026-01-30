@@ -46,7 +46,6 @@ export default function AuthenticatedLayout({
   const isLegalPage = pathname === '/terms' || pathname === '/privacy';
 
   useEffect(() => {
-    // Don't perform auth checks on legal pages.
     if (isLegalPage) {
       return;
     }
@@ -59,6 +58,7 @@ export default function AuthenticatedLayout({
     }
 
     const status = user.paymentStatus?.toLowerCase();
+    const isAllowedInApp = status === 'active' || status === 'trial';
 
     if (user.isAdmin) {
       if (pathname === '/activation-pending') {
@@ -67,9 +67,7 @@ export default function AuthenticatedLayout({
       return;
     }
 
-    const isActive = status === 'active';
-
-    if (!isActive) {
+    if (!isAllowedInApp) {
       if (pathname !== '/activation-pending') {
         router.replace('/activation-pending');
       }
@@ -117,9 +115,9 @@ export default function AuthenticatedLayout({
   }
 
   const status = user.paymentStatus?.toLowerCase();
-  const isActive = status === 'active';
+  const isAllowedInApp = status === 'active' || status === 'trial';
   
-  if (!user.isAdmin && !isActive && pathname !== '/activation-pending') {
+  if (!user.isAdmin && !isAllowedInApp && pathname !== '/activation-pending') {
     return (
         <div className="flex h-screen w-full items-center justify-center bg-background">
             <Loader2 className="h-12 w-12 animate-spin text-primary" />

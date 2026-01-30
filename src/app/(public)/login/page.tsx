@@ -49,7 +49,7 @@ export default function LoginPage() {
     if (user) {
       if (user.isAdmin) {
         router.replace('/admin');
-      } else if (user.paymentStatus === 'active') {
+      } else if (user.paymentStatus === 'active' || user.paymentStatus === 'trial') {
         router.replace('/dashboard');
       } else {
         router.replace('/activation-pending');
@@ -70,7 +70,7 @@ export default function LoginPage() {
       
       if (userData.isAdmin) {
         router.push('/admin');
-      } else if (userData.paymentStatus === 'active') {
+      } else if (userData.paymentStatus === 'active' || userData.paymentStatus === 'trial') {
         router.push('/dashboard');
       } else {
         router.push('/activation-pending');
