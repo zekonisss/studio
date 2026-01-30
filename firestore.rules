@@ -52,8 +52,10 @@ service cloud.firestore {
     match /searchLogs/{logId} {
       allow create: if isAllowedToOperate(request.auth.uid) &&
                      request.resource.data.userId == request.auth.uid;
-      allow read: if isAdmin(request.auth.uid) ||
-                  resource.data.userId == request.auth.uid;
+      // Read a single document
+      allow read: if isAdmin(request.auth.uid) || resource.data.userId == request.auth.uid;
+      // Query the collection
+      allow list: if isAllowedToOperate(request.auth.uid);
       allow update, delete: if false;
     }
 
