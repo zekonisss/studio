@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Loader2, Frown, FileText, ExternalLink, UserSearch } from "lucide-react";
+import { Search, Loader2, Frown, FileText, ExternalLink, UserSearch, ShieldCheck } from "lucide-react";
 import { SearchSchema, type SearchFormValues } from "@/lib/schemas";
 import { getAllReports } from "@/lib/storage";
 import { getCategoryNameForDisplay, cn } from "@/lib/utils";
@@ -161,23 +161,31 @@ export default function SearchPage() {
                                 </div>
                             )}
 
-                            {!isLoading && hasSearched && searchResults.length === 0 && (
-                                (() => {
-                                    const { firstName, lastName } = getNames(currentQuery);
-                                    return (
-                                        <Card className="text-center py-10">
-                                            <CardHeader className="pb-4">
-                                                <Frown className="mx-auto h-12 w-12 text-muted-foreground" />
-                                                <CardTitle className="mt-4">{t('search.noResults.title')}</CardTitle>
-                                                <CardDescription>{t('search.noResults.message', { query: currentQuery })}</CardDescription>
-                                            </CardHeader>
-                                            <CardContent>
-                                                <DriverSearchStats firstName={firstName} lastName={lastName} />
-                                            </CardContent>
-                                        </Card>
-                                    );
-                                })()
-                            )}
+                            {!isLoading && hasSearched && searchResults.length === 0 && (() => {
+                                const { firstName, lastName } = getNames(currentQuery);
+                                return (
+                                    <div className="text-center py-12 border rounded-lg bg-green-50/50 dark:bg-green-900/10 border-green-200 dark:border-green-900/20">
+                                        <div className="bg-green-100 dark:bg-green-900/20 w-20 h-20 mx-auto rounded-full flex items-center justify-center mb-4">
+                                            <ShieldCheck className="h-10 w-10 text-green-600 dark:text-green-500" />
+                                        </div>
+                                        
+                                        <h3 className="text-xl font-medium text-foreground">
+                                            {t('search.noResults.title') || "Duomenų nerasta"}
+                                        </h3>
+                                        
+                                        <p className="mt-2 text-muted-foreground max-w-md mx-auto">
+                                            Pagal užklausą <span className="font-medium text-foreground">"{currentQuery}"</span> įrašų sistemoje nerasta.
+                                            <br className="mt-2" />
+                                            <span className="text-sm">
+                                                Tai reiškia, kad šiuo metu duomenų bazėje nėra užfiksuotų atsiliepimų ar įvykių, susijusių su šiuo asmeniu.
+                                            </span>
+                                        </p>
+                                        <div className="max-w-md mx-auto mt-6">
+                                             <DriverSearchStats firstName={firstName} lastName={lastName} />
+                                        </div>
+                                    </div>
+                                )
+                            })()}
 
                             {!isLoading && hasSearched && searchResults.length > 0 && (
                                 <div className="space-y-4">
