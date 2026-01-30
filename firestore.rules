@@ -13,10 +13,11 @@ service cloud.firestore {
              userDoc.data.isAdmin == true;
     }
 
-    function isUserActive(userId) {
+    function isAllowedToOperate(userId) {
+      let userDoc = getUserDoc(userId);
       return request.auth != null && 
-            exists(/databases/$(database)/documents/users/$(userId)) &&
-            get(/databases/$(database)/documents/users/$(userId)).data.paymentStatus == 'active';
+            userDoc != null &&
+            (userDoc.data.paymentStatus == 'active' || userDoc.data.paymentStatus == 'trial');
     }
 
     // USERS
@@ -29,8 +30,8 @@ service cloud.firestore {
 
     // REPORTS
     match /reports/{reportId} {
-      allow create: if isUserActive(request.auth.uid) || isAdmin(request.auth.uid);
-      allow read, list: if isAdmin(request.auth.uid) || isUserActive(request.auth.uid);
+      allow create: if isAllowedToOperate(request.auth.uid) || isAdmin(request.auth.uid);
+      allow read, list: if isAdmin(request.auth.uid) || isAllowedToOperate(request.auth.uid);
 
       // 🛡️ User can ONLY update (not delete)
       // Update is allowed only if they are the owner AND are changing the status to 'pending_delete'
@@ -44,7 +45,7 @@ service cloud.firestore {
 
     // SEARCH LOGS
     match /searchLogs/{logId} {
-      allow create: if isUserActive(request.auth.uid) &&
+      allow create: if isAllowedToOperate(request.auth.uid) &&
                      request.resource.data.userId == request.auth.uid;
       allow read: if isAdmin(request.auth.uid) ||
                   resource.data.userId == request.auth.uid;
