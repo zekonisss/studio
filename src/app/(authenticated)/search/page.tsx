@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Loader2, FileText, ExternalLink, UserSearch, ShieldCheck } from "lucide-react";
+import { Search, Loader2, FileText, ExternalLink, UserSearch, ShieldCheck, ShieldAlert } from "lucide-react";
 import { SearchSchema, type SearchFormValues } from "@/lib/schemas";
 import { getAllReports } from "@/lib/storage";
 import { getCategoryNameForDisplay, cn } from "@/lib/utils";
@@ -22,6 +22,8 @@ import { logSearchActivity } from "./actions";
 import { LiveActivityFeed } from "@/components/shared/live-activity-feed";
 import { DriverSearchStats } from "@/components/search/driver-search-stats";
 import Link from "next/link";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+
 
 export default function SearchPage() {
     const { t, locale } = useLanguage();
@@ -111,6 +113,8 @@ export default function SearchPage() {
         return { firstName, lastName };
     };
 
+    const hasSearchCredits = user && (user.paymentStatus === 'active' || (user.paymentStatus === 'trial' && (user.searchCredits ?? 0) > 0));
+
     return (
         <div className="space-y-6">
             <Card>
@@ -124,31 +128,43 @@ export default function SearchPage() {
                     </div>
                 </CardHeader>
                 <CardContent>
+                    {!hasSearchCredits && user?.paymentStatus === 'trial' && (
+                         <Alert variant="destructive" className="mb-6">
+                            <ShieldAlert className="h-4 w-4" />
+                            <AlertTitle>Paieškos kreditai baigėsi</AlertTitle>
+                            <AlertDescription>
+                                Jūs išnaudojote nemokamų paieškų limitą. Norėdami tęsti, prašome{" "}
+                                <Link href="/authenticated/account?tab=payment" className="font-semibold underline">aktyvuoti prenumeratą</Link>.
+                            </AlertDescription>
+                        </Alert>
+                    )}
                     <Form {...form}>
                         <form onSubmit={form.handleSubmit(onSubmit)} className="w-full space-y-3 mb-8">
-                            <div className="flex items-center gap-2">
-                                <div className="flex-grow">
-                                     <FormField
-                                        control={form.control}
-                                        name="query"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormControl>
-                                                    <div className="relative">
-                                                        <Search className="absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-                                                        <Input placeholder={t('search.queryPlaceholder')} {...field} className="pl-12 h-12 text-base" />
-                                                    </div>
-                                                </FormControl>
-                                                <FormMessage className="pl-4" />
-                                            </FormItem>
-                                        )}
-                                    />
+                             <fieldset disabled={!hasSearchCredits || isLoading}>
+                                <div className="flex items-center gap-2">
+                                    <div className="flex-grow">
+                                        <FormField
+                                            control={form.control}
+                                            name="query"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormControl>
+                                                        <div className="relative">
+                                                            <Search className="absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+                                                            <Input placeholder={t('search.queryPlaceholder')} {...field} className="pl-12 h-12 text-base" />
+                                                        </div>
+                                                    </FormControl>
+                                                    <FormMessage className="pl-4" />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
+                                    <Button type="submit" disabled={!hasSearchCredits || isLoading} className="h-12 px-6">
+                                        {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Search className="h-5 w-5" />}
+                                        <span className="hidden sm:inline ml-2">{t('search.searchButton')}</span>
+                                    </Button>
                                 </div>
-                                <Button type="submit" disabled={isLoading} className="h-12 px-6">
-                                    {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Search className="h-5 w-5" />}
-                                    <span className="hidden sm:inline ml-2">{t('search.searchButton')}</span>
-                                </Button>
-                            </div>
+                            </fieldset>
                         </form>
                     </Form>
 
