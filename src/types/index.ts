@@ -137,6 +137,7 @@ export interface SearchLog {
   driverHash: string;
   firstName: string;
   lastName: string;
+  resultsCount: number;
   timestamp: string;
 }
 

@@ -6,15 +6,17 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/use-auth';
 import Link from 'next/link';
 import { useState } from 'react';
-import { Loader2, CreditCard } from 'lucide-react';
+import { Loader2, CreditCard, Banknote } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+
+type PaymentMethod = 'card' | 'bank_transfer';
 
 export default function PaymentsTab() {
   const { t, locale } = useLanguage();
   const { user } = useAuth();
   const { toast } = useToast();
   const [isPortalLoading, setIsPortalLoading] = useState(false);
-  const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
+  const [loadingMethod, setLoadingMethod] = useState<PaymentMethod | null>(null);
   
   const handleManageSubscription = async () => {
     if (!user) return;
@@ -46,14 +48,14 @@ export default function PaymentsTab() {
     }
   };
 
-  const handleSubscribe = async () => {
+  const handleSubscribe = async (method: PaymentMethod) => {
     if (!user) return;
-    setIsCheckoutLoading(true);
+    setLoadingMethod(method);
     try {
       const response = await fetch('/api/stripe/create-checkout-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.id }),
+        body: JSON.stringify({ userId: user.id, paymentMethod: method }),
       });
 
       if (!response.ok) {
@@ -69,7 +71,8 @@ export default function PaymentsTab() {
         title: "Mokėjimo Klaida",
         description: error.message,
       });
-      setIsCheckoutLoading(false);
+    } finally {
+        setLoadingMethod(null);
     }
   };
 
@@ -85,7 +88,14 @@ export default function PaymentsTab() {
             {user.subscriptionEndDate ? (
               <p className="text-sm pt-2">{t('account.payments.status.active.validUntil')}: <span className="font-semibold">{new Date(user.subscriptionEndDate).toLocaleDateString(locale)}</span></p>
             ) : null}
-             <p className="text-xs text-muted-foreground pt-1">{t('account.payments.status.active.priceInfo', { monthlyPrice: '29.99', annualPrice: '359.99' })}</p>
+             <p className="text-xs text-muted-foreground pt-1">{t('account.payments.status.active.priceInfo', { annualPrice: '359.99' })}</p>
+          </>
+        );
+      case 'trial':
+        return (
+          <>
+            <CardTitle className="text-blue-500">{t('account.payments.status.trial.title')}</CardTitle>
+            <CardDescription>{t('account.payments.status.trial.description', { searchCredits: user.searchCredits, reportCredits: user.reportCredits })}</CardDescription>
           </>
         );
       case 'pending_payment':
@@ -128,16 +138,23 @@ export default function PaymentsTab() {
         )
     }
 
-    if (user.paymentStatus === 'inactive' || user.paymentStatus === 'pending_payment') {
+    if (['inactive', 'pending_payment', 'trial'].includes(user.paymentStatus)) {
         return (
-            <>
-                <Button onClick={handleSubscribe} disabled={isCheckoutLoading}>
-                    {isCheckoutLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    <CreditCard className="mr-2 h-4 w-4" />
-                    Prenumeruoti dabar
-                </Button>
-                <p className="text-xs text-muted-foreground">Aktyvuokite savo paskyrą apmokėdami metinę prenumeratą.</p>
-            </>
+            <div className="space-y-4">
+                <p className="text-sm font-medium">Aktyvuokite metinę prenumeratą:</p>
+                <div className="flex flex-col sm:flex-row gap-4">
+                    <Button onClick={() => handleSubscribe('card')} disabled={!!loadingMethod}>
+                        {loadingMethod === 'card' && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        <CreditCard className="mr-2 h-4 w-4" />
+                        Mokėti kortele (prenumerata)
+                    </Button>
+                    <Button onClick={() => handleSubscribe('bank_transfer')} disabled={!!loadingMethod} variant="secondary">
+                        {loadingMethod === 'bank_transfer' && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        <Banknote className="mr-2 h-4 w-4" />
+                        Gauti sąskaitą pavedimui
+                    </Button>
+                </div>
+            </div>
         )
     }
 

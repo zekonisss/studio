@@ -221,7 +221,7 @@ export async function getSearchLogs(userId?: string): Promise<SearchLog[]> {
   const q = query(collection(db, "searchLogs"), where("userId", "==", userId), orderBy("timestamp", "desc"), limit(50));
   const querySnapshot = await getDocs(q);
   const logList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SearchLogFirestore));
-  return logList.map(log => processDoc<SearchLog>(log));
+  return logList.map(log => processDoc<SearchLog>(log as any)); // Temp any cast for resultsCount
 }
 
 export async function addSearchLog(logData: Omit<SearchLog, 'id' | 'timestamp'>): Promise<void> {

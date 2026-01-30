@@ -5,30 +5,32 @@ import { stripe } from '@/lib/stripe';
 import { adminDb } from '@/lib/firebase-admin';
 import { Timestamp } from 'firebase-admin/firestore';
 
-// Helper to update subscription status in Firestore
-const manageSubscriptionStatusChange = async (subscriptionId: string, customerId: string) => {
+const findUserByCustomerId = async (customerId: string) => {
     if (!adminDb) {
-        console.error("Admin DB not initialized");
-        return;
+        console.error("Admin DB not initialized for webhook.");
+        return null;
     }
-
     const usersRef = adminDb.collection('users');
     const q = usersRef.where('stripeCustomerId', '==', customerId).limit(1);
     const userSnapshot = await q.get();
     
     if (userSnapshot.docs.length === 0) {
         console.error(`Webhook Error: No user found for customer ID: ${customerId}`);
-        return;
+        return null;
     }
-    const userDocRef = userSnapshot.docs[0].ref;
+    return userSnapshot.docs[0].ref;
+}
+
+// Handles recurring subscriptions
+const manageSubscriptionStatusChange = async (subscriptionId: string, customerId: string) => {
+    const userDocRef = await findUserByCustomerId(customerId);
+    if (!userDocRef) return;
 
     const subscription = await stripe.subscriptions.retrieve(subscriptionId, {
         expand: ["default_payment_method"],
     });
 
-    // Map Stripe status to our app's status
     const paymentStatus = (subscription.status === 'active' || subscription.status === 'trialing') ? 'active' : 'inactive';
-    
     const subscriptionEndDate = subscription.current_period_end 
         ? Timestamp.fromMillis(subscription.current_period_end * 1000) 
         : null;
@@ -40,6 +42,26 @@ const manageSubscriptionStatusChange = async (subscriptionId: string, customerId
         subscriptionEndDate,
     });
 };
+
+// Handles one-time payments (like bank transfers for a yearly pass)
+const handleOneTimePayment = async (session: Stripe.Checkout.Session) => {
+    const customerId = session.customer as string;
+    if (!customerId) return;
+    
+    const userDocRef = await findUserByCustomerId(customerId);
+    if (!userDocRef) return;
+    
+    const oneYearFromNow = new Date();
+    oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
+
+    await userDocRef.update({
+        paymentStatus: 'active',
+        subscriptionEndDate: Timestamp.fromDate(oneYearFromNow),
+        stripeSubscriptionId: null, // It's not a recurring subscription
+        stripePriceId: null,
+    });
+};
+
 
 export async function POST(req: Request) {
   const body = await req.text();
@@ -62,20 +84,31 @@ export async function POST(req: Request) {
 
   try {
     switch (event.type) {
+      case 'checkout.session.completed': {
+        const session = event.data.object as Stripe.Checkout.Session;
+        if (session.mode === 'subscription' && session.subscription) {
+            await manageSubscriptionStatusChange(session.subscription as string, session.customer as string);
+        } else if (session.mode === 'payment' && session.payment_status === 'paid') {
+            await handleOneTimePayment(session);
+        }
+        break;
+      }
       case 'customer.subscription.created':
       case 'customer.subscription.updated':
-      case 'customer.subscription.deleted':
+      case 'customer.subscription.deleted': {
         const subscription = event.data.object as Stripe.Subscription;
         await manageSubscriptionStatusChange(subscription.id, subscription.customer as string);
         break;
-      case 'invoice.payment_succeeded':
+      }
+      case 'invoice.payment_succeeded': {
         const invoice = event.data.object as Stripe.Invoice;
         if (invoice.subscription) {
             await manageSubscriptionStatusChange(invoice.subscription as string, invoice.customer as string);
         }
         break;
+      }
       default:
-        // console.log(`Unhandled webhook event type: ${event.type}`);
+        // Unhandled event type
     }
   } catch (error) {
       console.error("Error handling webhook event:", error);

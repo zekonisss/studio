@@ -3,25 +3,27 @@
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, CreditCard, ShieldCheck, AlertTriangle } from "lucide-react";
+import { Loader2, CreditCard, ShieldCheck, AlertTriangle, Banknote } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/language-context";
+
+type PaymentMethod = 'card' | 'bank_transfer';
 
 export default function ActivationPendingPage() {
   const { user, logout } = useAuth();
   const { toast } = useToast();
   const { t } = useLanguage();
-  const [isPaymentLoading, setIsPaymentLoading] = useState(false);
+  const [loadingMethod, setLoadingMethod] = useState<PaymentMethod | null>(null);
 
-  const handlePayment = async () => {
+  const handlePayment = async (method: PaymentMethod) => {
     if (!user) return;
-    setIsPaymentLoading(true);
+    setLoadingMethod(method);
     try {
       const response = await fetch('/api/stripe/create-checkout-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.id }),
+        body: JSON.stringify({ userId: user.id, paymentMethod: method }),
       });
 
       if (!response.ok) {
@@ -37,7 +39,7 @@ export default function ActivationPendingPage() {
         title: "Mokėjimo Klaida",
         description: error.message,
       });
-      setIsPaymentLoading(false);
+      setLoadingMethod(null);
     }
   };
 
@@ -56,19 +58,38 @@ export default function ActivationPendingPage() {
                 </>
             );
         case 'pending_payment':
+        case 'trial':
+        case 'inactive':
+             let title = "Aktyvuokite Paskyrą";
+             let description = "Norėdami gauti pilną prieigą, pasirinkite Jums patogiausią metinės prenumeratos apmokėjimo būdą.";
+             if (user?.paymentStatus === 'trial') {
+                 title = "Bandomasis laikotarpis baigėsi";
+                 description = "Jūsų kreditai išnaudoti. Atnaujinkite prenumeratą, kad galėtumėte toliau naudotis visomis funkcijomis."
+             }
+             if (user?.paymentStatus === 'inactive') {
+                 title = "Prenumerata neaktyvi";
+                 description = "Jūsų prenumerata baigėsi. Atnaujinkite, kad neprarastumėte prieigos."
+             }
+
             return (
                  <>
                     <div className="mx-auto bg-primary/10 p-4 rounded-full w-fit mb-4">
                         <CreditCard className="h-10 w-10 text-primary" />
                     </div>
-                    <CardTitle className="text-2xl font-bold">Paskyra patvirtinta!</CardTitle>
-                    <CardDescription className="text-muted-foreground text-center mt-2 max-w-sm mx-auto">
-                        Norėdami aktyvuoti paskyrą ir pradėti naudotis visomis funkcijomis, apmokėkite metinę prenumeratą.
+                    <CardTitle className="text-2xl font-bold">{title}</CardTitle>
+                    <CardDescription className="text-muted-foreground text-center mt-2 max-w-md mx-auto">
+                        {description}
                     </CardDescription>
-                     <Button onClick={handlePayment} disabled={isPaymentLoading} size="lg" className="mt-6 w-full max-w-xs mx-auto">
-                        {isPaymentLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CreditCard className="mr-2 h-4 w-4" />}
-                        Apmokėti metinę prenumeratą
-                    </Button>
+                    <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
+                        <Button onClick={() => handlePayment('card')} disabled={!!loadingMethod} size="lg" className="w-full sm:w-auto">
+                            {loadingMethod === 'card' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CreditCard className="mr-2 h-4 w-4" />}
+                            Mokėti kortele
+                        </Button>
+                        <Button onClick={() => handlePayment('bank_transfer')} disabled={!!loadingMethod} size="lg" variant="outline" className="w-full sm:w-auto">
+                            {loadingMethod === 'bank_transfer' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Banknote className="mr-2 h-4 w-4" />}
+                            Gauti sąskaitą pavedimui
+                        </Button>
+                    </div>
                  </>
             );
         default:
@@ -77,14 +98,7 @@ export default function ActivationPendingPage() {
                     <div className="mx-auto bg-destructive/10 p-4 rounded-full w-fit mb-4">
                         <AlertTriangle className="h-10 w-10 text-destructive" />
                     </div>
-                    <CardTitle className="text-2xl font-bold">Paskyra neaktyvi</CardTitle>
-                    <CardDescription className="text-muted-foreground text-center mt-2 max-w-sm mx-auto">
-                        Jūsų paskyra šiuo metu yra neaktyvi. Prašome apmokėti prenumeratą arba susisiekti su palaikymo komanda.
-                    </CardDescription>
-                     <Button onClick={handlePayment} disabled={isPaymentLoading} size="lg" className="mt-6 w-full max-w-xs mx-auto">
-                        {isPaymentLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CreditCard className="mr-2 h-4 w-4" />}
-                        Apmokėti ir aktyvuoti
-                    </Button>
+                    <CardTitle className="text-2xl font-bold">Nežinoma būsena</CardTitle>
                  </>
             );
     }
