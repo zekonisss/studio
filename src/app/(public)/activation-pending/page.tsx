@@ -45,57 +45,51 @@ export default function ActivationPendingPage() {
   };
 
   const getStatusComponent = () => {
-    switch (user?.paymentStatus) {
+    let title: string;
+    let description: string;
+    const status = user?.paymentStatus;
+
+    switch (status) {
         case 'pending_verification':
-        case 'pending_payment':
+            title = t('account.payments.status.pending_verification.title');
+            description = t('account.payments.status.pending_verification.description');
+            break;
         case 'trial':
+            title = t('account.payments.status.trial.title');
+            description = t('account.payments.status.trial.description', { searchCredits: user?.searchCredits ?? 0, reportCredits: user?.reportCredits ?? 0 });
+            break;
         case 'inactive':
-             let title = "Aktyvuokite Paskyrą";
-             let description = "Norėdami gauti pilną prieigą, pasirinkite Jums patogiausią metinės prenumeratos apmokėjimo būdą.";
-
-             if (user?.paymentStatus === 'pending_verification') {
-                title = "Paskyra sukurta! Aktyvuokite ją";
-                description = "Jūsų registracija sėkminga. Atlikite mokėjimą, kad iškart gautumėte pilną prieigą prie sistemos ir pradėtumėte naudotis visais privalumais.";
-             } else if (user?.paymentStatus === 'trial' && (user.searchCredits <= 0 || user.reportCredits <= 0)) {
-                 title = "Bandomasis laikotarpis baigėsi";
-                 description = "Jūsų kreditai išnaudoti. Aktyvuokite metinę prenumeratą, kad galėtumėte toliau nevaržomai naudotis sistema."
-             } else if (user?.paymentStatus === 'inactive') {
-                 title = "Prenumerata neaktyvi";
-                 description = "Jūsų prenumerata baigėsi arba buvo atšaukta. Atnaujinkite, kad neprarastumėte prieigos prie svarbių duomenų."
-             }
-
-
-            return (
-                 <>
-                    <div className="mx-auto bg-primary/10 p-4 rounded-full w-fit mb-4">
-                        <CreditCard className="h-10 w-10 text-primary" />
-                    </div>
-                    <CardTitle className="text-2xl font-bold">{title}</CardTitle>
-                    <CardDescription className="text-muted-foreground text-center mt-2 max-w-md mx-auto">
-                        {description}
-                    </CardDescription>
-                    <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
-                        <Button onClick={() => handlePayment('card')} disabled={!!loadingMethod} size="lg" className="w-full sm:w-auto">
-                            {loadingMethod === 'card' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CreditCard className="mr-2 h-4 w-4" />}
-                            Mokėti kortele (prenumerata)
-                        </Button>
-                        <Button onClick={() => handlePayment('bank_transfer')} disabled={!!loadingMethod} size="lg" variant="outline" className="w-full sm:w-auto">
-                            {loadingMethod === 'bank_transfer' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Banknote className="mr-2 h-4 w-4" />}
-                            Gauti sąskaitą pavedimui
-                        </Button>
-                    </div>
-                 </>
-            );
+        case 'pending_payment':
+            title = t('account.payments.status.inactive.title');
+            description = t('account.payments.status.inactive.description');
+            break;
         default:
-            return (
-                 <>
-                    <div className="mx-auto bg-destructive/10 p-4 rounded-full w-fit mb-4">
-                        <AlertTriangle className="h-10 w-10 text-destructive" />
-                    </div>
-                    <CardTitle className="text-2xl font-bold">Nežinoma būsena</CardTitle>
-                 </>
-            );
+            title = "Nežinoma būsena";
+            description = "Susisiekite su palaikymo komanda.";
+            break;
     }
+
+    return (
+         <>
+            <div className="mx-auto bg-primary/10 p-4 rounded-full w-fit mb-4">
+                <CreditCard className="h-10 w-10 text-primary" />
+            </div>
+            <CardTitle className="text-2xl font-bold">{title}</CardTitle>
+            <CardDescription className="text-muted-foreground text-center mt-2 max-w-md mx-auto">
+                {description}
+            </CardDescription>
+            <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
+                <Button onClick={() => handlePayment('card')} disabled={!!loadingMethod} size="lg" className="w-full sm:w-auto">
+                    {loadingMethod === 'card' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CreditCard className="mr-2 h-4 w-4" />}
+                    Mokėti kortele (prenumerata)
+                </Button>
+                <Button onClick={() => handlePayment('bank_transfer')} disabled={!!loadingMethod} size="lg" variant="outline" className="w-full sm:w-auto">
+                    {loadingMethod === 'bank_transfer' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Banknote className="mr-2 h-4 w-4" />}
+                    Gauti sąskaitą pavedimui
+                </Button>
+            </div>
+         </>
+    );
   }
 
   return (
