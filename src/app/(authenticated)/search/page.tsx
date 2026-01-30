@@ -162,11 +162,21 @@ export default function SearchPage() {
                             )}
 
                             {!isLoading && hasSearched && searchResults.length === 0 && (
-                                <div className="text-center py-10 border rounded-lg">
-                                    <Frown className="mx-auto h-12 w-12 text-muted-foreground" />
-                                    <p className="mt-4 text-lg font-semibold">{t('search.noResults.title')}</p>
-                                    <p className="mt-2 text-muted-foreground">{t('search.noResults.message', { query: currentQuery })}</p>
-                                </div>
+                                (() => {
+                                    const { firstName, lastName } = getNames(currentQuery);
+                                    return (
+                                        <Card className="text-center py-10">
+                                            <CardHeader className="pb-4">
+                                                <Frown className="mx-auto h-12 w-12 text-muted-foreground" />
+                                                <CardTitle className="mt-4">{t('search.noResults.title')}</CardTitle>
+                                                <CardDescription>{t('search.noResults.message', { query: currentQuery })}</CardDescription>
+                                            </CardHeader>
+                                            <CardContent>
+                                                <DriverSearchStats firstName={firstName} lastName={lastName} />
+                                            </CardContent>
+                                        </Card>
+                                    );
+                                })()
                             )}
 
                             {!isLoading && hasSearched && searchResults.length > 0 && (
