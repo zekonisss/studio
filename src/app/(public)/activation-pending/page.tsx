@@ -46,30 +46,23 @@ export default function ActivationPendingPage() {
   const getStatusComponent = () => {
     switch (user?.paymentStatus) {
         case 'pending_verification':
-            return (
-                <>
-                    <div className="mx-auto bg-primary/10 p-4 rounded-full w-fit mb-4">
-                        <ShieldCheck className="h-10 w-10 text-primary" />
-                    </div>
-                    <CardTitle className="text-2xl font-bold">Paskyra laukia patvirtinimo</CardTitle>
-                    <CardDescription className="text-muted-foreground text-center mt-2 max-w-sm mx-auto">
-                        Jūsų registracija gauta. Mūsų komanda peržiūri informaciją ir patvirtins jūsų tapatybę per 1 d.d. Apie patvirtinimą būsite informuoti el. paštu.
-                    </CardDescription>
-                </>
-            );
         case 'pending_payment':
         case 'trial':
         case 'inactive':
              let title = "Aktyvuokite Paskyrą";
              let description = "Norėdami gauti pilną prieigą, pasirinkite Jums patogiausią metinės prenumeratos apmokėjimo būdą.";
-             if (user?.paymentStatus === 'trial') {
+
+             if (user?.paymentStatus === 'pending_verification') {
+                title = "Paskyra sukurta! Aktyvuokite ją";
+                description = "Jūsų registracija sėkminga. Atlikite mokėjimą, kad iškart gautumėte pilną prieigą prie sistemos ir pradėtumėte naudotis visais privalumais.";
+             } else if (user?.paymentStatus === 'trial' && (user.searchCredits <= 0 || user.reportCredits <= 0)) {
                  title = "Bandomasis laikotarpis baigėsi";
-                 description = "Jūsų kreditai išnaudoti. Atnaujinkite prenumeratą, kad galėtumėte toliau naudotis visomis funkcijomis."
-             }
-             if (user?.paymentStatus === 'inactive') {
+                 description = "Jūsų kreditai išnaudoti. Aktyvuokite metinę prenumeratą, kad galėtumėte toliau nevaržomai naudotis sistema."
+             } else if (user?.paymentStatus === 'inactive') {
                  title = "Prenumerata neaktyvi";
-                 description = "Jūsų prenumerata baigėsi. Atnaujinkite, kad neprarastumėte prieigos."
+                 description = "Jūsų prenumerata baigėsi arba buvo atšaukta. Atnaujinkite, kad neprarastumėte prieigos prie svarbių duomenų."
              }
+
 
             return (
                  <>
