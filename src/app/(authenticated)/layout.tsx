@@ -44,6 +44,7 @@ export default function AuthenticatedLayout({
   });
 
   const isLegalPage = pathname === '/terms' || pathname === '/privacy';
+  const isAccountPage = pathname.startsWith('/authenticated/account');
 
   useEffect(() => {
     if (isLegalPage) {
@@ -67,16 +68,17 @@ export default function AuthenticatedLayout({
       return;
     }
 
-    if (!isAllowedInApp) {
+    // If user isn't allowed in the app AND they are not trying to access the account page
+    if (!isAllowedInApp && !isAccountPage) {
       if (pathname !== '/activation-pending') {
         router.replace('/activation-pending');
       }
-    } else {
+    } else if (isAllowedInApp) {
       if (pathname === '/activation-pending') {
         router.replace('/dashboard');
       }
     }
-  }, [user, isLoading, pathname, router, isLegalPage]);
+  }, [user, isLoading, pathname, router, isLegalPage, isAccountPage]);
 
 
   // For unauthenticated users on legal pages, render a public-style layout
@@ -117,7 +119,8 @@ export default function AuthenticatedLayout({
   const status = user.paymentStatus?.toLowerCase();
   const isAllowedInApp = status === 'active' || status === 'trial';
   
-  if (!user.isAdmin && !isAllowedInApp && pathname !== '/activation-pending') {
+  // This is the loader screen that shows while redirecting. It must also allow access to the account page.
+  if (!user.isAdmin && !isAllowedInApp && pathname !== '/activation-pending' && !isAccountPage) {
     return (
         <div className="flex h-screen w-full items-center justify-center bg-background">
             <Loader2 className="h-12 w-12 animate-spin text-primary" />
