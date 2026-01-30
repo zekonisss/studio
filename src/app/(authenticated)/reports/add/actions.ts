@@ -1,9 +1,8 @@
 'use server';
 
 import { categorizeReport } from '@/ai/flows/categorize-report-flow';
-import { addReport as addReportToDb } from '@/lib/storage';
 import { adminDb } from '@/lib/firebase-admin';
-import { FieldValue } from 'firebase-admin/firestore';
+import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import type { Report } from '@/types';
 
 
@@ -31,29 +30,37 @@ export async function addReportWithCreditCheck(
       const userData = userDoc.data()!;
 
       if (userData.paymentStatus === 'trial') {
-        if (userData.reportCredits > 0) {
+        const reportCredits = userData.reportCredits || 0;
+        if (reportCredits > 0) {
           transaction.update(userRef, { reportCredits: FieldValue.increment(-1) });
         } else {
           throw new Error("out_of_credits");
         }
-      } else if (userData.paymentStatus !== 'active') {
+      } else if (userData.paymentStatus !== 'active' && !userData.isAdmin) {
           throw new Error("inactive_account");
       }
+
+      const newReportRef = adminDb.collection('reports').doc();
+      const finalReportData = {
+          ...reportData,
+          createdAt: Timestamp.now(),
+          status: 'active',
+          statusUpdatedAt: Timestamp.now(),
+      };
+      transaction.set(newReportRef, finalReportData);
     });
-
-    // If transaction is successful, add the report
-    await addReportToDb(reportData);
-
+    
     return { success: true };
 
   } catch (error: any) {
-    console.error("Report creation / credit check transaction error:", error.message);
+    console.error("Report creation / credit check transaction error:", error);
+    let errorMessage = "Nepavyko sukurti įrašo.";
     if (error.message === 'out_of_credits') {
-      return { success: false, error: 'Jūs išnaudojote nemokamų įrašų limitą.' };
+      errorMessage = 'Jūs išnaudojote nemokamų įrašų limitą.';
     }
     if (error.message === 'inactive_account') {
-        return { success: false, error: 'Jūsų paskyra neaktyvi.' };
+        errorMessage = 'Jūsų paskyra neaktyvi.';
     }
-    return { success: false, error: "Nepavyko sukurti įrašo." };
+    return { success: false, error: errorMessage };
   }
 }

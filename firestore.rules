@@ -2,28 +2,32 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Pagalbinė funkcija gauti vartotojo dokumentą
+    // --- PAGALBINĖS FUNKCIJOS ---
+
     function getUserDoc(userId) {
       return get(/databases/$(database)/documents/users/$(userId));
     }
 
-    // Patikrina, ar vartotojas yra Adminas
     function isAdmin(userId) {
       let userDoc = getUserDoc(userId);
-      return request.auth != null &&
-             userDoc != null &&
-             userDoc.data.isAdmin == true;
+      return request.auth != null && userDoc != null && userDoc.data.isAdmin == true;
     }
 
-    // Teisinga funkcija, kuri įleidžia 'active' ir 'trial' vartotojus
-    function isAllowedToOperate(userId) {
+    function isAllowedToRead(userId) {
       let userDoc = getUserDoc(userId);
       return request.auth != null && 
              userDoc != null &&
              (userDoc.data.paymentStatus == 'active' || userDoc.data.paymentStatus == 'trial');
     }
 
-    // VARTOTOJAI (USERS)
+    function hasCredits(userId, creditField) {
+       let userData = getUserDoc(userId).data;
+       return userData.paymentStatus == 'active' || 
+              (userData.paymentStatus == 'trial' && userData.get(creditField, 0) > 0);
+    }
+
+    // --- KOLEKCIJOS ---
+
     match /users/{userId} {
       allow create: if request.auth.uid == userId;
       allow get: if request.auth.uid == userId || isAdmin(request.auth.uid);
@@ -31,40 +35,31 @@ service cloud.firestore {
       allow write: if request.auth.uid == userId || isAdmin(request.auth.uid);
     }
 
-    // ATASKAITOS (REPORTS)
     match /reports/{reportId} {
-      allow create: if isAllowedToOperate(request.auth.uid) || isAdmin(request.auth.uid);
-      allow read, list: if isAllowedToOperate(request.auth.uid) || isAdmin(request.auth.uid);
+      allow create: if isAdmin(request.auth.uid) || 
+                     (isAllowedToRead(request.auth.uid) && hasCredits(request.auth.uid, 'reportCredits'));
+      allow read, list: if isAdmin(request.auth.uid) || isAllowedToRead(request.auth.uid);
       allow update: if isAdmin(request.auth.uid) || 
-                    (resource.data.reporterId == request.auth.uid && 
-                     request.resource.data.status == 'pending_delete');
+                    (resource.data.reporterId == request.auth.uid && request.resource.data.status == 'pending_delete');
       allow delete: if isAdmin(request.auth.uid);
     }
 
-    // PAIEŠKOS ISTORIJA (SEARCH LOGS)
     match /searchLogs/{logId} {
-      // Leidžiama 'trial' vartotojui kurti įrašus
-      allow create: if isAllowedToOperate(request.auth.uid) &&
-                     request.resource.data.userId == request.auth.uid;
-      
-      // Leidžiama skaityti savo paties logus
-      allow read: if isAdmin(request.auth.uid) ||
-                  resource.data.userId == request.auth.uid;
-                  
-      // SAUGI LIST TAISYKLĖ: Priverčia filtruoti pagal vartotojo ID
+      allow create: if isAdmin(request.auth.uid) ||
+                     (isAllowedToRead(request.auth.uid) && 
+                      request.resource.data.userId == request.auth.uid &&
+                      hasCredits(request.auth.uid, 'searchCredits'));
+      allow read: if isAdmin(request.auth.uid) || resource.data.userId == request.auth.uid;
       allow list: if isAdmin(request.auth.uid) || 
-                  (isAllowedToOperate(request.auth.uid) && request.query.where.size() > 0 && request.query.where[0][1] == 'userId');
-
+                  (isAllowedToRead(request.auth.uid) && request.query.where[0][1] == 'userId');
       allow update, delete: if false;
     }
 
-    // AUDIT LOGS
     match /auditLogs/{logId} {
       allow read, create: if isAdmin(request.auth.uid);
       allow update, delete: if false;
     }
 
-    // PRANEŠIMAI (NOTIFICATIONS)
     match /notifications/{notificationId} {
       allow create: if isAdmin(request.auth.uid);
       allow read, update: if resource.data.userId == request.auth.uid;
