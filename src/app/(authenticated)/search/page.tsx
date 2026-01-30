@@ -25,7 +25,7 @@ import Link from "next/link";
 
 export default function SearchPage() {
     const { t, locale } = useLanguage();
-    const { user } = useAuth();
+    const { user, refreshUser } = useAuth();
     const { toast } = useToast();
     const [searchResults, setSearchResults] = useState<Report[]>([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -48,6 +48,37 @@ export default function SearchPage() {
         setCurrentQuery(values.query);
     
         try {
+             if (user) {
+                const nameParts = values.query.trim().split(/\s+/);
+                const firstName = nameParts[0] || '';
+                const lastName = nameParts.slice(1).join(' ');
+
+                const logResult = await logSearchActivity({ 
+                    firstName, 
+                    lastName, 
+                    userId: user.id 
+                });
+
+                if (!logResult.success) {
+                    if (logResult.error === "out_of_credits") {
+                        toast({
+                            variant: "destructive",
+                            title: "Baigėsi paieškos kreditai!",
+                            description: "Norėdami tęsti paiešką, aktyvuokite pilną prenumeratą.",
+                        });
+                    } else {
+                        toast({
+                            variant: "destructive",
+                            title: "Klaida",
+                            description: "Nepavyko patikrinti kreditų. Bandykite vėliau.",
+                        });
+                    }
+                    setIsLoading(false);
+                    return; 
+                }
+                await refreshUser(); // Atnaujiname vartotojo duomenis kontekste
+            }
+
             const allReports = await getAllReports();
             const filteredReports = allReports.filter(report => {
                 if (!report.fullName) return false;
@@ -58,23 +89,6 @@ export default function SearchPage() {
             });
     
             setSearchResults(filteredReports);
-
-            if (user) {
-              if (filteredReports.length > 0) {
-                // Log the name from the first found report
-                const foundReport = filteredReports[0];
-                const nameParts = (foundReport.fullName || '').trim().split(/\s+/);
-                const firstName = nameParts[0] || '';
-                const lastName = nameParts.slice(1).join(' ');
-                await logSearchActivity({ firstName, lastName, userId: user.id });
-              } else {
-                // Log the raw user input if nothing was found
-                const nameParts = values.query.trim().split(/\s+/);
-                const firstName = nameParts[0] || '';
-                const lastName = nameParts.slice(1).join(' ');
-                await logSearchActivity({ firstName, lastName, userId: user.id });
-              }
-            }
 
         } catch (error: any) {
             console.error("Error during search:", error);
