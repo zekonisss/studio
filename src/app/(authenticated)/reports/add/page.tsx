@@ -199,7 +199,15 @@ export default function AddReportPage() {
               <FormField control={form.control} name="birthYear" render={({ field }) => (
                 <FormItem>
                   <FormLabel>{t("reports.add.form.birthYear.label")}</FormLabel>
-                  <FormControl><Input type="number" placeholder={t("reports.add.form.birthYear.placeholder")} {...field} onChange={e => field.onChange(e.target.value === '' ? undefined : Number(e.target.value))} /></FormControl>
+                  <FormControl>
+                    <Input 
+                        type="number" 
+                        placeholder={t("reports.add.form.birthYear.placeholder")} 
+                        {...field} 
+                        onChange={e => field.onChange(e.target.value === '' ? undefined : Number(e.target.value))}
+                        onKeyDown={(evt) => ["e", "E", "+", "-"].includes(evt.key) && evt.preventDefault()}
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )} />
