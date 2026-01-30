@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Loader2, Frown, FileText, ExternalLink, UserSearch, ShieldCheck } from "lucide-react";
+import { Search, Loader2, FileText, ExternalLink, UserSearch, ShieldCheck } from "lucide-react";
 import { SearchSchema, type SearchFormValues } from "@/lib/schemas";
 import { getAllReports } from "@/lib/storage";
 import { getCategoryNameForDisplay, cn } from "@/lib/utils";
@@ -21,6 +21,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { logSearchActivity } from "./actions";
 import { LiveActivityFeed } from "@/components/shared/live-activity-feed";
 import { DriverSearchStats } from "@/components/search/driver-search-stats";
+import Link from "next/link";
 
 export default function SearchPage() {
     const { t, locale } = useLanguage();
@@ -183,6 +184,9 @@ export default function SearchPage() {
                                         <div className="max-w-md mx-auto mt-6">
                                              <DriverSearchStats firstName={firstName} lastName={lastName} />
                                         </div>
+                                        <p className="mt-6 text-sm text-muted-foreground">
+                                            Norėdami sukurti įrašą, spauskite <Link href="/authenticated/reports/add" className="font-medium underline text-primary hover:text-primary/80">Pridėti įrašą</Link>.
+                                        </p>
                                     </div>
                                 )
                             })()}
