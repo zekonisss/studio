@@ -5,20 +5,20 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { ReportSchema, type ReportFormValues } from "@/lib/schemas";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useState, useMemo, useEffect, useCallback, useTransition } from "react";
+import { useState, useMemo, useEffect, useCallback, useTransition, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/language-context";
 import { useAuth } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
 import { countries, detailedReportCategories } from "@/lib/constants";
-import { getCategoryNameForDisplay } from "@/lib/utils";
+import { getCategoryNameForDisplay, cn } from "@/lib/utils";
 import { addReport, uploadReportImage } from "@/lib/storage";
-import { Loader2, BrainCircuit, FilePlus2 } from "lucide-react";
+import { Loader2, BrainCircuit, FilePlus2, UploadCloud, X } from "lucide-react";
 import { categorizeReportAction } from "./actions";
 
 export default function AddReportPage() {
@@ -26,10 +26,15 @@ export default function AddReportPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [isAiCategorizing, startTransition] = useTransition();
+
+  const [isAiHighlight, setIsAiHighlight] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<ReportFormValues>({
     resolver: zodResolver(ReportSchema),
@@ -53,9 +58,14 @@ export default function AddReportPage() {
       try {
         const result = await categorizeReportAction(commentValue);
         if (result?.categoryId) {
-          form.setValue('category', result.categoryId);
+          form.setValue('category', result.categoryId, { shouldValidate: true });
           setSelectedCategory(result.categoryId);
-          if (result.suggestedTags) form.setValue('tags', result.suggestedTags);
+          if (result.suggestedTags) {
+            form.setValue('tags', result.suggestedTags, { shouldValidate: true });
+          }
+          
+          setIsAiHighlight(true);
+          setTimeout(() => setIsAiHighlight(false), 2000);
         }
       } catch (e) {
         console.error("AI error:", e);
@@ -71,6 +81,43 @@ export default function AddReportPage() {
   useEffect(() => {
     form.resetField("tags");
   }, [selectedCategory, form]);
+
+  const handleFileSelect = (file: File | null) => {
+    if (file) {
+      form.setValue('image', file, { shouldValidate: true });
+      setImageFile(file);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    const droppedFile = e.dataTransfer.files?.[0];
+    if (droppedFile) {
+        handleFileSelect(droppedFile);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    form.setValue('image', null, { shouldValidate: true });
+    setImageFile(null);
+    if(fileInputRef.current) {
+        fileInputRef.current.value = "";
+    }
+  }
 
   const onSubmit = async (values: ReportFormValues) => {
     if (!user) {
@@ -103,7 +150,7 @@ export default function AddReportPage() {
       });
 
       toast({ title: t("reports.add.toast.success.title"), description: t("reports.add.toast.success.description", { fullName: values.fullName }) });
-      router.push("/reports/history");
+      router.push("/authenticated/reports/history");
     } catch (e) {
       toast({ variant: "destructive", title: "Klaida", description: "Nepavyko išsaugoti įrašo." });
       console.error(e);
@@ -177,7 +224,9 @@ export default function AddReportPage() {
                 <FormLabel>{t("reports.add.form.category.label")}</FormLabel>
                 <Select value={field.value} onValueChange={v => { field.onChange(v); setSelectedCategory(v); }}>
                   <FormControl>
-                    <SelectTrigger><SelectValue placeholder={t("reports.add.form.category.placeholder")} /></SelectTrigger>
+                    <SelectTrigger className={cn("transition-all", isAiHighlight && "ring-2 ring-primary bg-primary/5")}>
+                      <SelectValue placeholder={t("reports.add.form.category.placeholder")} />
+                    </SelectTrigger>
                   </FormControl>
                   <SelectContent>
                     {detailedReportCategories.map(cat => <SelectItem key={cat.id} value={cat.id}>{getCategoryNameForDisplay(cat.id, t)}</SelectItem>)}
@@ -212,20 +261,52 @@ export default function AddReportPage() {
               )} />
             )}
 
-            <FormField control={form.control} name="image" render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t("reports.add.form.image.label")}</FormLabel>
-                <FormControl>
-                  <Input type="file" accept="image/png, image/jpeg, application/pdf" onChange={e => {
-                    const file = e.target.files?.[0] || null;
-                    field.onChange(file);
-                    setImageFile(file);
-                  }} />
-                </FormControl>
-                <FormDescription>{t("reports.add.form.image.description")}</FormDescription>
-                <FormMessage />
-              </FormItem>
-            )} />
+            <div className="space-y-2">
+              <FormLabel>{t("reports.add.form.image.label")}</FormLabel>
+              <div 
+                  className={cn(
+                      "relative flex flex-col items-center justify-center w-full p-8 border-2 border-dashed rounded-lg cursor-pointer transition-colors",
+                      isDragging ? "border-primary bg-primary/10" : "border-border hover:border-primary/50 hover:bg-accent/50",
+                      imageFile && "border-primary bg-primary/5"
+                  )}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  onClick={() => fileInputRef.current?.click()}
+              >
+                  <UploadCloud className="h-10 w-10 text-muted-foreground mb-3" />
+                  <p className="text-center font-medium">
+                      {imageFile ? imageFile.name : 'Tempkite failą čia arba paspauskite'}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                      {t("reports.add.form.image.description")}
+                  </p>
+                  <input
+                      ref={fileInputRef}
+                      type="file"
+                      className="hidden"
+                      accept="image/png, image/jpeg, application/pdf"
+                      onChange={(e) => handleFileSelect(e.target.files?.[0] || null)}
+                  />
+                  {imageFile && (
+                      <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="absolute top-2 right-2 text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8 p-0"
+                          onClick={(e) => {
+                              e.stopPropagation();
+                              handleRemoveImage();
+                          }}
+                      >
+                          <X className="h-4 w-4" />
+                          <span className="sr-only">Pašalinti</span>
+                      </Button>
+                  )}
+              </div>
+              <FormMessage>{form.formState.errors.image && String(form.formState.errors.image.message)}</FormMessage>
+            </div>
+
 
             <Button type="submit" disabled={isSubmitting} className="w-full md:w-auto">
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
