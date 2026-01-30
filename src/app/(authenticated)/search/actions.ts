@@ -38,7 +38,7 @@ export async function getDriverSearchStats(
   
   if (!adminDb) {
     console.error("🔴 ADMIN DB NOT INITIALIZED! Check .env.local and restart the server.");
-    return { total: -1, recent: -1 };
+    return { total: 0, recent: 0 };
   }
 
   const driverHash = buildDriverHash(firstName, lastName);
@@ -48,33 +48,41 @@ export async function getDriverSearchStats(
     return { total: 0, recent: 0 };
   }
   
-  const sixtyDaysAgo = new Date();
-  sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
-
   const logsRef = adminDb.collection('searchLogs');
-
-  const totalPromise = logsRef
-    .where('driverHash', '==', driverHash)
-    .count()
-    .get();
-  
-  const recentPromise = logsRef
-    .where('driverHash', '==', driverHash)
-    .where('timestamp', '>=', Timestamp.fromDate(sixtyDaysAgo))
-    .orderBy('timestamp', 'desc') 
-    .count()
-    .get();
+  const query = logsRef.where('driverHash', '==', driverHash);
   
   try {
-    const [totalSnapshot, recentSnapshot] = await Promise.all([
-      totalPromise,
-      recentPromise,
-    ]);
+    const snapshot = await query.get();
 
-    const total = totalSnapshot.data().count;
-    const recent = recentSnapshot.data().count;
+    if (snapshot.empty) {
+        console.log(`--- [SERVER ACTION] getDriverSearchStats RESULT for '${driverHash}': No records found. ---`);
+        return { total: 0, recent: 0 };
+    }
+
+    const sixtyDaysAgo = new Date();
+    sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+
+    const totalUniqueUserIds = new Set<string>();
+    const recentUniqueUserIds = new Set<string>();
+
+    snapshot.docs.forEach(doc => {
+        const data = doc.data();
+        if (data.userId && data.timestamp) {
+            const userId = data.userId;
+            const timestamp = data.timestamp.toDate();
+
+            totalUniqueUserIds.add(userId);
+
+            if (timestamp >= sixtyDaysAgo) {
+                recentUniqueUserIds.add(userId);
+            }
+        }
+    });
     
-    console.log(`--- [SERVER ACTION] getDriverSearchStats RESULT for '${driverHash}': Total=${total}, Recent=${recent} ---`);
+    const total = totalUniqueUserIds.size;
+    const recent = recentUniqueUserIds.size;
+    
+    console.log(`--- [SERVER ACTION] getDriverSearchStats RESULT for '${driverHash}': Total Unique=${total}, Recent Unique=${recent} ---`);
 
     return {
         total,
@@ -82,7 +90,6 @@ export async function getDriverSearchStats(
     };
   } catch (error) {
       console.error("Klaida gaunant vairuotojo statistiką:", error);
-      // Grąžiname nulius klaidos atveju, kad UI "nesulūžtų"
       return { total: 0, recent: 0 };
   }
 }
