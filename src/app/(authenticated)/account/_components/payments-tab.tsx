@@ -66,7 +66,7 @@ export default function PaymentsTab() {
       case 'trial':
         return (
           <>
-            <CardTitle className="text-blue-500">{t('account.payments.status.trial.title')}</CardTitle>
+            <CardTitle className="text-amber-500">{t('account.payments.status.trial.title')}</CardTitle>
             <CardDescription>{t('account.payments.status.trial.description', { searchCredits: user.searchCredits, reportCredits: user.reportCredits })}</CardDescription>
           </>
         );
@@ -77,8 +77,14 @@ export default function PaymentsTab() {
                 <CardDescription>{t('account.payments.status.pending_verification.description')}</CardDescription>
             </>
         );
-      case 'inactive':
       case 'pending_payment':
+        return (
+          <>
+            <CardTitle className="text-amber-500">{t('account.payments.status.pending_payment.title')}</CardTitle>
+            <CardDescription>{t('account.payments.status.pending_payment.description')}</CardDescription>
+          </>
+        );
+      case 'inactive':
         return (
           <>
             <CardTitle className="text-destructive">{t('account.payments.status.inactive.title')}</CardTitle>
