@@ -114,7 +114,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signup = async (data: SignupFormValuesExtended) => {
      if (!auth || !db) throw new Error("Firebase not initialized");
-     const { email, password, companyName, companyCode, vatCode, address, contactPerson, phone, agreeToTerms } = data;
+     const { email, password, companyName, companyCode, vatCode, address, contactPerson, position, phone, subscriptionType, agreeToTerms } = data;
      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
      const uid = userCredential.user.uid;
 
@@ -125,15 +125,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         vatCode: vatCode || '',
         address,
         contactPerson,
+        position,
         phone,
+        subscriptionType,
         paymentStatus: 'pending_verification',
         isAdmin: false,
         agreeToTerms,
         registeredAt: serverTimestamp() as any,
         accountActivatedAt: null,
         subUsers: [],
-        searchCredits: 3,
-        reportCredits: 1,
+        searchCredits: 0,
+        reportCredits: 0,
      };
 
      await setDoc(doc(db, "users", uid), newUserProfile);

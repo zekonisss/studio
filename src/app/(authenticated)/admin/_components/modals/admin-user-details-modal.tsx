@@ -66,8 +66,16 @@ export function AdminUserDetailsModal({ isOpen, onClose, user }: AdminUserDetail
                 <DetailRow label={t('admin.userDetailsModal.vatCode')} value={user.vatCode} />
                 <DetailRow label={t('admin.userDetailsModal.address')} value={user.address} />
                 <DetailRow label={t('admin.userDetailsModal.contactPerson')} value={user.contactPerson} />
+                <DetailRow label="Pareigos" value={user.position} />
                 <DetailRow label={t('admin.userDetailsModal.email')} value={user.email} />
                 <DetailRow label={t('admin.userDetailsModal.phone')} value={user.phone} />
+                 <div className="grid grid-cols-3 gap-2 py-2 border-b">
+                    <div className="col-span-1 text-sm font-semibold text-muted-foreground">Pasirinktas planas:</div>
+                    <div className="col-span-2 text-sm">
+                      {user.subscriptionType === 'trial' && <Badge variant="outline">Bandomasis</Badge>}
+                      {user.subscriptionType === 'paid' && <Badge>Mokamas</Badge>}
+                    </div>
+                </div>
                 <div className="grid grid-cols-3 gap-2 py-2 border-b">
                     <div className="col-span-1 text-sm font-semibold text-muted-foreground">{t('admin.userDetailsModal.status')}:</div>
                     <div className="col-span-2 text-sm">{getStatusBadge(user.paymentStatus)}</div>

@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Loader2, UserPlus } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/contexts/language-context";
@@ -33,6 +34,7 @@ export default function SignupPage() {
         vatCode: "",
         address: "",
         contactPerson: "",
+        position: "",
         phone: "",
         agreeToTerms: false,
     },
@@ -105,6 +107,13 @@ export default function SignupPage() {
                                 <FormMessage />
                             </FormItem>
                         )} />
+                         <FormField control={form.control} name="position" render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Pareigos</FormLabel>
+                                <FormControl><Input placeholder="Pvz., direktorius, vadybininkas" {...field} /></FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )} />
                          <FormField control={form.control} name="phone" render={({ field }) => (
                             <FormItem>
                                 <FormLabel>{t('signup.form.phone.label')}</FormLabel>
@@ -136,6 +145,42 @@ export default function SignupPage() {
                             </FormItem>
                         )} />
                     </div>
+
+                    <FormField
+                        control={form.control}
+                        name="subscriptionType"
+                        render={({ field }) => (
+                            <FormItem className="space-y-3 rounded-md border p-4 shadow-sm">
+                            <FormLabel>Pasirinkite narystės planą</FormLabel>
+                            <FormControl>
+                                <RadioGroup
+                                onValueChange={field.onChange}
+                                defaultValue={field.value}
+                                className="flex flex-col space-y-2"
+                                >
+                                <FormItem className="flex items-center space-x-3 space-y-0">
+                                    <FormControl>
+                                    <RadioGroupItem value="trial" />
+                                    </FormControl>
+                                    <FormLabel className="font-normal">
+                                    Išbandyti nemokamai (3 paieškos ir 1 įrašas)
+                                    </FormLabel>
+                                </FormItem>
+                                <FormItem className="flex items-center space-x-3 space-y-0">
+                                    <FormControl>
+                                    <RadioGroupItem value="paid" />
+                                    </FormControl>
+                                    <FormLabel className="font-normal">
+                                    Mokama metinė prenumerata
+                                    </FormLabel>
+                                </FormItem>
+                                </RadioGroup>
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                        />
+
                      <FormField control={form.control} name="agreeToTerms" render={({ field }) => (
                         <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow-sm">
                             <FormControl>

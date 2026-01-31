@@ -10,8 +10,10 @@ export interface UserProfileFirestore {
   vatCode?: string;
   address: string;
   contactPerson: string;
+  position: string;
   phone: string;
   paymentStatus: 'active' | 'inactive' | 'pending_verification' | 'pending_payment' | 'trial';
+  subscriptionType: 'trial' | 'paid';
   isAdmin: boolean;
   agreeToTerms: boolean;
   registeredAt: Timestamp;
@@ -91,8 +93,10 @@ export interface UserProfile {
   vatCode?: string;
   address: string;
   contactPerson: string;
+  position: string;
   phone: string;
   paymentStatus: 'active' | 'inactive' | 'pending_verification' | 'pending_payment' | 'trial';
+  subscriptionType: 'trial' | 'paid';
   isAdmin: boolean;
   agreeToTerms: boolean;
   registeredAt: string; 

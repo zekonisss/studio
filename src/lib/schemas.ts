@@ -13,7 +13,9 @@ export const SignupFormSchema = z.object({
   vatCode: z.string().optional(),
   address: z.string().min(5, { message: "Adresas turi būti bent 5 simbolių ilgio." }),
   contactPerson: z.string().min(3, { message: "Kontaktinis asmuo turi būti bent 3 simbolių ilgio." }),
+  position: z.string().min(2, { message: "Pareigos turi būti bent 2 simbolių ilgio." }),
   phone: z.string().regex(/^\+?\d{7,15}$/, { message: "Neteisingas telefono numerio formatas." }),
+  subscriptionType: z.enum(['trial', 'paid'], { required_error: "Privalote pasirinkti narystės tipą." }),
   agreeToTerms: z.boolean().refine(val => val === true, { message: "Privalote sutikti su taisyklėmis." }),
 }).refine(data => data.password === data.confirmPassword, {
   message: "Slaptažodžiai nesutampa.",

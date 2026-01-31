@@ -61,8 +61,16 @@ export default function UserManagementTab() {
     const oldStatus = userToUpdate.paymentStatus;
     if (oldStatus === newStatus) return;
 
+    // Additional logic to handle trial credits
+    const updates: Partial<UserProfile> = { paymentStatus: newStatus };
+    if (newStatus === 'trial') {
+      updates.searchCredits = 3;
+      updates.reportCredits = 1;
+    }
+
+
     try {
-      await updateUserProfile(userToUpdate.id, { paymentStatus: newStatus });
+      await updateUserProfile(userToUpdate.id, updates);
       toast({
         title: t('admin.users.toast.statusChanged.title'),
         description: t('admin.users.toast.statusChanged.description', { 
@@ -89,7 +97,7 @@ export default function UserManagementTab() {
       // Refresh the list by updating the state locally
       setUsers(prevUsers => 
         prevUsers.map(u => 
-          u.id === userToUpdate.id ? { ...u, paymentStatus: newStatus } : u
+          u.id === userToUpdate.id ? { ...u, ...updates } : u
         )
       );
 
@@ -152,7 +160,7 @@ export default function UserManagementTab() {
                 <TableRow>
                   <TableHead>{t('admin.users.table.companyName')}</TableHead>
                   <TableHead>{t('admin.users.table.contactPerson')}</TableHead>
-                  <TableHead>{t('admin.users.table.email')}</TableHead>
+                  <TableHead>Plano tipas</TableHead>
                   <TableHead>{t('admin.users.table.registrationDate')}</TableHead>
                   <TableHead>{t('admin.users.table.status')}</TableHead>
                   <TableHead className="text-right">{t('admin.users.table.actions')}</TableHead>
@@ -164,7 +172,7 @@ export default function UserManagementTab() {
                     <TableRow key={i} className="hover:bg-transparent">
                         <TableCell><Skeleton className="h-5 w-32" /></TableCell>
                         <TableCell><Skeleton className="h-5 w-28" /></TableCell>
-                        <TableCell><Skeleton className="h-5 w-40" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-24" /></TableCell>
                         <TableCell><Skeleton className="h-5 w-24" /></TableCell>
                         <TableCell><Skeleton className="h-5 w-20" /></TableCell>
                         <TableCell className="text-right"><Skeleton className="h-8 w-8 ml-auto rounded-full" /></TableCell>
@@ -181,7 +189,10 @@ export default function UserManagementTab() {
                     <TableRow key={user.id}>
                       <TableCell className="font-medium">{user.companyName}</TableCell>
                       <TableCell>{user.contactPerson}</TableCell>
-                      <TableCell>{user.email}</TableCell>
+                      <TableCell>
+                        {user.subscriptionType === 'trial' && <Badge variant="outline">Bandomasis</Badge>}
+                        {user.subscriptionType === 'paid' && <Badge>Mokamas</Badge>}
+                      </TableCell>
                       <TableCell>{new Date(user.registeredAt).toLocaleDateString(locale)}</TableCell>
                       <TableCell>{getStatusBadge(user.paymentStatus)}</TableCell>
                       <TableCell className="text-right">
