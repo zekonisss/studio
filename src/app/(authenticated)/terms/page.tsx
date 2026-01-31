@@ -75,41 +75,67 @@ const TERMS_CONTENT = {
     ]
   },
   en: {
-    title: "Terms of Service",
+    title: "Terms of Use and Service Agreement",
     subtitle: "Official terms and conditions for using the DriverCheck platform.",
-    cardTitle: "General Terms of Service",
+    cardTitle: "TERMS OF USE AND SERVICE AGREEMENT",
     date: "Effective Date: January 24, 2026",
-    intro: "These rules ('Rules') set out the terms and conditions for using the 'DriverCheck' platform ('Platform'). By registering on or using the Platform, the User (Legal Entity) confirms that they have read, understood and agree to be bound by these Rules.",
+    intro: 'These terms (hereinafter – "Terms") establish the conditions for using the "DriverCheck" platform (hereinafter – "Platform"). By registering on the Platform or using it, the User (Legal Entity) confirms that they have read, understood, and agree to be bound by these Terms.',
     sections: [
       {
-        title: "1. Data Processing Principles and Retention",
+        title: "1. GENERAL PROVISIONS",
         items: [
-          { label: "1.1. Retention Period:", text: "All incident reports registered on the Platform are stored for 5 (five) years from the date of creation. Upon expiration of this period, data is automatically and permanently deleted from the system." },
-          { label: "1.2. Data Accuracy and Disputes:", text: "If a data subject (driver) or other interested party provides valid evidence that a record on the Platform is inaccurate, false, or misleading, the Service Provider reserves the right to unilaterally remove such record within 5 business days." },
-          { label: "1.3. Prohibited Content:", text: "It is strictly forbidden to enter personal identification numbers (SSN), exact residential addresses, health data, or other excessive information into comments or other fields. The User (Company) is responsible for ensuring the entry complies with the GDPR data minimization principle." }
+          { label: "1.1. Service Provider:", text: 'The Platform is administered and services are provided by [Your Company Name / Full Name], (hereinafter – "Provider").' },
+          { label: "1.2. User:", text: 'A legal entity (transport or logistics company) that has registered on the Platform and purchased a subscription (hereinafter – "User").' },
+          { label: "1.3. Purpose:", text: "The Platform is a B2B tool designed to collect and share feedback on drivers' professional activities for risk management purposes." }
         ]
       },
       {
-        title: "2. DriverCheck Brand and Reputation",
+        title: "2. ACCOUNT SECURITY AND USE RESTRICTIONS",
         items: [
-          { label: "2.1. Marketing Rights:", text: "A User with an active Platform subscription has the right to use the DriverCheck logo and 'Trusted Partner' badge on their company website, email signatures, or job postings to inform clients and candidates about their responsible recruitment process." },
-          { label: "2.2. Termination of Rights:", text: "Upon expiration of the subscription or violation of these Terms, the User must remove DriverCheck visual materials from all public channels within 3 business days." }
+          { label: "2.1. One Account – One Company:", text: "The account is intended solely for the internal use of the purchasing company." },
+          { label: "2.2. Prohibition on Sharing:", text: 'Login credentials (username and password) are strictly confidential. The User is strictly prohibited from transferring login credentials to third parties, including other employees of the same company (unless a "Team" plan is purchased) or other companies, partners, or subsidiaries that do not have a separate subscription.' },
+          { label: "2.3. Domain Restriction:", text: "If a company registers with a corporate email domain (e.g., @company.com), all additional users under that account must hold an email address with the same domain." },
+          { label: "2.4. Security Monitoring:", text: "To prevent abuse, the Provider reserves the right to use technical means to monitor user IP addresses, device identifiers, and the number of active sessions." },
+          { label: "2.5. Consequences of Violation:", text: "If the system detects suspicious activity (e.g., simultaneous logins from different geographic locations or use of the account on multiple devices at the same time), the Provider has the right to immediately block the account without prior notice and without refunding the subscription fee.", highlight: true }
         ]
       },
       {
-        title: "3. Nature of Records and Usage",
+        title: "3. PAYMENT AND SUBSCRIPTION",
         items: [
-          { label: "3.1. Advisory Nature:", text: "All records on the Platform are for informational purposes only. The fact that a data subject (driver) is mentioned on the Platform does not and cannot be treated as a recommendation not to hire the person or to terminate their employment." },
-          { label: "3.2. Education and Prevention:", text: "The Platform's goal is to help the User identify areas where a driver may need additional attention. It is recommended to use the information to plan targeted training (e.g., eco-driving, safety courses) or set probation guidelines, rather than as an automatic rejection criterion." },
-          { label: "3.3. Decision Making:", text: "The User (Company) makes the final decision on cooperation independently, evaluating the situation as a whole. The Platform serves as a tool for risk management and competence improvement." }
+          { label: "3.1. Payments:", text: 'Services are provided on a subscription basis. Payments are processed via a third-party operator ("Stripe"). The User agrees that the membership fee will be deducted automatically (via SEPA Direct Debit or Card) according to the selected plan.' },
+          { label: "3.2. Invoices:", text: "VAT invoices are generated automatically and sent to the email address provided by the User." },
+          { label: "3.3. Cancellation:", text: "The User may cancel the subscription at any time in their account settings. Upon cancellation, access to the Platform remains active until the end of the paid period. No refunds are issued for the unused portion of the billing period." }
         ]
       },
       {
-        title: "4. User Responsibility and Identification Limits",
+        title: "4. DATA PROCESSING PRINCIPLES",
         items: [
-          { label: "4.1. Data Controller Status:", text: "By using the Platform, the User confirms they act as a Data Controller and independently ensure compliance with all legal obligations arising from GDPR (including legitimate interest assessment). The Service Provider acts solely as a technical Data Processor." },
-          { label: "4.2. Identification Limitations:", text: "To ensure maximum personal data security and compliance with GDPR, the Platform does not collect unique personal identification numbers. Identification is based on name, surname, and year of birth. The User understands and accepts the risk that due to potential namesakes, the system cannot guarantee 100% identification accuracy. The User must take additional measures (e.g., during the interview) to verify that the record found on the Platform truly belongs to the candidate in question.", highlight: true },
-          { label: "4.3. Liability for Decisions:", text: "The Service Provider assumes no liability for the User's business decisions or potential damages resulting from mistaken identity if the User failed to perform additional verification." }
+          { label: "4.1. Retention Period:", text: "All records regarding infringements registered on the Platform are stored for 5 (five) years from the date of creation. Upon expiration of this term, data is automatically and permanently deleted from the system." },
+          { label: "4.2. Data Accuracy:", text: "If a data subject (driver) provides valid proof that an entry is inaccurate, false, or misleading, the Provider reserves the right to unilaterally remove such entry within 5 business days." },
+          { label: "4.3. Prohibited Content:", text: "It is strictly prohibited to enter personal identification numbers (social security numbers), exact residential addresses, health data, or other excessive information into the system. The User is responsible for ensuring that the entry complies with the GDPR principle of data minimization." }
+        ]
+      },
+      {
+        title: "5. NATURE OF ENTRIES AND LIABILITY",
+        items: [
+          { label: "5.1. User Liability:", text: "By using the Platform, the User confirms that they act as a Data Controller. The User assumes full legal responsibility for the content, accuracy, and legality of the feedback they upload. The Provider acts solely as a technical intermediary (Data Processor) and does not verify the factual circumstances." },
+          { label: "5.2. Consultative Nature:", text: "The information contained on the Platform is for recommendation purposes only. The fact that a driver is mentioned on the Platform cannot be treated as the sole reason for not hiring the individual or terminating their employment." },
+          { label: "5.3. Identification Risk:", text: "Person identification is performed based on Name, Surname, and Year of Birth (without personal ID numbers). The User acknowledges the risk of potential namesakes and agrees to perform additional verification before making business decisions.", highlight: true }
+        ]
+      },
+       {
+        title: '6. USE OF THE "DRIVERCHECK" BRAND',
+        items: [
+          { label: "6.1. Marketing Rights:", text: 'A User with an active subscription has the right to use the "DriverCheck" logo and the "Trusted Partner" badge on their website, email signatures, or job advertisements.' },
+          { label: "6.2. Termination of Rights:", text: 'Upon expiration of the subscription or violation of these Terms, the User must remove all "DriverCheck" visual materials from all public channels within 3 business days.' }
+        ]
+      },
+      {
+        title: "7. FINAL PROVISIONS",
+        items: [
+          { label: "7.1. Platform Availability:", text: "The Provider strives to ensure 99% Platform availability but is not liable for temporary disruptions due to technical maintenance or failures of third-party service providers (servers)." },
+          { label: "7.2. Amendments:", text: "The Provider has the right to unilaterally amend these Terms by notifying Users via email 14 days in advance. Continued use of the Platform constitutes agreement to the amendments." },
+          { label: "7.3. Dispute Resolution:", text: "All disputes shall be settled by negotiation. If no agreement is reached, disputes shall be settled in the courts of the Republic of Lithuania according to the location of the Provider's registered office." }
         ]
       }
     ]
