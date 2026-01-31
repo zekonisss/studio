@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   ComposableMap,
   Geographies,
@@ -8,11 +8,10 @@ import {
   Marker,
   Line,
 } from "react-simple-maps";
+import { useTheme } from "next-themes"; // Importuojame temų kablys
 
-// STABILUS ŠALTINIS
 const geoUrl = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
 
-// Skaitmeniniai ISO kodai: LT=440, LV=428, EE=233, PL=616
 const highlightedCountries = ["440", "428", "233", "616"];
 
 type Coordinate = [number, number];
@@ -24,26 +23,19 @@ interface MapMarker {
 }
 
 const markers: MapMarker[] = [
-  // LIETUVA
+  // ... (TAVO MARKERIAI, TAS PATS KODAS KAIP BUVO ANKSČIAU) ...
   { name: "Vilnius", coordinates: [25.2797, 54.6872], isCapital: true },
   { name: "Kaunas", coordinates: [23.9036, 54.8985] },
   { name: "Klaipėda", coordinates: [21.1443, 55.7037] },
   { name: "Šiauliai", coordinates: [23.3137, 55.9349] },
-  
-  // LATVIJA
   { name: "Ryga", coordinates: [24.1052, 56.9496], isCapital: true },
-  
-  // ESTIJA
   { name: "Talinas", coordinates: [24.7536, 59.4370], isCapital: true },
   { name: "Pärnu", coordinates: [24.4971, 58.3859] },
-  
-  // LENKIJA
   { name: "Varšuva", coordinates: [21.0122, 52.2297], isCapital: true },
   { name: "Białystok", coordinates: [23.1688, 53.1325] },
   { name: "Gdańsk", coordinates: [18.6466, 54.3520] },
 ];
 
-// Maršrutai
 const connections: { from: string; to: string }[] = [
   { from: "Varšuva", to: "Białystok" },
   { from: "Białystok", to: "Kaunas" },
@@ -57,12 +49,27 @@ const connections: { from: string; to: string }[] = [
 ];
 
 export function InteractiveMap() {
+  const { theme, resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  // Laukiame kol komponentas užsikraus kliente, kad gautume tikrą temą
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Nustatome ar šiuo metu tamsus režimas
+  const isDark = mounted && (theme === 'dark' || resolvedTheme === 'dark');
+
+  // SPALVŲ PALETĖS (DINAMINĖS)
   const colors = {
-    base: "#1e293b",      
-    highlight: "#06b6d4", 
-    hover: "#22d3ee",     
-    stroke: "#0f172a",    
-    line: "#67e8f9",      
+    base: isDark ? "#1e293b" : "#e2e8f0",      // Tamsi pilka / Šviesi pilka
+    highlight: isDark ? "#06b6d4" : "#2563eb", // Cyan / Blue
+    hover: isDark ? "#22d3ee" : "#3b82f6",     // Ryškesnė Cyan / Ryškesnė Blue
+    stroke: isDark ? "#0f172a" : "#cbd5e1",    // Sienos
+    line: isDark ? "#67e8f9" : "#3b82f6",      // Linijos
+    bg: isDark ? "rgba(15, 23, 42, 0.5)" : "rgba(255, 255, 255, 0.5)", // Konteinerio fonas
+    border: isDark ? "#1e293b" : "#cbd5e1",    // Konteinerio rėmelis
+    text: isDark ? "white" : "#0f172a",        // Teksto spalva
   };
 
   const getCoords = (name: string): Coordinate => {
@@ -70,12 +77,13 @@ export function InteractiveMap() {
   };
 
   return (
-    <div className="w-full h-[500px] relative overflow-hidden rounded-xl bg-slate-900/50 border border-slate-800">
+    <div 
+      className="w-full h-[500px] relative overflow-hidden rounded-xl border transition-colors duration-300"
+      style={{ backgroundColor: colors.bg, borderColor: colors.border }}
+    >
       <ComposableMap
         projection="geoMercator"
         projectionConfig={{
-          // IŠTAISYTA: Atitolinome (2000) ir nuleidome centrą (56), 
-          // kad tilptų ir Talinas viršuje, ir Varšuva apačioje.
           center: [23.5, 56], 
           scale: 2000,
         }}
@@ -136,7 +144,7 @@ export function InteractiveMap() {
           <Marker key={name} coordinates={coordinates}>
             <circle
               r={isCapital ? 6 : 3}
-              fill={isCapital ? "white" : colors.line}
+              fill={isCapital ? (isDark ? "white" : "#1e40af") : colors.line}
               stroke={colors.line}
               strokeWidth={isCapital ? 2 : 0}
             />
@@ -155,10 +163,10 @@ export function InteractiveMap() {
               y={isCapital ? -12 : 14}
               style={{
                 fontFamily: "system-ui",
-                fill: "white",
+                fill: colors.text, // Dinaminė teksto spalva
                 fontSize: isCapital ? "11px" : "9px",
                 fontWeight: isCapital ? "bold" : "normal",
-                textShadow: "0px 1px 3px rgba(0,0,0,0.9)",
+                textShadow: isDark ? "0px 1px 3px rgba(0,0,0,0.9)" : "none",
                 pointerEvents: "none"
               }}
             >
@@ -168,7 +176,15 @@ export function InteractiveMap() {
         ))}
       </ComposableMap>
 
-      <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent pointer-events-none"></div>
+      {/* Gradientas apačioje irgi turi keistis */}
+      <div 
+        className="absolute inset-0 pointer-events-none"
+        style={{
+             background: isDark 
+             ? "linear-gradient(to top, #020617, transparent)" 
+             : "linear-gradient(to top, #f8fafc, transparent)"
+        }}
+      ></div>
     </div>
   );
 }

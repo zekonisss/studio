@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useAuth } from "@/hooks/use-auth";
 import { useLanguage } from "@/contexts/language-context";
-import { ArrowRight, BarChart3, ShieldCheck, FileText, UserSearch } from "lucide-react";
+import { BarChart3, ShieldCheck, FileText, UserSearch } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -13,7 +13,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { getPublicReportCount } from "./page-actions";
 import { LanguageSwitcher } from "@/components/navigation/language-switcher";
 import { ThemeToggle } from "@/components/navigation/theme-toggle";
+
+// Mūsų komponentai
 import { CoverageSection } from "@/components/landing/CoverageSection";
+import { Hero } from "@/components/landing/Hero";
 
 export default function HomePage() {
   const { t } = useLanguage();
@@ -64,54 +67,52 @@ export default function HomePage() {
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground selection:bg-primary/30">
       {/* HEADER */}
-      <header className="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur-xl">
+      <header className="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur-xl transition-all duration-300">
         <div className="container mx-auto flex h-20 items-center justify-between px-6">
+          
+          {/* LOGO */}
           <Link href="/" className="flex items-center gap-2 group">
             <UserSearch className="h-8 w-8 text-primary transition-transform group-hover:rotate-12" />
             <span className="text-2xl font-bold bg-gradient-to-r from-slate-800 to-slate-500 dark:from-white dark:to-gray-400 bg-clip-text text-transparent italic">
               {t('app.name')}
             </span>
           </Link>
-          <div className="flex items-center gap-2">
+
+          {/* DEŠINĖ PUSĖ: Nustatymai + PRISIJUNGIMAS */}
+          <div className="flex items-center gap-3">
             <ThemeToggle />
             <LanguageSwitcher />
-            <Button variant="ghost" asChild className="text-muted-foreground hover:text-foreground hover:bg-accent/50">
-              <Link href="/login">{t('login.loginButton')}</Link>
-            </Button>
-            <Button asChild className="font-semibold shadow-glow-primary transition-all active:scale-95">
-              <Link href="/signup">{t('login.signupLink')}</Link>
-            </Button>
+
+            {/* --- NAUJAS "SHINY" LOGIN MYGTUKAS --- */}
+            <Link href="/login">
+              <button className="relative group overflow-hidden rounded-lg bg-gradient-to-b from-blue-500 to-blue-700 px-6 py-2 text-white shadow-[0_0_15px_rgba(59,130,246,0.4)] transition-all duration-300 hover:scale-105 hover:shadow-[0_0_25px_rgba(59,130,246,0.6)]">
+                {/* Glow efektas fone */}
+                <div className="absolute inset-0 bg-white/20 opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
+                
+                {/* Blizgesio efektas (tas pats kaip Hero) */}
+                <div className="absolute -inset-[100%] top-0 block h-full w-1/2 -skew-x-12 bg-gradient-to-r from-transparent to-white opacity-20 group-hover:animate-shine" />
+
+                {/* Tekstas */}
+                <span className="relative font-semibold text-sm tracking-wide">
+                  {t('login.loginButton')}
+                </span>
+              </button>
+            </Link>
+            {/* ------------------------------------- */}
+
           </div>
         </div>
       </header>
 
       <main className="flex-1">
-        {/* HERO SECTION */}
-        <section className="relative overflow-hidden pt-24 pb-20 md:pt-40 md:pb-32 flex flex-col items-center justify-center text-center px-6">
-          {/* Neon Glow Effects */}
-          <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -z-10 w-[600px] h-[300px] bg-primary/20 rounded-full blur-[120px] opacity-50 dark:opacity-100" />
-          <div className="absolute bottom-0 right-1/4 -z-10 w-[400px] h-[400px] bg-blue-600/10 rounded-full blur-[100px] opacity-30 dark:opacity-50" />
+        
+        {/* HERO (su didžiuoju mygtuku) */}
+        <Hero count={totalReports} />
 
-          <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-1000">
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tight leading-[1.05] bg-gradient-to-b from-foreground to-muted-foreground bg-clip-text text-transparent">
-              {t('landing.hero.title')}
-            </h1>
-            <p className="max-w-2xl mx-auto text-lg md:text-xl text-muted-foreground leading-relaxed">
-              {t('landing.hero.subtitle')}
-            </p>
-            <div className="flex flex-col sm:flex-row justify-center items-center gap-4 pt-4">
-              <Button size="lg" asChild className="h-16 px-10 text-lg shadow-glow-primary transition-all hover:-translate-y-1">
-                <Link href="/signup">
-                  {t('landing.hero.ctaButton')} <ArrowRight className="ml-2 h-5 w-5" />
-                </Link>
-              </Button>
-            </div>
-          </div>
-        </section>
-
+        {/* ŽEMĖLAPIS */}
         <CoverageSection />
 
-        {/* STATS SECTION */}
+        {/* STATISTIKA */}
         <section className="py-16 bg-accent/40 border-y border-border flex justify-center">
             <div className="flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16">
               <Stat value={totalReports} label={t('landing.stats.totalReports')} icon={FileText} loading={isStatsLoading} />
@@ -120,7 +121,7 @@ export default function HomePage() {
             </div>
         </section>
 
-        {/* FEATURES SECTION */}
+        {/* SAVYBĖS */}
         <section className="py-24 md:py-32 bg-background">
           <div className="container mx-auto px-6 text-center">
             <div className="max-w-2xl mx-auto mb-20">
