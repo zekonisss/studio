@@ -6,68 +6,17 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/use-auth';
 import Link from 'next/link';
 import { useState } from 'react';
-import { Loader2, CreditCard, Banknote } from 'lucide-react';
+import { Loader2, CreditCard } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-
-type PaymentMethod = 'card' | 'bank_transfer';
-
-const PaymentActions = ({ userId }: { userId: string }) => {
-    const { toast } = useToast();
-    const [loadingMethod, setLoadingMethod] = useState<PaymentMethod | null>(null);
-
-    const handleSubscribe = async (method: PaymentMethod) => {
-        setLoadingMethod(method);
-        try {
-            const response = await fetch('/api/stripe/create-checkout-session', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId: userId, paymentMethod: method }),
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Nepavyko sukurti mokėjimo sesijos.');
-            }
-
-            const { url } = await response.json();
-            window.location.href = url;
-        } catch (error: any) {
-            toast({
-                variant: "destructive",
-                title: "Mokėjimo Klaida",
-                description: error.message,
-            });
-        } finally {
-            setLoadingMethod(null);
-        }
-    };
-
-    return (
-        <div className="space-y-4">
-            <p className="text-sm font-medium">Aktyvuokite metinę prenumeratą:</p>
-            <div className="flex flex-col sm:flex-row gap-4">
-                <Button onClick={() => handleSubscribe('card')} disabled={!!loadingMethod}>
-                    {loadingMethod === 'card' && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    <CreditCard className="mr-2 h-4 w-4" />
-                    Mokėti kortele (prenumerata)
-                </Button>
-                <Button onClick={() => handleSubscribe('bank_transfer')} disabled={!!loadingMethod} variant="secondary">
-                    {loadingMethod === 'bank_transfer' && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    <Banknote className="mr-2 h-4 w-4" />
-                    Gauti sąskaitą pavedimui
-                </Button>
-            </div>
-        </div>
-    )
-}
-
+import { PaymentModal } from '@/components/shared/payment-modal';
 
 export default function PaymentsTab() {
   const { t, locale } = useLanguage();
   const { user } = useAuth();
   const { toast } = useToast();
   const [isPortalLoading, setIsPortalLoading] = useState(false);
-  
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+
   const handleManageSubscription = async () => {
     if (!user) return;
 
@@ -156,43 +105,58 @@ export default function PaymentsTab() {
     }
 
     if (['inactive', 'pending_payment', 'pending_verification', 'trial'].includes(user.paymentStatus)) {
-        return <PaymentActions userId={user.id} />
+        return (
+            <Button onClick={() => setIsPaymentModalOpen(true)}>
+                <CreditCard className="mr-2 h-4 w-4" />
+                Aktyvuoti prenumeratą
+            </Button>
+        )
     }
 
     return null;
   }
 
   return (
-    <Card className="mt-6 border-0 shadow-none">
-      <CardHeader>
-        <CardTitle>{t('account.payments.title')}</CardTitle>
-        <CardDescription>{t('account.payments.description')}</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-8">
-        <Card>
-          <CardHeader>
-            {getStatusComponent()}
-          </CardHeader>
-           <CardFooter className="flex flex-col items-start gap-4">
-               {getActionButtons()}
-           </CardFooter>
-        </Card>
-        
-        <Card>
+    <>
+      {user && (
+        <PaymentModal 
+            isOpen={isPaymentModalOpen}
+            onClose={() => setIsPaymentModalOpen(false)}
+            userId={user.id}
+            email={user.email}
+        />
+      )}
+      <Card className="mt-6 border-0 shadow-none">
+        <CardHeader>
+          <CardTitle>{t('account.payments.title')}</CardTitle>
+          <CardDescription>{t('account.payments.description')}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-8">
+          <Card>
             <CardHeader>
-                <CardTitle>{t('account.payments.paymentHistoryTitle')}</CardTitle>
-                <CardDescription>{t('account.payments.paymentHistoryDescription')}</CardDescription>
+              {getStatusComponent()}
             </CardHeader>
-            <CardContent>
-                <div className="text-center text-muted-foreground py-4">
-                    <p>Mokėjimų istorija bus rodoma čia.</p>
-                </div>
-            </CardContent>
-        </Card>
-      </CardContent>
-       <CardFooter className="border-t pt-6">
-           <p className="text-sm text-muted-foreground">{t('account.payments.footerNote')}</p>
-      </CardFooter>
-    </Card>
+            <CardFooter className="flex flex-col items-start gap-4">
+                {getActionButtons()}
+            </CardFooter>
+          </Card>
+          
+          <Card>
+              <CardHeader>
+                  <CardTitle>{t('account.payments.paymentHistoryTitle')}</CardTitle>
+                  <CardDescription>{t('account.payments.paymentHistoryDescription')}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                  <div className="text-center text-muted-foreground py-4">
+                      <p>Mokėjimų istorija bus rodoma čia.</p>
+                  </div>
+              </CardContent>
+          </Card>
+        </CardContent>
+        <CardFooter className="border-t pt-6">
+            <p className="text-sm text-muted-foreground">{t('account.payments.footerNote')}</p>
+        </CardFooter>
+      </Card>
+    </>
   );
 }
