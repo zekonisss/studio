@@ -72,31 +72,6 @@ export default function HomePage() {
         {/* ŽEMĖLAPIS */}
         <CoverageSection />
 
-        {/* SAVYBĖS */}
-        <section className="py-24 md:py-32 bg-background">
-          <div className="container mx-auto px-6 text-center">
-            <div className="max-w-2xl mx-auto mb-20">
-              <h2 className="text-4xl md:text-5xl font-bold mb-6">{t('landing.features.title')}</h2>
-              <p className="text-muted-foreground text-lg">{t('landing.features.subtitle')}</p>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-              {[
-                { icon: ShieldCheck, title: t('landing.features.feature1.title'), desc: t('landing.features.feature1.description') },
-                { icon: FileText, title: t('landing.features.feature2.title'), desc: t('landing.features.feature2.description') },
-                { icon: BarChart3, title: t('landing.features.feature3.title'), desc: t('landing.features.feature3.description') }
-              ].map((f, i) => (
-                <Card key={i} className="group p-8 bg-card/50 border-border backdrop-blur-xl transition-all hover:bg-accent/50 hover:border-primary/40 rounded-3xl">
-                  <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-6 mx-auto group-hover:scale-110 transition-transform">
-                    <f.icon className="h-8 w-8 text-primary" />
-                  </div>
-                  <h3 className="text-xl font-bold mb-3">{f.title}</h3>
-                  <p className="text-muted-foreground leading-relaxed text-sm md:text-base">{f.desc}</p>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </section>
       </main>
 
       <footer className="border-t border-border py-12 bg-background">
