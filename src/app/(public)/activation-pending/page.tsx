@@ -1,32 +1,25 @@
 "use client";
 
-import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { PaymentModal } from "@/components/shared/payment-modal";
-import { CreditCard, LogOut } from "lucide-react";
+import { LogOut, ShieldCheck } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function ActivationPendingPage() {
-  const { user, logout } = useAuth();
-  const [isPaymentOpen, setIsPaymentOpen] = useState(false);
+  const { logout } = useAuth();
 
   return (
     <>
       <Card className="w-full max-w-xl text-center">
-        <CardHeader>
-          <CardTitle className="text-3xl font-bold tracking-tight">Paskyra sukurta, laukiama aktyvavimo</CardTitle>
-          <CardDescription>Jūsų paskyra sėkmingai užregistruota. Kad galėtumėte pradėti naudotis sistema ir tikrinti vairuotojus, prašome aktyvuoti narystę.</CardDescription>
+        <CardHeader className="items-center">
+            <div className="p-4 bg-primary/10 rounded-full mb-2">
+                 <ShieldCheck className="h-10 w-10 text-primary" />
+            </div>
+          <CardTitle className="text-3xl font-bold tracking-tight">Paskyra laukia patvirtinimo</CardTitle>
+          <CardDescription>Jūsų paskyra sėkmingai užregistruota ir perduota peržiūrai. Mūsų administratorius netrukus ją patvirtins. Apie patvirtinimą būsite informuoti el. paštu.</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="bg-primary/5 border border-primary/10 rounded-lg p-6 space-y-4">
-            <h3 className="font-semibold text-primary">Narystės aktyvavimas</h3>
-            <p className="text-sm text-muted-foreground">Atlikus mokėjimą, prieiga prie duomenų bazės bus suteikta nedelsiant.</p>
-            <Button size="lg" className="w-full font-bold shadow-md" onClick={() => setIsPaymentOpen(true)}>
-              <CreditCard className="mr-2 h-5 w-5" />
-              Aktyvuoti paskyrą dabar
-            </Button>
-          </div>
+            <p className="text-sm text-muted-foreground">Jei turite klausimų, susisiekite su mumis el. paštu: <a href="mailto:support@drivercheck.lt" className="underline text-primary">support@drivercheck.lt</a></p>
         </CardContent>
         <CardFooter className="flex-col gap-4 pt-6 border-t">
           <p className="text-xs text-muted-foreground">Norite prisijungti su kita paskyra?</p>
@@ -36,13 +29,6 @@ export default function ActivationPendingPage() {
           </Button>
         </CardFooter>
       </Card>
-
-      <PaymentModal 
-        isOpen={isPaymentOpen} 
-        onClose={() => setIsPaymentOpen(false)}
-        userId={user?.id || ''}
-        email={user?.email || ''}
-      />
     </>
   );
 }
