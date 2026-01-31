@@ -1,6 +1,6 @@
 "use client";
 
-import { Building2, Users, Scale, Server, CheckCircle2 } from "lucide-react";
+import { Globe, Users, Scale, Server, CheckCircle2 } from "lucide-react";
 
 export function DataSourcesSection() {
   return (
@@ -16,29 +16,29 @@ export function DataSourcesSection() {
           <h2 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white mb-6">
             Informacija, kuria galite <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400">
-              teisiškai pasitikėti.
+              pasitikėti.
             </span>
           </h2>
           <p className="text-lg text-slate-600 dark:text-slate-400 leading-relaxed">
-            Mūsų duomenų bazė nėra tik „juodasis sąrašas“. Tai yra agreguota, 
-            patikrinta ir GDPR (BDAR) reikalavimus atitinkanti informacija 
-            iš trijų pagrindinių kanalų.
+            Mūsų sistema veikia kaip informacijos agregatorius. Mes sujungiame 
+            bendruomenės pranešimus, viešai prieinamą informaciją ir teisinius saugiklius 
+            į vieną patogų įrankį.
           </p>
         </div>
 
         {/* Kortelės */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           
-          {/* 1. Viešieji Registrai */}
+          {/* 1. Viešoji Erdvė (Pakeista pagal tavo prašymą) */}
           <SourceCard 
-            icon={<Building2 className="w-6 h-6 text-white" />}
+            icon={<Globe className="w-6 h-6 text-white" />}
             color="bg-blue-500"
-            title="Viešieji Registrai"
-            description="Automatiškai tikriname duomenis iš oficialių valstybinių šaltinių Lietuvoje, Latvijoje ir Lenkijoje."
+            title="Viešoji Erdvė"
+            description="Agreguojame informaciją, kuri yra išbarstyta internete, kad jums nereikėtų gaišti laiko naršant dešimtis skirtingų šaltinių."
             list={[
-              "Galiojantys vairuotojo pažymėjimai",
-              "LTSA pažeidimų istorija",
-              "Administracinės nuobaudos (kurios yra viešos)"
+              "Specializuoti forumai ir grupės",
+              "Socialinių tinklų monitoringas",
+              "Viešai prieinami atsiliepimai"
             ]}
           />
 

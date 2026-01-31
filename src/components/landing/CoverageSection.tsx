@@ -5,10 +5,9 @@ import { InteractiveMap } from "./InteractiveMap";
 
 export function CoverageSection() {
   return (
-    // PAKEITIMAS: bg-slate-50 šviesiam, bg-slate-950 tamsiam
     <section className="bg-slate-50 dark:bg-slate-950 py-24 overflow-hidden relative transition-colors duration-300">
       
-      {/* Tinklelis tamsiam režimui (šviesiame beveik nesimato arba paslėptas) */}
+      {/* Tinklelis tamsiam režimui */}
       <div className="absolute top-0 left-0 w-full h-full bg-[url('/assets/grid-pattern.svg')] opacity-5 pointer-events-none"></div>
 
       <div className="container mx-auto px-4 md:px-6 relative z-10">
@@ -26,9 +25,7 @@ export function CoverageSection() {
             </h2>
             
             <p className="text-lg text-slate-600 dark:text-slate-400 leading-relaxed transition-colors">
-              Vairuotojai kerta sienas, tikėdamiesi paslėpti savo istoriją. 
-              Mes panaikinome „akląsias zonas“. Mūsų sistema realiu laiku apjungia 
-              rizikos duomenis iš keturių pagrindinių regiono rinkų.
+              DriverCheck suteikia įrankius, reikalingus efektyviam rizikų valdymui ir personalo valdymui transporto sektoriuje.
             </p>
 
             <div className="space-y-6 pt-4">
@@ -42,17 +39,18 @@ export function CoverageSection() {
                 title="Migracijos Kontrolė"
                 description="Istorija seka paskui"
               />
+              {/* ATNAUJINTA FRAZĖ ČIA: */}
               <FeatureItem 
                 icon={<ShieldCheck className="w-5 h-5 text-blue-600 dark:text-cyan-400" />}
                 title="Prevencinis Poveikis"
-                description="Vairuotojai žino – incidentas Lietuvoje užkirs kelią darbui Lenkijoje ar Latvijoje."
+                description="Viena rinka – viena reputacija, skatina atsakingą požiūrį į darbą."
               />
             </div>
           </div>
 
           {/* Žemėlapis */}
           <div className="w-full relative">
-             {/* Glow efektas tik tamsiam režimui (dark:block), šviesiam - paslėptas (hidden) */}
+             {/* Glow efektas tik tamsiam režimui */}
             <div className="hidden dark:block absolute -inset-4 bg-cyan-500/20 rounded-full blur-3xl opacity-20 animate-pulse"></div>
             
             <InteractiveMap />
