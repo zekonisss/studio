@@ -11,38 +11,65 @@ const TERMS_CONTENT = {
   lt: {
     title: "Naudojimosi taisyklės",
     subtitle: "Oficialios DriverCheck platformos naudojimo sąlygos ir privatumo nuostatos.",
-    cardTitle: "Bendrosios Paslaugų Teikimo Sąlygos",
-    date: "Redakcija: 2026 m. Sausio 24 d.",
+    cardTitle: "NAUDOJIMOSI TAISYKLĖS IR PASLAUGŲ TEIKIMO SUTARTIS",
+    date: "Galioja nuo: 2026 m. sausio 24 d.",
+    intro: "Šios taisyklės (toliau – „Taisyklės“) nustato naudojimosi „DriverCheck“ platforma (toliau – „Platforma“) sąlygas. Registruodamasis Platformoje arba ja naudodamasis, Vartotojas (Juridinis asmuo) patvirtina, kad susipažino su šiomis Taisyklėmis, jas suprato ir įsipareigoja jų laikytis.",
     sections: [
       {
-        title: "1. Duomenų tvarkymo principai ir terminai",
+        title: "1. BENDROSIOS NUOSTATOS",
         items: [
-          { label: "1.1. Saugojimo terminas:", text: "Visi Platformoje užregistruoti įrašai apie nusižengimus yra saugomi 5 (penkerius) metus nuo įrašo sukūrimo datos. Suėjus šiam terminui, duomenys yra automatiškai ir negrįžtamai pašalinami iš sistemos." },
-          { label: "1.2. Duomenų tikslumas ir skundai:", text: "Jei duomenų subjektas (vairuotojas) ar kita suinteresuota šalis pateikia pagrįstus įrodymus, kad Platformoje esantis įrašas yra netikslus, melagingas ar klaidinantis, Paslaugų teikėjas pasilieka teisę per 5 darbo dienas vienašališkai pašalinti tokį įrašą." },
-          { label: "1.3. Draudžiamas turinys:", text: "Į komentarus ar kitus laukus griežtai draudžiama vesti asmens kodus, tikslius gyvenamosios vietos adresus, sveikatos duomenis ar kitą perteklinę informaciją. Vartotojas (įmonė) atsako už tai, kad įrašas atitiktų BDAR duomenų kiekio mažinimo (data minimization) principą." }
+          { label: "1.1. Paslaugos teikėjas:", text: "Platformą administruoja ir paslaugas teikia [Tavo Įmonės Pavadinimas / Arba tavo vardas, jei veiki pagal IV], (toliau – „Paslaugų teikėjas“)." },
+          { label: "1.2. Vartotojas:", text: "Juridinis asmuo (transporto ar logistikos įmonė), užsiregistravęs Platformoje ir įsigijęs prenumeratą (toliau – „Vartotojas“)." },
+          { label: "1.3. Paskirtis:", text: "Platforma yra B2B įrankis, skirtas kaupti ir dalintis atsiliepimais apie vairuotojų profesinę veiklą rizikos valdymo tikslais." }
         ]
       },
       {
-        title: "2. „DriverCheck“ ženklas ir reputacija",
+        title: "2. PASKYROS SAUGUMAS IR NAUDOJIMO RIBOJIMAI (SVARBU)",
         items: [
-          { label: "2.1. Marketingo teisės:", text: "Vartotojas, turintis aktyvią Platformos prenumeratą, turi teisę naudoti „DriverCheck“ logotipą ir žymą „Patikimas partneris“ savo įmonės svetainėje, el. pašto parašuose ar darbo skelbimuose, siekiant informuoti klientus ir kandidatus apie atsakingą personalo atrankos procesą." },
-          { label: "2.2. Teisės pasibaigimas:", text: "Pasibaigus prenumeratos galiojimui arba pažeidus šias Taisykles, Vartotojas privalo per 3 darbo dienas pašalinti „DriverCheck“ vizualinę medžiagą iš visų viešų kanalų." }
+          { label: "2.1. Viena paskyra – viena įmonė:", text: "Paskyra yra skirta naudoti tik ją įsigijusios įmonės vidaus reikmėms." },
+          { label: "2.2. Draudimas dalintis:", text: "Prisijungimo duomenys yra griežtai konfidencialūs. Vartotojui griežtai draudžiama perduoti prisijungimo duomenis tretiesiems asmenims (kitoms įmonėms, partneriams ar dukterinėms įmonėms, kurios neturi atskiros prenumeratos)." },
+          { label: "2.3. Domeno taisyklė:", text: "Jei įmonė registruojasi su korporatyviniu el. paštu (pvz., @manvesta.lt), visi papildomi tos paskyros vartotojai privalo turėti tą patį el. pašto domeną." },
+          { label: "2.4. Saugumo stebėsena:", text: "Siekiant užkirsti kelią piktnaudžiavimui, Paslaugų teikėjas turi teisę techninėmis priemonėmis fiksuoti vartotojų IP adresus, įrenginių identifikatorius ir sesijų skaičių." },
+          { label: "2.5. Pažeidimo pasekmės:", text: "Sistemai užfiksavus, kad ta pačia paskyra vienu metu naudojamasi iš skirtingų geografinių lokacijų arba įrenginių (indikacija, kad slaptažodžiu dalinamasi), Paslaugų teikėjas turi teisę nedelsiant ir be įspėjimo blokuoti paskyrą negrąžinant sumokėto narystės mokesčio.", highlight: true }
         ]
       },
       {
-        title: "3. Įrašų pobūdis ir naudojimas",
+        title: "3. APMOKĖJIMAS IR PRENUMERATA",
         items: [
-          { label: "3.1. Konsultacinis pobūdis:", text: "Visi Platformoje esantys įrašai yra išimtinai informacinio pobūdžio. Faktas, kad duomenų subjektas (vairuotojas) yra minimas Platformoje, savaime nėra ir negali būti traktuojamas kaip rekomendacija neįdarbinti šio asmens ar nutraukti su juo darbo santykius." },
-          { label: "3.2. Ugdymas ir prevencija:", text: "Platformos tikslas – padėti Vartotojui identifikuoti sritis, kuriose vairuotojui gali reikėti papildomo dėmesio. Rekomenduojama gautą informaciją naudoti planuojant tikslinius darbuotojų mokymus (pvz., kuro taupymo kursai, saugaus eismo mokymai) ar nustatant bandomojo laikotarpio priežiūros gaires, o ne kaip automatinį atmetimo kriterijų." },
-          { label: "3.3. Sprendimų priėmimas:", text: "Vartotojas (įmonė) galutinį sprendimą dėl bendradarbiavimo priima savarankiškai, įvertinęs visumą. Platforma tarnauja kaip rizikos valdymo ir kompetencijų kėlimo įrankis." }
+          { label: "3.1. Mokėjimai:", text: "Paslaugos teikiamos prenumeratos pagrindu. Mokėjimai apdorojami per trečiosios šalies operatorių („Stripe“). Vartotojas sutinka, kad narystės mokestis būtų nuskaičiuojamas automatiškai (SEPA Direct Debit arba kortele) pagal pasirinktą planą." },
+          { label: "3.2. Sąskaitos:", text: "PVM sąskaitos faktūros generuojamos automatiškai ir siunčiamos Vartotojo nurodytu el. paštu." },
+          { label: "3.3. Nutraukimas:", text: "Vartotojas gali bet kada nutraukti prenumeratą savo paskyros nustatymuose. Nutraukus prenumeratą, prieiga prie Platformos išlieka iki apmokėto laikotarpio pabaigos. Pinigai už nepanaudotą laikotarpio dalį nėra grąžinami." }
         ]
       },
       {
-        title: "4. Vartotojo atsakomybė ir identifikavimo ribos",
+        title: "4. DUOMENŲ TVARKYMO PRINCIPAI",
         items: [
-          { label: "4.1. Duomenų Valdytojo statusas:", text: "Naudodamasis Platforma, Vartotojas patvirtina, kad jis veikia kaip duomenų Valdytojas ir savarankiškai užtikrina visų teisinių prievolių, kylančių iš BDAR, vykdymą (įskaitant teisėto intereso vertinimą). Paslaugų teikėjas veikia tik kaip techninis Duomenų Tvarkytojas." },
-          { label: "4.2. Asmens identifikavimo ribotumai:", text: "Siekiant maksimalaus asmens duomenų saugumo ir laikantis BDAR nuostatų, Platformoje nerenkami unikalūs asmens kodai. Asmens identifikavimas vykdomas pagal vardą, pavardę ir gimimo metus. Vartotojas supranta ir prisiima riziką, kad dėl galimų bendravardžių sutapimų, sistema negali garantuoti 100% identifikavimo tikslumo. Vartotojas privalo imtis papildomų priemonių (pvz., pokalbio metu), kad įsitikintų, jog Platformoje rastas įrašas tikrai priklauso vertinamam kandidatui.", highlight: true },
-          { label: "4.3. Atsakomybė už sprendimus:", text: "Paslaugų teikėjas neprisiima atsakomybės už Vartotojo priimtus verslo sprendimus ar galimą žalą, kilusią dėl klaidingo asmens identifikavimo, jei Vartotojas neatliko papildomo patikrinimo." }
+          { label: "4.1. Saugojimo terminas:", text: "Visi Platformoje užregistruoti įrašai apie nusižengimus yra saugomi 5 (penkerius) metus nuo įrašo sukūrimo datos. Suėjus šiam terminui, duomenys yra automatiškai ir negrįžtamai pašalinami." },
+          { label: "4.2. Duomenų tikslumas:", text: "Jei duomenų subjektas (vairuotojas) pateikia pagrįstus įrodymus, kad įrašas yra netikslus ar melagingas, Paslaugų teikėjas pasilieka teisę per 5 darbo dienas vienašališkai pašalinti tokį įrašą." },
+          { label: "4.3. Draudžiamas turinys:", text: "Griežtai draudžiama į sistemą vesti asmens kodus, tikslius gyvenamosios vietos adresus, sveikatos duomenis ar kitą perteklinę informaciją. Vartotojas atsako už tai, kad įrašas atitiktų BDAR duomenų kiekio mažinimo (data minimization) principą." }
+        ]
+      },
+      {
+        title: "5. ĮRAŠŲ POBŪDIS IR ATSAKOMYBĖ",
+        items: [
+          { label: "5.1. Vartotojo atsakomybė:", text: "Naudodamasis Platforma, Vartotojas patvirtina, kad jis veikia kaip duomenų Valdytojas. Vartotojas prisiima visą teisinę atsakomybę už savo įkeltų atsiliepimų turinį, tikrumą ir teisėtumą. Paslaugų teikėjas veikia tik kaip techninis tarpininkas (duomenų Tvarkytojas) ir netikrina faktinių aplinkybių." },
+          { label: "5.2. Konsultacinis pobūdis:", text: "Platformoje esanti informacija yra rekomendacinio pobūdžio. Faktas, kad vairuotojas yra minimas Platformoje, negali būti traktuojamas kaip vienintelė priežastis neįdarbinti asmens." },
+          { label: "5.3. Identifikavimo rizika:", text: "Asmens identifikavimas vykdomas pagal vardą, pavardę ir gimimo metus (be asmens kodo). Vartotojas supranta riziką dėl galimų bendravardžių sutapimų ir įsipareigoja atlikti papildomą patikrinimą prieš priimdamas sprendimus.", highlight: true }
+        ]
+      },
+       {
+        title: "6. „DRIVERCHECK“ ŽENKLO NAUDOJIMAS",
+        items: [
+          { label: "6.1. Marketingo teisės:", text: "Aktyvią prenumeratą turintis Vartotojas turi teisę naudoti „DriverCheck“ logotipą ir žymą „Patikimas partneris“ savo svetainėje ar darbo skelbimuose." },
+          { label: "6.2. Teisės pasibaigimas:", text: "Nutraukus prenumeratą arba pažeidus šias Taisykles, Vartotojas privalo per 3 darbo dienas pašalinti visą „DriverCheck“ vizualinę medžiagą." }
+        ]
+      },
+      {
+        title: "7. BAIGIAMOSIOS NUOSTATOS",
+        items: [
+          { label: "7.1. Platformos prieinamumas:", text: "Paslaugų teikėjas siekia užtikrinti 99% Platformos pasiekiamumą, tačiau neatsako už laikinus sutrikimus dėl techninių profilaktikos darbų ar trečiųjų šalių (serverių tiekėjų) gedimų." },
+          { label: "7.2. Taisyklių keitimas:", text: "Paslaugų teikėjas turi teisę vienašališkai keisti šias Taisykles, apie tai informuodamas Vartotojus el. paštu prieš 14 dienų. Tolesnis naudojimasis Platforma reiškia sutikimą su pakeitimais." },
+          { label: "7.3. Ginčų sprendimas:", text: "Visi ginčiai sprendžiami derybų būdu. Nepavykus susitarti, ginčai sprendžiami Lietuvos Respublikos teismuose pagal Paslaugų teikėjo buveinės vietą." }
         ]
       }
     ]
@@ -52,6 +79,7 @@ const TERMS_CONTENT = {
     subtitle: "Official terms and conditions for using the DriverCheck platform.",
     cardTitle: "General Terms of Service",
     date: "Effective Date: January 24, 2026",
+    intro: "These rules ('Rules') set out the terms and conditions for using the 'DriverCheck' platform ('Platform'). By registering on or using the Platform, the User (Legal Entity) confirms that they have read, understood and agree to be bound by these Rules.",
     sections: [
       {
         title: "1. Data Processing Principles and Retention",
@@ -89,10 +117,7 @@ const TERMS_CONTENT = {
 };
 
 export default function TermsPage() {
-  // PATAISYTA: Naudojame 'locale' vietoje 'language'
-  const { locale } = useLanguage(); 
-  
-  // Logika: Jei locale yra 'lt', rodome LT, visais kitais atvejais (en, pl, ru...) rodome EN
+  const { locale } = useLanguage();
   const content = locale === 'lt' ? TERMS_CONTENT.lt : TERMS_CONTENT.en;
 
   const handlePrint = () => {
@@ -127,6 +152,11 @@ export default function TermsPage() {
         <CardContent className="p-0">
           <ScrollArea className="h-[calc(100vh-300px)] p-6 md:p-10 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
             <div className="space-y-8 print:space-y-4">
+                {content.intro && (
+                  <p className="text-base font-medium text-foreground border-b pb-4">
+                      {content.intro}
+                  </p>
+                )}
                 {content.sections.map((section, index) => (
                     <section key={index}>
                         <h3 className="text-lg font-bold text-foreground mb-3 flex items-center gap-2">
