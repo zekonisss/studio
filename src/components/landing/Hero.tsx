@@ -2,18 +2,13 @@
 
 import { ArrowRight, Info, ShieldCheck, CheckCircle } from "lucide-react";
 import Link from "next/link";
-import { AnimatedCounter } from "@/components/shared/animated-counter"; 
+import { PublicReportCounter } from "@/components/shared/PublicReportCounter";
 
-interface HeroProps {
-  count: number;
-}
-
-export function Hero({ count }: HeroProps) {
+export function Hero() {
   return (
-    // PAKEITIMAS: bg-white šviesiam, dark:bg-slate-950 tamsiam
     <section className="relative pt-32 pb-20 md:pt-48 md:pb-32 overflow-hidden bg-white dark:bg-slate-950 transition-colors duration-300">
       
-      {/* Fono efektas: Šviesiam režimui mėlynas, tamsiam - ryškesnis */}
+      {/* Fono efektas */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1200px] h-[600px] bg-blue-100 dark:bg-blue-900/10 rounded-full blur-[100px] -z-10 opacity-60"></div>
 
       <div className="container mx-auto px-4 md:px-6 text-center">
@@ -27,12 +22,12 @@ export function Hero({ count }: HeroProps) {
           <span>
             Duomenų bazė atnaujinta šiandien. Įrašų:{" "}
             <strong className="text-slate-900 dark:text-white">
-               <AnimatedCounter value={count > 0 ? count : 1542} />
+               <PublicReportCounter fallbackCount={1542} />
             </strong>
           </span>
         </div>
 
-        {/* ANTRAŠTĖ: Tamsi šviesiam fone, Balta tamsiam fone */}
+        {/* ANTRAŠTĖ */}
         <h1 className="text-4xl md:text-6xl font-bold text-slate-900 dark:text-white tracking-tight mb-6 leading-tight max-w-5xl mx-auto transition-colors">
           Mažinkite veiklos riziką <br />
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500 dark:from-blue-400 dark:to-cyan-300">
@@ -60,12 +55,14 @@ export function Hero({ count }: HeroProps) {
             </button>
           </Link>
           
-          <Link href="/about">
-            <button className="group px-8 py-4 rounded-xl bg-slate-100 border border-slate-200 dark:bg-slate-900/50 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium text-lg transition-all flex items-center gap-2 backdrop-blur-sm">
+          {/* ŠIS MYGTUKAS DABAR SKROLINA IKI #sources SEKCIJOS */}
+          <a href="#sources">
+            <button className="group px-8 py-4 rounded-xl bg-slate-100 border border-slate-200 dark:bg-slate-900/50 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium text-lg transition-all flex items-center gap-2 backdrop-blur-sm cursor-pointer">
               <Info className="w-5 h-5 text-slate-500 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white transition-colors" />
               <span className="group-hover:text-slate-900 dark:group-hover:text-white transition-colors">Apie duomenų šaltinius</span>
             </button>
-          </Link>
+          </a>
+
         </div>
 
         {/* TRUST MARKERS */}

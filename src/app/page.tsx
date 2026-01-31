@@ -1,68 +1,31 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { useAuth } from "@/hooks/use-auth";
 import { useLanguage } from "@/contexts/language-context";
 import { BarChart3, ShieldCheck, FileText, UserSearch } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { AnimatedCounter } from "@/components/shared/animated-counter";
-import { Skeleton } from "@/components/ui/skeleton";
-import { getPublicReportCount } from "./page-actions";
+import { useEffect } from "react";
 import { LanguageSwitcher } from "@/components/navigation/language-switcher";
 import { ThemeToggle } from "@/components/navigation/theme-toggle";
 
 // Mūsų komponentai
 import { CoverageSection } from "@/components/landing/CoverageSection";
 import { Hero } from "@/components/landing/Hero";
+import { DataSourcesSection } from "@/components/landing/DataSourcesSection";
+import { Card } from "@/components/ui/card";
+
 
 export default function HomePage() {
   const { t } = useLanguage();
   const { user, isLoading } = useAuth();
   const router = useRouter();
-  const [totalReports, setTotalReports] = useState(0);
-  const [isStatsLoading, setIsStatsLoading] = useState(true);
 
   useEffect(() => {
     if (!isLoading && user) {
       router.replace('/dashboard');
     }
   }, [user, isLoading, router]);
-
-  useEffect(() => {
-    async function fetchData() {
-      setIsStatsLoading(true);
-      try {
-        const count = await getPublicReportCount();
-        setTotalReports(count || 0);
-      } catch (error) {
-        console.error("Failed to fetch page data:", error);
-      } finally {
-        setIsStatsLoading(false);
-      }
-    }
-    fetchData();
-  }, []);
-
-  const Stat = ({ value, label, icon: Icon, loading }: { value: number, label: string, icon: React.ElementType, loading: boolean }) => (
-    <div className="flex flex-col items-center text-center gap-2 group p-4">
-      <div className="p-4 bg-primary/10 rounded-2xl border border-primary/20 group-hover:border-primary/40 transition-colors">
-        <Icon className="h-8 w-8 text-primary" />
-      </div>
-      <div>
-        {loading ? (
-          <Skeleton className="h-8 w-20 mx-auto mb-1" />
-        ) : (
-          <div className="text-3xl font-bold tracking-tighter">
-            <AnimatedCounter value={value} />
-          </div>
-        )}
-        <p className="text-sm text-muted-foreground font-medium uppercase tracking-widest">{label}</p>
-      </div>
-    </div>
-  );
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground selection:bg-primary/30">
@@ -78,27 +41,21 @@ export default function HomePage() {
             </span>
           </Link>
 
-          {/* DEŠINĖ PUSĖ: Nustatymai + PRISIJUNGIMAS */}
+          {/* DEŠINĖ PUSĖ */}
           <div className="flex items-center gap-3">
             <ThemeToggle />
             <LanguageSwitcher />
 
-            {/* --- NAUJAS "SHINY" LOGIN MYGTUKAS --- */}
+            {/* "SHINY" LOGIN MYGTUKAS */}
             <Link href="/login">
               <button className="relative group overflow-hidden rounded-lg bg-gradient-to-b from-blue-500 to-blue-700 px-6 py-2 text-white shadow-[0_0_15px_rgba(59,130,246,0.4)] transition-all duration-300 hover:scale-105 hover:shadow-[0_0_25px_rgba(59,130,246,0.6)]">
-                {/* Glow efektas fone */}
                 <div className="absolute inset-0 bg-white/20 opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
-                
-                {/* Blizgesio efektas (tas pats kaip Hero) */}
                 <div className="absolute -inset-[100%] top-0 block h-full w-1/2 -skew-x-12 bg-gradient-to-r from-transparent to-white opacity-20 group-hover:animate-shine" />
-
-                {/* Tekstas */}
                 <span className="relative font-semibold text-sm tracking-wide">
                   {t('login.loginButton')}
                 </span>
               </button>
             </Link>
-            {/* ------------------------------------- */}
 
           </div>
         </div>
@@ -106,20 +63,14 @@ export default function HomePage() {
 
       <main className="flex-1">
         
-        {/* HERO (su didžiuoju mygtuku) */}
-        <Hero count={totalReports} />
+        {/* HERO */}
+        <Hero />
+
+        {/* NAUJAS: DUOMENŲ ŠALTINIŲ SEKCIJA */}
+        <DataSourcesSection />
 
         {/* ŽEMĖLAPIS */}
         <CoverageSection />
-
-        {/* STATISTIKA */}
-        <section className="py-16 bg-accent/40 border-y border-border flex justify-center">
-            <div className="flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16">
-              <Stat value={totalReports} label={t('landing.stats.totalReports')} icon={FileText} loading={isStatsLoading} />
-              <Stat value={150} label={t('landing.stats.activeCompanies')} icon={ShieldCheck} loading={isStatsLoading} />
-              <Stat value={98} label={t('landing.stats.positiveImpact')} icon={BarChart3} loading={isStatsLoading} />
-            </div>
-        </section>
 
         {/* SAVYBĖS */}
         <section className="py-24 md:py-32 bg-background">
