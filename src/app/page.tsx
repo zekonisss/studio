@@ -13,6 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { getPublicReportCount } from "./page-actions";
 import { LanguageSwitcher } from "@/components/navigation/language-switcher";
 import { ThemeToggle } from "@/components/navigation/theme-toggle";
+import { CoverageSection } from "@/components/landing/CoverageSection";
 
 export default function HomePage() {
   const { t } = useLanguage();
@@ -107,6 +108,8 @@ export default function HomePage() {
             </div>
           </div>
         </section>
+
+        <CoverageSection />
 
         {/* STATS SECTION */}
         <section className="py-16 bg-accent/40 border-y border-border flex justify-center">

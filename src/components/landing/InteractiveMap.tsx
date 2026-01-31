@@ -1,74 +1,89 @@
 "use client";
 
-import React, { memo } from "react";
+import React from "react";
 import {
   ComposableMap,
   Geographies,
   Geography,
+  Marker,
   Line,
-  Marker
+  Annotation
 } from "react-simple-maps";
+import { useTheme } from "next-themes"; // Jei naudoji next-themes, padės su spalvom
 
-const geoUrl =
-  "https://raw.githubusercontent.com/deldersveld/topojson/master/world-countries.json";
+// Nuoroda į viešą TopoJSON failą (pasaulio šalys)
+const geoUrl = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
 
-const TARGET_COUNTRIES = ["LTU", "LVA", "EST", "POL"];
+// Šalių ISO kodai, kurias norime paryškinti
+const highlightedCountries = ["LTU", "LVA", "EST", "POL"];
 
-const capitals = {
-  "Tallinn": [24.7536, 59.4370],
-  "Riga": [24.1052, 56.9496],
-  "Vilnius": [25.2797, 54.6872],
-  "Warsaw": [21.0122, 52.2297],
-};
-
-const lines = [
-  { from: "Vilnius", to: "Riga" },
-  { from: "Riga", to: "Tallinn" },
-  { from: "Tallinn", to: "Warsaw" },
-  { from: "Warsaw", to: "Vilnius" },
-  { from: "Riga", to: "Warsaw"},
+// Sostinių koordinatės (ilgumos, platumos) ir pavadinimai
+const markers = [
+  { name: "Vilnius", coordinates: [25.2797, 54.6872] },
+  { name: "Ryga", coordinates: [24.1052, 56.9496] },
+  { name: "Talinas", coordinates: [24.7536, 59.4370] },
+  { name: "Varšuva", coordinates: [21.0122, 52.2297] },
 ];
 
-const InteractiveMap = () => {
-  return (
-    <div className="w-full h-full relative">
-       <style>
-        {`
-          .data-line {
-            stroke-dasharray: 4 4;
-            animation: dash 8s linear infinite;
-          }
+// Jungtys tarp miestų (kad rodytų duomenų srautą)
+const connections = [
+  [markers[0].coordinates, markers[3].coordinates], // Vilnius - Varšuva
+  [markers[0].coordinates, markers[1].coordinates], // Vilnius - Ryga
+  [markers[1].coordinates, markers[2].coordinates], // Ryga - Talinas
+  [markers[3].coordinates, markers[1].coordinates], // Varšuva - Ryga
+];
 
-          @keyframes dash {
-            to {
-              stroke-dashoffset: -100;
-            }
-          }
-        `}
-      </style>
+export function InteractiveMap() {
+  // Spalvų paletė tamsiam režimui (galima derinti pagal tavo Tailwind config)
+  const colors = {
+    base: "#1e293b", // Slate-800 (kitos šalys)
+    highlight: "#06b6d4", // Cyan-500 (tavo šalys)
+    hover: "#22d3ee", // Cyan-400 (užvedus pelyte)
+    stroke: "#0f172a", // Slate-900 (sienos)
+    line: "#67e8f9", // Cyan-300 (linijos)
+  };
+
+  return (
+    <div className="w-full h-[500px] relative overflow-hidden rounded-xl bg-slate-900/50 border border-slate-800">
       <ComposableMap
-        projection="geoAzimuthalEqualArea"
+        projection="geoMercator"
         projectionConfig={{
-          rotate: [-24.0, -56.0, 0],
-          scale: 3000
+          center: [24, 56], // Centruojame ties Baltija
+          scale: 2000, // Pritraukiame vaizdą
         }}
-        style={{ width: "100%", height: "100%" }}
+        className="w-full h-full"
       >
         <Geographies geography={geoUrl}>
           {({ geographies }) =>
             geographies.map((geo) => {
-              const isHighlighted = TARGET_COUNTRIES.includes(geo.id);
+              // Tikriname, ar šalis yra mūsų sąraše
+              const isHighlighted = highlightedCountries.includes(geo.properties.iso_a3);
+
               return (
                 <Geography
                   key={geo.rsmKey}
                   geography={geo}
-                  fill={isHighlighted ? "hsl(var(--primary) / 0.4)" : "hsl(var(--muted-foreground) / 0.15)"}
-                  stroke={isHighlighted ? "hsl(var(--primary))" : "hsl(var(--muted-foreground) / 0.3)"}
-                  strokeWidth={0.5}
                   style={{
-                    default: { outline: "none" },
-                    hover: { outline: "none" },
-                    pressed: { outline: "none" },
+                    default: {
+                      fill: isHighlighted ? colors.highlight : colors.base,
+                      stroke: colors.stroke,
+                      strokeWidth: 0.5,
+                      outline: "none",
+                      transition: "all 250ms",
+                    },
+                    hover: {
+                      fill: isHighlighted ? colors.hover : colors.base,
+                      stroke: colors.stroke,
+                      strokeWidth: 0.5,
+                      outline: "none",
+                      cursor: isHighlighted ? "pointer" : "default",
+                      // Pridedame švytėjimo efektą užvedus
+                      filter: isHighlighted ? `drop-shadow(0 0 8px ${colors.highlight})` : "none"
+                    },
+                    pressed: {
+                       fill: isHighlighted ? colors.hover : colors.base,
+                       outline: "none",
+                    }
                   }}
                 />
               );
@@ -76,47 +91,41 @@ const InteractiveMap = () => {
           }
         </Geographies>
 
-        {/* Data lines */}
-        {lines.map((line, i) => (
-          <Line
-            key={i}
-            from={capitals[line.from as keyof typeof capitals]}
-            to={capitals[line.to as keyof typeof capitals]}
-            stroke="hsl(var(--primary) / 0.6)"
-            strokeWidth={1.5}
-            className="data-line"
-            style={{ animationDelay: `${i * -1.5}s` }}
-          />
-        ))}
+        {/* Duomenų srauto linijos */}
+        {connections.map((connection, index) => (
+           <Line
+             key={index}
+             from={connection[0]}
+             to={connection[1]}
+             stroke={colors.line}
+             strokeWidth={1.5}
+             strokeLinecap="round"
+             strokeOpacity={0.6}
+             // Punktyrinė linija atrodo technologiškiau
+             strokeDasharray="4 4"
+             // Animacija (reikėtų papildomo CSS, bet pradžiai užteks statinės)
+           />
+         ))}
 
-        {/* Capitals */}
-        {Object.entries(capitals).map(([name, coords]) => (
-            <Marker key={name} coordinates={coords as [number, number]}>
-                <circle r={3} fill="hsl(var(--primary))" stroke="hsl(var(--background))" strokeWidth={1} />
-                <circle r={6} fill="hsl(var(--primary) / 0.3)">
-                   <animate
-                      attributeName="r"
-                      from="3"
-                      to="10"
-                      dur="1.5s"
-                      begin={`${Math.random()}s`}
-                      repeatCount="indefinite"
-                    />
-                    <animate
-                      attributeName="opacity"
-                      from="1"
-                      to="0"
-                      dur="1.5s"
-                      begin={`${Math.random()}s`}
-                      repeatCount="indefinite"
-                    />
-                </circle>
-            </Marker>
+        {/* Sostinių taškai */}
+        {markers.map(({ name, coordinates }) => (
+          <Marker key={name} coordinates={coordinates}>
+            {/* Pulsuojantis efektas */}
+            <circle r={6} fill={colors.line} opacity={0.4} className="animate-ping" />
+            <circle r={3} fill="white" />
+            <text
+              textAnchor="middle"
+              y={15}
+              style={{ fontFamily: "system-ui", fill: "white", fontSize: "10px", fontWeight: "bold" }}
+            >
+              {name}
+            </text>
+          </Marker>
         ))}
-
       </ComposableMap>
+      
+      {/* Perdanga, kad žemėlapis gražiai įsilietų į foną */}
+      <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent pointer-events-none"></div>
     </div>
   );
-};
-
-export default memo(InteractiveMap);
+}
