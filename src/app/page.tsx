@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useAuth } from "@/hooks/use-auth";
@@ -66,11 +67,11 @@ export default function HomePage() {
         {/* HERO */}
         <Hero />
 
-        {/* NAUJAS: DUOMENŲ ŠALTINIŲ SEKCIJA */}
-        <DataSourcesSection />
-
         {/* ŽEMĖLAPIS */}
         <CoverageSection />
+
+        {/* DUOMENŲ ŠALTINIŲ SEKCIJA (perkelta į apačią) */}
+        <DataSourcesSection />
 
       </main>
 
