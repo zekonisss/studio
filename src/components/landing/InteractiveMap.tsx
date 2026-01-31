@@ -7,40 +7,66 @@ import {
   Geography,
   Marker,
   Line,
-  Annotation
 } from "react-simple-maps";
-import { useTheme } from "next-themes"; // Jei naudoji next-themes, padės su spalvom
 
-// Nuoroda į viešą TopoJSON failą (pasaulio šalys)
+// STABILUS ŠALTINIS
 const geoUrl = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
 
-// Šalių ISO kodai, kurias norime paryškinti
-const highlightedCountries = ["LTU", "LVA", "EST", "POL"];
+// Skaitmeniniai ISO kodai: LT=440, LV=428, EE=233, PL=616
+const highlightedCountries = ["440", "428", "233", "616"];
 
-// Sostinių koordinatės (ilgumos, platumos) ir pavadinimai
-const markers = [
-  { name: "Vilnius", coordinates: [25.2797, 54.6872] },
-  { name: "Ryga", coordinates: [24.1052, 56.9496] },
-  { name: "Talinas", coordinates: [24.7536, 59.4370] },
-  { name: "Varšuva", coordinates: [21.0122, 52.2297] },
+type Coordinate = [number, number];
+
+interface MapMarker {
+  name: string;
+  coordinates: Coordinate;
+  isCapital?: boolean;
+}
+
+const markers: MapMarker[] = [
+  // LIETUVA
+  { name: "Vilnius", coordinates: [25.2797, 54.6872], isCapital: true },
+  { name: "Kaunas", coordinates: [23.9036, 54.8985] },
+  { name: "Klaipėda", coordinates: [21.1443, 55.7037] },
+  { name: "Šiauliai", coordinates: [23.3137, 55.9349] },
+  
+  // LATVIJA
+  { name: "Ryga", coordinates: [24.1052, 56.9496], isCapital: true },
+  
+  // ESTIJA
+  { name: "Talinas", coordinates: [24.7536, 59.4370], isCapital: true },
+  { name: "Pärnu", coordinates: [24.4971, 58.3859] },
+  
+  // LENKIJA
+  { name: "Varšuva", coordinates: [21.0122, 52.2297], isCapital: true },
+  { name: "Białystok", coordinates: [23.1688, 53.1325] },
+  { name: "Gdańsk", coordinates: [18.6466, 54.3520] },
 ];
 
-// Jungtys tarp miestų (kad rodytų duomenų srautą)
-const connections = [
-  [markers[0].coordinates, markers[3].coordinates], // Vilnius - Varšuva
-  [markers[0].coordinates, markers[1].coordinates], // Vilnius - Ryga
-  [markers[1].coordinates, markers[2].coordinates], // Ryga - Talinas
-  [markers[3].coordinates, markers[1].coordinates], // Varšuva - Ryga
+// Maršrutai
+const connections: { from: string; to: string }[] = [
+  { from: "Varšuva", to: "Białystok" },
+  { from: "Białystok", to: "Kaunas" },
+  { from: "Kaunas", to: "Vilnius" },
+  { from: "Kaunas", to: "Klaipėda" },
+  { from: "Kaunas", to: "Šiauliai" },
+  { from: "Šiauliai", to: "Ryga" },
+  { from: "Ryga", to: "Pärnu" },
+  { from: "Pärnu", to: "Talinas" },
+  { from: "Varšuva", to: "Gdańsk" },
 ];
 
 export function InteractiveMap() {
-  // Spalvų paletė tamsiam režimui (galima derinti pagal tavo Tailwind config)
   const colors = {
-    base: "#1e293b", // Slate-800 (kitos šalys)
-    highlight: "#06b6d4", // Cyan-500 (tavo šalys)
-    hover: "#22d3ee", // Cyan-400 (užvedus pelyte)
-    stroke: "#0f172a", // Slate-900 (sienos)
-    line: "#67e8f9", // Cyan-300 (linijos)
+    base: "#1e293b",      
+    highlight: "#06b6d4", 
+    hover: "#22d3ee",     
+    stroke: "#0f172a",    
+    line: "#67e8f9",      
+  };
+
+  const getCoords = (name: string): Coordinate => {
+    return markers.find((m) => m.name === name)?.coordinates || [0, 0];
   };
 
   return (
@@ -48,16 +74,17 @@ export function InteractiveMap() {
       <ComposableMap
         projection="geoMercator"
         projectionConfig={{
-          center: [24, 56], // Centruojame ties Baltija
-          scale: 2000, // Pritraukiame vaizdą
+          // IŠTAISYTA: Atitolinome (2000) ir nuleidome centrą (56), 
+          // kad tilptų ir Talinas viršuje, ir Varšuva apačioje.
+          center: [23.5, 56], 
+          scale: 2000,
         }}
         className="w-full h-full"
       >
         <Geographies geography={geoUrl}>
-          {({ geographies }) =>
-            geographies.map((geo) => {
-              // Tikriname, ar šalis yra mūsų sąraše
-              const isHighlighted = highlightedCountries.includes(geo.properties.iso_a3);
+          {({ geographies }: { geographies: any[] }) =>
+            geographies.map((geo: any) => {
+              const isHighlighted = highlightedCountries.includes(geo.id);
 
               return (
                 <Geography
@@ -77,13 +104,14 @@ export function InteractiveMap() {
                       strokeWidth: 0.5,
                       outline: "none",
                       cursor: isHighlighted ? "pointer" : "default",
-                      // Pridedame švytėjimo efektą užvedus
-                      filter: isHighlighted ? `drop-shadow(0 0 8px ${colors.highlight})` : "none"
+                      filter: isHighlighted
+                        ? `drop-shadow(0 0 10px ${colors.highlight})`
+                        : "none",
                     },
                     pressed: {
-                       fill: isHighlighted ? colors.hover : colors.base,
-                       outline: "none",
-                    }
+                      fill: isHighlighted ? colors.hover : colors.base,
+                      outline: "none",
+                    },
                   }}
                 />
               );
@@ -91,41 +119,56 @@ export function InteractiveMap() {
           }
         </Geographies>
 
-        {/* Duomenų srauto linijos */}
-        {connections.map((connection, index) => (
-           <Line
-             key={index}
-             from={connection[0]}
-             to={connection[1]}
-             stroke={colors.line}
-             strokeWidth={1.5}
-             strokeLinecap="round"
-             strokeOpacity={0.6}
-             // Punktyrinė linija atrodo technologiškiau
-             strokeDasharray="4 4"
-             // Animacija (reikėtų papildomo CSS, bet pradžiai užteks statinės)
-           />
-         ))}
+        {connections.map((conn, index) => (
+          <Line
+            key={index}
+            from={getCoords(conn.from)}
+            to={getCoords(conn.to)}
+            stroke={colors.line}
+            strokeWidth={1.5}
+            strokeLinecap="round"
+            strokeOpacity={0.5}
+            strokeDasharray="3 3"
+          />
+        ))}
 
-        {/* Sostinių taškai */}
-        {markers.map(({ name, coordinates }) => (
+        {markers.map(({ name, coordinates, isCapital }) => (
           <Marker key={name} coordinates={coordinates}>
-            {/* Pulsuojantis efektas */}
-            <circle r={6} fill={colors.line} opacity={0.4} className="animate-ping" />
-            <circle r={3} fill="white" />
+            <circle
+              r={isCapital ? 6 : 3}
+              fill={isCapital ? "white" : colors.line}
+              stroke={colors.line}
+              strokeWidth={isCapital ? 2 : 0}
+            />
+            
+            {isCapital && (
+                 <circle
+                 r={10}
+                 fill={colors.line}
+                 opacity={0.3}
+                 className="animate-ping"
+               />
+            )}
+
             <text
               textAnchor="middle"
-              y={15}
-              style={{ fontFamily: "system-ui", fill: "white", fontSize: "10px", fontWeight: "bold" }}
+              y={isCapital ? -12 : 14}
+              style={{
+                fontFamily: "system-ui",
+                fill: "white",
+                fontSize: isCapital ? "11px" : "9px",
+                fontWeight: isCapital ? "bold" : "normal",
+                textShadow: "0px 1px 3px rgba(0,0,0,0.9)",
+                pointerEvents: "none"
+              }}
             >
               {name}
             </text>
           </Marker>
         ))}
       </ComposableMap>
-      
-      {/* Perdanga, kad žemėlapis gražiai įsilietų į foną */}
-      <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent pointer-events-none"></div>
+
+      <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent pointer-events-none"></div>
     </div>
   );
 }
