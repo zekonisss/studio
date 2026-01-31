@@ -96,7 +96,6 @@ export default function SignupPage() {
                             <FormItem className="md:col-span-2">
                                 <FormLabel>{t('signup.form.address.label')}</FormLabel>
                                 <FormControl><Input placeholder={t('signup.form.address.placeholder')} {...field} /></FormControl>
-                                <FormDescription>{t('signup.form.address.description')}</FormDescription>
                                 <FormMessage />
                             </FormItem>
                         )} />

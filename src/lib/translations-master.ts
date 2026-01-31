@@ -1,4 +1,3 @@
-
 export type Locale = 'lt' | 'en' | 'ru' | 'lv' | 'et' | 'pl';
 
 // Visi vertimai dabar yra centralizuoti ir įtraukti tiesiogiai į šį failą.
@@ -77,7 +76,7 @@ export const translationsMaster: Record<string, Partial<Record<Locale, string>>>
   'signup.form.vatCode.placeholder': { lt: 'LT000000000000', en: 'LT000000000000', ru: 'LT000000000000', pl: 'PL1234567890' },
   'signup.form.address.label': { lt: 'Adresas', en: 'Address', ru: 'Адрес', pl: 'Adres' },
   'signup.form.address.placeholder': { lt: 'Gedimino pr. 9, Vilnius', en: '9 Gedimino Ave, Vilnius', ru: 'пр. Гедимина, 9, Вильнюс', pl: 'Aleje Jerozolimskie 9, Warszawa' },
-  'signup.form.address.description': { lt: 'Šiuo adresu siųsime korespondenciją (pvz., lipdukus).', en: 'We will send correspondence (e.g., stickers) to this address.', ru: 'На этот адрес мы будем отправлять корреспонденцию (например, наклейки).', pl: 'Na ten adres będziemy wysyłać korespondencję (np. naklejki).' },
+  'signup.form.address.description': { lt: '', en: '', ru: '', pl: '' },
   'signup.form.contactPerson.label': { lt: 'Kontaktinis asmuo', en: 'Contact Person', ru: 'Контактное лицо', pl: 'Osoba kontaktowa' },
   'signup.form.contactPerson.placeholder': { lt: 'Vardenis Pavardenis', en: 'John Doe', ru: 'Иван Иванов', pl: 'Jan Kowalski' },
   'signup.form.phone.label': { lt: 'Telefono numeris', en: 'Phone Number', ru: 'Номер телефона', pl: 'Numer telefonu' },
