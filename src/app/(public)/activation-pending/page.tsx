@@ -15,8 +15,8 @@ export default function ActivationPendingPage() {
             <div className="p-4 bg-primary/10 rounded-full mb-2">
                  <ShieldCheck className="h-10 w-10 text-primary" />
             </div>
-          <CardTitle className="text-3xl font-bold tracking-tight">Paskyra laukia patvirtinimo</CardTitle>
-          <CardDescription>Jūsų paskyra sėkmingai užregistruota ir perduota peržiūrai. Mūsų administratorius netrukus ją patvirtins. Apie patvirtinimą būsite informuoti el. paštu.</CardDescription>
+          <CardTitle className="text-3xl font-bold tracking-tight">Registracija priimta! Vyksta paskyros patvirtinimas.</CardTitle>
+          <CardDescription>Ačiū, kad prisijungėte prie DriverCheck. Siekdami užtikrinti aukščiausią duomenų saugumą, kiekvieną naują įmonę patikriname rankiniu būdu. Tai paprastai trunka iki 24 val. Apie aktyvavimą informuosime el. paštu.</CardDescription>
         </CardHeader>
         <CardContent>
             <p className="text-sm text-muted-foreground">Jei turite klausimų, susisiekite su mumis el. paštu: <a href="mailto:support@drivercheck.lt" className="underline text-primary">support@drivercheck.lt</a></p>
