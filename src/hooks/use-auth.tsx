@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -116,6 +117,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
      if (!auth || !db) throw new Error("Firebase not initialized");
      const { email, password, companyName, companyCode, vatCode, address, contactPerson, position, phone, subscriptionType, agreeToTerms } = data;
      
+     // Defensive checks to prevent 400 Bad Request
+     if (!email || typeof email !== 'string' || !email.includes('@')) {
+       throw new Error("A valid email must be provided for signup.");
+     }
+     if (!password || typeof password !== 'string' || password.length < 6) {
+       throw new Error("A valid password (at least 6 characters) must be provided.");
+     }
+
      // 1. Create Firebase Auth user
      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
      const uid = userCredential.user.uid;
@@ -133,13 +142,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
      });
      
      // 3. Create User Document and link to Company
-     const newUserProfile = {
+     const newUserProfile: Omit<UserProfileFirestore, 'id'> = {
         email: email.toLowerCase(),
         companyName,
         companyCode,
         vatCode: vatCode || '',
         address,
-        contactPerson,
+        fullName: contactPerson, // Map contactPerson to fullName
+        contactPerson: contactPerson,
         position,
         phone,
         subscriptionType,
@@ -160,7 +170,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // Legacy fields for safety
         searchCredits: 999, // Generous credits for testing
         reportCredits: 999,
-        subUsers: [],
      };
 
      await setDoc(doc(db, "users", uid), newUserProfile);

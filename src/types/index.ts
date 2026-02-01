@@ -1,3 +1,4 @@
+
 import { type Timestamp } from 'firebase/firestore';
 
 // --- Firestore Data Types ---
@@ -16,17 +17,34 @@ export interface CompanyFirestore {
 }
 
 export interface UserProfileFirestore {
-  id: string;
+  id: string; // Not in doc, but added in processing
   email: string;
   fullName?: string;
+  contactPerson?: string;
   companyId?: string | null;
   role?: 'owner' | 'admin' | 'member' | 'suspended';
+  
+  // Denormalized company info + contact info
+  companyName: string;
+  companyCode: string;
+  vatCode?: string;
+  address: string;
+  position?: string;
+  phone: string;
+
+  // Subscription/Status
+  subscriptionType: 'trial' | 'paid';
+  agreeToTerms: boolean;
   isAdmin?: boolean;
-  paymentStatus?: 'active' | 'trial' | 'past_due' | 'canceled';
+  paymentStatus?: 'active' | 'trial' | 'pending_verification' | 'pending_payment' | 'inactive';
   searchCredits?: number;
   reportCredits?: number;
-  createdAt: Timestamp;
+  
+  // Timestamps
+  registeredAt: Timestamp;
+  accountActivatedAt?: Timestamp;
 }
+
 
 export interface InvitationFirestore {
   id: string;
@@ -184,20 +202,36 @@ export interface Company {
 export interface UserProfile {
   id: string;
   email: string;
-  fullName?: string;
+  fullName: string;
+  contactPerson: string;
   
   // B2B Fields
-  companyId?: string | null; // Null if solo or removed
+  companyId?: string | null;
   role?: 'owner' | 'admin' | 'member' | 'suspended';
   
-  // Legacy/Compatibility
+  // Company Info
+  companyName: string;
+  companyCode: string;
+  vatCode?: string;
+  address: string;
+  position?: string;
+  phone: string;
+
+  // Subscription & Status
+  subscriptionType: 'trial' | 'paid';
+  agreeToTerms: boolean;
   isAdmin?: boolean; 
-  paymentStatus?: 'active' | 'trial' | 'past_due' | 'canceled';
-  searchCredits?: number; // Optional for legacy users
-  reportCredits?: number; // Optional for legacy users
+  paymentStatus: 'active' | 'trial' | 'pending_verification' | 'pending_payment' | 'inactive';
+  searchCredits: number;
+  reportCredits: number;
   
-  createdAt: any;
+  // Timestamps
+  registeredAt: string;
+  accountActivatedAt?: string;
+  subscriptionEndDate?: string;
+  stripeCustomerId?: string;
 }
+
 
 export interface Invitation {
   id: string;
