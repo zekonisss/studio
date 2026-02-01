@@ -10,7 +10,7 @@ export function CoverageSection() {
     <section className="bg-slate-50 dark:bg-slate-950 py-24 overflow-hidden relative transition-colors duration-300">
       
       {/* Tinklelis tamsiam režimui */}
-      <div className="absolute top-0 left-0 w-full h-full bg-[url('/assets/grid-pattern.svg')] opacity-5 pointer-events-none"></div>
+      
 
       <div className="container mx-auto px-4 md:px-6 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
