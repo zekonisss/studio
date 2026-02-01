@@ -17,6 +17,17 @@ const CATEGORY_COLORS: Record<string, string> = {
   default: "#a1a1aa",
 };
 
+const CustomTooltip = ({ active, payload }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="rounded-lg border bg-card text-card-foreground p-2 px-3 shadow-lg">
+        <p className="text-sm font-medium">{`${payload[0].name}: ${payload[0].value}`}</p>
+      </div>
+    );
+  }
+  return null;
+};
+
 
 export function ReportsDistributionChart({ reports }: { reports: any[] }) {
   const { t } = useLanguage();
@@ -44,13 +55,7 @@ export function ReportsDistributionChart({ reports }: { reports: any[] }) {
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Tooltip 
-                contentStyle={{ 
-                    borderRadius: '8px', 
-                    border: 'none', 
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                    backgroundColor: 'hsl(var(--card))',
-                    color: 'hsl(var(--card-foreground))'
-                }}
+                content={<CustomTooltip />}
               />
               <Pie
                 data={data}
