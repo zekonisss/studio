@@ -128,7 +128,7 @@ export default function SearchPage() {
                             <AlertTitle>Paieškos kreditai baigėsi</AlertTitle>
                             <AlertDescription>
                                 Jūs išnaudojote nemokamų paieškų limitą. Norėdami tęsti, prašome{" "}
-                                <Link href="/authenticated/account?tab=payment" className="font-semibold underline hover:text-white">aktyvuoti prenumeratą</Link>.
+                                <Link href="/account?tab=payment" className="font-semibold underline hover:text-white">aktyvuoti prenumeratą</Link>.
                             </AlertDescription>
                         </Alert>
                     )}
@@ -220,7 +220,7 @@ export default function SearchPage() {
                                         
                                         <div className="mt-8 pt-6 border-t border-green-200/50 dark:border-green-900/30">
                                             <p className="text-sm text-muted-foreground">
-                                                Turite informacijos apie šį asmenį? <Link href="/authenticated/reports/add" className="font-medium underline text-primary hover:text-primary/80 transition-colors">Sukurti naują įrašą</Link>.
+                                                Turite informacijos apie šį asmenį? <Link href="/reports/add" className="font-medium underline text-primary hover:text-primary/80 transition-colors">Sukurti naują įrašą</Link>.
                                             </p>
                                         </div>
                                     </div>

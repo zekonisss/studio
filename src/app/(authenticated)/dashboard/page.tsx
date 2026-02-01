@@ -126,7 +126,7 @@ export default function DashboardPage() {
             title={t('dashboard.overview.yourReports')}
             value={userReportsCount}
             icon={FileText}
-            link="/authenticated/reports/history"
+            link="/reports/history"
             linkText={t('dashboard.overview.viewHistory')}
             isLoading={isStatsLoading}
           />
@@ -134,7 +134,7 @@ export default function DashboardPage() {
             title={t('dashboard.overview.yourSearches')}
             value={userSearchesCount}
             icon={Search}
-            link="/authenticated/search/history"
+            link="/search/history"
             linkText={t('dashboard.overview.viewHistory')}
             isLoading={isStatsLoading}
           />
@@ -142,7 +142,7 @@ export default function DashboardPage() {
             title={t('dashboard.overview.totalPlatformReports')}
             value={totalReportsCount}
             icon={BarChart}
-            link="/authenticated/search"
+            link="/search"
             linkText={t('dashboard.overview.viewAll')}
             isLoading={isStatsLoading}
           />
@@ -184,7 +184,7 @@ export default function DashboardPage() {
                 <CardContent>
                     <p>{t('dashboard.overview.subscriptionEndingSoon.message', { endDate: subscriptionEndDate })}</p>
                     <Button asChild size="sm" className="mt-4">
-                        <Link href="/authenticated/account?tab=payment">{t('account.payments.manageSubscriptionButton')}</Link>
+                        <Link href="/account?tab=payment">{t('account.payments.manageSubscriptionButton')}</Link>
                     </Button>
                 </CardContent>
             </Card>

@@ -25,8 +25,8 @@ export async function POST(req: Request) {
     }
 
     let session;
-    const success_url = `${origin}/authenticated/dashboard?payment=success`;
-    const cancel_url = `${origin}/authenticated/account?tab=payment&payment=cancelled`;
+    const success_url = `${origin}/dashboard?payment=success`;
+    const cancel_url = `${origin}/account?tab=payment&payment=cancelled`;
 
     if (paymentMethod === 'card') {
       const priceId = process.env.NEXT_PUBLIC_STRIPE_PRICE_ID;
