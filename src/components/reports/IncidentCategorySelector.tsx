@@ -9,12 +9,12 @@ interface CategorySelectorProps {
 }
 
 const categories = [
-  { id: "THEFT", label: "Kuro/Krovinio Vagystė", icon: Fuel, color: "text-red-500", bg: "bg-red-500/10", border: "border-red-200 hover:border-red-500" },
-  { id: "ALCOHOL", label: "Girtumas darbe", icon: Wine, color: "text-purple-500", bg: "bg-purple-500/10", border: "border-purple-200 hover:border-purple-500" },
-  { id: "ACCIDENT", label: "Žala technikai", icon: Car, color: "text-orange-500", bg: "bg-orange-500/10", border: "border-orange-200 hover:border-orange-500" },
-  { id: "DOCUMENTS", label: "Dokumentų klastojimas", icon: FileWarning, color: "text-blue-500", bg: "bg-blue-500/10", border: "border-blue-200 hover:border-blue-500" },
-  { id: "VIOLATION", label: "Šiurkštus pažeidimas", icon: AlertOctagon, color: "text-yellow-600", bg: "bg-yellow-500/10", border: "border-yellow-200 hover:border-yellow-500" },
-  { id: "LEGAL", label: "Teisinis ginčas", icon: Gavel, color: "text-slate-600", bg: "bg-slate-500/10", border: "border-slate-200 hover:border-slate-500" },
+  { id: "fuel_theft", label: "Kuro/Krovinio Vagystė", icon: Fuel, color: "text-red-500", bg: "bg-red-500/10" },
+  { id: "behavior", label: "Girtumas / Elgesys", icon: Wine, color: "text-purple-500", bg: "bg-purple-500/10" },
+  { id: "technical_damage", label: "Žala technikai", icon: Car, color: "text-orange-500", bg: "bg-orange-500/10" },
+  { id: "driving_safety", label: "Vairavimo pažeidimai", icon: AlertOctagon, color: "text-yellow-600", bg: "bg-yellow-500/10" },
+  { id: "legal_reputation", label: "Teisinės problemos", icon: FileWarning, color: "text-blue-500", bg: "bg-blue-500/10" },
+  { id: "discipline", label: "Darbo drausmė", icon: Gavel, color: "text-slate-600", bg: "bg-slate-500/10" },
 ];
 
 export function IncidentCategorySelector({ value, onChange }: CategorySelectorProps) {
