@@ -5,7 +5,18 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { useLanguage } from "@/contexts/language-context";
 import { getCategoryNameForDisplay } from "@/lib/utils";
 
-const COLORS = ["#ef4444", "#f59e0b", "#3b82f6", "#10b981", "#8b5cf6", "#64748b"];
+// Priskiriame stabilias spalvas kiekvienai kategorijai, kad jos nesikartotų.
+const CATEGORY_COLORS: Record<string, string> = {
+  fuel_theft: "#ef4444",       // Raudona
+  driving_safety: "#8b5cf6",   // Violetinė
+  behavior: "#ec4899",         // Rausva (buvo raudona)
+  discipline: "#3b82f6",       // Mėlyna
+  technical_damage: "#f59e0b", // Oranžinė
+  legal_reputation: "#10b981", // Žalia
+  other_category: "#64748b",   // Pilka
+  default: "#a1a1aa",           // Atsarginė spalva nenumatytoms kategorijoms
+};
+
 
 export function ReportsDistributionChart({ reports }: { reports: any[] }) {
   const { t } = useLanguage();
@@ -17,6 +28,7 @@ export function ReportsDistributionChart({ reports }: { reports: any[] }) {
       return acc;
     }, {})
   ).map(([id, value]) => ({
+    id: id, // Pridedame ID, kad galėtume priskirti spalvą
     name: getCategoryNameForDisplay(id, t),
     value,
   }));
@@ -49,8 +61,12 @@ export function ReportsDistributionChart({ reports }: { reports: any[] }) {
                 paddingAngle={5}
                 dataKey="value"
               >
-                {data.map((_, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="none" />
+                {data.map((entry, index) => (
+                  <Cell 
+                    key={`cell-${index}`} 
+                    fill={CATEGORY_COLORS[entry.id] || CATEGORY_COLORS.default} 
+                    stroke="none" 
+                  />
                 ))}
               </Pie>
               <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
