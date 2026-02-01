@@ -9,9 +9,9 @@ import { getCategoryNameForDisplay } from "@/lib/utils";
 const CATEGORY_COLORS: Record<string, string> = {
   fuel_theft: "#ef4444",       // Raudona
   driving_safety: "#8b5cf6",   // Violetinė
-  behavior: "#ec4899",         // Rausva (buvo raudona)
+  behavior: "#f59e0b",         // Oranžinė (Pakeista pagal pageidavimą)
   discipline: "#3b82f6",       // Mėlyna
-  technical_damage: "#f59e0b", // Oranžinė
+  technical_damage: "#ec4899", // Rausva (buvusi elgesio spalva)
   legal_reputation: "#10b981", // Žalia
   other_category: "#64748b",   // Pilka
   default: "#a1a1aa",           // Atsarginė spalva nenumatytoms kategorijoms
