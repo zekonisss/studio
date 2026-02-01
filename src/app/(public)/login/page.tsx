@@ -27,6 +27,7 @@ import { Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from 'next/navigation';
+import { PremiumLoadingScreen } from "@/components/ui/premium-loading";
 
 export default function LoginPage() {
   const { login, user, isLoading } = useAuth();
@@ -95,11 +96,7 @@ export default function LoginPage() {
   };
   
   if (isLoading || (!isLoading && user)) {
-     return (
-        <div className="flex h-screen w-full items-center justify-center bg-background">
-          <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        </div>
-      );
+     return <PremiumLoadingScreen />;
   }
 
   return (

@@ -3,7 +3,7 @@
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect } from 'react';
-import { Loader2, Menu, LogOut, Timer } from 'lucide-react';
+import { Menu, LogOut, Timer } from 'lucide-react';
 import { SidebarNav } from '@/components/navigation/sidebar-nav';
 import { UserNav } from '@/components/navigation/user-nav';
 import { ThemeToggle } from '@/components/navigation/theme-toggle';
@@ -25,6 +25,7 @@ import { useLanguage } from '@/contexts/language-context';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { UserSearch } from 'lucide-react';
+import { PremiumLoadingScreen } from '@/components/ui/premium-loading';
 
 
 export default function AuthenticatedLayout({
@@ -44,7 +45,7 @@ export default function AuthenticatedLayout({
   });
 
   const isLegalPage = pathname === '/terms' || pathname === '/privacy';
-  const isAccountPage = pathname.startsWith('/authenticated/account');
+  const isAccountPage = pathname.startsWith('/account');
 
   useEffect(() => {
     if (isLegalPage) {
@@ -103,20 +104,12 @@ export default function AuthenticatedLayout({
   }
   
   if (isLoading || (!user && !isLegalPage)) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center bg-background">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-      </div>
-    );
+    return <PremiumLoadingScreen />;
   }
 
   if (!user) {
     // This should not be reached if logic is correct, but it's a safeguard.
-     return (
-      <div className="flex h-screen w-full items-center justify-center bg-background">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-      </div>
-    );
+     return <PremiumLoadingScreen />;
   }
 
   const status = user.paymentStatus?.toLowerCase();
@@ -125,11 +118,7 @@ export default function AuthenticatedLayout({
   // This is the loader screen that shows while redirecting to activation-pending.
   // It must also allow access to the account page to prevent a redirect loop.
   if (!user.isAdmin && !isAllowedInApp && pathname !== '/activation-pending' && !isAccountPage) {
-    return (
-        <div className="flex h-screen w-full items-center justify-center bg-background">
-            <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        </div>
-    );
+    return <PremiumLoadingScreen />;
   }
 
   return (
