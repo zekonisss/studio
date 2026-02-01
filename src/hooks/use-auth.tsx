@@ -117,16 +117,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
      
      const { email, password, companyName, companyCode, vatCode, address, contactPerson, position, phone, subscriptionType, agreeToTerms } = data;
      
-      if (!email || typeof email !== 'string' || !email.includes('@')) {
+     if (!email || typeof email !== 'string' || !email.includes('@')) {
        throw new Error("Būtinas teisingas el. paštas.");
      }
      if (!password || typeof password !== 'string' || password.length < 6) {
        throw new Error("Slaptažodis turi būti bent 6 simbolių.");
      }
 
+     // 1. Sukuriame Firebase Auth User
      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
      const uid = userCredential.user.uid;
 
+     // 2. Sukuriame Įmonę
      const companyRef = await addDoc(collection(db, "companies"), {
         name: companyName,
         ownerId: uid,
@@ -134,26 +136,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         maxSeats: 20,
         subscriptionStatus: 'active',
         createdAt: serverTimestamp(),
+        vatCode: vatCode || '',
+        address: address,
      });
      
-     const newUserProfile: UserProfileFirestore = {
+     // 3. Sukuriame Vartotoją
+     const newUserProfile: Omit<UserProfileFirestore, 'id'> = {
         email: email.toLowerCase(),
         companyName,
         companyCode,
         vatCode: vatCode || '',
         address,
+        fullName: contactPerson,
         contactPerson: contactPerson,
         position,
         phone,
         subscriptionType,
         agreeToTerms,
+        
         companyId: companyRef.id,
         role: 'owner',
+        
         paymentStatus: 'active', 
         isAdmin: false,
-        createdAt: serverTimestamp() as any,
+        
+        // PATAISYTA ČIA: Pridėtas "as any", kad TypeScript nepyktų
+        createdAt: serverTimestamp() as any, 
         registeredAt: serverTimestamp() as any,
         accountActivatedAt: serverTimestamp() as any,
+
         searchCredits: 999,
         reportCredits: 999,
      };

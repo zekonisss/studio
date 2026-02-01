@@ -17,13 +17,7 @@ export interface Report {
   createdAt: any;
   updatedAt?: any;
   dataAiHint?: string | null;
-  deleteRequestReason?: string;
-  statusUpdatedAt?: any;
-  deletedAt?: any;
-  adminRejectReason?: string;
 }
-
-export type ReportFirestore = Omit<Report, 'id'>;
 
 export interface Company {
   id: string;
@@ -32,50 +26,58 @@ export interface Company {
   vatCode?: string;
   address?: string;
   
+  // Prenumerata
   subscriptionStatus: 'active' | 'trial' | 'past_due' | 'canceled';
   plan: 'solo' | 'team' | 'corporate'; 
   
+  // Limitai
   maxSeats: number;
+  credits?: number;
   
   createdAt: any;
   updatedAt?: any;
 }
 
+// Vartotojo profilis
 export interface UserProfile {
   id: string;
   email: string;
   fullName?: string;
-  companyName: string;
-  companyCode: string;
+  
+  // Įmonės duomenys
+  companyName?: string;
+  companyCode?: string;
   vatCode?: string;
-  address: string;
-  contactPerson: string;
-  position: string;
-  phone: string;
-  subscriptionType: string;
-  agreeToTerms: boolean;
+  address?: string;
+  
+  // Kontaktiniai duomenys
+  contactPerson?: string;
+  position?: string;
+  phone?: string;
+  
+  // Registracijos info
+  subscriptionType?: string;
+  agreeToTerms?: boolean;
+  
+  // B2B Laukai
   companyId?: string | null;
   role?: 'owner' | 'admin' | 'member' | 'suspended';
+  
+  // Statusai
   isAdmin?: boolean; 
-  paymentStatus: 'active' | 'trial' | 'pending_payment' | 'pending_verification' | 'inactive';
-  searchCredits: number;
-  reportCredits: number;
-  createdAt: string; // ISO string
-  registeredAt: string; // ISO string
-  accountActivatedAt?: string; // ISO string
-  stripeCustomerId?: string;
-  stripeSubscriptionId?: string;
-  stripePriceId?: string;
-  subscriptionEndDate?: string; // ISO string
+  paymentStatus?: 'active' | 'trial' | 'past_due' | 'canceled';
+  
+  // Kreditai
+  searchCredits?: number;
+  reportCredits?: number;
+  
+  // Datos
+  createdAt: any;
+  registeredAt?: any;
+  accountActivatedAt?: any;
 }
 
-export type UserProfileFirestore = Omit<UserProfile, 'id' | 'createdAt' | 'registeredAt' | 'accountActivatedAt' | 'subscriptionEndDate'> & {
-    createdAt: any; // serverTimestamp
-    registeredAt: any; // serverTimestamp
-    accountActivatedAt?: any;
-    subscriptionEndDate?: any;
-};
-
+export type UserProfileFirestore = Omit<UserProfile, 'id'>;
 
 export interface Invitation {
   id: string;
@@ -91,7 +93,7 @@ export interface Invitation {
   expiresAt: any;
 }
 
-// --- FORMAI REIKALINGAS TIPAS ---
+// --- FORMAI REIKALINGAS TIPAS (Šito trūko jūsų nuotraukoje) ---
 export interface SignupFormValuesExtended {
   email: string;
   password: string;
@@ -105,50 +107,4 @@ export interface SignupFormValuesExtended {
   phone: string;
   subscriptionType: string;
   agreeToTerms: boolean;
-}
-
-export interface SearchLog {
-  id: string;
-  userId: string;
-  searchText: string;
-  timestamp: string;
-  resultsCount: number;
-}
-
-export type SearchLogFirestore = Omit<SearchLog, 'id' | 'timestamp'> & {
-    timestamp: any;
-}
-
-export interface AuditLogEntry {
-  id: string;
-  adminId: string;
-  adminName: string;
-  actionKey: string;
-  details: Record<string, any>;
-  timestamp: string; // ISO string
-}
-
-export type AuditLogEntryFirestore = Omit<AuditLogEntry, 'id' | 'timestamp'> & {
-    timestamp: any; // serverTimestamp
-};
-
-export interface UserNotification {
-    id: string;
-    userId: string;
-    title: string;
-    message: string;
-    link?: string;
-    read: boolean;
-    createdAt: string; // ISO String
-}
-
-export type UserNotificationFirestore = Omit<UserNotification, 'id' | 'createdAt'> & {
-    createdAt: any; // serverTimestamp
-};
-
-
-export interface DetailedCategory {
-  id: string;
-  nameKey: string;
-  tags: string[];
 }
