@@ -1,236 +1,80 @@
+// src/types/index.ts
 
-import { type Timestamp } from 'firebase/firestore';
+// --- PAGRINDINIAI TIPAI ---
 
-// --- Firestore Data Types ---
+export interface Report {
+  id: string;
+  reporterId: string;
+  reporterCompanyName?: string;
+  fullName: string;
+  nationality: string;
+  birthYear?: number;
+  category: string;
+  tags: string[];
+  comment?: string;
+  imageUrl?: string | null;
+  status: 'active' | 'pending_delete' | 'deleted';
+  createdAt: any;
+  updatedAt?: any;
+  dataAiHint?: string | null;
+  deleteRequestReason?: string;
+  statusUpdatedAt?: any;
+  deletedAt?: any;
+  adminRejectReason?: string;
+}
 
-export interface CompanyFirestore {
+export type ReportFirestore = Omit<Report, 'id'>;
+
+export interface Company {
   id: string;
   name: string;
   ownerId: string;
   vatCode?: string;
   address?: string;
-  subscriptionStatus: 'active' | 'trial' | 'past_due' | 'canceled';
-  plan: 'solo' | 'team' | 'corporate';
-  maxSeats: number;
-  createdAt: Timestamp;
-  updatedAt?: Timestamp;
-}
-
-export interface UserProfileFirestore {
-  id: string; // Not in doc, but added in processing
-  email: string;
-  fullName?: string;
-  contactPerson?: string;
-  companyId?: string | null;
-  role?: 'owner' | 'admin' | 'member' | 'suspended';
   
-  // Denormalized company info + contact info
-  companyName: string;
-  companyCode: string;
-  vatCode?: string;
-  address: string;
-  position?: string;
-  phone: string;
-
-  // Subscription/Status
-  subscriptionType: 'trial' | 'paid';
-  agreeToTerms: boolean;
-  isAdmin?: boolean;
-  paymentStatus?: 'active' | 'trial' | 'pending_verification' | 'pending_payment' | 'inactive';
-  searchCredits?: number;
-  reportCredits?: number;
-  
-  // Timestamps
-  registeredAt: Timestamp;
-  accountActivatedAt?: Timestamp;
-}
-
-
-export interface InvitationFirestore {
-  id: string;
-  companyId: string;
-  companyName: string;
-  inviterId: string;
-  email: string;
-  token: string;
-  role: 'member' | 'admin';
-  status: 'pending' | 'accepted' | 'expired';
-  createdAt: Timestamp;
-  expiresAt: Timestamp;
-}
-
-export interface ReportFirestore {
-  id: string;
-  reporterId: string;
-  reporterCompanyName: string;
-  fullName: string;
-  nationality?: string;
-  birthYear?: number | null;
-  category: string;
-  tags: string[];
-  comment: string;
-  imageUrl?: string | null;
-  dataAiHint?: string | null;
-  createdAt: Timestamp;
-  
-  // Status management fields
-  status: 'active' | 'pending_delete' | 'deleted';
-  deleteRequestReason?: string | null;
-  adminRejectReason?: string | null;
-  statusUpdatedAt?: Timestamp | null;
-  deletedAt?: Timestamp | null;
-
-  // New field for import
-  subjectCompany?: string;
-}
-
-export interface SearchLogFirestore {
-  id: string;
-  userId: string;
-  driverHash: string;
-  firstName: string;
-  lastName: string;
-  timestamp: Timestamp;
-}
-
-export interface AuditLogEntryFirestore {
-  id: string;
-  adminId: string;
-  adminName: string;
-  actionKey: string;
-  details: Record<string, any>;
-  timestamp: Timestamp;
-}
-
-export interface UserNotificationFirestore {
-  id: string;
-  userId: string;
-  type: 'account_status_change' | 'subscription_warning' | 'new_feature' | 'general';
-  titleKey: string;
-  messageKey: string;
-  messageParams?: Record<string, any>;
-  link?: string;
-  createdAt: Timestamp;
-  read: boolean;
-}
-
-
-// --- Client-Side Data Types ---
-
-export interface Report {
-  id: string;
-  reporterId: string;
-  reporterCompanyName: string;
-  fullName: string;
-  nationality?: string;
-  birthYear?: number | null;
-  category: string;
-  tags: string[];
-  comment: string;
-  imageUrl?: string | null;
-  dataAiHint?: string | null;
-  createdAt: string;
-
-  // Status management fields
-  status: 'active' | 'pending_delete' | 'deleted';
-  deleteRequestReason?: string | null;
-  adminRejectReason?: string | null;
-  statusUpdatedAt?: string | null;
-  deletedAt?: string | null;
-  
-  // New field for import
-  subjectCompany?: string;
-}
-
-export interface SearchLog {
-  id: string;
-  userId: string;
-  driverHash: string;
-  firstName: string;
-  lastName: string;
-  resultsCount: number;
-  timestamp: string;
-}
-
-export interface AuditLogEntry {
-  id: string;
-  adminId: string;
-  adminName: string;
-  actionKey: string;
-  details: Record<string, any>;
-  timestamp: string;
-}
-
-export interface UserNotification {
-  id: string;
-  userId: string;
-  type: 'account_status_change' | 'subscription_warning' | 'new_feature' | 'general';
-  titleKey: string;
-  messageKey: string;
-  messageParams?: Record<string, any>;
-  link?: string;
-  createdAt: string;
-  read: boolean;
-}
-
-export interface DetailedCategory {
-  id: string;
-  nameKey: string;
-  tags: string[];
-}
-
-
-// --- NEW B2B TYPES ---
-
-export interface Company {
-  id: string;
-  name: string;
-  ownerId: string; // The user who pays
-  vatCode?: string;
-  address?: string;
-  
-  // Subscription & Limits
   subscriptionStatus: 'active' | 'trial' | 'past_due' | 'canceled';
   plan: 'solo' | 'team' | 'corporate'; 
   
-  maxSeats: number; // LIMIT: How many users can be in this company
+  maxSeats: number;
   
-  createdAt: any; // Firebase Timestamp or Date
+  createdAt: any;
   updatedAt?: any;
 }
 
 export interface UserProfile {
   id: string;
   email: string;
-  fullName: string;
-  contactPerson: string;
-  
-  // B2B Fields
-  companyId?: string | null;
-  role?: 'owner' | 'admin' | 'member' | 'suspended';
-  
-  // Company Info
+  fullName?: string;
   companyName: string;
   companyCode: string;
   vatCode?: string;
   address: string;
-  position?: string;
+  contactPerson: string;
+  position: string;
   phone: string;
-
-  // Subscription & Status
-  subscriptionType: 'trial' | 'paid';
+  subscriptionType: string;
   agreeToTerms: boolean;
+  companyId?: string | null;
+  role?: 'owner' | 'admin' | 'member' | 'suspended';
   isAdmin?: boolean; 
-  paymentStatus: 'active' | 'trial' | 'pending_verification' | 'pending_payment' | 'inactive';
+  paymentStatus: 'active' | 'trial' | 'pending_payment' | 'pending_verification' | 'inactive';
   searchCredits: number;
   reportCredits: number;
-  
-  // Timestamps
-  registeredAt: string;
-  accountActivatedAt?: string;
-  subscriptionEndDate?: string;
+  createdAt: string; // ISO string
+  registeredAt: string; // ISO string
+  accountActivatedAt?: string; // ISO string
   stripeCustomerId?: string;
+  stripeSubscriptionId?: string;
+  stripePriceId?: string;
+  subscriptionEndDate?: string; // ISO string
 }
+
+export type UserProfileFirestore = Omit<UserProfile, 'id' | 'createdAt' | 'registeredAt' | 'accountActivatedAt' | 'subscriptionEndDate'> & {
+    createdAt: any; // serverTimestamp
+    registeredAt: any; // serverTimestamp
+    accountActivatedAt?: any;
+    subscriptionEndDate?: any;
+};
 
 
 export interface Invitation {
@@ -247,6 +91,7 @@ export interface Invitation {
   expiresAt: any;
 }
 
+// --- FORMAI REIKALINGAS TIPAS ---
 export interface SignupFormValuesExtended {
   email: string;
   password: string;
@@ -260,4 +105,50 @@ export interface SignupFormValuesExtended {
   phone: string;
   subscriptionType: string;
   agreeToTerms: boolean;
+}
+
+export interface SearchLog {
+  id: string;
+  userId: string;
+  searchText: string;
+  timestamp: string;
+  resultsCount: number;
+}
+
+export type SearchLogFirestore = Omit<SearchLog, 'id' | 'timestamp'> & {
+    timestamp: any;
+}
+
+export interface AuditLogEntry {
+  id: string;
+  adminId: string;
+  adminName: string;
+  actionKey: string;
+  details: Record<string, any>;
+  timestamp: string; // ISO string
+}
+
+export type AuditLogEntryFirestore = Omit<AuditLogEntry, 'id' | 'timestamp'> & {
+    timestamp: any; // serverTimestamp
+};
+
+export interface UserNotification {
+    id: string;
+    userId: string;
+    title: string;
+    message: string;
+    link?: string;
+    read: boolean;
+    createdAt: string; // ISO String
+}
+
+export type UserNotificationFirestore = Omit<UserNotification, 'id' | 'createdAt'> & {
+    createdAt: any; // serverTimestamp
+};
+
+
+export interface DetailedCategory {
+  id: string;
+  nameKey: string;
+  tags: string[];
 }

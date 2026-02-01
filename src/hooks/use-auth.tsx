@@ -1,4 +1,3 @@
-
 "use client";
 
 import {
@@ -16,8 +15,8 @@ import {
   type User as FirebaseUser,
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp, updateDoc, collection, addDoc } from 'firebase/firestore';
-import { auth, db } from '@/lib/firebase'; 
-import type { UserProfile, UserProfileFirestore, Company, SignupFormValuesExtended } from '@/types';
+import { auth, db } from '@/lib/firebase';
+import type { UserProfile, UserProfileFirestore, SignupFormValuesExtended } from '@/types';
 import { useRouter } from 'next/navigation';
 import { useToast } from './use-toast';
 import type { LoginFormValues } from '@/lib/schemas';
@@ -115,68 +114,56 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signup = async (data: SignupFormValuesExtended) => {
      if (!auth || !db) throw new Error("Firebase not initialized");
+     
      const { email, password, companyName, companyCode, vatCode, address, contactPerson, position, phone, subscriptionType, agreeToTerms } = data;
      
-     // Defensive checks to prevent 400 Bad Request
-     if (!email || typeof email !== 'string' || !email.includes('@')) {
-       throw new Error("A valid email must be provided for signup.");
+      if (!email || typeof email !== 'string' || !email.includes('@')) {
+       throw new Error("Būtinas teisingas el. paštas.");
      }
      if (!password || typeof password !== 'string' || password.length < 6) {
-       throw new Error("A valid password (at least 6 characters) must be provided.");
+       throw new Error("Slaptažodis turi būti bent 6 simbolių.");
      }
 
-     // 1. Create Firebase Auth user
      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
      const uid = userCredential.user.uid;
 
-     // 2. Create Company Document
      const companyRef = await addDoc(collection(db, "companies"), {
         name: companyName,
         ownerId: uid,
-        plan: 'corporate', // Per request for testing
-        maxSeats: 20, // Per request for testing
-        subscriptionStatus: 'active', // Per request for testing
+        plan: 'corporate', 
+        maxSeats: 20,
+        subscriptionStatus: 'active',
         createdAt: serverTimestamp(),
-        vatCode: vatCode || '',
-        address: address,
      });
      
-     // 3. Create User Document and link to Company
-     const newUserProfile: Omit<UserProfileFirestore, 'id'> = {
+     const newUserProfile: UserProfileFirestore = {
         email: email.toLowerCase(),
         companyName,
         companyCode,
         vatCode: vatCode || '',
         address,
-        fullName: contactPerson, // Map contactPerson to fullName
         contactPerson: contactPerson,
         position,
         phone,
         subscriptionType,
         agreeToTerms,
-        
-        // New B2B fields
         companyId: companyRef.id,
         role: 'owner',
-        
-        // Status fields
-        paymentStatus: 'active', // Per request for testing
+        paymentStatus: 'active', 
         isAdmin: false,
-        
-        // Timestamps
-        registeredAt: serverTimestamp(),
-        accountActivatedAt: serverTimestamp(),
-
-        // Legacy fields for safety
-        searchCredits: 999, // Generous credits for testing
+        createdAt: serverTimestamp() as any,
+        registeredAt: serverTimestamp() as any,
+        accountActivatedAt: serverTimestamp() as any,
+        searchCredits: 999,
         reportCredits: 999,
      };
 
      await setDoc(doc(db, "users", uid), newUserProfile);
      
-     // 4. Update user context
      const createdProfile = await getUserProfile(uid);
      setUser(createdProfile);
+     
+     router.push("/authenticated/account/team");
   };
   
   const updateUserInContext = async (data: Partial<UserProfile>) => {
@@ -201,7 +188,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     </AuthContext.Provider>
   );
 };
-
 
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
