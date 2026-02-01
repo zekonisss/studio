@@ -1,6 +1,7 @@
 import 'server-only';
 import admin from 'firebase-admin';
 import { getFirestore } from 'firebase-admin/firestore';
+import { getAuth } from 'firebase-admin/auth';
 
 if (!admin.apps.length) {
   const projectId = process.env.FIREBASE_PROJECT_ID;
@@ -32,3 +33,5 @@ if (!admin.apps.length) {
 export const adminDb = admin.apps.length 
   ? getFirestore(admin.app(), "drivercheck") 
   : null as any;
+
+export const adminAuth = admin.apps.length ? getAuth(admin.app()) : null as any;
