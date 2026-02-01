@@ -99,45 +99,6 @@ export interface UserNotificationFirestore {
 
 // --- Client-Side Data Types ---
 
-export interface Company {
-  id: string;
-  name: string;
-  ownerId: string;
-  vatCode?: string;
-  address?: string;
-  subscriptionStatus: 'active' | 'trial' | 'past_due' | 'canceled';
-  plan: 'solo' | 'team' | 'corporate';
-  maxSeats: number;
-  createdAt: string;
-  updatedAt?: string;
-}
-
-export interface UserProfile {
-  id: string;
-  email: string;
-  fullName?: string;
-  companyId?: string | null;
-  role?: 'owner' | 'admin' | 'member' | 'suspended';
-  isAdmin?: boolean;
-  paymentStatus?: 'active' | 'trial' | 'past_due' | 'canceled';
-  searchCredits?: number;
-  reportCredits?: number;
-  createdAt: string;
-}
-
-export interface Invitation {
-  id: string;
-  companyId: string;
-  companyName: string;
-  inviterId: string;
-  email: string;
-  token: string;
-  role: 'member' | 'admin';
-  status: 'pending' | 'accepted' | 'expired';
-  createdAt: string;
-  expiresAt: string;
-}
-
 export interface Report {
   id: string;
   reporterId: string;
@@ -198,4 +159,56 @@ export interface DetailedCategory {
   id: string;
   nameKey: string;
   tags: string[];
+}
+
+
+// --- NEW B2B TYPES ---
+
+export interface Company {
+  id: string;
+  name: string;
+  ownerId: string; // The user who pays
+  vatCode?: string;
+  address?: string;
+  
+  // Subscription & Limits
+  subscriptionStatus: 'active' | 'trial' | 'past_due' | 'canceled';
+  plan: 'solo' | 'team' | 'corporate'; 
+  
+  maxSeats: number; // LIMIT: How many users can be in this company
+  
+  createdAt: any; // Firebase Timestamp or Date
+  updatedAt?: any;
+}
+
+export interface UserProfile {
+  id: string;
+  email: string;
+  fullName?: string;
+  
+  // B2B Fields
+  companyId?: string | null; // Null if solo or removed
+  role?: 'owner' | 'admin' | 'member' | 'suspended';
+  
+  // Legacy/Compatibility
+  isAdmin?: boolean; 
+  paymentStatus?: 'active' | 'trial' | 'past_due' | 'canceled';
+  searchCredits?: number; // Optional for legacy users
+  reportCredits?: number; // Optional for legacy users
+  
+  createdAt: any;
+}
+
+export interface Invitation {
+  id: string;
+  companyId: string;
+  companyName: string;
+  inviterId: string;
+  email: string;
+  token: string;
+  role: 'member' | 'admin';
+  status: 'pending' | 'accepted' | 'expired';
+  
+  createdAt: any;
+  expiresAt: any;
 }
