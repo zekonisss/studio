@@ -88,11 +88,11 @@ export default function HomePage() {
         {/* 1. HERO (Su dinaminiu skaičiumi) */}
         <Hero count={totalReports} />
         
-        {/* 2. ŽEMĖLAPIS (Scale) */}
-        <CoverageSection />
-
-        {/* 3. DUOMENŲ ŠALTINIAI (Trust) */}
+        {/* 2. DUOMENŲ ŠALTINIAI (Trust) */}
         <DataSourcesSection />
+        
+        {/* 3. ŽEMĖLAPIS (Scale) */}
+        <CoverageSection />
 
         {/* 4. API SEKCIJA (Enterprise) */}
         <ApiSection />
