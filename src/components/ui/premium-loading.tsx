@@ -4,24 +4,30 @@ import { UserSearch, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLanguage } from "@/contexts/language-context";
 
-export function PremiumLoadingScreen() {
+// Leidžiame paduoti pasirinktinį tekstą, jei ateityje reikės
+export function PremiumLoadingScreen({ customText }: { customText?: string }) {
   const { t } = useLanguage();
-  const [loadingText, setLoadingText] = useState("Saugus prisijungimas...");
+  // Pakeičiau pradinį tekstą į neutralų
+  const [loadingText, setLoadingText] = useState(customText || "Vykdomi sistemos procesai...");
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
+    // JEI yra customText, tekstų nebekeičiame (nejudinam masyvo)
+    if (customText) return;
+
+    // NAUJI UNIVERSALŪS TEKSTAI (Tinka ir Login, ir Logout)
     const texts = [
-      "Tikrinama tapatybė...",
-      "Šifruojamas ryšys...",
-      "Kraunamas valdymo skydelis...",
-      "Beveik baigta..."
+      "Vykdomi saugumo protokolai...", // Skamba rimtai
+      "Šifruojamas duomenų srautas...", // Tinka visur
+      "Sinchronizacija su serveriu...", // Neutralu
+      "Atnaujinama informacija..."      // Tinka pabaigai
     ];
     let textIndex = 0;
 
     const textInterval = setInterval(() => {
       textIndex = (textIndex + 1) % texts.length;
       setLoadingText(texts[textIndex]);
-    }, 2000);
+    }, 2000); // Keičiasi kas 2 sekundes
 
     const progressInterval = setInterval(() => {
         setProgress(prev => {
@@ -38,7 +44,7 @@ export function PremiumLoadingScreen() {
       clearInterval(textInterval);
       clearInterval(progressInterval);
     };
-  }, []);
+  }, [customText]);
 
   return (
     <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center min-h-screen overflow-hidden bg-[#020817] text-white">
@@ -68,8 +74,8 @@ export function PremiumLoadingScreen() {
           </div>
         </div>
 
-        {/* Loading Text */}
-        <h2 className="text-lg font-medium text-slate-200 mb-2 min-h-[28px] transition-all duration-500 ease-in-out">
+        {/* Loading Text - Čia rodomas universalus tekstas */}
+        <h2 className="text-lg font-medium text-slate-200 mb-2 min-h-[28px] transition-all duration-500 ease-in-out text-center px-4">
             {loadingText}
         </h2>
         

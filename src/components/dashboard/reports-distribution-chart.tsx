@@ -5,16 +5,16 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { useLanguage } from "@/contexts/language-context";
 import { getCategoryNameForDisplay } from "@/lib/utils";
 
-// Priskiriame stabilias spalvas kiekvienai kategorijai, kad jos nesikartotų.
+// Suvienodinta spalvų paletė, kad atitiktų kategorijų pasirinkimo langą
 const CATEGORY_COLORS: Record<string, string> = {
-  fuel_theft: "#ef4444",       // Raudona
-  driving_safety: "#8b5cf6",   // Violetinė
-  behavior: "#f59e0b",         // Oranžinė (Pakeista pagal pageidavimą)
-  discipline: "#3b82f6",       // Mėlyna
-  technical_damage: "#ec4899", // Rausva (buvusi elgesio spalva)
-  legal_reputation: "#10b981", // Žalia
-  other_category: "#64748b",   // Pilka
-  default: "#a1a1aa",           // Atsarginė spalva nenumatytoms kategorijoms
+  fuel_theft: "#ef4444",       // red-500
+  driving_safety: "#06b6d4",   // cyan-500
+  behavior: "#6366f1",         // indigo-500
+  discipline: "#ca8a04",       // yellow-600
+  technical_damage: "#f97316", // orange-500
+  legal_reputation: "#475569", // slate-600
+  other_category: "#6b7280",   // gray-500
+  default: "#a1a1aa",
 };
 
 
