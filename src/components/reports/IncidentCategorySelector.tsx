@@ -37,7 +37,7 @@ const getCategoryStyle = (id: string) => {
     return { icon: AlertOctagon, color: "text-yellow-600", bg: "bg-yellow-500/10", border: "border-yellow-200 hover:border-yellow-500" };
   
   if (lowerId.includes('legal') || lowerId.includes('dispute')) 
-    return { icon: Gavel, color: "text-slate-600", bg: "bg-slate-500/10", border: "border-slate-200 hover:border-slate-500" };
+    return { icon: Gavel, color: "text-green-600", bg: "bg-green-500/10", border: "border-green-200 hover:border-green-500" };
 
   if (lowerId.includes('aband') || lowerId.includes('palik')) 
     return { icon: UserX, color: "text-rose-600", bg: "bg-rose-500/10", border: "border-rose-200 hover:border-rose-500" };

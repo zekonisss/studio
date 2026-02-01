@@ -9,10 +9,10 @@ import { getCategoryNameForDisplay } from "@/lib/utils";
 const CATEGORY_COLORS: Record<string, string> = {
   fuel_theft: "#ef4444",       // red-500
   driving_safety: "#06b6d4",   // cyan-500
-  behavior: "#6366f1",         // indigo-500
+  behavior: "#f97316",         // orange-500
   discipline: "#ca8a04",       // yellow-600
-  technical_damage: "#f97316", // orange-500
-  legal_reputation: "#475569", // slate-600
+  technical_damage: "#ec4899", // pink-500
+  legal_reputation: "#22c55e", // green-500
   other_category: "#6b7280",   // gray-500
   default: "#a1a1aa",
 };
