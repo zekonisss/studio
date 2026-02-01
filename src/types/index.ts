@@ -2,29 +2,43 @@ import { type Timestamp } from 'firebase/firestore';
 
 // --- Firestore Data Types ---
 
+export interface CompanyFirestore {
+  id: string;
+  name: string;
+  ownerId: string;
+  vatCode?: string;
+  address?: string;
+  subscriptionStatus: 'active' | 'trial' | 'past_due' | 'canceled';
+  plan: 'solo' | 'team' | 'corporate';
+  maxSeats: number;
+  createdAt: Timestamp;
+  updatedAt?: Timestamp;
+}
+
 export interface UserProfileFirestore {
   id: string;
   email: string;
-  companyName: string;
-  companyCode: string;
-  vatCode?: string;
-  address: string;
-  contactPerson: string;
-  position: string;
-  phone: string;
-  paymentStatus: 'active' | 'inactive' | 'pending_verification' | 'pending_payment' | 'trial';
-  subscriptionType: 'trial' | 'paid';
-  isAdmin: boolean;
-  agreeToTerms: boolean;
-  registeredAt: Timestamp;
-  accountActivatedAt?: Timestamp | null;
-  subUsers: string[];
-  stripeCustomerId?: string | null;
-  stripeSubscriptionId?: string | null;
-  stripePriceId?: string | null;
-  subscriptionEndDate?: Timestamp | null;
+  fullName?: string;
+  companyId?: string | null;
+  role?: 'owner' | 'admin' | 'member' | 'suspended';
+  isAdmin?: boolean;
+  paymentStatus?: 'active' | 'trial' | 'past_due' | 'canceled';
   searchCredits?: number;
   reportCredits?: number;
+  createdAt: Timestamp;
+}
+
+export interface InvitationFirestore {
+  id: string;
+  companyId: string;
+  companyName: string;
+  inviterId: string;
+  email: string;
+  token: string;
+  role: 'member' | 'admin';
+  status: 'pending' | 'accepted' | 'expired';
+  createdAt: Timestamp;
+  expiresAt: Timestamp;
 }
 
 export interface ReportFirestore {
@@ -85,29 +99,43 @@ export interface UserNotificationFirestore {
 
 // --- Client-Side Data Types ---
 
+export interface Company {
+  id: string;
+  name: string;
+  ownerId: string;
+  vatCode?: string;
+  address?: string;
+  subscriptionStatus: 'active' | 'trial' | 'past_due' | 'canceled';
+  plan: 'solo' | 'team' | 'corporate';
+  maxSeats: number;
+  createdAt: string;
+  updatedAt?: string;
+}
+
 export interface UserProfile {
   id: string;
   email: string;
+  fullName?: string;
+  companyId?: string | null;
+  role?: 'owner' | 'admin' | 'member' | 'suspended';
+  isAdmin?: boolean;
+  paymentStatus?: 'active' | 'trial' | 'past_due' | 'canceled';
+  searchCredits?: number;
+  reportCredits?: number;
+  createdAt: string;
+}
+
+export interface Invitation {
+  id: string;
+  companyId: string;
   companyName: string;
-  companyCode: string;
-  vatCode?: string;
-  address: string;
-  contactPerson: string;
-  position: string;
-  phone: string;
-  paymentStatus: 'active' | 'inactive' | 'pending_verification' | 'pending_payment' | 'trial';
-  subscriptionType: 'trial' | 'paid';
-  isAdmin: boolean;
-  agreeToTerms: boolean;
-  registeredAt: string; 
-  accountActivatedAt?: string | null;
-  subUsers: string[];
-  stripeCustomerId?: string | null;
-  stripeSubscriptionId?: string | null;
-  stripePriceId?: string | null;
-  subscriptionEndDate?: string | null;
-  searchCredits: number;
-  reportCredits: number;
+  inviterId: string;
+  email: string;
+  token: string;
+  role: 'member' | 'admin';
+  status: 'pending' | 'accepted' | 'expired';
+  createdAt: string;
+  expiresAt: string;
 }
 
 export interface Report {
