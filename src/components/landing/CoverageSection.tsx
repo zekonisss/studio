@@ -2,8 +2,10 @@
 
 import { ShieldCheck, Map, Globe, Activity } from "lucide-react";
 import { InteractiveMap } from "./InteractiveMap"; 
+import { useLanguage } from "@/contexts/language-context";
 
 export function CoverageSection() {
+  const { t } = useLanguage();
   return (
     <section className="bg-slate-50 dark:bg-slate-950 py-24 overflow-hidden relative transition-colors duration-300">
       
@@ -17,33 +19,32 @@ export function CoverageSection() {
           <div className="space-y-8">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-100 border border-cyan-200 text-cyan-700 dark:bg-cyan-950/30 dark:border-cyan-800 dark:text-cyan-400 text-sm font-medium transition-colors">
               <Activity className="w-4 h-4" />
-              <span>Live Region Coverage</span>
+              <span>{t('landing.coverage.badge')}</span>
             </div>
 
             <h2 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white leading-tight transition-colors">
-              Vieninga duomenų erdvė: <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500 dark:from-cyan-400 dark:to-blue-500">LT, LV, EE, PL</span>
+              {t('landing.coverage.title')}
             </h2>
             
             <p className="text-lg text-slate-600 dark:text-slate-400 leading-relaxed transition-colors">
-              DriverCheck suteikia įrankius, reikalingus efektyviam rizikų valdymui ir personalo valdymui transporto sektoriuje.
+              {t('landing.coverage.subtitle')}
             </p>
 
             <div className="space-y-6 pt-4">
               <FeatureItem 
                 icon={<Map className="w-5 h-5 text-blue-600 dark:text-cyan-400" />}
-                title="Regioninis Saugumas"
-                description="Matykite pilną vaizdą. Duomenys sinchronizuojami tarp šalių akimirksniu."
+                title={t('landing.coverage.feature1.title')}
+                description={t('landing.coverage.feature1.description')}
               />
               <FeatureItem 
                 icon={<Globe className="w-5 h-5 text-blue-600 dark:text-cyan-400" />}
-                title="Migracijos Kontrolė"
-                description="Istorija seka paskui"
+                title={t('landing.coverage.feature2.title')}
+                description={t('landing.coverage.feature2.description')}
               />
-              {/* ATNAUJINTA FRAZĖ ČIA: */}
               <FeatureItem 
                 icon={<ShieldCheck className="w-5 h-5 text-blue-600 dark:text-cyan-400" />}
-                title="Prevencinis Poveikis"
-                description="Viena rinka – viena reputacija, skatina atsakingą požiūrį į darbą."
+                title={t('landing.coverage.feature3.title')}
+                description={t('landing.coverage.feature3.description')}
               />
             </div>
           </div>

@@ -1,8 +1,10 @@
 "use client";
 
 import { Globe, Users, Scale, Server, CheckCircle2 } from "lucide-react";
+import { useLanguage } from "@/contexts/language-context";
 
 export function DataSourcesSection() {
+  const { t } = useLanguage();
   return (
     <section id="sources" className="py-24 bg-white dark:bg-slate-950 transition-colors duration-300 border-t border-slate-200 dark:border-slate-800">
       <div className="container mx-auto px-4 md:px-6">
@@ -11,18 +13,16 @@ export function DataSourcesSection() {
         <div className="text-center max-w-3xl mx-auto mb-16">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-sm font-medium mb-6">
             <Server className="w-4 h-4" />
-            <span>Duomenų Kilmė ir Skaidrumas</span>
+            <span>{t('landing.datasources.badge')}</span>
           </div>
           <h2 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white mb-6">
-            Informacija, kuria galite <br />
+            {t('landing.datasources.title.line1')} <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400">
-              pasitikėti.
+              {t('landing.datasources.title.line2')}
             </span>
           </h2>
           <p className="text-lg text-slate-600 dark:text-slate-400 leading-relaxed">
-            Mūsų sistema veikia kaip informacijos agregatorius. Mes sujungiame 
-            bendruomenės pranešimus, viešai prieinamą informaciją ir teisinius saugiklius 
-            į vieną patogų įrankį.
+            {t('landing.datasources.subtitle')}
           </p>
         </div>
 
@@ -33,12 +33,12 @@ export function DataSourcesSection() {
           <SourceCard 
             icon={<Globe className="w-6 h-6 text-white" />}
             color="bg-blue-500"
-            title="Viešoji Erdvė"
-            description="Agreguojame informaciją, kuri yra išbarstyta internete, kad jums nereikėtų gaišti laiko naršant dešimtis skirtingų šaltinių."
+            title={t('landing.datasources.card1.title')}
+            description={t('landing.datasources.card1.description')}
             list={[
-              "Specializuoti forumai ir grupės",
-              "Socialinių tinklų monitoringas",
-              "Viešai prieinami atsiliepimai"
+              t('landing.datasources.card1.item1'),
+              t('landing.datasources.card1.item2'),
+              t('landing.datasources.card1.item3')
             ]}
           />
 
@@ -46,12 +46,12 @@ export function DataSourcesSection() {
           <SourceCard 
             icon={<Users className="w-6 h-6 text-white" />}
             color="bg-indigo-500"
-            title="Vežėjų Bendruomenė"
-            description="Uždaras patikimų transporto įmonių tinklas dalinasi vidiniais incidentų pranešimais realiu laiku."
+            title={t('landing.datasources.card2.title')}
+            description={t('landing.datasources.card2.description')}
             list={[
-              "Kuro vagysčių pranešimai su įrodymais",
-              "Transporto priemonės apgadinimai",
-              "Piktybiniai darbo sutarties pažeidimai"
+              t('landing.datasources.card2.item1'),
+              t('landing.datasources.card2.item2'),
+              t('landing.datasources.card2.item3')
             ]}
           />
 
@@ -59,12 +59,12 @@ export function DataSourcesSection() {
           <SourceCard 
             icon={<Scale className="w-6 h-6 text-white" />}
             color="bg-emerald-500"
-            title="Teisinis Filtravimas"
-            description="Kiekvienas įrašas praeina automatinį ir rankinį teisinį patikrinimą, kad atitiktų duomenų apsaugos įstatymus."
+            title={t('landing.datasources.card3.title')}
+            description={t('landing.datasources.card3.description')}
             list={[
-              "Duomenų nuasmeninimas (kur būtina)",
-              "Teisėtas interesas (Legitimate Interest)",
-              "Ginčų sprendimo mechanizmas"
+              t('landing.datasources.card3.item1'),
+              t('landing.datasources.card3.item2'),
+              t('landing.datasources.card3.item3')
             ]}
           />
 
