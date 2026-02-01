@@ -71,6 +71,7 @@ export default function TeamPage() {
         const res = await inviteTeamMember(user!.id, inviteEmail);
         
         if (res.success) {
+            console.log("INVITE LINK:", res.inviteLink);
             toast({ 
                 title: "Invite Created!", 
                 description: "Link (Dev Mode): " + res.inviteLink, 
