@@ -1,4 +1,5 @@
 "use client";
+
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -8,14 +9,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Loader2, FileText, ExternalLink, UserSearch, ShieldCheck, ShieldAlert } from "lucide-react";
+import { Search, Loader2, UserSearch, ShieldCheck, ShieldAlert } from "lucide-react";
 import { SearchSchema, type SearchFormValues } from "@/lib/schemas";
 import { getAllReports } from "@/lib/storage";
-import { getCategoryNameForDisplay, cn } from "@/lib/utils";
 import type { Report } from "@/types";
-import { Badge } from "@/components/ui/badge";
-import Image from "next/image";
-import { DESTRUCTIVE_REPORT_MAIN_CATEGORIES } from "@/lib/constants";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { logSearchActivity } from "./actions";
@@ -23,10 +20,11 @@ import { LiveActivityFeed } from "@/components/shared/live-activity-feed";
 import { DriverSearchStats } from "@/components/search/driver-search-stats";
 import Link from "next/link";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-
+// NAUJAS KOMPONENTAS
+import { SearchResultCard } from "@/components/search/SearchResultCard";
 
 export default function SearchPage() {
-    const { t, locale } = useLanguage();
+    const { t } = useLanguage();
     const { user, refreshUser } = useAuth();
     const { toast } = useToast();
     const [searchResults, setSearchResults] = useState<Report[]>([]);
@@ -38,11 +36,6 @@ export default function SearchPage() {
         resolver: zodResolver(SearchSchema),
         defaultValues: { query: "" },
     });
-
-    const isImageUrl = (url: string) => {
-        if (!url) return false;
-        return /\.(jpg|jpeg|png|gif|webp)$/i.test(url.split('?')[0]);
-    }
 
     const onSubmit = async (values: SearchFormValues) => {
         setIsLoading(true);
@@ -78,7 +71,7 @@ export default function SearchPage() {
                     setIsLoading(false);
                     return; 
                 }
-                await refreshUser(); // Atnaujiname vartotojo duomenis kontekste
+                await refreshUser();
             }
 
             const allReports = await getAllReports();
@@ -105,7 +98,6 @@ export default function SearchPage() {
         }
     };
     
-    // Helper to get names for stats component
     const getNames = (fullName: string): { firstName: string, lastName: string } => {
         const nameParts = fullName.trim().split(/\s+/);
         const firstName = nameParts[0] || "";
@@ -116,42 +108,51 @@ export default function SearchPage() {
     const hasSearchCredits = user && (user.paymentStatus === 'active' || (user.paymentStatus === 'trial' && (user.searchCredits ?? 0) > 0));
 
     return (
-        <div className="space-y-6">
-            <Card>
-                <CardHeader>
+        <div className="space-y-6 max-w-7xl mx-auto">
+            <Card className="border-none shadow-none bg-transparent">
+                <CardHeader className="px-0">
                     <div className="flex items-center gap-4">
-                        <UserSearch className="h-8 w-8 text-primary" />
+                        <div className="p-3 bg-primary/10 rounded-xl">
+                            <UserSearch className="h-8 w-8 text-primary" />
+                        </div>
                         <div>
-                            <CardTitle>{t("search.title")}</CardTitle>
-                            <CardDescription>{t("search.description")}</CardDescription>
+                            <CardTitle className="text-3xl font-bold tracking-tight">{t("search.title")}</CardTitle>
+                            <CardDescription className="text-base mt-1">{t("search.description")}</CardDescription>
                         </div>
                     </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="px-0">
                     {!hasSearchCredits && user?.paymentStatus === 'trial' && (
-                         <Alert variant="destructive" className="mb-6">
+                         <Alert variant="destructive" className="mb-6 border-red-500/50 bg-red-500/10">
                             <ShieldAlert className="h-4 w-4" />
                             <AlertTitle>Paieškos kreditai baigėsi</AlertTitle>
                             <AlertDescription>
                                 Jūs išnaudojote nemokamų paieškų limitą. Norėdami tęsti, prašome{" "}
-                                <Link href="/authenticated/account?tab=payment" className="font-semibold underline">aktyvuoti prenumeratą</Link>.
+                                <Link href="/authenticated/account?tab=payment" className="font-semibold underline hover:text-white">aktyvuoti prenumeratą</Link>.
                             </AlertDescription>
                         </Alert>
                     )}
+                    
+                    {/* SEARCH INPUT AREA */}
                     <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onSubmit)} className="w-full space-y-3 mb-8">
+                        <form onSubmit={form.handleSubmit(onSubmit)} className="w-full space-y-3 mb-10">
                              <fieldset disabled={!hasSearchCredits || isLoading}>
-                                <div className="flex items-center gap-2">
-                                    <div className="flex-grow">
+                                <div className="flex flex-col sm:flex-row gap-3">
+                                    <div className="flex-grow relative group">
+                                         <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg blur opacity-20 group-hover:opacity-40 transition duration-1000"></div>
                                         <FormField
                                             control={form.control}
                                             name="query"
                                             render={({ field }) => (
-                                                <FormItem>
+                                                <FormItem className="relative bg-background rounded-lg">
                                                     <FormControl>
                                                         <div className="relative">
-                                                            <Search className="absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-                                                            <Input placeholder={t('search.queryPlaceholder')} {...field} className="pl-12 h-12 text-base" />
+                                                            <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                                                            <Input 
+                                                                placeholder={t('search.queryPlaceholder')} 
+                                                                {...field} 
+                                                                className="pl-12 h-14 text-lg shadow-sm border-slate-200 dark:border-slate-800 focus-visible:ring-2 focus-visible:ring-primary/50" 
+                                                            />
                                                         </div>
                                                     </FormControl>
                                                     <FormMessage className="pl-4" />
@@ -159,7 +160,11 @@ export default function SearchPage() {
                                             )}
                                         />
                                     </div>
-                                    <Button type="submit" disabled={!hasSearchCredits || isLoading} className="h-12 px-6">
+                                    <Button 
+                                        type="submit" 
+                                        disabled={!hasSearchCredits || isLoading} 
+                                        className="h-14 px-8 text-lg font-medium shadow-lg hover:shadow-primary/25 transition-all"
+                                    >
                                         {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Search className="h-5 w-5" />}
                                         <span className="hidden sm:inline ml-2">{t('search.searchButton')}</span>
                                     </Button>
@@ -169,155 +174,92 @@ export default function SearchPage() {
                     </Form>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-                        <div className="lg:col-span-2 space-y-4">
+                        <div className="lg:col-span-2 space-y-6">
+                            
+                            {/* LOADING STATE */}
                             {isLoading && (
                                 <div className="space-y-4">
                                     {[...Array(3)].map((_, i) => (
-                                        <Card key={i}>
-                                            <CardHeader>
-                                                <div className="flex justify-between items-start gap-4">
-                                                    <div>
-                                                        <Skeleton className="h-8 w-48 mb-2" />
-                                                        <Skeleton className="h-4 w-32" />
+                                        <div key={i} className="rounded-xl border border-slate-200 dark:border-slate-800 bg-card p-6 space-y-4">
+                                            <div className="flex justify-between items-start">
+                                                <div className="space-y-2">
+                                                    <Skeleton className="h-8 w-48" />
+                                                    <div className="flex gap-2">
+                                                        <Skeleton className="h-5 w-24" />
+                                                        <Skeleton className="h-5 w-24" />
                                                     </div>
-                                                    <Skeleton className="h-6 w-24" />
                                                 </div>
-                                            </CardHeader>
-                                            <CardContent className="space-y-4">
-                                                <Skeleton className="h-4 w-full" />
-                                                <Skeleton className="h-4 w-5/6" />
-                                            </CardContent>
-                                        </Card>
+                                                <Skeleton className="h-8 w-8 rounded-full" />
+                                            </div>
+                                            <Skeleton className="h-20 w-full rounded-lg" />
+                                        </div>
                                     ))}
                                 </div>
                             )}
 
+                            {/* NO RESULTS STATE */}
                             {!isLoading && hasSearched && searchResults.length === 0 && (() => {
                                 const { firstName, lastName } = getNames(currentQuery);
                                 return (
-                                    <div className="text-center py-12 border rounded-lg bg-green-50/50 dark:bg-green-900/10 border-green-200 dark:border-green-900/20">
-                                        <div className="bg-green-100 dark:bg-green-900/20 w-20 h-20 mx-auto rounded-full flex items-center justify-center mb-4">
+                                    <div className="text-center py-12 border rounded-xl bg-green-50/50 dark:bg-green-900/10 border-green-200 dark:border-green-900/20 backdrop-blur-sm">
+                                        <div className="bg-green-100 dark:bg-green-900/20 w-20 h-20 mx-auto rounded-full flex items-center justify-center mb-4 shadow-inner">
                                             <ShieldCheck className="h-10 w-10 text-green-600 dark:text-green-500" />
                                         </div>
                                         
-                                        <h3 className="text-xl font-medium text-foreground">
-                                            {t('search.noResults.title') || "Duomenų nerasta"}
+                                        <h3 className="text-2xl font-bold text-slate-800 dark:text-slate-100">
+                                            {t('search.noResults.title') || "Švaru!"}
                                         </h3>
                                         
-                                        <p className="mt-2 text-muted-foreground max-w-md mx-auto">
-                                            Pagal užklausą <span className="font-medium text-foreground">"{currentQuery}"</span> įrašų sistemoje nerasta.
-                                            <br className="mt-2" />
-                                            <span className="text-sm">
-                                                Tai reiškia, kad šiuo metu duomenų bazėje nėra užfiksuotų atsiliepimų ar įvykių, susijusių su šiuo asmeniu.
-                                            </span>
+                                        <p className="mt-3 text-muted-foreground max-w-md mx-auto leading-relaxed">
+                                            Pagal užklausą <span className="font-semibold text-foreground">"{currentQuery}"</span> įrašų nerasta.
                                         </p>
-                                        <div className="max-w-md mx-auto mt-6">
+                                        
+                                        <div className="max-w-md mx-auto mt-8">
                                              <DriverSearchStats firstName={firstName} lastName={lastName} />
                                         </div>
-                                        <p className="mt-6 text-sm text-muted-foreground">
-                                            Norėdami sukurti įrašą, spauskite <Link href="/authenticated/reports/add" className="font-medium underline text-primary hover:text-primary/80">Pridėti įrašą</Link>.
-                                        </p>
+                                        
+                                        <div className="mt-8 pt-6 border-t border-green-200/50 dark:border-green-900/30">
+                                            <p className="text-sm text-muted-foreground">
+                                                Turite informacijos apie šį asmenį? <Link href="/authenticated/reports/add" className="font-medium underline text-primary hover:text-primary/80 transition-colors">Sukurti naują įrašą</Link>.
+                                            </p>
+                                        </div>
                                     </div>
                                 )
                             })()}
 
+                            {/* RESULTS LIST */}
                             {!isLoading && hasSearched && searchResults.length > 0 && (
-                                <div className="space-y-4">
-                                    <h3 className="text-xl font-semibold text-muted-foreground">{t('search.results.title', { count: searchResults.length })}</h3>
-                                    {searchResults.map((report) => {
-                                        const { firstName, lastName } = getNames(report.fullName);
-                                        return (
-                                            <Card key={report.id} className={cn(
-                                                "overflow-hidden transition-shadow duration-300",
-                                                DESTRUCTIVE_REPORT_MAIN_CATEGORIES.includes(report.category) 
-                                                    ? "shadow-glow-destructive" 
-                                                    : "hover:shadow-glow-primary"
-                                            )}>
-                                                <CardHeader>
-                                                    <div className="flex justify-between items-start gap-4">
-                                                        <div>
-                                                            <CardTitle className="text-2xl">{report.fullName}</CardTitle>
-                                                            <CardDescription>
-                                                                {report.nationality && `${t(`countries.${report.nationality}`)}`}
-                                                                {report.nationality && report.birthYear && ', '}
-                                                                {report.birthYear && `${t('search.results.birthYearPrefix')}${report.birthYear}`}
-                                                            </CardDescription>
-                                                        </div>
-                                                        <Badge variant={DESTRUCTIVE_REPORT_MAIN_CATEGORIES.includes(report.category) ? 'destructive' : 'secondary'}>{getCategoryNameForDisplay(report.category, t)}</Badge>
-                                                    </div>
-                                                </CardHeader>
-                                                <CardContent className="space-y-4">
-                                                    
-                                                    <DriverSearchStats firstName={firstName} lastName={lastName} />
-                                                    
-                                                    {report.tags && report.tags.length > 0 && (
-                                                      <div className="pt-4 border-t">
-                                                        <h4 className="font-semibold text-sm mb-2">Žymos</h4>
-                                                        <div className="flex flex-wrap gap-2">
-                                                            {report.tags.map(tag => <Badge key={tag} variant="outline">{t(`tags.${tag}`)}</Badge>)}
-                                                        </div>
-                                                      </div>
-                                                    )}
-                                                    <div className="pt-4 border-t">
-                                                        <h4 className="font-semibold text-sm mb-1">{t('search.results.comment')}</h4>
-                                                        <p className="text-sm text-muted-foreground whitespace-pre-wrap">{report.comment}</p>
-                                                    </div>
-
-                                                    {report.imageUrl && (
-                                                        <div className="pt-4 border-t">
-                                                            <h4 className="font-semibold text-sm mb-2">{t('search.results.attachedFile')}</h4>
-                                                            
-                                                            {isImageUrl(report.imageUrl) ? (
-                                                                <a href={report.imageUrl} target="_blank" rel="noopener noreferrer" className="block relative h-64 w-full md:w-96 rounded-md overflow-hidden border group">
-                                                                    <Image 
-                                                                        src={report.imageUrl} 
-                                                                        alt="Attachment" 
-                                                                        fill
-                                                                        style={{objectFit:'cover'}}
-                                                                        data-ai-hint={report.dataAiHint || ''}
-                                                                    />
-                                                                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                                                                        <ExternalLink className="text-white h-8 w-8" />
-                                                                    </div>
-                                                                </a>
-                                                            ) : (
-                                                                <div className="flex flex-col gap-2">
-                                                                    <a 
-                                                                        href={report.imageUrl} 
-                                                                        target="_blank" 
-                                                                        rel="noopener noreferrer"
-                                                                        className="flex items-center gap-3 p-4 border rounded-lg bg-muted/30 hover:bg-muted/60 transition-colors w-full md:w-96"
-                                                                    >
-                                                                        <div className="p-2 bg-red-100 rounded-md">
-                                                                            <FileText className="h-6 w-6 text-red-600" />
-                                                                        </div>
-                                                                        <div className="flex flex-col">
-                                                                            <span className="text-sm font-medium">Dokumentas (PDF)</span>
-                                                                            <span className="text-xs text-muted-foreground">Spauskite, kad peržiūrėtumėte</span>
-                                                                        </div>
-                                                                        <ExternalLink className="h-4 w-4 ml-auto text-muted-foreground" />
-                                                                    </a>
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    )}
-                                                    
-                                                    <div className="text-xs text-muted-foreground pt-4 border-t mt-4 flex justify-between">
-                                                        <span>{t('search.results.submittedBy')}: <strong>{report.reporterCompanyName}</strong></span>
-                                                        <span>{t('search.results.date')}: <strong>{new Date(report.createdAt).toLocaleDateString(locale)}</strong></span>
-                                                    </div>
-                                                </CardContent>
-                                            </Card>
-                                        )
-                                    })}
+                                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200">
+                                            {t('search.results.title', { count: searchResults.length })}
+                                        </h3>
+                                        <span className="text-sm text-muted-foreground">
+                                            Rasti {searchResults.length} įrašai
+                                        </span>
+                                    </div>
+                                    
+                                    <div className="space-y-4">
+                                        {searchResults.map((report) => (
+                                            <SearchResultCard key={report.id} report={report} />
+                                        ))}
+                                    </div>
                                 </div>
                             )}
+
+                            {/* INITIAL STATE */}
                              {!isLoading && !hasSearched && (
-                                <div className="text-center py-10 border rounded-lg">
-                                    <p className="text-muted-foreground">{t('search.initialMessage')}</p>
+                                <div className="text-center py-16 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50/50 dark:bg-slate-900/20">
+                                    <UserSearch className="h-12 w-12 mx-auto text-slate-300 dark:text-slate-600 mb-4" />
+                                    <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100">Pradėkite paiešką</h3>
+                                    <p className="text-muted-foreground max-w-sm mx-auto mt-2">
+                                        Įveskite vardą, pavardę arba asmens kodą, kad patikrintumėte duomenų bazę.
+                                    </p>
                                 </div>
                             )}
                         </div>
+
+                        {/* RIGHT SIDEBAR */}
                         <div className="lg:col-span-1">
                             <LiveActivityFeed />
                         </div>
