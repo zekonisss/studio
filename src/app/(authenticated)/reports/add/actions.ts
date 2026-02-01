@@ -4,6 +4,7 @@ import { categorizeReport } from '@/ai/flows/categorize-report-flow';
 import { adminDb } from '@/lib/firebase-admin';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import type { Report } from '@/types';
+import { migrateTagIfNeeded } from '@/lib/utils';
 
 
 export async function categorizeReportAction(comment: string) {
@@ -43,6 +44,8 @@ export async function addReportWithCreditCheck(
       const newReportRef = adminDb.collection('reports').doc();
       const finalReportData = {
           ...reportData,
+          // PATAISYMAS: Užtikriname, kad žymos visada būtų išsaugotos teisingu "rakto" formatu.
+          tags: Array.isArray(reportData.tags) ? reportData.tags.map(migrateTagIfNeeded) : [],
           createdAt: Timestamp.now(),
           status: 'active',
           statusUpdatedAt: Timestamp.now(),

@@ -5,6 +5,7 @@ import { detailedReportCategories } from '@/lib/constants';
 import { Timestamp } from 'firebase-admin/firestore';
 import { getCategoryNameForDisplay } from '@/lib/utils';
 import { categorizeReport } from '@/ai/flows/categorize-report-flow';
+import { translationsMaster } from '@/lib/translations-master';
 
 // PAGRINDINĖ TAISYKLĖ: Tik 'async function' gali būti eksportuojamos šiame faile.
 // Visi pagalbiniai kintamieji turi būti funkcijų viduje arba kituose failuose.
@@ -77,11 +78,14 @@ export async function getAllReportsForExport(companyName: string) {
     return [];
   }
 
-  // Funkcija perkelta į vidų ir paversta paprasta konstanta, 
-  // kad Next.js nemanytų, jog tai eksportuojamas narys.
-  const tForServer = (key: string) => {
-    const category = detailedReportCategories.find(c => c.nameKey === key);
-    return category ? key.replace('categories.', '').replace(/_/g, ' ') : key;
+  // PATAISYMAS: Sukurta teisinga server-side vertimo funkcija
+  const tForServer = (key: string): string => {
+    const translationsForKey = translationsMaster[key];
+    if (!translationsForKey) {
+      return key;
+    }
+    // Eksportui naudojame lietuvišką vertimą kaip numatytąjį
+    return translationsForKey['lt'] ?? key;
   };
 
   return snapshot.docs.map((doc) => {
