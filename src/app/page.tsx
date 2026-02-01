@@ -49,25 +49,6 @@ export default function HomePage() {
     fetchData();
   }, []);
 
-  // Mažas komponentas statistikai (naudojamas žemiau)
-  const Stat = ({ value, label, icon: Icon, loading }: { value: number, label: string, icon: React.ElementType, loading: boolean }) => (
-    <div className="flex flex-col items-center text-center gap-2 group p-4">
-      <div className="p-4 bg-primary/10 rounded-2xl border border-primary/20 group-hover:border-primary/40 transition-colors">
-        <Icon className="h-8 w-8 text-primary" />
-      </div>
-      <div>
-        {loading ? (
-          <Skeleton className="h-8 w-20 mx-auto mb-1" />
-        ) : (
-          <div className="text-3xl font-bold tracking-tighter">
-            <AnimatedCounter value={value} />
-          </div>
-        )}
-        <p className="text-sm text-muted-foreground font-medium uppercase tracking-widest">{label}</p>
-      </div>
-    </div>
-  );
-
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground selection:bg-primary/30">
       {/* HEADER */}
@@ -110,19 +91,10 @@ export default function HomePage() {
         {/* 2. ŽEMĖLAPIS (Scale) */}
         <CoverageSection />
 
-        {/* 3. STATISTIKA (Proof) */}
-        <section className="py-16 bg-accent/40 border-y border-border flex justify-center">
-            <div className="flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16">
-              <Stat value={totalReports} label={t('landing.stats.totalReports')} icon={FileText} loading={isStatsLoading} />
-              <Stat value={150} label={t('landing.stats.activeCompanies')} icon={ShieldCheck} loading={isStatsLoading} />
-              <Stat value={98} label={t('landing.stats.positiveImpact')} icon={BarChart3} loading={isStatsLoading} />
-            </div>
-        </section>
-
-        {/* 4. DUOMENŲ ŠALTINIAI (Trust) */}
+        {/* 3. DUOMENŲ ŠALTINIAI (Trust) */}
         <DataSourcesSection />
 
-        {/* 5. API SEKCIJA (Enterprise) */}
+        {/* 4. API SEKCIJA (Enterprise) */}
         <ApiSection />
 
       </main>
