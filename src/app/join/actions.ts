@@ -99,7 +99,7 @@ export async function acceptInvitation(token: string, fullName: string, password
             accountActivatedAt: Timestamp.now(),
         });
 
-        // 3. Mark invitation as accepted
+        // 3. Mark invitation as accepted instead of deleting
         await invDoc.ref.update({
             status: 'accepted',
             acceptedAt: Timestamp.now(),

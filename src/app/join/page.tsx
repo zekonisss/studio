@@ -142,7 +142,7 @@ export default function JoinPage() {
                         </div>
                         <Button type="submit" className="w-full" disabled={isSubmitting}>
                             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Priimti pakvietimą ir prisijungti
+                            Priimti pakvietimą ir sukurti paskyrą
                         </Button>
                     </form>
                 </CardContent>
