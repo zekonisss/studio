@@ -1,6 +1,6 @@
 "use client";
 
-import { Fuel, Car, Wine, FileWarning, Gavel, AlertOctagon, HelpCircle, UserX } from "lucide-react";
+import { Fuel, Car, Wine, FileWarning, Gavel, AlertOctagon, HelpCircle, UserX, ShieldAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { detailedReportCategories } from "@/lib/constants"; // <--- Svarbu: Imame iš tavo konstantų
 import { useLanguage } from "@/contexts/language-context";
@@ -18,10 +18,16 @@ const getCategoryStyle = (id: string) => {
   if (lowerId.includes('theft') || lowerId.includes('vagyst')) 
     return { icon: Fuel, color: "text-red-500", bg: "bg-red-500/10", border: "border-red-200 hover:border-red-500" };
   
+  if (lowerId.includes('driving_safety'))
+    return { icon: ShieldAlert, color: "text-cyan-500", bg: "bg-cyan-500/10", border: "border-cyan-200 hover:border-cyan-500" };
+  
+  if (lowerId.includes('behavior'))
+    return { icon: UserX, color: "text-indigo-500", bg: "bg-indigo-500/10", border: "border-indigo-200 hover:border-indigo-500" };
+  
   if (lowerId.includes('alcohol') || lowerId.includes('drunk') || lowerId.includes('girt')) 
     return { icon: Wine, color: "text-purple-500", bg: "bg-purple-500/10", border: "border-purple-200 hover:border-purple-500" };
   
-  if (lowerId.includes('accident') || lowerId.includes('damage') || lowerId.includes('zal') || lowerId.includes('žala')) 
+  if (lowerId.includes('accident') || lowerId.includes('damage') || lowerId.includes('zal') || lowerId.includes('žala') || lowerId.includes('technical_damage')) 
     return { icon: Car, color: "text-orange-500", bg: "bg-orange-500/10", border: "border-orange-200 hover:border-orange-500" };
   
   if (lowerId.includes('document') || lowerId.includes('fraud')) 
