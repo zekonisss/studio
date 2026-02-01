@@ -17,7 +17,7 @@ import {
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp, updateDoc, collection, addDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase'; 
-import type { UserProfile, UserProfileFirestore, SignupFormValuesExtended, Company } from '@/types';
+import type { UserProfile, UserProfileFirestore, Company, SignupFormValuesExtended } from '@/types';
 import { useRouter } from 'next/navigation';
 import { useToast } from './use-toast';
 import type { LoginFormValues } from '@/lib/schemas';

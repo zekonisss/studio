@@ -1,3 +1,4 @@
+
 import { z } from 'zod';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
@@ -21,8 +22,6 @@ export const SignupFormSchema = z.object({
   message: "Slaptažodžiai nesutampa.",
   path: ["confirmPassword"],
 });
-
-export type SignupFormValuesExtended = z.infer<typeof SignupFormSchema>;
 
 
 export const LoginSchema = z.object({

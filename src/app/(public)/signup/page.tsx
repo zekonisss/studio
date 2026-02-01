@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useForm } from "react-hook-form";
@@ -14,7 +15,8 @@ import { Loader2, UserPlus } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/contexts/language-context";
 import { useToast } from "@/hooks/use-toast";
-import { SignupFormSchema, type SignupFormValuesExtended } from "@/lib/schemas";
+import { SignupFormSchema } from "@/lib/schemas";
+import type { SignupFormValuesExtended } from '@/types';
 
 
 export default function SignupPage() {

@@ -246,3 +246,18 @@ export interface Invitation {
   createdAt: any;
   expiresAt: any;
 }
+
+export interface SignupFormValuesExtended {
+  email: string;
+  password: string;
+  confirmPassword?: string;
+  companyName: string;
+  companyCode: string;
+  vatCode?: string;
+  address: string;
+  contactPerson: string;
+  position: string;
+  phone: string;
+  subscriptionType: string;
+  agreeToTerms: boolean;
+}
