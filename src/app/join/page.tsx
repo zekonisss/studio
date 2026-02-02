@@ -73,7 +73,7 @@ export default function JoinPage() {
                     title: "Sveikiname prisijungus!",
                     description: `Jūs sėkmingai prisijungėte prie ${invitation?.companyName}. Dabar galite prisijungti.`,
                 });
-                router.push('/login');
+                window.location.replace('/login');
             } else {
                 toast({
                     variant: "destructive",
