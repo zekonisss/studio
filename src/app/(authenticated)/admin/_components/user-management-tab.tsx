@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, Fragment } from 'react';
 import type { UserProfile } from '@/types';
-import { getAllUsers, updateUserProfile } from '@/lib/storage';
+import { getAllUsers, updateUserProfile, addAuditLogEntry } from '@/lib/storage';
 import { useLanguage } from '@/contexts/language-context';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -10,12 +10,15 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuGroup } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, Loader2 } from 'lucide-react';
+import { MoreHorizontal, Loader2, ChevronDown, ChevronRight, Users, Building } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { addAuditLogEntry } from '@/lib/storage';
 import { useAuth } from '@/hooks/use-auth';
 import { AdminUserDetailsModal } from './modals/admin-user-details-modal';
 import { Skeleton } from '@/components/ui/skeleton';
+
+interface GroupedUsers {
+  [companyName: string]: UserProfile[];
+}
 
 export default function UserManagementTab() {
   const { t, locale } = useLanguage();
@@ -25,6 +28,7 @@ export default function UserManagementTab() {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [expandedCompanies, setExpandedCompanies] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -35,7 +39,7 @@ export default function UserManagementTab() {
       setIsLoading(true);
       try {
         const userList = await getAllUsers();
-        setUsers(userList.sort((a, b) => new Date(b.registeredAt).getTime() - new Date(a.registeredAt).getTime()));
+        setUsers(userList);
       } catch (error) {
         console.error("Error fetching users:", error);
         toast({
@@ -48,7 +52,8 @@ export default function UserManagementTab() {
       }
     };
     fetchUsers();
-  }, [adminUser, toast]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [adminUser]);
 
   const handleViewDetails = (userToView: UserProfile) => {
     setSelectedUser(userToView);
@@ -57,17 +62,14 @@ export default function UserManagementTab() {
 
   const handleStatusChange = async (userToUpdate: UserProfile, newStatus: UserProfile['paymentStatus']) => {
     if (!adminUser || !adminUser.isAdmin) return;
-
     const oldStatus = userToUpdate.paymentStatus;
     if (oldStatus === newStatus) return;
 
-    // Additional logic to handle trial credits
     const updates: Partial<UserProfile> = { paymentStatus: newStatus };
     if (newStatus === 'trial') {
       updates.searchCredits = 3;
       updates.reportCredits = 1;
     }
-
 
     try {
       await updateUserProfile(userToUpdate.id, updates);
@@ -80,7 +82,6 @@ export default function UserManagementTab() {
         }),
       });
 
-      // Log audit entry
       await addAuditLogEntry({
           adminId: adminUser.id,
           adminName: adminUser.contactPerson,
@@ -94,13 +95,11 @@ export default function UserManagementTab() {
           }
       });
       
-      // Refresh the list by updating the state locally
       setUsers(prevUsers => 
         prevUsers.map(u => 
           u.id === userToUpdate.id ? { ...u, ...updates } : u
         )
       );
-
     } catch (error) {
         console.error("Error updating user status:", error);
         toast({
@@ -128,6 +127,31 @@ export default function UserManagementTab() {
     }
   };
 
+  const groupedUsers = useMemo(() => {
+    return users.reduce((acc: GroupedUsers, user) => {
+      const companyName = user.companyName || "Unassigned";
+      if (!acc[companyName]) {
+        acc[companyName] = [];
+      }
+      acc[companyName].push(user);
+      return acc;
+    }, {});
+  }, [users]);
+  
+  const companyNames = Object.keys(groupedUsers).sort((a, b) => a.localeCompare(b));
+
+  const toggleCompanyExpansion = (companyName: string) => {
+    setExpandedCompanies(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(companyName)) {
+        newSet.delete(companyName);
+      } else {
+        newSet.add(companyName);
+      }
+      return newSet;
+    });
+  };
+
   if (!adminUser?.isAdmin) {
     return (
          <Card className="mt-6">
@@ -139,7 +163,7 @@ export default function UserManagementTab() {
               </CardContent>
          </Card>
     )
-}
+  }
 
   return (
     <>
@@ -154,84 +178,119 @@ export default function UserManagementTab() {
           <CardDescription>{t('admin.users.description')}</CardDescription>
         </CardHeader>
         <CardContent>
-          <ScrollArea className="h-[600px]">
+          <ScrollArea className="h-[600px] border rounded-md">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>{t('admin.users.table.companyName')}</TableHead>
-                  <TableHead>{t('admin.users.table.contactPerson')}</TableHead>
-                  <TableHead>Plano tipas</TableHead>
-                  <TableHead>{t('admin.users.table.registrationDate')}</TableHead>
-                  <TableHead>{t('admin.users.table.status')}</TableHead>
-                  <TableHead className="text-right">{t('admin.users.table.actions')}</TableHead>
+                  <TableHead className="w-[50px]"></TableHead>
+                  <TableHead>Įmonė</TableHead>
+                  <TableHead>Savininkas / Kontaktas</TableHead>
+                  <TableHead className="text-center">Narių sk.</TableHead>
+                  <TableHead className="text-center">Būsena</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {isLoading ? (
-                  [...Array(10)].map((_, i) => (
-                    <TableRow key={i} className="hover:bg-transparent">
-                        <TableCell><Skeleton className="h-5 w-32" /></TableCell>
-                        <TableCell><Skeleton className="h-5 w-28" /></TableCell>
-                        <TableCell><Skeleton className="h-5 w-24" /></TableCell>
-                        <TableCell><Skeleton className="h-5 w-24" /></TableCell>
-                        <TableCell><Skeleton className="h-5 w-20" /></TableCell>
-                        <TableCell className="text-right"><Skeleton className="h-8 w-8 ml-auto rounded-full" /></TableCell>
+                  [...Array(5)].map((_, i) => (
+                    <TableRow key={i}>
+                      <TableCell><Skeleton className="h-5 w-5" /></TableCell>
+                      <TableCell><Skeleton className="h-5 w-40" /></TableCell>
+                      <TableCell><Skeleton className="h-5 w-48" /></TableCell>
+                      <TableCell><Skeleton className="h-5 w-16 mx-auto" /></TableCell>
+                      <TableCell><Skeleton className="h-6 w-24 mx-auto" /></TableCell>
                     </TableRow>
                   ))
-                ) : users.length === 0 ? (
+                ) : companyNames.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                    <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
                       {t('admin.users.noUsersFound')}
                     </TableCell>
                   </TableRow>
                 ) : (
-                  users.map((user) => (
-                    <TableRow key={user.id}>
-                      <TableCell className="font-medium">{user.companyName}</TableCell>
-                      <TableCell>{user.contactPerson}</TableCell>
-                      <TableCell>
-                        {user.subscriptionType === 'trial' && <Badge variant="outline">Bandomasis</Badge>}
-                        {user.subscriptionType === 'paid' && <Badge>Mokamas</Badge>}
-                      </TableCell>
-                      <TableCell>{new Date(user.registeredAt).toLocaleDateString(locale)}</TableCell>
-                      <TableCell>{getStatusBadge(user.paymentStatus)}</TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
-                              <span className="sr-only">Open menu</span>
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>{t('admin.users.actions.userActions')}</DropdownMenuLabel>
-                            <DropdownMenuItem onClick={() => handleViewDetails(user)}>
-                                {t('admin.users.actions.viewProfile')}
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuGroup>
-                              <DropdownMenuLabel>{t('admin.users.actions.changeStatus')}</DropdownMenuLabel>
-                                  <DropdownMenuItem onClick={() => handleStatusChange(user, 'active')} disabled={user.paymentStatus === 'active'}>
-                                      {t('admin.users.status.active')}
+                  companyNames.map(companyName => {
+                    const companyUsers = groupedUsers[companyName];
+                    const owner = companyUsers.find(u => u.role === 'owner') || companyUsers[0];
+                    const isExpanded = expandedCompanies.has(companyName);
+                    const mainStatus = companyUsers.some(u => u.paymentStatus === 'active') ? 'active' : owner.paymentStatus;
+                    
+                    return (
+                      <Fragment key={companyName}>
+                        <TableRow 
+                          className="cursor-pointer bg-card hover:bg-accent/50"
+                          onClick={() => toggleCompanyExpansion(companyName)}
+                        >
+                          <TableCell className="px-4">
+                            {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            <div className="flex items-center gap-2">
+                                <Building className="h-4 w-4 text-muted-foreground" />
+                                {companyName}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">{owner.email}</TableCell>
+                          <TableCell className="text-center">
+                            <div className="flex items-center justify-center gap-2">
+                                <Users className="h-4 w-4" />
+                                {companyUsers.length}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-center">{getStatusBadge(mainStatus)}</TableCell>
+                        </TableRow>
+
+                        {isExpanded && companyUsers.map(user => (
+                          <TableRow key={user.id} className="bg-muted/30 hover:bg-muted/60">
+                            <TableCell></TableCell>
+                            <TableCell className="pl-12">
+                                <div>{user.contactPerson}</div>
+                                <div className="text-xs text-muted-foreground">{user.email}</div>
+                            </TableCell>
+                            <TableCell>
+                              {user.role === 'owner' && <Badge variant="secondary">Savininkas</Badge>}
+                              {user.role === 'admin' && <Badge variant="outline">Admin</Badge>}
+                              {user.role === 'member' && <Badge variant="outline">Narys</Badge>}
+                            </TableCell>
+                            <TableCell className="text-center">{getStatusBadge(user.paymentStatus)}</TableCell>
+                            <TableCell className="text-right">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" className="h-8 w-8 p-0">
+                                    <span className="sr-only">Open menu</span>
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuLabel>{t('admin.users.actions.userActions')}</DropdownMenuLabel>
+                                  <DropdownMenuItem onClick={() => handleViewDetails(user)}>
+                                      {t('admin.users.actions.viewProfile')}
                                   </DropdownMenuItem>
-                                   <DropdownMenuItem onClick={() => handleStatusChange(user, 'trial')} disabled={user.paymentStatus === 'trial'}>
-                                      {t('admin.users.status.trial')}
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => handleStatusChange(user, 'pending_payment')} disabled={user.paymentStatus === 'pending_payment'}>
-                                      {t('admin.users.status.pending_payment')}
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => handleStatusChange(user, 'pending_verification')} disabled={user.paymentStatus === 'pending_verification'}>
-                                      {t('admin.users.status.pending_verification')}
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => handleStatusChange(user, 'inactive')} disabled={user.paymentStatus === 'inactive'}>
-                                      {t('admin.users.status.inactive')}
-                                  </DropdownMenuItem>
-                            </DropdownMenuGroup>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuGroup>
+                                    <DropdownMenuLabel>{t('admin.users.actions.changeStatus')}</DropdownMenuLabel>
+                                        <DropdownMenuItem onClick={() => handleStatusChange(user, 'active')} disabled={user.paymentStatus === 'active'}>
+                                            {t('admin.users.status.active')}
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => handleStatusChange(user, 'trial')} disabled={user.paymentStatus === 'trial'}>
+                                            {t('admin.users.status.trial')}
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => handleStatusChange(user, 'pending_payment')} disabled={user.paymentStatus === 'pending_payment'}>
+                                            {t('admin.users.status.pending_payment')}
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => handleStatusChange(user, 'pending_verification')} disabled={user.paymentStatus === 'pending_verification'}>
+                                            {t('admin.users.status.pending_verification')}
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => handleStatusChange(user, 'inactive')} disabled={user.paymentStatus === 'inactive'}>
+                                            {t('admin.users.status.inactive')}
+                                        </DropdownMenuItem>
+                                  </DropdownMenuGroup>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </Fragment>
+                    );
+                  })
                 )}
               </TableBody>
             </Table>
