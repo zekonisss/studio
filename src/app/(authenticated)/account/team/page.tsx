@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,7 +30,7 @@ export default function TeamPage() {
   const [isInviting, setIsInviting] = useState(false);
   const [companyInfo, setCompanyInfo] = useState<{name: string, used: number, max: number} | null>(null);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     if (!user) return;
     setLoading(true);
     try {
@@ -45,20 +45,28 @@ export default function TeamPage() {
                 max: res.maxSeats
             });
         }
+      } else if (!res.success) {
+          toast({
+              variant: "destructive",
+              title: "Klaida kraunant komandą",
+              description: res.error,
+          });
       }
     } catch (error) {
       console.error(error);
+       toast({
+          variant: "destructive",
+          title: "Klaida",
+          description: "Nepavyko gauti komandos duomenų.",
+        });
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, toast]);
 
   useEffect(() => {
-    if(user){
-      loadData();
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+    loadData();
+  }, [loadData]);
 
   const handleInvite = async () => {
     if (!inviteEmail.includes("@")) {
