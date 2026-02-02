@@ -33,16 +33,7 @@ export default function LoginPage() {
   const { login, user, isLoading } = useAuth();
   const { t } = useLanguage();
   const { toast } = useToast();
-  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const form = useForm<LoginFormValues>({
-    resolver: zodResolver(LoginSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-    },
-  });
 
   useEffect(() => {
     if (isLoading || typeof window === 'undefined') return;
@@ -53,10 +44,10 @@ export default function LoginPage() {
       } else if (user.paymentStatus === 'active' || user.paymentStatus === 'trial') {
         window.location.replace('/dashboard');
       } else {
-        router.replace('/activation-pending');
+        window.location.replace('/activation-pending');
       }
     }
-  }, [user, isLoading, router]);
+  }, [user, isLoading]);
 
 
   const onSubmit = async (values: LoginFormValues) => {
