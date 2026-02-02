@@ -69,30 +69,37 @@ export default function TeamPage() {
     }
   }, [currentUser]);
 
-  // 2. Kvietimo funkcija
-  const handleInvite = async () => {
-    if (!inviteEmail || !currentUser?.companyId) return;
-    setIsInviting(true);
-    try {
-       const result = await createInvitation(
-         inviteEmail, 
-         currentUser.companyId, 
-         currentUser.companyName || "Mūsų Įmonė"
-       ); 
+// 2. Kvietimo funkcija (PATAISYTA)
+const handleInvite = async () => {
+  if (!inviteEmail || !currentUser?.companyId) return;
+  setIsInviting(true);
+  
+  try {
+     const result = await createInvitation(
+       inviteEmail, 
+       currentUser.companyId, 
+       currentUser.companyName || "Mūsų Įmonė"
+     ); 
 
-       if (result?.success) {
-         toast({ title: "Išsiųsta!", description: "Pakvietimas sėkmingai išsiųstas nurodytu el. paštu." });
-         setInviteEmail("");
-       } else {
-         toast({ variant: "destructive", title: "Klaida", description: result.error || "Nepavyko." });
-       }
-    } catch (e) {
-      console.error(e);
-      toast({ variant: "destructive", title: "Klaida", description: "Sistemos klaida." });
-    } finally {
-      setIsInviting(false);
-    }
-  };
+     // APSAUGA: Jei serveris visai nieko negrąžino (pvz. tinklo klaida)
+     if (!result) {
+       throw new Error("Serveris neatsakė (no response).");
+     }
+
+     if (result.success) {
+       toast({ title: "Išsiųsta!", description: "Pakvietimas išsiųstas el. paštu." });
+       setInviteEmail("");
+     } else {
+       // Čia lūžo tavo kodas. Dabar mes saugiai skaitome error.
+       toast({ variant: "destructive", title: "Klaida", description: result.error || "Nepavyko išsiųsti." });
+     }
+  } catch (e: any) {
+    console.error("HandleInvite Error:", e);
+    toast({ variant: "destructive", title: "Sistemos klaida", description: e.message || "Įvyko nenumatyta klaida." });
+  } finally {
+    setIsInviting(false);
+  }
+};
 
   // 3. Rolės keitimo funkcija
   const handleRoleChange = async (memberId: string, newRole: string) => {

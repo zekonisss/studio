@@ -1,3 +1,4 @@
+// Triggering a cache refresh to resolve ChunkLoadError.
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
