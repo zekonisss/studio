@@ -48,6 +48,8 @@ export default function AuthenticatedLayout({
   const isAccountPage = pathname.startsWith('/account');
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+
     if (isLegalPage) {
       return;
     }
@@ -55,7 +57,7 @@ export default function AuthenticatedLayout({
     if (isLoading) return;
 
     if (!user) {
-      router.replace('/login');
+      window.location.replace('/login');
       return;
     }
 
@@ -64,25 +66,21 @@ export default function AuthenticatedLayout({
 
     if (user.isAdmin) {
       if (pathname === '/activation-pending') {
-        router.replace('/dashboard');
+        window.location.replace('/dashboard');
       }
       return;
     }
 
-    // If user isn't allowed in the app AND they are not trying to access the account page,
-    // send them to the activation pending page.
     if (!isAllowedInApp && !isAccountPage) {
       if (pathname !== '/activation-pending') {
-        router.replace('/activation-pending');
+        window.location.replace('/activation-pending');
       }
     } else if (isAllowedInApp) {
-      // If a user who IS allowed in the app somehow lands on activation-pending,
-      // send them to their dashboard.
       if (pathname === '/activation-pending') {
-        router.replace('/dashboard');
+        window.location.replace('/dashboard');
       }
     }
-  }, [user, isLoading, pathname, router, isLegalPage, isAccountPage]);
+  }, [user, isLoading, pathname, isLegalPage, isAccountPage]);
 
 
   // For unauthenticated users on legal pages, render a public-style layout

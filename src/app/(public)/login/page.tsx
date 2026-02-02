@@ -45,13 +45,13 @@ export default function LoginPage() {
   });
 
   useEffect(() => {
-    if (isLoading) return;
+    if (isLoading || typeof window === 'undefined') return;
 
     if (user) {
       if (user.isAdmin) {
-        router.replace('/admin');
+        window.location.replace('/admin');
       } else if (user.paymentStatus === 'active' || user.paymentStatus === 'trial') {
-        router.replace('/dashboard');
+        window.location.replace('/dashboard');
       } else {
         router.replace('/activation-pending');
       }
@@ -68,7 +68,7 @@ export default function LoginPage() {
           title: t('toast.login.success.title'),
           description: t('toast.login.success.description'),
       });
-      // Nukreipimą atliks useEffect, kai pasikeis "user" būsena.
+      // The useEffect hook will handle redirection once the user state is updated.
 
     } catch (error: any) {
        console.error("Login error:", error);
