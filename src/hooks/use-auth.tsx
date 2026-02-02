@@ -109,7 +109,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await signOut(auth);
     setUser(null);
     setFirebaseUser(null);
-    router.push('/login');
+    // FIX: Force a full page reload on logout to prevent chunk load errors
+    window.location.assign('/login');
   };
 
   const signup = async (data: SignupFormValuesExtended) => {
@@ -160,7 +161,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         paymentStatus: 'active', 
         isAdmin: false,
         
-        // PATAISYTA ČIA: Pridėtas "as any", kad TypeScript nepyktų
         createdAt: serverTimestamp() as any, 
         registeredAt: serverTimestamp() as any,
         accountActivatedAt: serverTimestamp() as any,
