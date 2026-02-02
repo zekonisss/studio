@@ -69,7 +69,7 @@ export default function HomePage() {
             <LanguageSwitcher />
 
             {/* "SHINY" LOGIN MYGTUKAS */}
-            <Link href="/login">
+            <a href="/login">
               <button className="relative group overflow-hidden rounded-lg bg-gradient-to-b from-blue-500 to-blue-700 px-6 py-2 text-white shadow-[0_0_15px_rgba(59,130,246,0.4)] transition-all duration-300 hover:scale-105 hover:shadow-[0_0_25px_rgba(59,130,246,0.6)]">
                 <div className="absolute inset-0 bg-white/20 opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
                 <div className="absolute -inset-[100%] top-0 block h-full w-1/2 -skew-x-12 bg-gradient-to-r from-transparent to-white opacity-20 group-hover:animate-shine" />
@@ -77,7 +77,7 @@ export default function HomePage() {
                   {t('login.loginButton')}
                 </span>
               </button>
-            </Link>
+            </a>
 
           </div>
         </div>
@@ -103,9 +103,9 @@ export default function HomePage() {
         <div className="container mx-auto flex flex-col md:flex-row items-center justify-between gap-6 px-6 text-sm text-muted-foreground">
           <p>&copy; {new Date().getFullYear()} {t('app.name')}. {t('landing.footer.rights')}</p>
           <div className="flex gap-8">
-            <Link href="/terms" className="hover:text-primary transition-colors">{t('sidebar.terms')}</Link>
-            <Link href="/privacy" className="hover:text-primary transition-colors">{t('sidebar.privacy')}</Link>
-            <Link href="/support" className="hover:text-primary transition-colors">{t('sidebar.support')}</Link>
+            <a href="/terms" className="hover:text-primary transition-colors">{t('sidebar.terms')}</a>
+            <a href="/privacy" className="hover:text-primary transition-colors">{t('sidebar.privacy')}</a>
+            <a href="/support" className="hover:text-primary transition-colors">{t('sidebar.support')}</a>
           </div>
         </div>
       </footer>
