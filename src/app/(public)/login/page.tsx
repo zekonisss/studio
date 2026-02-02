@@ -62,20 +62,13 @@ export default function LoginPage() {
   const onSubmit = async (values: LoginFormValues) => {
     setIsSubmitting(true);
     try {
-      const userData = await login(values); 
+      await login(values); 
       
       toast({
           title: t('toast.login.success.title'),
           description: t('toast.login.success.description'),
       });
-      
-      if (userData.isAdmin) {
-        router.push('/admin');
-      } else if (userData.paymentStatus === 'active' || userData.paymentStatus === 'trial') {
-        router.push('/dashboard');
-      } else {
-        router.push('/activation-pending');
-      }
+      // Nukreipimą atliks useEffect, kai pasikeis "user" būsena.
 
     } catch (error: any) {
        console.error("Login error:", error);
