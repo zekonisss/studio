@@ -1,169 +1,81 @@
 'use server';
 
 import { adminAuth, adminDb } from "@/lib/firebase-admin";
-import { Timestamp } from "firebase-admin/firestore";
-import crypto from 'crypto';
+import { revalidatePath } from "next/cache";
+import { randomBytes } from "crypto";
 
-// --- HELPER FUNCTIONS ---
-const getUser = async (userId: string) => {
-    const userRef = adminDb.collection('users').doc(userId);
-    const userDoc = await userRef.get();
-    return userDoc.exists ? userDoc.data() : null;
-};
-
-const getCompany = async (companyId: string) => {
-    const companyRef = adminDb.collection('companies').doc(companyId);
-    const companyDoc = await companyRef.get();
-    return companyDoc.exists ? { id: companyDoc.id, ...companyDoc.data() } : null;
-};
-
-// 1. GET TEAM MEMBERS
-export async function getTeamMembers(userId: string) {
+// --- 1. PAKVIETIMO KŪRIMO FUNKCIJA (GRĄŽINTA) ---
+export async function createInvitation(email: string, companyId: string, companyName: string) {
   try {
-    const user = await getUser(userId);
-    if (!user || !user.companyId) {
-        // User is not part of any company
-        return { success: true, members: [], companyId: null, plan: 'solo' };
-    }
+    // Sugeneruojame unikalų tokeną
+    const token = randomBytes(32).toString('hex');
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7); // Galioja 7 dienas
 
-    const company = await getCompany(user.companyId);
-    if (!company) {
-        // Data inconsistency: user has a companyId but company doesn't exist
-        return { success: false, error: "Susijusi įmonė nerasta." };
-    }
+    // Įrašome į Firestore
+    await adminDb.collection('invitations').add({
+      email,
+      companyId,
+      companyName,
+      token,
+      status: 'pending',
+      createdAt: new Date(),
+      expiresAt
+    });
 
-    // Find all users belonging to this company
-    const usersSnapshot = await adminDb.collection('users')
-      .where('companyId', '==', user.companyId)
-      .get();
+    // Sugeneruojame nuorodą (kad matytumėte konsolėje)
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const link = `${baseUrl}/join?token=${token}`;
+    
+    console.log("🔗 INVITE LINK:", link);
 
-    const members = usersSnapshot.docs.map(doc => ({
-      id: doc.id,
-      email: doc.data().email,
-      fullName: doc.data().fullName || 'Nenurodyta',
-      role: doc.data().role,
-      joinedAt: doc.data().createdAt?.toDate() || new Date(),
-      status: doc.data().paymentStatus || 'active'
-    }));
+    revalidatePath('/authenticated/account/team');
+    return { success: true, link };
 
-    return { 
-        success: true, 
-        members, 
-        companyId: company.id, 
-        companyName: company.name,
-        maxSeats: company.maxSeats || 1,
-        usedSeats: members.length 
-    };
-
-  } catch (error) {
-    console.error("Error fetching team:", error);
-    return { success: false, error: "Serverio klaida gaunant komandos duomenis." };
+  } catch (error: any) {
+    console.error("Error creating invitation:", error);
+    return { success: false, error: error.message };
   }
 }
 
-// 2. INVITE MEMBER
-export async function inviteTeamMember(inviterId: string, email: string) {
+// --- 2. ROLĖS KEITIMO FUNKCIJA ---
+export async function updateMemberRole(targetUserId: string, newRole: 'admin' | 'member') {
+  try {
+    console.log(`🔄 Updating role for ${targetUserId} to ${newRole}`);
+
+    // Atnaujiname Firestore
+    await adminDb.collection('users').doc(targetUserId).update({
+      role: newRole
+    });
+
+    // Pabandome atnaujinti ir Auth claims (nebūtina, bet saugiau)
     try {
-        const inviter = await getUser(inviterId);
-        if (!inviter || !inviter.companyId) {
-            return { success: false, error: "Jūs nepriklausote jokiai įmonei." };
-        }
-        
-        if (inviter.role !== 'owner' && inviter.role !== 'admin' && !inviter.isAdmin) {
-            return { success: false, error: "Neturite teisių kviesti naujų narių." };
-        }
-        
-        const company = await getCompany(inviter.companyId);
-        if (!company) {
-             return { success: false, error: "Jūsų įmonė nerasta sistemoje." };
-        }
-        
-        // Check Limits
-        const currentSeats = (await adminDb.collection('users').where('companyId', '==', inviter.companyId).get()).size;
-        const maxSeats = company.maxSeats || 1;
-
-        if (currentSeats >= maxSeats) {
-             return { success: false, error: "Pasiektas vartotojų limitas. Padidinkite planą." };
-        }
-
-        // Generate Token
-        const token = crypto.randomBytes(32).toString('hex');
-        const expiresAt = new Date();
-        expiresAt.setDate(expiresAt.getDate() + 7); 
-
-        // Save Invitation
-        await adminDb.collection('invitations').add({
-            companyId: inviter.companyId,
-            companyName: company.name,
-            inviterId: inviterId,
-            email: email.toLowerCase(),
-            token,
-            status: 'pending',
-            createdAt: Timestamp.now(),
-            expiresAt: Timestamp.fromDate(expiresAt)
-        });
-
-        // Return link for testing (Email integration comes later)
-        const inviteLink = `${process.env.NEXT_PUBLIC_APP_URL}/join?token=${token}`;
-
-        return { success: true, message: "Pakvietimas sukurtas", inviteLink };
-
-    } catch (error) {
-        console.error("Invite error:", error);
-        return { success: false, error: "Serverio klaida." };
+        await adminAuth.setCustomUserClaims(targetUserId, { role: newRole });
+    } catch (e) {
+        console.warn("Custom claims update skipped.");
     }
+
+    revalidatePath('/authenticated/account/team');
+    return { success: true };
+
+  } catch (error: any) {
+    console.error("Klaida keičiant rolę:", error);
+    return { success: false, error: error.message };
+  }
 }
 
-// 3. REMOVE MEMBER (Strict)
-export async function removeTeamMember(removerId: string, memberId: string) {
-    try {
-        if (removerId === memberId) return { success: false, error: "Negalima pašalinti savęs." };
-
-        const remover = await getUser(removerId);
-        if (!remover || !remover.companyId) {
-            return { success: false, error: "Jūs nepriklausote jokiai įmonei." };
-        }
-        
-        if (remover.role !== 'owner' && remover.role !== 'admin' && !remover.isAdmin) {
-            return { success: false, error: "Neturite teisių šalinti narių." };
-        }
-        
-        const memberRef = adminDb.collection('users').doc(memberId);
-        const memberDoc = await memberRef.get();
-        const memberData = memberDoc.data();
-
-        if (!memberDoc.exists || !memberData) {
-             return { success: false, error: "Šalinamas vartotojas nerastas." };
-        }
-
-        if (memberData.companyId !== remover.companyId) {
-            return { success: false, error: "Vartotojas nepriklauso jūsų komandai." };
-        }
-
-        if (memberData.role === 'owner') {
-             return { success: false, error: "Negalima pašalinti įmonės savininko." };
-        }
-
-        // A) Update Database
-        await memberRef.update({
-            companyId: null,
-            role: 'suspended',
-            paymentStatus: 'inactive',
-            updatedAt: Timestamp.now()
-        });
-
-        // B) Disable in Auth (Prevent Login)
-        try {
-            await adminAuth.updateUser(memberId, { disabled: true });
-        } catch (authError) {
-            console.error("Auth disable error:", authError);
-            // Don't fail the whole operation if this part fails, but log it
-        }
-
-        return { success: true, message: "Narys pašalintas ir jo paskyra suspenduota." };
-
-    } catch (error) {
-        console.error("Remove error:", error);
-        return { success: false, error: "Klaida šalinant narį." };
-    }
+// --- 3. VARTOTOJO TRYNIMO FUNKCIJA ---
+export async function deleteTeamMember(userId: string) {
+  try {
+    // Ištriname iš Auth (kad nebegalėtų prisijungti)
+    await adminAuth.deleteUser(userId);
+    // Ištriname iš Firestore (kad neberodytų sąraše)
+    await adminDb.collection('users').doc(userId).delete();
+    
+    revalidatePath('/authenticated/account/team');
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error removing member:", error);
+    return { success: false, error: error.message };
+  }
 }

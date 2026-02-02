@@ -174,7 +174,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
      const createdProfile = await getUserProfile(uid);
      setUser(createdProfile);
      
-     router.push("/authenticated/account/team");
+     window.location.replace("/account/team");
   };
   
   const updateUserInContext = async (data: Partial<UserProfile>) => {

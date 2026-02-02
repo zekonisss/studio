@@ -1,230 +1,217 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, UserPlus, Trash2, Users, Crown, ShieldAlert } from "lucide-react";
-import { getTeamMembers, inviteTeamMember, removeTeamMember } from "./actions";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Loader2, Trash2, UserPlus } from "lucide-react";
+import { collection, query, where, onSnapshot, orderBy, Firestore } from "firebase/firestore";
+import { db } from "@/lib/firebase"; 
+import { createInvitation, deleteTeamMember, updateMemberRole } from "./actions";
 
+// Sukuriame tipą, kad TypeScript žinotų, ko tikėtis iš nario
 interface TeamMember {
   id: string;
   email: string;
-  fullName: string;
-  role: string;
-  status: string;
+  fullName?: string;
+  role?: string;
+  companyId?: string;
 }
 
 export default function TeamPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   
-  const [members, setMembers] = useState<TeamMember[]>([]);
+  // 1. TRIUKAS: verčiame 'user' į 'any', kad TS nebeklausinėtų apie 'companyId'
+  const currentUser = user as any;
+
   const [loading, setLoading] = useState(true);
+  const [members, setMembers] = useState<TeamMember[]>([]);
   const [inviteEmail, setInviteEmail] = useState("");
   const [isInviting, setIsInviting] = useState(false);
-  const [companyInfo, setCompanyInfo] = useState<{name: string, used: number, max: number} | null>(null);
 
-  const loadData = useCallback(async () => {
-    if (!user) return;
-    setLoading(true);
-    try {
-      const res = await getTeamMembers(user.id);
-      if (res.success && res.members) {
-        setMembers(res.members);
-        // Only set company info if a company exists
-        if (res.companyId) {
-            setCompanyInfo({
-                name: res.companyName,
-                used: res.usedSeats,
-                max: res.maxSeats
-            });
-        }
-      } else if (!res.success) {
-          toast({
-              variant: "destructive",
-              title: "Klaida kraunant komandą",
-              description: res.error,
-          });
-      }
-    } catch (error) {
-      console.error(error);
-       toast({
-          variant: "destructive",
-          title: "Klaida",
-          description: "Nepavyko gauti komandos duomenų.",
-        });
-    } finally {
-      setLoading(false);
-    }
-  }, [user, toast]);
-
+  // 1. Gauname komandos narius realiu laiku
   useEffect(() => {
-    loadData();
-  }, [loadData]);
-
-  const handleInvite = async () => {
-    if (!inviteEmail.includes("@")) {
-        toast({ variant: "destructive", title: "Error", description: "Please enter a valid email." });
+    // Jei nėra DB arba vartotojo companyId - nieko nedarome
+    if (!db || !currentUser?.companyId) {
+        setLoading(false);
         return;
     }
-    
+
+    try {
+      // 2. TRIUKAS: (db as Firestore) pasako TS: "Aš pasitikiu, kad db čia egzistuoja"
+      const usersRef = collection(db as Firestore, "users");
+      
+      const q = query(
+        usersRef, 
+        where("companyId", "==", currentUser.companyId),
+        orderBy("createdAt", "desc")
+      );
+
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const usersData = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as TeamMember[]; // Pasakome, kad gauti duomenys atitinka TeamMember struktūrą
+        
+        setMembers(usersData);
+        setLoading(false);
+      });
+
+      return () => unsubscribe();
+    } catch (e) {
+      console.error("Firestore error:", e);
+      setLoading(false);
+    }
+  }, [currentUser]);
+
+  // 2. Kvietimo funkcija
+  const handleInvite = async () => {
+    if (!inviteEmail || !currentUser?.companyId) return;
     setIsInviting(true);
     try {
-        const res = await inviteTeamMember(user!.id, inviteEmail);
-        
-        if (res.success) {
-            console.log("INVITE LINK:", res.inviteLink);
-            toast({ 
-                title: "Invite Created!", 
-                description: "Link (Dev Mode): " + res.inviteLink, 
-                duration: 10000 
-            });
-            setInviteEmail("");
-        } else {
-            toast({ variant: "destructive", title: "Failed", description: res.error });
-        }
+       const result = await createInvitation(
+         inviteEmail, 
+         currentUser.companyId, 
+         currentUser.companyName || "Mūsų Įmonė"
+       ); 
+
+       if (result?.success) {
+         toast({ title: "Pavyko!", description: "Pakvietimas sukurtas (žiūrėti konsolę)." });
+         setInviteEmail("");
+         if (result.link) console.log("🔗 Tavo nuoroda:", result.link);
+       } else {
+         toast({ variant: "destructive", title: "Klaida", description: result.error || "Nepavyko." });
+       }
     } catch (e) {
-        toast({ variant: "destructive", title: "Error", description: "Server error." });
+      console.error(e);
+      toast({ variant: "destructive", title: "Klaida", description: "Sistemos klaida." });
     } finally {
-        setIsInviting(false);
+      setIsInviting(false);
     }
   };
 
-  const handleRemove = async (memberId: string) => {
-    if (!confirm("Are you sure? This will suspend the user's account access.")) return;
+  // 3. Rolės keitimo funkcija
+  const handleRoleChange = async (memberId: string, newRole: string) => {
+    if(newRole !== 'admin' && newRole !== 'member') return;
 
-    try {
-        const res = await removeTeamMember(user!.id, memberId);
-        if (res.success) {
-            toast({ title: "Done", description: "User removed." });
-            loadData();
-        } else {
-            toast({ variant: "destructive", title: "Error", description: res.error });
-        }
-    } catch (e) {
-        console.error(e);
+    toast({ title: "Atnaujinama...", description: "Keičiama vartotojo rolė." });
+    
+    const result = await updateMemberRole(memberId, newRole as 'admin' | 'member');
+    
+    if (result.success) {
+        toast({ title: "Atlikta!", description: "Vartotojo teisės pakeistos." });
+    } else {
+        toast({ variant: "destructive", title: "Klaida", description: result.error });
     }
   };
 
-  if (loading) {
-    return <div className="flex justify-center p-12"><Loader2 className="animate-spin h-8 w-8 text-primary" /></div>;
-  }
+  // 4. Trynimo funkcija
+  const handleDelete = async (memberId: string) => {
+      if(!confirm("Ar tikrai norite pašalinti šį narį?")) return;
+      
+      const result = await deleteTeamMember(memberId);
+      if (result.success) {
+          toast({ title: "Ištrinta", description: "Narys pašalintas iš komandos." });
+      } else {
+          toast({ variant: "destructive", title: "Klaida", description: result.error });
+      }
+  };
 
-  // Handle Solo Users (No Company yet)
-  if (!companyInfo) {
-      return (
-          <div className="max-w-4xl mx-auto p-6">
-              <Alert className="bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-900">
-                  <Crown className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                  <AlertTitle>Team Management</AlertTitle>
-                  <AlertDescription className="mt-2">
-                      This feature is available for <strong>Team</strong> and <strong>Corporate</strong> plans.
-                      <br />
-                      You are currently on a Solo plan. Upgrade to manage multiple users.
-                      <div className="mt-4">
-                        <Button variant="default">Upgrade Plan &rarr;</Button>
-                      </div>
-                  </AlertDescription>
-              </Alert>
-          </div>
-      );
-  }
+  if (loading) return <div className="p-8 text-center text-muted-foreground">Kraunama komanda...</div>;
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8 p-4">
-      
-      {/* HEADER */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-            <h1 className="text-3xl font-bold tracking-tight">Team</h1>
-            <p className="text-muted-foreground">
-                Company: <span className="font-semibold text-foreground">{companyInfo.name}</span>
-            </p>
-        </div>
-        <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 px-4 py-2 rounded-full font-medium text-sm">
-            <Users className="w-4 h-4 text-muted-foreground" />
-            <span>Seats: {companyInfo.used} / {companyInfo.max}</span>
-        </div>
+    <div className="space-y-6 p-6 max-w-5xl mx-auto">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Komanda</h1>
+        <p className="text-muted-foreground">
+          Įmonė: <span className="font-semibold text-foreground">{currentUser?.companyName || "Kraunama..."}</span>
+        </p>
       </div>
 
-      {/* INVITE FORM */}
+      {/* Kvietimo kortelė */}
       <Card>
         <CardHeader>
-            <CardTitle>Invite New Member</CardTitle>
-            <CardDescription>
-                Send an invitation to add a colleague to your company account.
-            </CardDescription>
+          <CardTitle>Pakviesti naują narį</CardTitle>
+          <CardDescription>Išsiųskite pakvietimą el. paštu.</CardDescription>
         </CardHeader>
         <CardContent>
-            <div className="flex gap-4">
-                <Input 
-                    placeholder="colleague@company.com" 
-                    value={inviteEmail}
-                    onChange={(e) => setInviteEmail(e.target.value)}
-                />
-                <Button onClick={handleInvite} disabled={isInviting || companyInfo.used >= companyInfo.max}>
-                    {isInviting ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4 mr-2" />}
-                    Invite
-                </Button>
-            </div>
-            {companyInfo.used >= companyInfo.max && (
-                <p className="text-xs text-red-500 mt-2 flex items-center gap-1">
-                    <ShieldAlert className="w-3 h-3" />
-                    Seat limit reached. Upgrade your plan to add more users.
-                </p>
-            )}
+          <div className="flex gap-2">
+            <Input 
+              placeholder="kolega@imone.lt" 
+              value={inviteEmail}
+              onChange={(e) => setInviteEmail(e.target.value)}
+            />
+            <Button onClick={handleInvite} disabled={isInviting}>
+              {isInviting ? <Loader2 className="animate-spin mr-2"/> : <UserPlus className="mr-2 h-4 w-4"/>}
+              Pakviesti
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
-      {/* MEMBER LIST */}
+      {/* Narių sąrašas */}
       <Card>
-          <CardHeader>
-              <CardTitle>Members</CardTitle>
-          </CardHeader>
-          <CardContent>
-              <div className="space-y-4">
-                  {members.map((member) => (
-                      <div key={member.id} className="flex items-center justify-between p-4 border rounded-lg bg-card hover:bg-accent/5 transition-colors">
-                          <div className="flex items-center gap-4">
-                              <Avatar>
-                                  <AvatarFallback>{member.fullName?.[0]?.toUpperCase() || member.email[0]?.toUpperCase()}</AvatarFallback>
-                              </Avatar>
-                              <div>
-                                  <p className="font-medium text-sm">{member.fullName}</p>
-                                  <p className="text-xs text-muted-foreground">{member.email}</p>
-                              </div>
-                              {member.role === 'owner' && <Badge variant="default" className="ml-2">Owner</Badge>}
-                              {member.role === 'admin' && <Badge variant="secondary" className="ml-2">Admin</Badge>}
-                              {member.status === 'suspended' && <Badge variant="destructive" className="ml-2">Suspended</Badge>}
-                          </div>
+        <CardHeader>
+          <CardTitle>Nariai ({members.length})</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {members.map((member) => (
+              <div key={member.id} className="flex items-center justify-between p-4 border rounded-lg bg-card hover:bg-accent/10 transition">
+                
+                {/* Kairė pusė */}
+                <div className="flex items-center gap-4">
+                  <Avatar>
+                    <AvatarFallback>{member.fullName?.[0] || member.email?.[0] || "?"}</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="font-medium">{member.fullName || "Be vardo"}</p>
+                    <p className="text-sm text-muted-foreground">{member.email}</p>
+                  </div>
+                  
+                  {member.role === 'owner' && <Badge className="bg-blue-600">Savininkas</Badge>}
+                  {member.role === 'admin' && <Badge variant="secondary">Admin</Badge>}
+                </div>
 
-                          {/* Actions (Cannot remove self/owner) */}
-                          {member.role !== 'owner' && (
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
-                                onClick={() => handleRemove(member.id)}
-                              >
-                                  <Trash2 className="w-4 h-4" />
-                              </Button>
-                          )}
-                      </div>
-                  ))}
+                {/* Dešinė pusė: Veiksmai */}
+                <div className="flex items-center gap-3">
+                    
+                    {/* ROLĖS KEITIMAS */}
+                    {member.role !== 'owner' && (
+                        <select 
+                            className="h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                            value={member.role || 'member'}
+                            onChange={(e) => handleRoleChange(member.id, e.target.value)}
+                            disabled={member.id === currentUser?.uid} 
+                        >
+                            <option value="member">Narys</option>
+                            <option value="admin">Administratorius</option>
+                        </select>
+                    )}
 
-                  {members.length === 0 && (
-                      <p className="text-center text-muted-foreground py-8">No members found.</p>
-                  )}
+                    {/* TRYNIMO MYGTUKAS */}
+                    {member.role !== 'owner' && (
+                        <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="text-red-500 hover:text-red-600 hover:bg-red-100"
+                            onClick={() => handleDelete(member.id)}
+                            disabled={member.id === currentUser?.uid}
+                        >
+                            <Trash2 className="h-4 w-4" />
+                        </Button>
+                    )}
+                </div>
               </div>
-          </CardContent>
+            ))}
+          </div>
+        </CardContent>
       </Card>
-
     </div>
   );
 }
