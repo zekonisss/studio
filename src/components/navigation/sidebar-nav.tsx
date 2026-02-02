@@ -43,7 +43,7 @@ const accountNavItemsBase = [
 
 // 2. NAUJAS OBJEKTAS KOMANDAI
 const teamNavItemBase = {
-  href: "/authenticated/account/team", 
+  href: "/account/team", 
   labelKey: "Team", 
   icon: Users
 };
