@@ -4,27 +4,37 @@ import { adminAuth, adminDb } from "@/lib/firebase-admin";
 import { Timestamp } from "firebase-admin/firestore";
 import crypto from 'crypto';
 
-// 1. GET TEAM MEMBERS
-export async function getTeamMembers(ownerId: string) {
-  try {
-    // Find the company owned by this user
-    const companySnapshot = await adminDb.collection('companies')
-      .where('ownerId', '==', ownerId)
-      .limit(1)
-      .get();
+// --- HELPER FUNCTIONS ---
+const getUser = async (userId: string) => {
+    const userRef = adminDb.collection('users').doc(userId);
+    const userDoc = await userRef.get();
+    return userDoc.exists ? userDoc.data() : null;
+};
 
-    if (companySnapshot.empty) {
-        // User has no company (Solo user)
+const getCompany = async (companyId: string) => {
+    const companyRef = adminDb.collection('companies').doc(companyId);
+    const companyDoc = await companyRef.get();
+    return companyDoc.exists ? { id: companyDoc.id, ...companyDoc.data() } : null;
+};
+
+// 1. GET TEAM MEMBERS
+export async function getTeamMembers(userId: string) {
+  try {
+    const user = await getUser(userId);
+    if (!user || !user.companyId) {
+        // User is not part of any company
         return { success: true, members: [], companyId: null, plan: 'solo' };
     }
 
-    const companyDoc = companySnapshot.docs[0];
-    const companyId = companyDoc.id;
-    const companyData = companyDoc.data();
+    const company = await getCompany(user.companyId);
+    if (!company) {
+        // Data inconsistency: user has a companyId but company doesn't exist
+        return { success: false, error: "Susijusi įmonė nerasta." };
+    }
 
     // Find all users belonging to this company
     const usersSnapshot = await adminDb.collection('users')
-      .where('companyId', '==', companyId)
+      .where('companyId', '==', user.companyId)
       .get();
 
     const members = usersSnapshot.docs.map(doc => ({
@@ -33,42 +43,44 @@ export async function getTeamMembers(ownerId: string) {
       fullName: doc.data().fullName || 'Nenurodyta',
       role: doc.data().role,
       joinedAt: doc.data().createdAt?.toDate() || new Date(),
-      status: doc.data().status || 'active'
+      status: doc.data().paymentStatus || 'active'
     }));
 
     return { 
         success: true, 
         members, 
-        companyId, 
-        companyName: companyData.name,
-        maxSeats: companyData.maxSeats || 1,
+        companyId: company.id, 
+        companyName: company.name,
+        maxSeats: company.maxSeats || 1,
         usedSeats: members.length 
     };
 
   } catch (error) {
     console.error("Error fetching team:", error);
-    return { success: false, error: "Failed to fetch team members." };
+    return { success: false, error: "Serverio klaida gaunant komandos duomenis." };
   }
 }
 
 // 2. INVITE MEMBER
-export async function inviteTeamMember(ownerId: string, email: string) {
+export async function inviteTeamMember(inviterId: string, email: string) {
     try {
-        const companySnapshot = await adminDb.collection('companies')
-            .where('ownerId', '==', ownerId)
-            .limit(1)
-            .get();
-
-        if (companySnapshot.empty) {
-            return { success: false, error: "Jūs neturite sukūręs įmonės paskyros." };
+        const inviter = await getUser(inviterId);
+        if (!inviter || !inviter.companyId) {
+            return { success: false, error: "Jūs nepriklausote jokiai įmonei." };
         }
         
-        const companyDoc = companySnapshot.docs[0];
-        const companyId = companyDoc.id;
+        if (inviter.role !== 'owner' && inviter.role !== 'admin' && !inviter.isAdmin) {
+            return { success: false, error: "Neturite teisių kviesti naujų narių." };
+        }
+        
+        const company = await getCompany(inviter.companyId);
+        if (!company) {
+             return { success: false, error: "Jūsų įmonė nerasta sistemoje." };
+        }
         
         // Check Limits
-        const currentSeats = (await adminDb.collection('users').where('companyId', '==', companyId).get()).size;
-        const maxSeats = companyDoc.data().maxSeats || 1;
+        const currentSeats = (await adminDb.collection('users').where('companyId', '==', inviter.companyId).get()).size;
+        const maxSeats = company.maxSeats || 1;
 
         if (currentSeats >= maxSeats) {
              return { success: false, error: "Pasiektas vartotojų limitas. Padidinkite planą." };
@@ -81,9 +93,9 @@ export async function inviteTeamMember(ownerId: string, email: string) {
 
         // Save Invitation
         await adminDb.collection('invitations').add({
-            companyId,
-            companyName: companyDoc.data().name,
-            inviterId: ownerId,
+            companyId: inviter.companyId,
+            companyName: company.name,
+            inviterId: inviterId,
             email: email.toLowerCase(),
             token,
             status: 'pending',
@@ -103,30 +115,40 @@ export async function inviteTeamMember(ownerId: string, email: string) {
 }
 
 // 3. REMOVE MEMBER (Strict)
-export async function removeTeamMember(ownerId: string, memberId: string) {
+export async function removeTeamMember(removerId: string, memberId: string) {
     try {
-        if (ownerId === memberId) return { success: false, error: "Negalima pašalinti savęs." };
+        if (removerId === memberId) return { success: false, error: "Negalima pašalinti savęs." };
 
-        // Verify Ownership
-        const companySnapshot = await adminDb.collection('companies')
-            .where('ownerId', '==', ownerId)
-            .limit(1)
-            .get();
-
-        if (companySnapshot.empty) return { success: false, error: "Neturite teisių." };
-
-        const companyId = companySnapshot.docs[0].id;
+        const remover = await getUser(removerId);
+        if (!remover || !remover.companyId) {
+            return { success: false, error: "Jūs nepriklausote jokiai įmonei." };
+        }
+        
+        if (remover.role !== 'owner' && remover.role !== 'admin' && !remover.isAdmin) {
+            return { success: false, error: "Neturite teisių šalinti narių." };
+        }
+        
         const memberRef = adminDb.collection('users').doc(memberId);
         const memberDoc = await memberRef.get();
+        const memberData = memberDoc.data();
 
-        if (!memberDoc.exists || memberDoc.data()?.companyId !== companyId) {
-             return { success: false, error: "Vartotojas nerastas komandoje." };
+        if (!memberDoc.exists || !memberData) {
+             return { success: false, error: "Šalinamas vartotojas nerastas." };
+        }
+
+        if (memberData.companyId !== remover.companyId) {
+            return { success: false, error: "Vartotojas nepriklauso jūsų komandai." };
+        }
+
+        if (memberData.role === 'owner') {
+             return { success: false, error: "Negalima pašalinti įmonės savininko." };
         }
 
         // A) Update Database
         await memberRef.update({
             companyId: null,
             role: 'suspended',
+            paymentStatus: 'inactive',
             updatedAt: Timestamp.now()
         });
 
@@ -135,9 +157,10 @@ export async function removeTeamMember(ownerId: string, memberId: string) {
             await adminAuth.updateUser(memberId, { disabled: true });
         } catch (authError) {
             console.error("Auth disable error:", authError);
+            // Don't fail the whole operation if this part fails, but log it
         }
 
-        return { success: true, message: "Narys pašalintas." };
+        return { success: true, message: "Narys pašalintas ir jo paskyra suspenduota." };
 
     } catch (error) {
         console.error("Remove error:", error);

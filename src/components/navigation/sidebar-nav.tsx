@@ -19,7 +19,8 @@ import {
   FileSpreadsheet,
   LogOut,
   ScrollText,
-  ShieldCheck
+  ShieldCheck,
+  Users // <--- 1. NAUJA IKONA
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import type { ReactNode } from "react";
@@ -39,6 +40,13 @@ const historyNavItemsBase = [
 const accountNavItemsBase = [
   { href: "/account", labelKey: "sidebar.account", icon: UserCircle },
 ];
+
+// 2. NAUJAS OBJEKTAS KOMANDAI
+const teamNavItemBase = {
+  href: "/authenticated/account/team", 
+  labelKey: "Team", 
+  icon: Users
+};
 
 const legalNavItemsBase = [
   { href: "/support", labelKey: "sidebar.support", icon: ShieldQuestion },
@@ -60,9 +68,20 @@ export function SidebarNav({ isInSheet = false }: SidebarNavProps) {
   const { user, logout } = useAuth();
   const { t } = useLanguage(); 
 
+  // 3. LOGIKA: Jei savininkas arba adminas -> pridedame "Team"
+  const finalAccountItems = [...accountNavItemsBase];
+
+  // (user as any) naudojame apeiti TypeScript, jei role tipas dar neaprašytas
+  if (user && ((user as any).role === 'owner' || user.isAdmin)) {
+    finalAccountItems.push(teamNavItemBase);
+  }
+
   const mainNavItems = mainNavItemsBase.map(item => ({ ...item, label: t(item.labelKey) }));
   const historyNavItems = historyNavItemsBase.map(item => ({ ...item, label: t(item.labelKey) }));
-  const accountNavItems = accountNavItemsBase.map(item => ({ ...item, label: t(item.labelKey) }));
+  
+  // Čia naudojame jau modifikuotą sąrašą
+  const accountNavItems = finalAccountItems.map(item => ({ ...item, label: t(item.labelKey) }));
+  
   const legalNavItems = legalNavItemsBase.map(item => ({ ...item, label: t(item.labelKey) }));
   const adminNavItems = adminNavItemsBase.map(item => ({ ...item, label: t(item.labelKey) }));
 
@@ -129,7 +148,8 @@ export function SidebarNav({ isInSheet = false }: SidebarNavProps) {
             <h3 className="mb-1 mt-3 px-2 text-xs font-semibold uppercase text-muted-foreground tracking-wider">{t('sidebar.section.history')}</h3>
             {renderLinks(historyNavItems)}
           </div>
-          
+           
+          {/* Čia bus rodoma "Komanda" jei vartotojas turi teises */}
           <div>
             <h3 className="mb-1 mt-3 px-2 text-xs font-semibold uppercase text-muted-foreground tracking-wider">{t('sidebar.section.account')}</h3>
             {renderLinks(accountNavItems)}
