@@ -3,6 +3,8 @@
 import { adminAuth, adminDb } from "@/lib/firebase-admin";
 import { Timestamp } from "firebase-admin/firestore";
 import crypto from 'crypto';
+import { resend } from '@/lib/resend';
+import { InviteEmailTemplate } from '@/components/emails/invite-template';
 
 // --- HELPER FUNCTIONS ---
 const getUser = async (userId: string) => {
@@ -110,13 +112,27 @@ export async function inviteTeamMember(inviterId: string, email: string) {
             expiresAt: Timestamp.fromDate(expiresAt)
         });
 
-        // Return link for testing (Email integration comes later)
         const inviteLink = `${process.env.NEXT_PUBLIC_APP_URL}/join?token=${token}`;
 
-        return { success: true, message: "Pakvietimas sukurtas", inviteLink };
+        // --- Send email using Resend ---
+        await resend.emails.send({
+            from: 'Drivercheck <onboarding@resend.dev>',
+            to: email,
+            subject: `You have been invited to join ${company.name}`,
+            react: InviteEmailTemplate({ 
+                inviteLink, 
+                companyName: company.name as string,
+                inviterName: inviter.fullName || 'A team member'
+            }),
+        });
 
-    } catch (error) {
+        return { success: true, message: "Pakvietimas išsiųstas." };
+
+    } catch (error: any) {
         console.error("Invite error:", error);
+        if (error.name === 'ResendError') {
+             return { success: false, error: `Klaida siunčiant el. laišką: ${error.message}` };
+        }
         return { success: false, error: "Serverio klaida." };
     }
 }
