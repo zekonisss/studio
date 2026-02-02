@@ -120,7 +120,7 @@ export default function ReportsHistoryPage() {
                         <p className="text-sm text-muted-foreground">{current.message}</p>
                         {current.showButton && (
                         <Button asChild className="mt-4">
-                            <Link href="/authenticated/reports/add">
+                            <Link href="/reports/add">
                             <FilePlus2 className="mr-2 h-4 w-4" />
                             {current.buttonText}
                             </Link>
@@ -250,7 +250,7 @@ export default function ReportsHistoryPage() {
                             </div>
                         </div>
                          <Button asChild>
-                            <Link href="/authenticated/reports/add">
+                            <Link href="/reports/add">
                                 <FilePlus2 className="mr-2 h-4 w-4" />
                                 {t('reports.history.addNewButton')}
                             </Link>
