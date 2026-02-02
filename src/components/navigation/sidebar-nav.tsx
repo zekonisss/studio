@@ -20,7 +20,7 @@ import {
   LogOut,
   ScrollText,
   ShieldCheck,
-  Users // <--- 1. NAUJA IKONA
+  Users
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import type { ReactNode } from "react";
@@ -41,10 +41,9 @@ const accountNavItemsBase = [
   { href: "/account", labelKey: "sidebar.account", icon: UserCircle },
 ];
 
-// 2. NAUJAS OBJEKTAS KOMANDAI
 const teamNavItemBase = {
   href: "/account/team", 
-  labelKey: "Team", 
+  labelKey: "sidebar.team", 
   icon: Users
 };
 
@@ -68,20 +67,15 @@ export function SidebarNav({ isInSheet = false }: SidebarNavProps) {
   const { user, logout } = useAuth();
   const { t } = useLanguage(); 
 
-  // 3. LOGIKA: Jei savininkas arba adminas -> pridedame "Team"
   const finalAccountItems = [...accountNavItemsBase];
 
-  // (user as any) naudojame apeiti TypeScript, jei role tipas dar neaprašytas
   if (user && ((user as any).role === 'owner' || user.isAdmin)) {
     finalAccountItems.push(teamNavItemBase);
   }
 
   const mainNavItems = mainNavItemsBase.map(item => ({ ...item, label: t(item.labelKey) }));
   const historyNavItems = historyNavItemsBase.map(item => ({ ...item, label: t(item.labelKey) }));
-  
-  // Čia naudojame jau modifikuotą sąrašą
   const accountNavItems = finalAccountItems.map(item => ({ ...item, label: t(item.labelKey) }));
-  
   const legalNavItems = legalNavItemsBase.map(item => ({ ...item, label: t(item.labelKey) }));
   const adminNavItems = adminNavItemsBase.map(item => ({ ...item, label: t(item.labelKey) }));
 
@@ -97,7 +91,7 @@ export function SidebarNav({ isInSheet = false }: SidebarNavProps) {
   const renderLinks = (items: { href: string; label: string; icon: React.ElementType }[]) => {
     return items.map((item) => {
       let isActive: boolean;
-      if (item.href === '/dashboard' || item.href === '/search') {
+      if (item.href === '/dashboard' || item.href === '/search' || item.href === '/account/team') {
         isActive = pathname === item.href;
       } else {
         isActive = pathname.startsWith(item.href);
@@ -149,7 +143,6 @@ export function SidebarNav({ isInSheet = false }: SidebarNavProps) {
             {renderLinks(historyNavItems)}
           </div>
            
-          {/* Čia bus rodoma "Komanda" jei vartotojas turi teises */}
           <div>
             <h3 className="mb-1 mt-3 px-2 text-xs font-semibold uppercase text-muted-foreground tracking-wider">{t('sidebar.section.account')}</h3>
             {renderLinks(accountNavItems)}

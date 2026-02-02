@@ -29,11 +29,7 @@ export default function JoinPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
-        // 1. LOGAS NARŠYKLĖJE
-        console.log("🟢 JoinPage užsikrovė. Tokenas URL:", token);
-
         if (!token) {
-            console.error("🔴 Tokeno nėra URL'e");
             setError("Pakvietimo nuoroda negaliojanti arba jos trūksta.");
             setLoading(false);
             return;
@@ -41,17 +37,13 @@ export default function JoinPage() {
 
         const checkToken = async () => {
             try {
-                console.log("🟡 Bandau kviesti verifyInvitation serveryje...");
                 const result = await verifyInvitation(token);
-                console.log("🔵 Gavau atsakymą iš serverio:", result);
-
                 if (result.success && result.data) {
                     setInvitation(result.data);
                 } else {
                     setError(result.error || "Įvyko nežinoma klaida.");
                 }
             } catch (err) {
-                console.error("🔴 KLAIDA kviečiant serverį:", err);
                 setError("Nepavyko susisiekti su serveriu.");
             }
             setLoading(false);
@@ -62,7 +54,6 @@ export default function JoinPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        console.log("🟢 Paspaustas Submit mygtukas");
 
         if (!token || !fullName || password.length < 6) {
             toast({
@@ -76,8 +67,7 @@ export default function JoinPage() {
         setIsSubmitting(true);
         try {
             const result = await acceptInvitation(token, fullName, password);
-            console.log("🔵 Registracijos rezultatas:", result);
-
+            
             if (result.success) {
                 toast({
                     title: "Sveikiname prisijungus!",
@@ -92,14 +82,23 @@ export default function JoinPage() {
                 });
             }
         } catch (err) {
-            console.error("🔴 Registracijos klaida:", err);
+            toast({
+                variant: "destructive",
+                title: "Klaida",
+                description: "Įvyko netikėta klaida registruojantis.",
+            });
         } finally {
             setIsSubmitting(false);
         }
     };
 
-    // UI dalis lieka ta pati, tik trumpinu pavyzdžiui
-    if (loading) return <div>Tikrinama...</div>;
+    if (loading) {
+      return (
+        <div className="flex h-screen w-full items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      );
+    }
     
     if (error) {
         return (
