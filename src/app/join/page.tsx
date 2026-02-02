@@ -59,7 +59,7 @@ export default function JoinPage() {
             toast({
                 variant: "destructive",
                 title: "Klaida",
-                description: "Prašome užpildyti visus laukus teisingai.",
+                description: "Prašome užpildyti visus laukus teisingai (slaptažodis bent 6 simbolių).",
             });
             return;
         }
@@ -71,9 +71,9 @@ export default function JoinPage() {
             if (result.success) {
                 toast({
                     title: "Sveikiname prisijungus!",
-                    description: `Jūs sėkmingai prisijungėte prie ${invitation?.companyName}.`,
+                    description: `Jūs sėkmingai prisijungėte prie ${invitation?.companyName}. Dabar galite prisijungti.`,
                 });
-                window.location.replace('/login');
+                router.push('/login');
             } else {
                 toast({
                     variant: "destructive",
@@ -160,7 +160,8 @@ export default function JoinPage() {
                                 />
                             </div>
                             <Button type="submit" className="w-full h-11 text-base" disabled={isSubmitting}>
-                                {isSubmitting ? <Loader2 className="animate-spin mr-2"/> : "Sukurti paskyrą ir Prisijungti"}
+                                {isSubmitting ? <Loader2 className="animate-spin mr-2"/> : <UserCheck className="mr-2 h-4 w-4" />}
+                                Sukurti paskyrą ir Prisijungti
                             </Button>
                         </form>
                     </CardContent>

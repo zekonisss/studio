@@ -67,9 +67,11 @@ export function SidebarNav({ isInSheet = false }: SidebarNavProps) {
   const { user, logout } = useAuth();
   const { t } = useLanguage(); 
 
-  const finalAccountItems = [...accountNavItemsBase];
+  if (!user) return null;
 
-  if (user && ((user as any).role === 'owner' || user.isAdmin)) {
+  const finalAccountItems = [...accountNavItemsBase];
+  // Show team link if user is owner, admin, or platform admin.
+  if (user.role === 'owner' || user.role === 'admin' || user.isAdmin) {
     finalAccountItems.push(teamNavItemBase);
   }
 
@@ -78,8 +80,6 @@ export function SidebarNav({ isInSheet = false }: SidebarNavProps) {
   const accountNavItems = finalAccountItems.map(item => ({ ...item, label: t(item.labelKey) }));
   const legalNavItems = legalNavItemsBase.map(item => ({ ...item, label: t(item.labelKey) }));
   const adminNavItems = adminNavItemsBase.map(item => ({ ...item, label: t(item.labelKey) }));
-
-  if (!user) return null;
 
   const NavLinkWrapper = ({ children }: { children: ReactNode }) => {
     if (isInSheet) {
@@ -148,7 +148,7 @@ export function SidebarNav({ isInSheet = false }: SidebarNavProps) {
             {renderLinks(accountNavItems)}
           </div>
 
-          {user?.isAdmin && (
+          {user.isAdmin && (
             <div>
               <h3 className="mb-1 mt-3 px-2 text-xs font-semibold uppercase text-muted-foreground tracking-wider">{t('sidebar.section.admin')}</h3>
               {renderLinks(adminNavItems)}

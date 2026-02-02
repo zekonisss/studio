@@ -109,7 +109,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await signOut(auth);
     setUser(null);
     setFirebaseUser(null);
-    // FIX: Force a full page reload on logout to prevent chunk load errors
     window.location.assign('/login');
   };
 
@@ -125,23 +124,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
        throw new Error("Slaptažodis turi būti bent 6 simbolių.");
      }
 
-     // 1. Sukuriame Firebase Auth User
+     // 1. Create Firebase Auth User
      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
      const uid = userCredential.user.uid;
 
-     // 2. Sukuriame Įmonę
+     // 2. Create Company
      const companyRef = await addDoc(collection(db, "companies"), {
         name: companyName,
         ownerId: uid,
         plan: 'corporate', 
         maxSeats: 20,
-        subscriptionStatus: 'active',
+        subscriptionStatus: subscriptionType === 'paid' ? 'active' : 'trial',
         createdAt: serverTimestamp(),
         vatCode: vatCode || '',
         address: address,
      });
      
-     // 3. Sukuriame Vartotoją
+     // 3. Create User Document in Firestore
      const newUserProfile: Omit<UserProfileFirestore, 'id'> = {
         email: email.toLowerCase(),
         companyName,
@@ -156,17 +155,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         agreeToTerms,
         
         companyId: companyRef.id,
-        role: 'owner',
+        role: 'owner', // First user is the owner
         
-        paymentStatus: 'active', 
-        isAdmin: false,
+        paymentStatus: subscriptionType === 'paid' ? 'active' : 'trial', 
+        isAdmin: false, // Regular users are not platform admins
         
         createdAt: serverTimestamp() as any, 
         registeredAt: serverTimestamp() as any,
         accountActivatedAt: serverTimestamp() as any,
 
-        searchCredits: 999,
-        reportCredits: 999,
+        // Generous credits for new signups
+        searchCredits: subscriptionType === 'paid' ? 9999 : 3,
+        reportCredits: subscriptionType === 'paid' ? 9999 : 1,
      };
 
      await setDoc(doc(db, "users", uid), newUserProfile);
@@ -174,6 +174,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
      const createdProfile = await getUserProfile(uid);
      setUser(createdProfile);
      
+     // Redirect to the team page so they can start inviting
      window.location.replace("/account/team");
   };
   

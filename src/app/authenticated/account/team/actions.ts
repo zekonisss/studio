@@ -6,12 +6,14 @@ import crypto from 'crypto';
 
 // --- HELPER FUNCTIONS ---
 const getUser = async (userId: string) => {
+    if (!adminDb) return null;
     const userRef = adminDb.collection('users').doc(userId);
     const userDoc = await userRef.get();
     return userDoc.exists ? userDoc.data() : null;
 };
 
 const getCompany = async (companyId: string) => {
+    if (!adminDb) return null;
     const companyRef = adminDb.collection('companies').doc(companyId);
     const companyDoc = await companyRef.get();
     return companyDoc.exists ? { id: companyDoc.id, ...companyDoc.data() } : null;
@@ -20,6 +22,8 @@ const getCompany = async (companyId: string) => {
 // 1. GET TEAM MEMBERS
 export async function getTeamMembers(userId: string) {
   try {
+    if (!adminDb) throw new Error("Serverio konfigūracijos klaida.");
+    
     const user = await getUser(userId);
     if (!user || !user.companyId) {
         // User is not part of any company
@@ -64,6 +68,8 @@ export async function getTeamMembers(userId: string) {
 // 2. INVITE MEMBER
 export async function inviteTeamMember(inviterId: string, email: string) {
     try {
+        if (!adminDb) throw new Error("Serverio konfigūracijos klaida.");
+
         const inviter = await getUser(inviterId);
         if (!inviter || !inviter.companyId) {
             return { success: false, error: "Jūs nepriklausote jokiai įmonei." };
@@ -98,6 +104,7 @@ export async function inviteTeamMember(inviterId: string, email: string) {
             inviterId: inviterId,
             email: email.toLowerCase(),
             token,
+            role: 'member', // Default role for new invites
             status: 'pending',
             createdAt: Timestamp.now(),
             expiresAt: Timestamp.fromDate(expiresAt)
@@ -117,6 +124,7 @@ export async function inviteTeamMember(inviterId: string, email: string) {
 // 3. REMOVE MEMBER (Strict)
 export async function removeTeamMember(removerId: string, memberId: string) {
     try {
+        if (!adminDb || !adminAuth) throw new Error("Serverio konfigūracijos klaida.");
         if (removerId === memberId) return { success: false, error: "Negalima pašalinti savęs." };
 
         const remover = await getUser(removerId);
@@ -144,7 +152,7 @@ export async function removeTeamMember(removerId: string, memberId: string) {
              return { success: false, error: "Negalima pašalinti įmonės savininko." };
         }
 
-        // A) Update Database
+        // A) Update Database: Dissociate from company and suspend role
         await memberRef.update({
             companyId: null,
             role: 'suspended',
@@ -172,6 +180,7 @@ export async function removeTeamMember(removerId: string, memberId: string) {
 // 4. UPDATE MEMBER ROLE
 export async function updateMemberRole(updaterId: string, memberId: string, newRole: 'admin' | 'member') {
     try {
+        if (!adminDb) throw new Error("Serverio konfigūracijos klaida.");
         if (updaterId === memberId) {
             return { success: false, error: "Negalima keisti savo rolės." };
         }

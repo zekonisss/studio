@@ -11,6 +11,8 @@ interface InvitationDetails {
 // 1. VERIFY INVITATION
 export async function verifyInvitation(token: string): Promise<{ success: boolean; data?: InvitationDetails; error?: string }> {
     try {
+        if (!adminDb || !adminAuth) throw new Error("Serverio konfigūracijos klaida.");
+
         const invSnapshot = await adminDb.collection('invitations')
             .where('token', '==', token)
             .limit(1)
@@ -58,11 +60,12 @@ export async function verifyInvitation(token: string): Promise<{ success: boolea
 export async function acceptInvitation(token: string, fullName: string, password: string): Promise<{ success: boolean; error?: string }> {
 
     if (!password || typeof password !== 'string' || password.length < 6) {
-        console.error("Accept Error: Invalid password provided.");
         return { success: false, error: "Slaptažodis turi būti bent 6 simbolių ilgio." };
     }
 
     try {
+        if (!adminDb || !adminAuth) throw new Error("Serverio konfigūracijos klaida.");
+
          const invSnapshot = await adminDb.collection('invitations')
             .where('token', '==', token)
             .where('status', '==', 'pending')
@@ -93,12 +96,12 @@ export async function acceptInvitation(token: string, fullName: string, password
         await adminDb.collection('users').doc(userRecord.uid).set({
             email: invData.email,
             fullName: fullName,
-            contactPerson: fullName, // Use fullName as contactPerson
+            contactPerson: fullName,
             companyId: invData.companyId,
             companyName: invData.companyName,
             role: invData.role || 'member',
             
-            paymentStatus: 'active', // Inherits from company
+            paymentStatus: 'active', // Inherits active status from company
             subscriptionType: 'paid', // Inherits from company
             isAdmin: false,
             createdAt: Timestamp.now(),
@@ -106,7 +109,7 @@ export async function acceptInvitation(token: string, fullName: string, password
             accountActivatedAt: Timestamp.now(),
         });
 
-        // 3. Mark invitation as accepted instead of deleting to preserve an audit trail
+        // 3. Mark invitation as accepted
         await invDoc.ref.update({
             status: 'accepted',
             acceptedAt: Timestamp.now(),

@@ -55,9 +55,9 @@ export default function TeamPage() {
         }));
         if (res.companyId) {
             setCompanyInfo({
-                name: res.companyName,
-                used: res.usedSeats,
-                max: res.maxSeats
+                name: res.companyName!,
+                used: res.usedSeats!,
+                max: res.maxSeats!
             });
         }
       } else if (!res.success) {
@@ -84,6 +84,7 @@ export default function TeamPage() {
   }, [loadData]);
 
   const handleInvite = async () => {
+    if (!user) return;
     if (!inviteEmail.includes("@")) {
         toast({ variant: "destructive", title: "Klaida", description: "Prašome įvesti teisingą el. paštą." });
         return;
@@ -91,13 +92,13 @@ export default function TeamPage() {
     
     setIsInviting(true);
     try {
-        const res = await inviteTeamMember(user!.id, inviteEmail);
+        const res = await inviteTeamMember(user.id, inviteEmail);
         
         if (res.success) {
             console.log("INVITE LINK:", res.inviteLink);
             toast({ 
                 title: "Pakvietimas sukurtas!", 
-                description: "Nuoroda (testavimo režimu): " + res.inviteLink, 
+                description: `Nuoroda išsiųsta adresu ${inviteEmail}.`, 
                 duration: 10000 
             });
             setInviteEmail("");
@@ -113,10 +114,11 @@ export default function TeamPage() {
   };
 
   const handleRemove = async (memberId: string) => {
+    if (!user) return;
     if (!confirm("Ar tikrai? Šis veiksmas suspenduos vartotojo prieigą.")) return;
 
     try {
-        const res = await removeTeamMember(user!.id, memberId);
+        const res = await removeTeamMember(user.id, memberId);
         if (res.success) {
             toast({ title: "Atlikta", description: "Vartotojas pašalintas." });
             loadData();
@@ -182,7 +184,7 @@ export default function TeamPage() {
       );
   }
 
-  const canManageRoles = user?.role === 'owner' || user?.role === 'admin' || user?.isAdmin;
+  const canManageTeam = user?.role === 'owner' || user?.role === 'admin' || user?.isAdmin;
 
   return (
     <div className="max-w-5xl mx-auto space-y-8 p-4">
@@ -202,33 +204,35 @@ export default function TeamPage() {
       </div>
 
       {/* INVITE FORM */}
-      <Card>
-        <CardHeader>
-            <CardTitle>Pakviesti naują narį</CardTitle>
-            <CardDescription>
-                Išsiųskite pakvietimą kolegai prisijungti prie jūsų įmonės paskyros.
-            </CardDescription>
-        </CardHeader>
-        <CardContent>
-            <div className="flex gap-4">
-                <Input 
-                    placeholder="kolega@imone.lt" 
-                    value={inviteEmail}
-                    onChange={(e) => setInviteEmail(e.target.value)}
-                />
-                <Button onClick={handleInvite} disabled={isInviting || companyInfo.used >= companyInfo.max}>
-                    {isInviting ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4 mr-2" />}
-                    Kviesti
-                </Button>
-            </div>
-            {companyInfo.used >= companyInfo.max && (
-                <p className="text-xs text-red-500 mt-2 flex items-center gap-1">
-                    <ShieldAlert className="w-3 h-3" />
-                    Pasiektas vietų limitas. Atnaujinkite planą, kad pridėtumėte daugiau vartotojų.
-                </p>
-            )}
-        </CardContent>
-      </Card>
+       {canManageTeam && (
+          <Card>
+            <CardHeader>
+                <CardTitle>Pakviesti naują narį</CardTitle>
+                <CardDescription>
+                    Išsiųskite pakvietimą kolegai prisijungti prie jūsų įmonės paskyros.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div className="flex gap-4">
+                    <Input 
+                        placeholder="kolega@imone.lt" 
+                        value={inviteEmail}
+                        onChange={(e) => setInviteEmail(e.target.value)}
+                    />
+                    <Button onClick={handleInvite} disabled={isInviting || companyInfo.used >= companyInfo.max}>
+                        {isInviting ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4 mr-2" />}
+                        Kviesti
+                    </Button>
+                </div>
+                {companyInfo.used >= companyInfo.max && (
+                    <p className="text-xs text-red-500 mt-2 flex items-center gap-1">
+                        <ShieldAlert className="w-3 h-3" />
+                        Pasiektas vietų limitas. Atnaujinkite planą, kad pridėtumėte daugiau vartotojų.
+                    </p>
+                )}
+            </CardContent>
+          </Card>
+        )}
 
       {/* MEMBER LIST */}
       <Card>
@@ -238,7 +242,7 @@ export default function TeamPage() {
           <CardContent>
               <div className="space-y-4">
                   {members.map((member) => {
-                      const showActions = canManageRoles && member.role !== 'owner' && user?.id !== member.id;
+                      const showActions = canManageTeam && member.role !== 'owner' && user?.id !== member.id;
                       return (
                       <div key={member.id} className="flex items-center justify-between p-4 border rounded-lg bg-card hover:bg-accent/5 transition-colors">
                           <div className="flex items-center gap-4">
@@ -275,8 +279,7 @@ export default function TeamPage() {
                                 </DropdownMenuContent>
                             </DropdownMenu>
                           ) : (
-                              // Placeholder to keep alignment
-                              <div className="h-8 w-8" />
+                              <div className="w-8" />
                           )}
                       </div>
                   )})}

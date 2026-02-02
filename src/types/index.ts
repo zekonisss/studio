@@ -1,7 +1,5 @@
 // src/types/index.ts
 
-// --- PAGRINDINIAI TIPAI ---
-
 export interface Report {
   id: string;
   reporterId: string;
@@ -16,7 +14,12 @@ export interface Report {
   status: 'active' | 'pending_delete' | 'deleted';
   createdAt: any;
   updatedAt?: any;
+  statusUpdatedAt?: any;
+  deleteRequestReason?: string;
+  adminRejectReason?: string;
+  deletedAt?: any;
   dataAiHint?: string | null;
+  subjectCompany?: string;
 }
 
 export interface Company {
@@ -26,58 +29,59 @@ export interface Company {
   vatCode?: string;
   address?: string;
   
-  // Prenumerata
+  // Subscription info
   subscriptionStatus: 'active' | 'trial' | 'past_due' | 'canceled';
   plan: 'solo' | 'team' | 'corporate'; 
   
-  // Limitai
+  // Limits
   maxSeats: number;
-  credits?: number;
   
   createdAt: any;
   updatedAt?: any;
 }
 
-// Vartotojo profilis
+// User Profile
 export interface UserProfile {
   id: string;
   email: string;
   fullName?: string;
   
-  // Įmonės duomenys
-  companyName?: string;
+  // Company details
+  companyName: string;
   companyCode?: string;
   vatCode?: string;
   address?: string;
   
-  // Kontaktiniai duomenys
-  contactPerson?: string;
+  // Contact details
+  contactPerson: string;
   position?: string;
   phone?: string;
   
-  // Registracijos info
-  subscriptionType?: string;
-  agreeToTerms?: boolean;
+  // Registration info
+  subscriptionType: 'trial' | 'paid';
+  agreeToTerms: boolean;
   
-  // B2B Laukai
+  // B2B Fields
   companyId?: string | null;
-  role?: 'owner' | 'admin' | 'member' | 'suspended';
+  role: 'owner' | 'admin' | 'member' | 'suspended';
   
-  // Statusai
-  isAdmin?: boolean; 
-  paymentStatus?: 'active' | 'trial' | 'past_due' | 'canceled';
+  // Statuses
+  isAdmin: boolean; 
+  paymentStatus: 'active' | 'trial' | 'pending_verification' | 'pending_payment' | 'inactive';
+  subscriptionEndDate?: string;
+  stripeCustomerId?: string;
   
-  // Kreditai
-  searchCredits?: number;
-  reportCredits?: number;
+  // Credits
+  searchCredits: number;
+  reportCredits: number;
   
-  // Datos
+  // Dates
   createdAt: any;
-  registeredAt?: any;
+  registeredAt: any;
   accountActivatedAt?: any;
+  updatedAt?: any;
 }
 
-export type UserProfileFirestore = Omit<UserProfile, 'id'>;
 
 export interface Invitation {
   id: string;
@@ -91,9 +95,76 @@ export interface Invitation {
   
   createdAt: any;
   expiresAt: any;
+  acceptedAt?: any;
+  acceptedByUserId?: string;
 }
 
-// --- FORMAI REIKALINGAS TIPAS (Šito trūko jūsų nuotraukoje) ---
+// Firestore-specific types with Timestamps
+export interface ReportFirestore extends Omit<Report, 'createdAt' | 'updatedAt' | 'statusUpdatedAt' | 'deletedAt'> {
+  createdAt: any; // Firestore Timestamp
+  updatedAt?: any;
+  statusUpdatedAt?: any;
+  deletedAt?: any;
+}
+
+export interface UserProfileFirestore extends Omit<UserProfile, 'id' | 'createdAt' | 'registeredAt' | 'accountActivatedAt' | 'updatedAt'> {
+  createdAt: any;
+  registeredAt: any;
+  accountActivatedAt?: any;
+  updatedAt?: any;
+}
+
+// Log types
+export interface SearchLog {
+  id: string;
+  userId: string;
+  searchText: string;
+  firstName: string;
+  lastName: string;
+  driverHash: string;
+  resultsCount?: number;
+  timestamp: string;
+}
+
+export interface SearchLogFirestore extends Omit<SearchLog, 'id' | 'timestamp'> {
+    timestamp: any;
+}
+
+export interface AuditLogEntry {
+    id: string;
+    adminId: string;
+    adminName: string;
+    actionKey: string;
+    details: Record<string, any>;
+    timestamp: string;
+}
+
+export interface AuditLogEntryFirestore extends Omit<AuditLogEntry, 'id' | 'timestamp'> {
+    timestamp: any;
+}
+
+// Notification types
+export interface UserNotification {
+    id: string;
+    userId: string;
+    title: string;
+    description: string;
+    link?: string;
+    read: boolean;
+    createdAt: string;
+}
+
+export interface UserNotificationFirestore extends Omit<UserNotification, 'id' | 'createdAt'> {
+    createdAt: any;
+}
+
+// Other types
+export interface DetailedCategory {
+  id: string;
+  nameKey: string;
+  tags: string[];
+}
+
 export interface SignupFormValuesExtended {
   email: string;
   password: string;
@@ -105,6 +176,6 @@ export interface SignupFormValuesExtended {
   contactPerson: string;
   position: string;
   phone: string;
-  subscriptionType: string;
+  subscriptionType: 'trial' | 'paid';
   agreeToTerms: boolean;
 }
