@@ -81,9 +81,8 @@ export default function TeamPage() {
        ); 
 
        if (result?.success) {
-         toast({ title: "Pavyko!", description: "Pakvietimas sukurtas (žiūrėti konsolę)." });
+         toast({ title: "Išsiųsta!", description: "Pakvietimas sėkmingai išsiųstas nurodytu el. paštu." });
          setInviteEmail("");
-         if (result.link) console.log("🔗 Tavo nuoroda:", result.link);
        } else {
          toast({ variant: "destructive", title: "Klaida", description: result.error || "Nepavyko." });
        }

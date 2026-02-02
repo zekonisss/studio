@@ -3,6 +3,8 @@
 import { adminAuth, adminDb } from "@/lib/firebase-admin";
 import { revalidatePath } from "next/cache";
 import { randomBytes } from "crypto";
+import { resend } from "@/lib/resend";
+import { InviteEmailTemplate } from "@/components/emails/invite-template";
 
 // --- 1. PAKVIETIMO KŪRIMO FUNKCIJA (GRĄŽINTA) ---
 export async function createInvitation(email: string, companyId: string, companyName: string) {
@@ -23,11 +25,22 @@ export async function createInvitation(email: string, companyId: string, company
       expiresAt
     });
 
-    // Sugeneruojame nuorodą (kad matytumėte konsolėje)
+    // Sugeneruojame nuorodą
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
     const link = `${baseUrl}/join?token=${token}`;
     
-    console.log("🔗 INVITE LINK:", link);
+    // --- Send email using Resend ---
+    await resend.emails.send({
+        from: 'Drivercheck <onboarding@resend.dev>',
+        to: email,
+        subject: `You have been invited to join ${companyName}`,
+        react: InviteEmailTemplate({ 
+            inviteLink: link, 
+            companyName: companyName,
+            inviterName: "A team member"
+        }),
+    });
+
 
     revalidatePath('/authenticated/account/team');
     return { success: true, link };
