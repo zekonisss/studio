@@ -10,18 +10,22 @@ interface InvitationDetails {
 
 // 1. VERIFY INVITATION
 export async function verifyInvitation(token: string): Promise<{ success: boolean; data?: InvitationDetails; error?: string }> {
+    console.log("🔍 Verifying token:", token);
     try {
         const invSnapshot = await adminDb.collection('invitations')
             .where('token', '==', token)
             .limit(1)
             .get();
+        
+        const invDoc = !invSnapshot.empty ? invSnapshot.docs[0] : null;
+        console.log("📄 Found Invite Doc:", invDoc ? "YES" : "NO");
 
-        if (invSnapshot.empty) {
+        if (!invDoc) {
             return { success: false, error: "Pakvietimas nerastas arba nebegalioja." };
         }
 
-        const invDoc = invSnapshot.docs[0];
         const invData = invDoc.data();
+        console.log("📄 Invite Data:", invData);
 
         if (invData.status !== 'pending') {
             return { success: false, error: "Pakvietimas jau buvo panaudotas." };
@@ -38,6 +42,7 @@ export async function verifyInvitation(token: string): Promise<{ success: boolea
             return { success: false, error: "Vartotojas su šiuo el. paštu jau egzistuoja sistemoje." };
         } catch (error: any) {
             if (error.code !== 'auth/user-not-found') {
+                console.error("❌ Verify Error (during user check):", error);
                 throw error; // Re-throw unexpected errors
             }
             // User does not exist, which is what we want. Continue.
@@ -47,13 +52,21 @@ export async function verifyInvitation(token: string): Promise<{ success: boolea
         return { success: true, data: { companyName: invData.companyName, email: invData.email } };
 
     } catch (error) {
-        console.error("Error verifying invitation:", error);
+        console.error("❌ Verify Error:", error);
         return { success: false, error: "Serverio klaida tikrinant pakvietimą." };
     }
 }
 
 // 2. ACCEPT INVITATION
 export async function acceptInvitation(token: string, fullName: string, password: string): Promise<{ success: boolean; error?: string }> {
+    console.log(`🚀 Accepting invitation for token: ${token} with fullName: ${fullName}`);
+
+    // Robust validation to prevent 400 Bad Request
+    if (!password || typeof password !== 'string' || password.length < 6) {
+        console.error("❌ Accept Error: Invalid password provided.");
+        return { success: false, error: "Slaptažodis turi būti bent 6 simbolių ilgio." };
+    }
+
     try {
          const invSnapshot = await adminDb.collection('invitations')
             .where('token', '==', token)
@@ -62,6 +75,7 @@ export async function acceptInvitation(token: string, fullName: string, password
             .get();
         
         if (invSnapshot.empty) {
+            console.error("❌ Accept Error: Invitation not found or not pending.");
             return { success: false, error: "Pakvietimas nerastas arba nebegalioja." };
         }
 
@@ -69,10 +83,12 @@ export async function acceptInvitation(token: string, fullName: string, password
         const invData = invDoc.data();
 
         if (invData.expiresAt.toDate() < new Date()) {
+            console.error("❌ Accept Error: Invitation expired.");
              return { success: false, error: "Pakvietimo galiojimo laikas baigėsi." };
         }
 
         // --- Create User Flow ---
+        console.log(`✅ Creating auth user for ${invData.email}...`);
 
         // 1. Create Auth user
         const userRecord = await adminAuth.createUser({
@@ -82,34 +98,39 @@ export async function acceptInvitation(token: string, fullName: string, password
             disabled: false,
         });
 
+        console.log(`✅ Auth user created: ${userRecord.uid}. Now creating Firestore doc...`);
+
         // 2. Create Firestore user document
         await adminDb.collection('users').doc(userRecord.uid).set({
             email: invData.email,
             fullName: fullName,
             contactPerson: fullName, // Use fullName as contactPerson
             companyId: invData.companyId,
+            companyName: invData.companyName,
             role: invData.role || 'member',
             
-            // Set default values for a team member
-            paymentStatus: 'active',
+            paymentStatus: 'active', // Inherits from company
             subscriptionType: 'paid', // Inherits from company
             isAdmin: false,
             createdAt: Timestamp.now(),
             registeredAt: Timestamp.now(),
             accountActivatedAt: Timestamp.now(),
         });
+        
+        console.log(`✅ Firestore doc created. Now updating invitation status...`);
 
-        // 3. Mark invitation as accepted instead of deleting
+        // 3. Mark invitation as accepted instead of deleting to preserve an audit trail
         await invDoc.ref.update({
             status: 'accepted',
             acceptedAt: Timestamp.now(),
             acceptedByUserId: userRecord.uid
         });
 
+        console.log(`✅ Invitation status updated to 'accepted'. Flow complete.`);
         return { success: true };
 
     } catch (error: any) {
-        console.error("Error accepting invitation:", error);
+        console.error("❌ Accept Invitation - Critical Error:", error);
         if (error.code === 'auth/email-already-exists') {
             return { success: false, error: "Vartotojas su šiuo el. paštu jau egzistuoja." };
         }
