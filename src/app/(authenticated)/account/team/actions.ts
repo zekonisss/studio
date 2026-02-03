@@ -36,16 +36,63 @@ export async function createInvitation(email: string, companyId: string, company
 
     // 4. Siunčiame laišką per Resend
     console.log("📧 Bandome siųsti laišką per Resend...");
+
+    const inviteLink = `${process.env.NEXT_PUBLIC_APP_URL}/join?token=${token}`;
+    const emailHtml = `
+    <body style="margin: 0; padding: 0; background-color: #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+      <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f3f4f6;">
+        <tr>
+          <td align="center" style="padding: 20px;">
+            <table width="600" border="0" cellspacing="0" cellpadding="0" style="background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; max-width: 600px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);">
+              <!-- Header -->
+              <tr>
+                <td align="center" style="padding: 30px 40px 20px 40px;">
+                  <h1 style="color: #2563EB; font-size: 28px; font-weight: bold; margin: 0; font-style: italic;">DriverCheck</h1>
+                </td>
+              </tr>
+              <!-- Body -->
+              <tr>
+                <td style="padding: 0 40px;">
+                  <h2 style="font-size: 20px; font-weight: 600; color: #111827; margin-top: 0;">Sveiki!</h2>
+                  <p style="font-size: 16px; color: #374151; line-height: 1.6;">
+                    Jūs buvote pakviestas prisijungti prie komandos <strong>${companyName}</strong>.
+                  </p>
+                  <p style="font-size: 16px; color: #374151; line-height: 1.6;">
+                    Spustelėkite žemiau esantį mygtuką, kad užbaigtumėte registraciją.
+                  </p>
+                </td>
+              </tr>
+              <!-- Button -->
+              <tr>
+                <td align="center" style="padding: 30px 40px;">
+                  <a href="${inviteLink}" target="_blank" style="background-color: #2563EB; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; display: inline-block;">
+                    Užbaigti registraciją
+                  </a>
+                </td>
+              </tr>
+              <!-- Footer -->
+              <tr>
+                <td align="center" style="padding: 20px 40px 30px 40px; border-top: 1px solid #e5e7eb;">
+                  <p style="font-size: 12px; color: #6b7280; margin: 0;">
+                    Jei ne jūs inicijavote šį veiksmą, ignoruokite šį laišką.
+                  </p>
+                  <p style="font-size: 12px; color: #6b7280; margin: 10px 0 0;">
+                    © ${new Date().getFullYear()} DriverCheck
+                  </p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+    `;
     
     const { data, error } = await resend.emails.send({
       from: 'onboarding@resend.dev', // PRIVALOMA naudoti šį testuojant
       to: email,
       subject: `Kvietimas prisijungti prie ${companyName}`,
-      html: `
-        <h1>Sveiki!</h1>
-        <p>Jūs buvote pakviestas prisijungti prie įmonės <strong>${companyName}</strong> sistemoje Drivercheck.</p>
-        <p><a href="${process.env.NEXT_PUBLIC_APP_URL}/join?token=${token}">Spauskite čia, kad prisijungtumėte</a></p>
-      `
+      html: emailHtml
     });
 
     if (error) {
