@@ -127,14 +127,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
      // 1. Create Firebase Auth User
      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
      const uid = userCredential.user.uid;
+     
+     const isTrial = subscriptionType === 'trial';
 
      // 2. Create Company
      const companyRef = await addDoc(collection(db, "companies"), {
         name: companyName,
         ownerId: uid,
-        plan: 'corporate', 
-        maxSeats: 20,
-        subscriptionStatus: subscriptionType === 'paid' ? 'active' : 'trial',
+        plan: isTrial ? 'trial' : 'corporate', 
+        maxSeats: isTrial ? 1 : 20,
+        subscriptionStatus: isTrial ? 'trial' : 'pending_verification',
         createdAt: serverTimestamp(),
         vatCode: vatCode || '',
         address: address,
@@ -157,16 +159,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         companyId: companyRef.id,
         role: 'owner', // First user is the owner
         
-        paymentStatus: subscriptionType === 'paid' ? 'active' : 'trial', 
+        paymentStatus: isTrial ? 'trial' : 'pending_verification', 
         isAdmin: false, // Regular users are not platform admins
         
         createdAt: serverTimestamp() as any, 
         registeredAt: serverTimestamp() as any,
-        accountActivatedAt: serverTimestamp() as any,
+        accountActivatedAt: isTrial ? serverTimestamp() as any : null,
 
-        // Generous credits for new signups
-        searchCredits: subscriptionType === 'paid' ? 9999 : 3,
-        reportCredits: subscriptionType === 'paid' ? 9999 : 1,
+        // Correct credits based on plan
+        searchCredits: isTrial ? 3 : 0,
+        reportCredits: isTrial ? 1 : 0,
      };
 
      await setDoc(doc(db, "users", uid), newUserProfile);
@@ -174,8 +176,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
      const createdProfile = await getUserProfile(uid);
      setUser(createdProfile);
      
-     // Redirect to the team page so they can start inviting
-     window.location.replace("/account/team");
+     // Redirect based on plan
+     if (isTrial) {
+        router.push("/dashboard");
+     } else {
+        router.push("/activation-pending");
+     }
   };
   
   const updateUserInContext = async (data: Partial<UserProfile>) => {
