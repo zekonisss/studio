@@ -10,7 +10,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, UserPlus, Trash2, Users, Crown, ShieldAlert, MoreHorizontal, Shield, User as UserIcon } from "lucide-react";
-import { getTeamMembers, inviteTeamMember, removeTeamMember, updateMemberRole } from "./actions";
+import { getTeamMembers, inviteTeamMember, removeTeamMember, updateMemberRole } from "@/app/actions/team";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   DropdownMenu,
