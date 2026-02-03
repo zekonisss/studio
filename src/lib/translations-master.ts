@@ -710,7 +710,40 @@ export const translationsMaster: Record<string, Partial<Record<Locale, string>>>
   'forgotPassword.backToLoginLink': { lt: 'Grįžti į prisijungimą', en: 'Back to login', ru: 'Вернуться ко входу', pl: 'Powrót do logowania' },
   'toast.forgotPassword.success.title': { lt: 'Instrukcijos išsiųstos', en: 'Instructions Sent', ru: 'Инструкции отправлены', pl: 'Instrukcje wysłane' },
   'toast.forgotPassword.success.description': { lt: 'Jei paskyra su {email} egzistuoja, gausite laišką.', en: 'If an account with {email} exists, you will receive an email.', ru: 'Если аккаунт с {email} существует, вы получите письмо.', pl: 'Jeśli konto o adresie {email} istnieje, otrzymasz wiadomość e-mail.' },
+  'activation.pending.title': {
+    lt: 'Paskyra laukia patvirtinimo',
+    en: 'Account Pending Approval',
+    ru: 'Аккаунт ожидает подтверждения',
+    pl: 'Konto oczekuje na zatwierdzenie',
+    lv: 'Konts gaida apstiprinājumu',
+    et: 'Konto ootab kinnitamist'
+  },
+  'activation.pending.description': {
+    lt: 'Jūsų registracija gauta. Administratorius peržiūri jūsų duomenis.',
+    en: 'Your registration has been received. An administrator is reviewing your details.',
+    ru: 'Ваша регистрация получена. Администратор проверяет ваши данные.',
+    pl: 'Twoja rejestracja została otrzymana. Administrator sprawdza Twoje dane.',
+    lv: 'Jūsu reģistrācija ir saņemta. Administrators pārbauda jūsu datus.',
+    et: 'Teie registreerimine on vastu võetud. Administraator vaatab teie andmed üle.'
+  },
+  'activation.pending.questions': {
+    lt: 'Apie paskyros patvirtinimą būsite informuoti el. paštu. Jei turite klausimų, susisiekite su mumis: {email}',
+    en: 'You will be notified by email upon account approval. If you have questions, contact us at: {email}',
+    ru: 'Вы будете уведомлены по электронной почte после одобрения аккаунта. Если у вас есть вопросы, свяжитесь с нами по адресу: {email}',
+    pl: 'Zostaniesz powiadomiony e-mailem po zatwierdzeniu konta. Jeśli masz pytania, skontaktuj się z nami pod adresem: {email}',
+    lv: 'Pēc konta apstiprināšanas jūs saņemsiet paziņojumu pa e-pastu. Ja jums ir jautājumi, sazinieties ar mums pa e-pastu: {email}',
+    et: 'Konto kinnitamisel teavitatakse teid e-posti teel. Küsimuste korral võtke meiega ühendust aadressil: {email}'
+  },
+  'activation.pending.differentAccount': {
+    lt: 'Norite prisijungti su kita paskyra?',
+    en: 'Want to log in with a different account?',
+    ru: 'Хотите войти с другой учетной записью?',
+    pl: 'Chcesz zalogować się na inne konto?',
+    lv: 'Vai vēlaties pieteikties ar citu kontu?',
+    et: 'Kas soovite sisse logida teise kontoga?'
+  }
 };
 
     
+
 
