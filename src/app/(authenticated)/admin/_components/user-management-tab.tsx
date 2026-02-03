@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, Fragment } from 'react';
 import type { UserProfile } from '@/types';
-import { getAllUsers, updateUserProfile, addAuditLogEntry } from '@/lib/storage';
+import { getAllUsers } from '@/lib/storage';
 import { useLanguage } from '@/contexts/language-context';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -15,6 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { AdminUserDetailsModal } from './modals/admin-user-details-modal';
 import { Skeleton } from '@/components/ui/skeleton';
+import { changeUserStatus } from '../actions'; // <-- NAUJAS IMPORTAS
 
 interface GroupedUsers {
   [companyName: string]: UserProfile[];
@@ -30,27 +31,28 @@ export default function UserManagementTab() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [expandedCompanies, setExpandedCompanies] = useState<Set<string>>(new Set());
 
+  const fetchUsers = async () => {
+    if (!adminUser?.isAdmin) {
+      setIsLoading(false);
+      return;
+    }
+    setIsLoading(true);
+    try {
+      const userList = await getAllUsers();
+      setUsers(userList);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      toast({
+        variant: "destructive",
+        title: "Klaida",
+        description: "Nepavyko gauti vartotojų sąrašo. Patikrinkite saugumo taisykles.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchUsers = async () => {
-      if (!adminUser?.isAdmin) {
-        setIsLoading(false);
-        return;
-      }
-      setIsLoading(true);
-      try {
-        const userList = await getAllUsers();
-        setUsers(userList);
-      } catch (error) {
-        console.error("Error fetching users:", error);
-        toast({
-          variant: "destructive",
-          title: "Klaida",
-          description: "Nepavyko gauti vartotojų sąrašo. Patikrinkite saugumo taisykles.",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
     fetchUsers();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [adminUser]);
@@ -62,17 +64,16 @@ export default function UserManagementTab() {
 
   const handleStatusChange = async (userToUpdate: UserProfile, newStatus: UserProfile['paymentStatus']) => {
     if (!adminUser || !adminUser.isAdmin) return;
+    
     const oldStatus = userToUpdate.paymentStatus;
     if (oldStatus === newStatus) return;
 
-    const updates: Partial<UserProfile> = { paymentStatus: newStatus };
-    if (newStatus === 'trial') {
-      updates.searchCredits = 3;
-      updates.reportCredits = 1;
-    }
-
     try {
-      await updateUserProfile(userToUpdate.id, updates);
+      const result = await changeUserStatus(adminUser.id, userToUpdate.id, newStatus);
+      if (!result.success) {
+        throw new Error(result.error || 'Nežinoma klaida keičiant būseną');
+      }
+
       toast({
         title: t('admin.users.toast.statusChanged.title'),
         description: t('admin.users.toast.statusChanged.description', { 
@@ -82,33 +83,19 @@ export default function UserManagementTab() {
         }),
       });
 
-      await addAuditLogEntry({
-          adminId: adminUser.id,
-          adminName: adminUser.contactPerson,
-          actionKey: 'user.status.changed',
-          details: { 
-              userId: userToUpdate.id,
-              userEmail: userToUpdate.email,
-              companyName: userToUpdate.companyName,
-              oldStatus: oldStatus,
-              newStatus: newStatus
-          }
-      });
-      
-      setUsers(prevUsers => 
-        prevUsers.map(u => 
-          u.id === userToUpdate.id ? { ...u, ...updates } : u
-        )
-      );
-    } catch (error) {
+      // Optimistically update UI or re-fetch
+      await fetchUsers();
+
+    } catch (error: any) {
         console.error("Error updating user status:", error);
         toast({
             variant: "destructive",
             title: "Klaida",
-            description: "Nepavyko atnaujinti vartotojo būsenos.",
+            description: error.message || "Nepavyko atnaujinti vartotojo būsenos.",
         });
     }
   };
+
 
   const getStatusBadge = (status: UserProfile['paymentStatus']) => {
     switch (status) {
