@@ -7,6 +7,8 @@ import type { UserProfile } from '@/types';
 import { Timestamp } from 'firebase-admin/firestore';
 
 export async function changeUserStatus(adminUserId: string, targetUserId: string, newStatus: UserProfile['paymentStatus']) {
+    console.log(`🚀 Admin Action Started: Changing status for user ${targetUserId} to ${newStatus}`);
+
     if (!adminDb) {
         return { success: false, error: 'Serverio konfigūracijos klaida.' };
     }
@@ -27,6 +29,12 @@ export async function changeUserStatus(adminUserId: string, targetUserId: string
 
         const targetUserData = targetUserDoc.data() as UserProfile;
         const oldStatus = targetUserData.paymentStatus;
+        
+        if (targetUserData.email) {
+            console.log(`📧 User Email Fetched: ${targetUserData.email}`);
+        } else {
+            console.error(`❌ User Email Missing for user ID: ${targetUserId}`);
+        }
         
         if (oldStatus === newStatus) {
             return { success: true, message: 'Būsena nepasikeitė.' }; 
@@ -61,15 +69,29 @@ export async function changeUserStatus(adminUserId: string, targetUserId: string
             timestamp: Timestamp.now()
         });
 
+        console.log(`🤔 Checking Condition: New Status is ${newStatus}. Should send email: ${shouldSendEmail}`);
+
         if (shouldSendEmail) {
-            await resend.emails.send({
-                from: 'DriverCheck <onboarding@resend.dev>',
-                to: targetUserData.email,
-                subject: 'Jūsų paskyra patvirtinta! 🚀',
-                react: WelcomeEmailTemplate({
-                    loginUrl: `${process.env.NEXT_PUBLIC_APP_URL}/login`
-                })
-            });
+            console.log("📨 Attempting to send email via Resend...");
+            try {
+                const { data, error } = await resend.emails.send({
+                    from: 'DriverCheck <onboarding@resend.dev>',
+                    to: targetUserData.email,
+                    subject: 'Jūsų paskyra patvirtinta! 🚀',
+                    react: WelcomeEmailTemplate({
+                        loginUrl: `${process.env.NEXT_PUBLIC_APP_URL}/login`
+                    })
+                });
+
+                if (error) {
+                    throw error;
+                }
+
+                console.log(`✅ Resend Success: ${data?.id}`);
+
+            } catch (e: any) {
+                console.error(`❌ Resend Failed:`, e);
+            }
         }
 
         return { success: true };
