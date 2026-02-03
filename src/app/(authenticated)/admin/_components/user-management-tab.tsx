@@ -15,7 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { AdminUserDetailsModal } from './modals/admin-user-details-modal';
 import { Skeleton } from '@/components/ui/skeleton';
-import { changeUserStatus } from '../actions'; // <-- NAUJAS IMPORTAS
+import { changeUserStatus } from '../actions';
 
 interface GroupedUsers {
   [companyName: string]: UserProfile[];
@@ -63,28 +63,30 @@ export default function UserManagementTab() {
   };
 
   const handleStatusChange = async (userToUpdate: UserProfile, newStatus: UserProfile['paymentStatus']) => {
-    if (!adminUser || !adminUser.isAdmin) return;
+    if (!adminUser || !adminUser.isAdmin) {
+      toast({ variant: "destructive", title: "Klaida", description: "Neturite teisių atlikti šio veiksmo." });
+      return;
+    }
     
     const oldStatus = userToUpdate.paymentStatus;
     if (oldStatus === newStatus) return;
 
     try {
       const result = await changeUserStatus(adminUser.id, userToUpdate.id, newStatus);
-      if (!result.success) {
+      
+      if (result.success) {
+        toast({
+          title: t('admin.users.toast.statusChanged.title'),
+          description: t('admin.users.toast.statusChanged.description', { 
+              companyName: userToUpdate.companyName, 
+              email: userToUpdate.email, 
+              status: t(`admin.users.status.${newStatus}`) 
+          }),
+        });
+        await fetchUsers();
+      } else {
         throw new Error(result.error || 'Nežinoma klaida keičiant būseną');
       }
-
-      toast({
-        title: t('admin.users.toast.statusChanged.title'),
-        description: t('admin.users.toast.statusChanged.description', { 
-            companyName: userToUpdate.companyName, 
-            email: userToUpdate.email, 
-            status: t(`admin.users.status.${newStatus}`) 
-        }),
-      });
-
-      // Optimistically update UI or re-fetch
-      await fetchUsers();
 
     } catch (error: any) {
         console.error("Error updating user status:", error);

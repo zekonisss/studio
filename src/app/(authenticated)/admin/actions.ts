@@ -18,10 +18,10 @@ export async function changeUserStatus(adminUserId: string, targetUserId: string
         const adminUserDoc = await adminUserRef.get();
         const targetUserDoc = await targetUserRef.get();
 
-        if (!adminUserDoc.exists() || !adminUserDoc.data()?.isAdmin) {
+        if (!adminUserDoc.exists || !adminUserDoc.data()?.isAdmin) {
             return { success: false, error: 'Neturite administratoriaus teisių.' };
         }
-        if (!targetUserDoc.exists()) {
+        if (!targetUserDoc.exists) {
             return { success: false, error: 'Vartotojas nerastas.' };
         }
 
