@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
@@ -76,7 +75,7 @@ export default function TeamPage() {
        toast({
           variant: "destructive",
           title: t('common.error'),
-          description: "Nepavyko gauti komandos duomenų.",
+          description: t('team.fetchError'),
         });
     } finally {
       setLoading(false);
@@ -90,7 +89,7 @@ export default function TeamPage() {
   const handleInvite = async () => {
     if (!user) return;
     if (!inviteEmail.includes("@")) {
-        toast({ variant: "destructive", title: t('common.error'), description: "Prašome įvesti teisingą el. paštą." });
+        toast({ variant: "destructive", title: t('common.error'), description: t('team.invalidEmail') });
         return;
     }
     
@@ -100,17 +99,17 @@ export default function TeamPage() {
         
         if (res.success) {
             toast({ 
-                title: "Pakvietimas sukurtas!", 
-                description: `Nuoroda išsiųsta adresu ${inviteEmail}.`, 
+                title: t('team.inviteSentTitle'), 
+                description: t('team.inviteSentDesc', { email: inviteEmail }), 
                 duration: 10000 
             });
             setInviteEmail("");
             await loadData();
         } else {
-            toast({ variant: "destructive", title: "Nepavyko", description: res.error });
+            toast({ variant: "destructive", title: t('team.inviteFail'), description: res.error });
         }
     } catch (e) {
-        toast({ variant: "destructive", title: t('common.error'), description: "Serverio klaida." });
+        toast({ variant: "destructive", title: t('common.error'), description: t('team.serverError') });
     } finally {
         setIsInviting(false);
     }
@@ -118,12 +117,12 @@ export default function TeamPage() {
 
   const handleRemove = async (memberId: string) => {
     if (!user) return;
-    if (!confirm("Ar tikrai? Šis veiksmas suspenduos vartotojo prieigą.")) return;
+    if (!confirm(t('team.confirmRemove'))) return;
 
     try {
         const res = await removeTeamMember(user.id, memberId);
         if (res.success) {
-            toast({ title: "Atlikta", description: "Vartotojas pašalintas." });
+            toast({ title: t('team.actionComplete'), description: t('team.memberRemoved') });
             loadData();
         } else {
             toast({ variant: "destructive", title: t('common.error'), description: res.error });
@@ -138,14 +137,14 @@ export default function TeamPage() {
     try {
       const res = await updateMemberRole(user.id, memberId, newRole);
       if (res.success) {
-        toast({ title: "Rolė pakeista!", description: res.message });
+        toast({ title: t('team.roleChanged'), description: res.message });
         loadData();
       } else {
         toast({ variant: "destructive", title: t('common.error'), description: res.error });
       }
     } catch (e) {
       console.error(e);
-      toast({ variant: "destructive", title: "Serverio klaida", description: "Nepavyko pakeisti rolės." });
+      toast({ variant: "destructive", title: t('common.error'), description: t('team.changeRoleError') });
     }
   };
   
@@ -166,29 +165,6 @@ export default function TeamPage() {
   if (loading) {
     return <div className="flex justify-center p-12"><Loader2 className="animate-spin h-8 w-8 text-primary" /></div>;
   }
-  
-  if (user?.isAdmin) {
-      return (
-          <div className="max-w-4xl mx-auto p-6">
-              <Alert className="bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-900">
-                  <Shield className="h-4 w-4 text-green-600 dark:text-green-400" />
-                  <AlertTitle>Administratoriaus Prieiga</AlertTitle>
-                  <AlertDescription className="mt-2">
-                      Jūs esate prisijungęs kaip administratorius. Visi vartotojai ir įmonės yra valdomi centralizuotai.
-                      <br />
-                      Norėdami peržiūrėti ar valdyti vartotojus, eikite į administravimo panelę.
-                      <div className="mt-4">
-                        <Button asChild variant="default">
-                            <Link href="/admin">
-                                Eiti į Admin Panelę &rarr;
-                            </Link>
-                        </Button>
-                      </div>
-                  </AlertDescription>
-              </Alert>
-          </div>
-      );
-  }
 
   // Handle Solo Users (No Company yet)
   if (!companyInfo) {
@@ -196,14 +172,14 @@ export default function TeamPage() {
           <div className="max-w-4xl mx-auto p-6">
               <Alert className="bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-900">
                   <Crown className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                  <AlertTitle>Komandos valdymas</AlertTitle>
+                  <AlertTitle>{t('team.managementTitle')}</AlertTitle>
                   <AlertDescription className="mt-2">
-                      Ši funkcija prieinama <strong>Team</strong> ir <strong>Corporate</strong> planams.
+                      <span dangerouslySetInnerHTML={{ __html: t('team.upgradePlan.description1') }} />
                       <br />
-                      Jūs šiuo metu naudojate individualų planą. Atnaujinkite planą, kad galėtumėte valdyti kelis vartotojus.
+                      {t('team.upgradePlan.description2')}
                       <div className="mt-4">
                         <Button asChild variant="default">
-                          <Link href="/account?tab=payment">Atnaujinti planą &rarr;</Link>
+                          <Link href="/account?tab=payment">{t('team.upgradePlan.button')} &rarr;</Link>
                         </Button>
                       </div>
                   </AlertDescription>
@@ -227,7 +203,7 @@ export default function TeamPage() {
         </div>
         <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 px-4 py-2 rounded-full font-medium text-sm">
             <Users className="w-4 h-4 text-muted-foreground" />
-            <span>Vietos: {companyInfo.used} / {companyInfo.max}</span>
+            <span>{t('team.seats')} {companyInfo.used} / {companyInfo.max}</span>
         </div>
       </div>
 
@@ -235,27 +211,27 @@ export default function TeamPage() {
        {canManageTeam && (
           <Card>
             <CardHeader>
-                <CardTitle>Pakviesti naują narį</CardTitle>
+                <CardTitle>{t('team.inviteTitle')}</CardTitle>
                 <CardDescription>
-                    Išsiųskite pakvietimą kolegai prisijungti prie jūsų įmonės paskyros.
+                    {t('team.inviteDescription')}
                 </CardDescription>
             </CardHeader>
             <CardContent>
                 <div className="flex gap-4">
                     <Input 
-                        placeholder="kolega@imone.lt" 
+                        placeholder={t('team.invitePlaceholder')} 
                         value={inviteEmail}
                         onChange={(e) => setInviteEmail(e.target.value)}
                     />
                     <Button onClick={handleInvite} disabled={isInviting || companyInfo.used >= companyInfo.max}>
                         {isInviting ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4 mr-2" />}
-                        Kviesti
+                        {t('team.inviteButton')}
                     </Button>
                 </div>
                 {companyInfo.used >= companyInfo.max && (
                     <p className="text-xs text-red-500 mt-2 flex items-center gap-1">
                         <ShieldAlert className="w-3 h-3" />
-                        Pasiektas vietų limitas. Atnaujinkite planą, kad pridėtumėte daugiau vartotojų.
+                        {t('team.limitReached')}
                     </p>
                 )}
             </CardContent>
@@ -265,7 +241,7 @@ export default function TeamPage() {
       {/* MEMBER LIST */}
       <Card>
           <CardHeader>
-              <CardTitle>{t('admin.users.table.memberCount')}</CardTitle>
+              <CardTitle>{t('team.membersTitle')}</CardTitle>
           </CardHeader>
           <CardContent>
               <div className="space-y-4">
@@ -282,7 +258,7 @@ export default function TeamPage() {
                                   <p className="text-xs text-muted-foreground">{member.email}</p>
                               </div>
                               {getRoleBadge(member.role)}
-                              {member.status === 'suspended' && <Badge variant="destructive" className="ml-2">Suspenduotas</Badge>}
+                              {member.status === 'suspended' && <Badge variant="destructive" className="ml-2">{t('team.statusSuspended')}</Badge>}
                           </div>
 
                           {showActions ? (
@@ -293,7 +269,7 @@ export default function TeamPage() {
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
-                                    <DropdownMenuLabel>Keisti rolę</DropdownMenuLabel>
+                                    <DropdownMenuLabel>{t('team.changeRole')}</DropdownMenuLabel>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuRadioGroup value={member.role} onValueChange={(value) => handleRoleChange(member.id, value as 'admin' | 'member')}>
                                         <DropdownMenuRadioItem value="member">{t('admin.users.role.member')}</DropdownMenuRadioItem>
@@ -302,7 +278,7 @@ export default function TeamPage() {
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem className="text-red-500 focus:bg-red-50 focus:text-red-600" onClick={() => handleRemove(member.id)}>
                                         <Trash2 className="mr-2 h-4 w-4" />
-                                        <span>Pašalinti narį</span>
+                                        <span>{t('team.removeMember')}</span>
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
@@ -313,7 +289,7 @@ export default function TeamPage() {
                   )})}
 
                   {members.length === 0 && (
-                      <p className="text-center text-muted-foreground py-8">Narių nerasta.</p>
+                      <p className="text-center text-muted-foreground py-8">{t('team.noMembersFound')}</p>
                   )}
               </div>
           </CardContent>

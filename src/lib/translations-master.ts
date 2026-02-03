@@ -154,7 +154,7 @@ export const translationsMaster: Record<string, Partial<Record<Locale, string>>>
   'reports.guidance.privacy.description': { lt: 'Jūsų įrašas bus matomas kitiems vežėjams. Kad išvengtumėte BDAR pažeidimų, nenaudokite perteklinės asmeninės informacijos:', en: 'Your entry will be visible to other carriers. To avoid GDPR violations, do not use excessive personal information:', ru: 'Ваша запись будет видна другим перевозчикам. Во избежание нарушений GDPR не используйте избыточную личную информацию:', pl: 'Twój wpis będzie widoczny dla innych przewoźników. Aby uniknąć naruszeń RODO, nie używaj nadmiernych danych osobowych:', lv: 'Jūsu ieraksts būs redzams citiem pārvadātājiem. Lai izvairītos no VDAR pārkāpumiem, neizmantojiet pārmērīgu personisko informāciju:', et: 'Teie kirje on nähtav teistele vedajatele. Isikuandmete kaitse üldmääruse rikkumiste vältimiseks ärge kasutage liigset isiklikku teavet:' },
   'reports.guidance.privacy.rule1': { lt: 'Nerašykite asmens kodų.', en: 'Do not write personal identification numbers.', ru: 'Не пишите личные идентификационные номера.', pl: 'Nie wpisuj osobistych numerów identyfikacyjnych.', lv: 'Nerakstiet personas identifikācijas numurus.', et: 'Ärge kirjutage isikukoodi.' },
   'reports.guidance.privacy.rule2': { lt: 'Nekelkite asmens dokumentų kopijų (pasų, ID kortelių).', en: 'Do not upload copies of personal documents (passports, ID cards).', ru: 'Не загружайте копии личных документов (паспортов, удостоверений личности).', pl: 'Nie przesyłaj kopii dokumentów osobistych (paszportów, dowodów osobistych).', lv: 'Neaugšupielādējiet personas dokumentu (pasu, ID karšu) kopijas.', et: 'Ärge laadige üles isiklike dokumentide (passide, ID-kaartide) koopiaid.' },
-  'reports.guidance.privacy.rule3': { lt: 'Nurodykite tik vardą, pavardę ir gimimo metus.', en: 'Provide only the name, surname, and year of birth.', ru: 'Указывайте только имя, фамилию и год рождения.', pl: 'Podaj tylko imię, nazwisko i rok urodzenia.', lv: 'Norādiet tikai vārdu, uzvārdu un dzimšanas gadu.', et: 'Esitage ainult ees- ja perekonnanimi ning sünniaasta.' },
+  'reports.guidance.privacy.rule3': { lt: 'Nurodykite tik vardą, pavardę ir gimimo metus.', en: 'Provide only the name, surname, and year of birth.', ru: 'Указывайте только имя, фамилию и год рождения.', pl: 'Podaj only imię, nazwisko i rok urodzenia.', lv: 'Norādiet tikai vārdu, uzvārdu un dzimšanas gadu.', et: 'Esitage ainult ees- ja perekonnanimi ning sünniaasta.' },
   'reports.guidance.evidence.title': { lt: 'Patarimas dėl įrodymų', en: 'Evidence Tip', ru: 'Совет по доказательствам', pl: 'Wskazówka dotycząca dowodów', lv: 'Padoms par pierādījumiem', et: 'Tõendite näpunäide' },
   'reports.guidance.evidence.tip.default': { lt: 'Pateikite tik faktinę informaciją, susijusią su darbo pareigų vykdymu.', en: 'Provide only factual information related to the performance of duties.', ru: 'Предоставляйте только фактическую информацию, связанную с исполнением обязанностей.', pl: 'Podawaj tylko faktyczne informacje związane z wykonywaniem obowiązków.', lv: 'Sniedziet tikai faktisku informāciju, kas saistīta ar pienākumu izpildi.', et: 'Esitage ainult tööülesannete täitmisega seotud faktilist teavet.' },
   'reports.guidance.evidence.tip.fuel_theft': { lt: 'Rekomenduojami įrodymai: CMR važtaraštis su trūkumo žyma, susirašinėjimas ar policijos pažyma.', en: 'Recommended evidence: CMR consignment note with a shortage mark, correspondence, or police report.', ru: 'Рекомендуемые доказательства: накладная CMR с отметкой о недостаче, переписка или справка из полиции.', pl: 'Zalecane dowody: list przewozowy CMR z adnotacją o brakach, korespondencja lub raport policyjny.', lv: 'Ieteicamie pierādījumi: CMR pavadzīme ar iztrūkuma atzīmi, sarakste vai policijas ziņojums.', et: 'Soovitatavad tõendid: CMR-saateleht puudujäägi märkega, kirjavahetus või politseiraport.' },
@@ -741,9 +741,36 @@ export const translationsMaster: Record<string, Partial<Record<Locale, string>>>
     pl: 'Chcesz zalogować się na inne konto?',
     lv: 'Vai vēlaties pieteikties ar citu kontu?',
     et: 'Kas soovite sisse logida teise kontoga?'
-  }
+  },
+  'team.fetchError': { lt: 'Nepavyko gauti komandos duomenų.', en: 'Failed to fetch team data.' },
+  'team.invalidEmail': { lt: 'Prašome įvesti teisingą el. paštą.', en: 'Please enter a valid email address.' },
+  'team.inviteSentTitle': { lt: 'Pakvietimas išsiųstas!', en: 'Invitation Sent!' },
+  'team.inviteSentDesc': { lt: 'Pakvietimo nuoroda išsiųsta adresu {email}.', en: 'An invitation link has been sent to {email}.' },
+  'team.inviteFail': { lt: 'Nepavyko', en: 'Failed' },
+  'team.serverError': { lt: 'Serverio klaida.', en: 'Server error.' },
+  'team.confirmRemove': { lt: 'Ar tikrai? Šis veiksmas suspenduos vartotojo prieigą.', en: 'Are you sure? This action will suspend the user\'s access.' },
+  'team.actionComplete': { lt: 'Atlikta', en: 'Done' },
+  'team.memberRemoved': { lt: 'Vartotojas pašalintas.', en: 'User removed.' },
+  'team.roleChanged': { lt: 'Rolė pakeista!', en: 'Role Changed!' },
+  'team.changeRoleError': { lt: 'Nepavyko pakeisti rolės.', en: 'Failed to change role.' },
+  'team.managementTitle': { lt: 'Komandos valdymas', en: 'Team Management' },
+  'team.upgradePlan.description1': { lt: 'Ši funkcija prieinama <strong>Team</strong> ir <strong>Corporate</strong> planams.', en: 'This feature is available for <strong>Team</strong> and <strong>Corporate</strong> plans.' },
+  'team.upgradePlan.description2': { lt: 'Jūs šiuo metu naudojate individualų planą. Atnaujinkite planą, kad galėtumėte valdyti kelis vartotojus.', en: 'You are currently on an individual plan. Upgrade your plan to manage multiple users.' },
+  'team.upgradePlan.button': { lt: 'Atnaujinti planą', en: 'Upgrade Plan' },
+  'team.seats': { lt: 'Vietos:', en: 'Seats:' },
+  'team.inviteTitle': { lt: 'Pakviesti naują narį', en: 'Invite a New Member' },
+  'team.inviteDescription': { lt: 'Išsiųskite pakvietimą kolegai prisijungti prie jūsų įmonės paskyros.', en: 'Send an invitation to a colleague to join your company account.' },
+  'team.invitePlaceholder': { lt: 'kolega@imone.lt', en: 'colleague@company.com' },
+  'team.inviteButton': { lt: 'Kviesti', en: 'Invite' },
+  'team.limitReached': { lt: 'Pasiektas vietų limitas. Atnaujinkite planą, kad pridėtumėte daugiau vartotojų.', en: 'Seat limit reached. Upgrade your plan to add more users.' },
+  'team.membersTitle': { lt: 'Nariai', en: 'Members' },
+  'team.statusSuspended': { lt: 'Suspenduotas', en: 'Suspended' },
+  'team.changeRole': { lt: 'Keisti rolę', en: 'Change Role' },
+  'team.removeMember': { lt: 'Pašalinti narį', en: 'Remove Member' },
+  'team.noMembersFound': { lt: 'Narių nerasta.', en: 'No members found.' }
 };
 
     
+
 
 
