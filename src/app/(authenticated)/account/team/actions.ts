@@ -47,7 +47,23 @@ export async function createInvitation(email: string, companyId: string, company
               <!-- Header -->
               <tr>
                 <td align="center" style="padding: 30px 40px 20px 40px;">
-                  <img src="${process.env.NEXT_PUBLIC_APP_URL}/logo.png" alt="Drivercheck Logo" style="width: 150px; height: auto; display: block; margin: 0 auto 20px auto;">
+                  <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="vertical-align:middle; margin-bottom: 20px;">
+                    <tr>
+                      <td style="padding-right: 8px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="10" cy="7" r="4"></circle>
+                            <path d="M10.3 15H7a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="17" cy="17" r="3"></circle>
+                            <path d="m21 21-1.9-1.9"></path>
+                        </svg>
+                      </td>
+                      <td>
+                          <span style="font-size: 24px; font-weight: 700; font-style: italic; color: #1e293b; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+                              DriverCheck
+                          </span>
+                      </td>
+                    </tr>
+                  </table>
                 </td>
               </tr>
               <!-- Body -->
