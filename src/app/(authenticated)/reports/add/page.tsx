@@ -22,8 +22,6 @@ import { Loader2, BrainCircuit, UploadCloud, X, ShieldAlert, CheckCircle2 } from
 import { categorizeReportAction, addReportWithCreditCheck } from "./actions";
 import Link from "next/link";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-
-// MŪSŲ NAUJI KOMPONENTAI
 import { IncidentCategorySelector } from "@/components/reports/IncidentCategorySelector";
 import { ReportGuidance } from "@/components/reports/ReportGuidance";
 
@@ -50,14 +48,12 @@ export default function AddReportPage() {
       birthYear: undefined,
       category: "",
       tags: [],
-      comment: "",
       image: null
     },
   });
 
   const commentValue = form.watch('comment');
 
-  // AI Kategorizavimo logika
   const handleAiCategorize = useCallback(() => {
     if (!commentValue || commentValue.trim().length < 20) return;
 
@@ -66,41 +62,37 @@ export default function AddReportPage() {
         const result = await categorizeReportAction(commentValue);
         if (result?.categoryId) {
           form.setValue('category', result.categoryId, { shouldValidate: true });
-          setSelectedCategory(result.categoryId); // Atnaujinam state, kad pasikeistų Guidance
+          setSelectedCategory(result.categoryId);
           if (result.suggestedTags) {
             form.setValue('tags', result.suggestedTags, { shouldValidate: true });
           }
           
           setIsAiHighlight(true);
           setTimeout(() => setIsAiHighlight(false), 2000);
-          toast({ title: "AI Atliko analizę", description: "Kategorija ir žymos parinktos automatiškai." });
+          toast({ title: t("reports.add.toast.aiSuccess.title"), description: t("reports.add.toast.aiSuccess.description") });
         }
       } catch (e) {
         console.error("AI error:", e);
       }
     });
-  }, [commentValue, form, toast]);
+  }, [commentValue, form, toast, t]);
 
-  // Žymų (Tags) logika
   const availableTags = useMemo(() =>
     detailedReportCategories.find(c => c.id === selectedCategory)?.tags || [],
     [selectedCategory]
   );
 
   useEffect(() => {
-    // Išvalyti tagus, kai keičiasi kategorija (kad neliktų senų)
-    // Nebent tai AI veiksmas (galima patobulinti vėliau)
     const currentTags = form.getValues('tags');
     if (currentTags && currentTags.length > 0 && !isAiHighlight) {
          form.setValue("tags", []);
     }
   }, [selectedCategory, form, isAiHighlight]);
 
-  // Failų įkėlimo logika
   const handleFileSelect = (file: File | null) => {
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
-          toast({ variant: "destructive", title: "Klaida", description: "Failas per didelis (maks. 5MB)" });
+          toast({ variant: "destructive", title: t("common.error"), description: t("reports.add.toast.fileTooLarge") });
           return;
       }
       form.setValue('image', file, { shouldValidate: true });
@@ -138,14 +130,13 @@ export default function AddReportPage() {
     }
   }
 
-  // Formos pateikimas
   const onSubmit = async (values: ReportFormValues) => {
     if (!user) {
       toast({ variant: "destructive", title: t("reports.add.toast.notLoggedIn.title"), description: t("reports.add.toast.notLoggedIn.description") });
       return;
     }
     if (user.paymentStatus === 'trial' && (!user.reportCredits || user.reportCredits <= 0)) {
-        toast({ variant: "destructive", title: "Kreditai baigėsi", description: "Jūs išnaudojote nemokamų įrašų limitą. Prašome aktyvuoti prenumeratą." });
+        toast({ variant: "destructive", title: t("reports.add.toast.noCredits.title"), description: t("reports.add.toast.noCredits.description") });
         return;
     }
 
@@ -179,13 +170,13 @@ export default function AddReportPage() {
       if (result.success) {
         toast({ title: t("reports.add.toast.success.title"), description: t("reports.add.toast.success.description", { fullName: values.fullName }) });
         await refreshUser(); 
-        router.push("/authenticated/reports/history");
+        router.push("/reports/history");
       } else {
-        throw new Error(result.error || "Nepavyko išsaugoti įrašo.");
+        throw new Error(result.error || t("reports.add.toast.saveError"));
       }
 
     } catch (e: any) {
-      toast({ variant: "destructive", title: "Klaida", description: e.message || "Nepavyko išsaugoti įrašo." });
+      toast({ variant: "destructive", title: t("common.error"), description: e.message || t("reports.add.toast.saveError") });
       console.error(e);
     } finally { setIsSubmitting(false); }
   };
@@ -195,7 +186,6 @@ export default function AddReportPage() {
   return (
     <div className="max-w-7xl mx-auto py-8 px-4">
         
-        {/* Antraštė */}
         <div className="mb-8">
             <h1 className="text-3xl font-bold text-slate-900 dark:text-white">{t("reports.add.title")}</h1>
             <p className="text-slate-500 dark:text-slate-400 mt-2 max-w-2xl">
@@ -206,27 +196,25 @@ export default function AddReportPage() {
         {!hasCredits && (
              <Alert variant="destructive" className="mb-8 border-red-500/50 bg-red-500/10">
                 <ShieldAlert className="h-5 w-5" />
-                <AlertTitle className="text-lg font-semibold">Kreditai baigėsi</AlertTitle>
+                <AlertTitle className="text-lg font-semibold">{t("reports.add.form.noCredits.title")}</AlertTitle>
                 <AlertDescription className="text-base mt-1">
-                    Jūs išnaudojote nemokamų įrašų limitą. Norėdami tęsti, prašome{" "}
-                    <Link href="/authenticated/account?tab=payment" className="font-bold underline hover:text-white">aktyvuoti prenumeratą</Link>.
+                    {t("reports.add.form.noCredits.description")}{" "}
+                    <Link href="/account?tab=payment" className="font-bold underline hover:text-white">{t("reports.add.form.noCredits.link")}</Link>.
                 </AlertDescription>
             </Alert>
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
-            {/* KAIRĖ PUSĖ - FORMA (2/3) */}
             <div className="lg:col-span-2 space-y-6">
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                         <fieldset disabled={!hasCredits || isSubmitting} className="space-y-6">
                             
-                            {/* 1. KATEGORIJA (Naujas dizainas) */}
                             <Card className={cn("border-slate-200 dark:border-slate-800 shadow-sm transition-all", isAiHighlight && "ring-2 ring-primary border-primary")}>
                                 <CardHeader>
-                                    <CardTitle>Incidento Tipas</CardTitle>
-                                    <CardDescription>{t("reports.add.form.category.placeholder")}</CardDescription>
+                                    <CardTitle>{t("reports.add.form.incidentType.title")}</CardTitle>
+                                    <CardDescription>{t("reports.add.form.incidentType.description")}</CardDescription>
                                 </CardHeader>
                                 <CardContent>
                                     <FormField 
@@ -235,7 +223,6 @@ export default function AddReportPage() {
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormControl>
-                                                    {/* NAUDOJAME MŪSŲ NAUJĄ SELECTOR */}
                                                     <IncidentCategorySelector 
                                                         value={field.value} 
                                                         onChange={(val) => {
@@ -251,10 +238,9 @@ export default function AddReportPage() {
                                 </CardContent>
                             </Card>
 
-                            {/* 2. VAIRUOTOJO DUOMENYS */}
                             <Card className="border-slate-200 dark:border-slate-800 shadow-sm">
                                 <CardHeader>
-                                    <CardTitle>Vairuotojo Duomenys</CardTitle>
+                                    <CardTitle>{t("reports.add.form.driverData.title")}</CardTitle>
                                 </CardHeader>
                                 <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <FormField control={form.control} name="fullName" render={({ field }) => (
@@ -286,7 +272,7 @@ export default function AddReportPage() {
                                             <FormControl>
                                                 <Input 
                                                     type="number" 
-                                                    placeholder="PVZ: 1985" 
+                                                    placeholder={t("reports.add.form.birthYear.placeholder")}
                                                     {...field} 
                                                     className="h-11"
                                                     onChange={e => field.onChange(e.target.value === '' ? undefined : Number(e.target.value))}
@@ -299,10 +285,9 @@ export default function AddReportPage() {
                                 </CardContent>
                             </Card>
 
-                            {/* 3. APLINKYBĖS IR ĮRODYMAI */}
                             <Card className="border-slate-200 dark:border-slate-800 shadow-sm">
                                 <CardHeader>
-                                    <CardTitle>Aplinkybės ir Įrodymai</CardTitle>
+                                    <CardTitle>{t("reports.add.form.circumstances.title")}</CardTitle>
                                 </CardHeader>
                                 <CardContent className="space-y-6">
                                     
@@ -319,15 +304,14 @@ export default function AddReportPage() {
                                                     disabled={isAiCategorizing || !commentValue || commentValue.trim().length < 20}
                                                 >
                                                     {isAiCategorizing ? <Loader2 className="mr-2 h-3 w-3 animate-spin" /> : <BrainCircuit className="mr-2 h-3 w-3" />}
-                                                    {t("AI Analizė")}
+                                                    {t("reports.add.form.aiAnalyzeButton")}
                                                 </Button>
                                             </div>
-                                            <FormControl><Textarea className="min-h-[140px] resize-y text-base" placeholder="Aprašykite įvykio detales..." {...field} /></FormControl>
+                                            <FormControl><Textarea className="min-h-[140px] resize-y text-base" placeholder={t("reports.add.form.comment.label")} {...field} /></FormControl>
                                             <FormMessage />
                                         </FormItem>
                                     )} />
 
-                                    {/* TAGAI */}
                                     {availableTags.length > 0 && (
                                         <FormField control={form.control} name="tags" render={() => (
                                             <FormItem className="animate-in fade-in slide-in-from-top-2">
@@ -357,7 +341,6 @@ export default function AddReportPage() {
                                         )} />
                                     )}
 
-                                    {/* FAILŲ ĮKĖLIMAS (Modernus stilius) */}
                                     <div className="space-y-2 pt-2">
                                         <FormLabel>{t("reports.add.form.image.label")}</FormLabel>
                                         <div 
@@ -387,10 +370,10 @@ export default function AddReportPage() {
                                                         <UploadCloud className="w-6 h-6" />
                                                     </div>
                                                     <p className="text-center font-medium text-slate-900 dark:text-white">
-                                                        Spauskite įkelti arba tempkite failą
+                                                        {t("reports.add.form.image.dragAndDrop")}
                                                     </p>
                                                     <p className="text-xs text-slate-500 mt-1">
-                                                        PDF, JPG, PNG (iki 5MB)
+                                                        {t("reports.add.form.image.formats")}
                                                     </p>
                                                 </>
                                             )}
@@ -440,10 +423,8 @@ export default function AddReportPage() {
                 </Form>
             </div>
 
-            {/* DEŠINĖ PUSĖ - GIDAS (Sticky) */}
             <div className="hidden lg:block lg:col-span-1">
                 <div className="sticky top-8">
-                     {/* MŪSŲ NAUJAS KOMPONENTAS */}
                      <ReportGuidance category={selectedCategory} />
                 </div>
             </div>
