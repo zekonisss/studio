@@ -1,4 +1,4 @@
-// Force cache refresh for ChunkLoadError - attempt 2.
+// Force cache refresh for ChunkLoadError - attempt 3.
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
