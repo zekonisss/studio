@@ -11,7 +11,8 @@ const getUser = async (userId: string) => {
     if (!adminDb) return null;
     const userRef = adminDb.collection('users').doc(userId);
     const userDoc = await userRef.get();
-    return userDoc.exists ? userDoc.data() : null;
+    // PATAISYMAS: grąžiname ir ID
+    return userDoc.exists ? { id: userDoc.id, ...userDoc.data() } as any : null;
 };
 
 const getCompany = async (companyId: string) => {
@@ -27,18 +28,41 @@ export async function getTeamMembers(userId: string) {
     if (!adminDb) throw new Error("Serverio konfigūracijos klaida.");
     
     const user = await getUser(userId);
-    if (!user || !user.companyId) {
-        // User is not part of any company
+    if (!user) {
+        return { success: false, error: "Vartotojas nerastas." };
+    }
+
+    // SPECIALUS ATVEJIS: Administratorius be priskirtos įmonės
+    if (user.isAdmin && !user.companyId) {
+        const self = {
+          id: user.id,
+          email: user.email,
+          fullName: user.fullName || 'Nenurodyta',
+          role: 'owner', // Adminas yra savo virtualios komandos savininkas
+          joinedAt: user.createdAt?.toDate() || new Date(),
+          status: user.paymentStatus || 'active'
+        };
+        return { 
+            success: true, 
+            members: [self], 
+            companyId: 'admin_virtual_company', // Svarbu, kad nebūtų null
+            companyName: 'Administratoriai',
+            maxSeats: 10,
+            usedSeats: 1 
+        };
+    }
+
+    // Standartinis vartotojas be įmonės
+    if (!user.companyId) {
         return { success: true, members: [], companyId: null, plan: 'solo' };
     }
 
+    // Vartotojas (arba adminas) su priskirta įmone
     const company = await getCompany(user.companyId);
     if (!company) {
-        // Data inconsistency: user has a companyId but company doesn't exist
         return { success: false, error: "Susijusi įmonė nerasta." };
     }
 
-    // Find all users belonging to this company
     const usersSnapshot = await adminDb.collection('users')
       .where('companyId', '==', user.companyId)
       .get();
@@ -73,40 +97,42 @@ export async function inviteTeamMember(inviterId: string, email: string) {
         if (!adminDb) throw new Error("Serverio konfigūracijos klaida.");
 
         const inviter = await getUser(inviterId);
-        if (!inviter || !inviter.companyId) {
-            return { success: false, error: "Jūs nepriklausote jokiai įmonei." };
+        if (!inviter) {
+            return { success: false, error: "Kvietėjas nerastas." };
         }
         
-        if (inviter.role !== 'owner' && inviter.role !== 'admin' && !inviter.isAdmin) {
+        const isAllowedToInvite = inviter.role === 'owner' || inviter.role === 'admin' || inviter.isAdmin;
+        if (!isAllowedToInvite) {
             return { success: false, error: "Neturite teisių kviesti naujų narių." };
         }
-        
-        const company = await getCompany(inviter.companyId);
-        if (!company) {
-             return { success: false, error: "Jūsų įmonė nerasta sistemoje." };
+
+        if (!inviter.companyId && !inviter.isAdmin) {
+             return { success: false, error: "Jūs nepriklausote jokiai įmonei." };
         }
         
-        // Check Limits
-        const currentSeats = (await adminDb.collection('users').where('companyId', '==', inviter.companyId).get()).size;
-        const maxSeats = company.maxSeats || 1;
+        const companyId = inviter.companyId || 'admin_virtual_company';
+        const companyName = inviter.companyName || 'Administratoriai';
+        let company = inviter.companyId ? await getCompany(inviter.companyId) : null;
+        let maxSeats = company ? (company.maxSeats || 1) : 10;
+        
+        const currentSeatsSnapshot = await adminDb.collection('users').where('companyId', '==', companyId).get();
+        const currentSeats = currentSeatsSnapshot.size;
 
         if (currentSeats >= maxSeats) {
              return { success: false, error: "Pasiektas vartotojų limitas. Padidinkite planą." };
         }
 
-        // Generate Token
         const token = crypto.randomBytes(32).toString('hex');
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + 7); 
 
-        // Save Invitation
         await adminDb.collection('invitations').add({
-            companyId: inviter.companyId,
-            companyName: company.name,
+            companyId: companyId,
+            companyName: companyName,
             inviterId: inviterId,
             email: email.toLowerCase(),
             token,
-            role: 'member', // Default role for new invites
+            role: 'member',
             status: 'pending',
             createdAt: Timestamp.now(),
             expiresAt: Timestamp.fromDate(expiresAt)
@@ -114,26 +140,16 @@ export async function inviteTeamMember(inviterId: string, email: string) {
 
         const inviteLink = `${process.env.NEXT_PUBLIC_APP_URL}/join?token=${token}`;
 
-        // --- Debugging and Sending Email ---
-        console.log("🔑 Checking API Key:", process.env.RESEND_API_KEY ? "Present" : "MISSING");
-
-        const { data, error } = await resend.emails.send({
-            from: 'onboarding@resend.dev', // Force 'from' address
+        await resend.emails.send({
+            from: 'Drivercheck <onboarding@resend.dev>',
             to: email,
-            subject: `You have been invited to join ${company.name}`,
+            subject: `You have been invited to join ${companyName}`,
             react: InviteEmailTemplate({ 
                 inviteLink, 
-                companyName: company.name as string,
+                companyName: companyName,
                 inviterName: inviter.fullName || 'A team member'
             }),
         });
-
-        if (error) {
-            console.error("❌ RESEND ERROR:", error);
-            return { success: false, error: error.message };
-        }
-
-        console.log("✅ RESEND SUCCESS:", data);
 
         return { success: true, message: "Pakvietimas išsiųstas." };
 
@@ -153,8 +169,8 @@ export async function removeTeamMember(removerId: string, memberId: string) {
         if (removerId === memberId) return { success: false, error: "Negalima pašalinti savęs." };
 
         const remover = await getUser(removerId);
-        if (!remover || !remover.companyId) {
-            return { success: false, error: "Jūs nepriklausote jokiai įmonei." };
+        if (!remover) {
+             return { success: false, error: "Jūsų vartotojas nerastas." };
         }
         
         if (remover.role !== 'owner' && remover.role !== 'admin' && !remover.isAdmin) {
@@ -168,8 +184,9 @@ export async function removeTeamMember(removerId: string, memberId: string) {
         if (!memberDoc.exists || !memberData) {
              return { success: false, error: "Šalinamas vartotojas nerastas." };
         }
-
-        if (memberData.companyId !== remover.companyId) {
+        
+        const removerCompanyId = remover.companyId || 'admin_virtual_company';
+        if (memberData.companyId !== removerCompanyId && !(remover.isAdmin && !memberData.companyId)) {
             return { success: false, error: "Vartotojas nepriklauso jūsų komandai." };
         }
 
@@ -177,7 +194,6 @@ export async function removeTeamMember(removerId: string, memberId: string) {
              return { success: false, error: "Negalima pašalinti įmonės savininko." };
         }
 
-        // A) Update Database: Dissociate from company and suspend role
         await memberRef.update({
             companyId: null,
             role: 'suspended',
@@ -185,12 +201,10 @@ export async function removeTeamMember(removerId: string, memberId: string) {
             updatedAt: Timestamp.now()
         });
 
-        // B) Disable in Auth (Prevent Login)
         try {
             await adminAuth.updateUser(memberId, { disabled: true });
         } catch (authError) {
             console.error("Auth disable error:", authError);
-            // Don't fail the whole operation if this part fails, but log it
         }
 
         return { success: true, message: "Narys pašalintas ir jo paskyra suspenduota." };
@@ -211,8 +225,8 @@ export async function updateMemberRole(updaterId: string, memberId: string, newR
         }
 
         const updater = await getUser(updaterId);
-        if (!updater || !updater.companyId) {
-            return { success: false, error: "Jūs nepriklausote jokiai įmonei." };
+         if (!updater) {
+             return { success: false, error: "Jūsų vartotojas nerastas." };
         }
         
         if (updater.role !== 'owner' && updater.role !== 'admin' && !updater.isAdmin) {
@@ -227,7 +241,8 @@ export async function updateMemberRole(updaterId: string, memberId: string, newR
              return { success: false, error: "Narys nerastas." };
         }
 
-        if (memberData.companyId !== updater.companyId) {
+        const updaterCompanyId = updater.companyId || 'admin_virtual_company';
+         if (memberData.companyId !== updaterCompanyId && !(updater.isAdmin && !memberData.companyId)) {
             return { success: false, error: "Vartotojas nepriklauso jūsų komandai." };
         }
 
