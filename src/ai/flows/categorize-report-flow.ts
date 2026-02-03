@@ -5,36 +5,55 @@ import { googleAI } from '@genkit-ai/google-genai';
 import { z } from 'zod';
 import { detailedReportCategories } from '@/lib/constants';
 
-// Griežtas ID sąrašas iš tavo constants.ts
 const CategoryIdEnum = z.enum([
   ...detailedReportCategories.map(c => c.id) as [string, ...string[]]
 ]);
 
+// NAUJAS IŠPLĖSTAS IŠVESTIES FORMATAS SU VALIDACIJA
 const OutputSchema = z.object({
-  categoryId: CategoryIdEnum,
-  suggestedTags: z.array(z.string()).optional(),
+  isValid: z.boolean().describe("Is the comment valid and relevant for a professional driver report?"),
+  rejectionReason: z.string().optional().describe("If invalid, a short, one-sentence reason in Lithuanian why it was rejected."),
+  categoryId: CategoryIdEnum.optional().describe("If valid, the most appropriate category ID."),
+  suggestedTags: z.array(z.string()).optional().describe("If valid, a list of suggested tags."),
 });
 
-export async function categorizeReport(input: { comment: string }) {
-  if (!input.comment || input.comment.trim().length < 5) {
-    return { categoryId: 'other_category', suggestedTags: [] };
+// Funkcija dabar grąžina sudėtingesnį objektą
+export async function categorizeReport(input: { comment: string }): Promise<z.infer<typeof OutputSchema>> {
+  const defaultInvalid = { isValid: false, rejectionReason: "Komentaras per trumpas arba jo nėra." };
+  const defaultError = { isValid: false, rejectionReason: "AI analizės klaida." };
+  
+  if (!input.comment || input.comment.trim().length < 10) {
+    return defaultInvalid;
   }
 
   try {
     const result = await ai.generate({
-      // Naudojame tavo nuotraukoje matytą modelį
-      model: googleAI.model('gemini-2.5-flash'), 
+      model: googleAI.model('gemini-2.5-flash'),
       prompt: `
-        Tu esi vairuotojų saugumo analitikas. Išanalizuok šį tekstą: "${input.comment}"
+        Tu esi griežtas transporto sektoriaus analitikas. Tavo užduotis yra patikrinti ir sukategorizuoti vairuotojo elgesio aprašymą.
+        Tekstas: "${input.comment}"
 
-        Privalai priskirti vieną iš šių ID:
-        ${detailedReportCategories.map(c => `- ${c.id} (${c.nameKey})`).join('\n')}
+        Pirma, atlik VALIDACIJĄ. Komentaras yra NETINKAMAS, jei:
+        - Jame yra asmeninės informacijos (telefono numeris, asmens kodas, adresas).
+        - Tai bendrinio pobūdžio teigiama rekomendacija ("geras vairuotojas", "puikiai dirba").
+        - Tekstas akivaizdžiai nesusijęs su vairuotojo profesine veikla.
+        - Komentaras yra per trumpas arba beprasmis.
+        
+        Jei komentaras NETINKAMAS:
+        - "isValid" nustatyk į 'false'.
+        - "rejectionReason" lauke trumpai parašyk atmetimo priežastį lietuviškai (pvz., "Sudėtyje yra asmens duomenų" arba "Nespecifinis teigiamas atsiliepimas").
 
-        Griežtos taisyklės:
-        1. Jei tekstas apie kuro vagystę/trūkumą -> fuel_theft.
-        2. Jei tekstas apie policiją, avariją, sustabdymą -> driving_safety.
-        3. Jei tekstas apie girtumą, agresiją -> behavior.
-        4. Jei niekas netinka -> other_category.
+        Jei komentaras TINKAMAS:
+        - "isValid" nustatyk į 'true'.
+        - Atlik KATEGORIZACIJĄ. Priskirk vieną iš šių ID:
+          ${detailedReportCategories.map(c => `- ${c.id} (${c.nameKey})`).join('\n')}
+        - Griežtos priskyrimo taisyklės:
+          1. Jei apie kuro vagystę/trūkumą -> fuel_theft.
+          2. Jei apie policiją, avariją, KET -> driving_safety.
+          3. Jei apie girtumą, agresiją -> behavior.
+          4. Jei apie darbo drausmės pažeidimus (neatvykimą, pravaikštas) -> discipline.
+          5. Jei niekas akivaizdžiai netinka -> other_category.
+        - Pasiūlyk tinkamas žymas ("suggestedTags").
         
         Atsakyk TIK JSON formatu.
       `,
@@ -43,18 +62,14 @@ export async function categorizeReport(input: { comment: string }) {
     });
 
     if (!result.output) {
-      return { categoryId: 'other_category', suggestedTags: [] };
+      return defaultError;
     }
 
-    // Spausdiname rezultatą terminale (image_fc4928.png vietoje)
-    console.log(">>> AI ATPAŽINO:", result.output.categoryId);
-
+    console.log(">>> AI REZULTATAS:", result.output);
     return result.output;
-  } catch (error: any) {
-    // Jei gemini-2.5-flash visgi neveikia, terminale pamatysi šį užrašą:
-    console.error(">>> AI KLAIDA:", error.message);
     
-    // Grąžiname default, kad programa nesustotų
-    return { categoryId: 'other_category', suggestedTags: [] };
+  } catch (error: any) {
+    console.error(">>> AI KLAIDA:", error.message);
+    return defaultError;
   }
 }

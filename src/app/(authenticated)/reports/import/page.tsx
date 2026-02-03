@@ -103,7 +103,7 @@ export default function ReportsImportPage() {
       const workbook = XLSX.read(fileBuffer, { type: 'array' });
       const sheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[sheetName];
-      const jsonData = XLSX.utils.sheet_to_json(worksheet) as any[];
+      const jsonData = XLSX.utils.sheet_to_json(worksheet, { raw: false }) as any[];
 
       const findHeader = (possibleNames: string[]): string | undefined => {
         const headerRow = jsonData.length > 0 ? Object.keys(jsonData[0]) : [];
@@ -130,22 +130,55 @@ export default function ReportsImportPage() {
         setIsParsing(false);
         return;
       }
+      
+      const cutoffDate = new Date();
+      cutoffDate.setFullYear(cutoffDate.getFullYear() - 5);
 
-      const clientRecords: ClientParsedRecord[] = jsonData
-        .map((row, index) => ({
+      const filteredJsonData = jsonData.filter(row => row[fullNameHeader] && row[commentHeader]);
+
+      const clientRecords: ClientParsedRecord[] = filteredJsonData.map((row, index) => {
+        const recordDateStr = row[dateHeader] || new Date().toISOString();
+        // Handle Excel's date format (serial number)
+        let recordDate;
+        if (typeof recordDateStr === 'number') {
+            recordDate = new Date(XLSX.SSF.format('yyyy-mm-dd', recordDateStr));
+        } else {
+            recordDate = new Date(recordDateStr);
+        }
+
+        if (isNaN(recordDate.getTime())) { // Invalid date
+            return {
+                id: index + 2,
+                fullName: String(row[fullNameHeader]),
+                comment: String(row[commentHeader]),
+                company: companyHeader ? String(row[companyHeader]) : undefined,
+                createdAt: new Date().toISOString(),
+                status: 'error' as const,
+                error: 'Neteisingas datos formatas.',
+            };
+        }
+        
+        if (recordDate < cutoffDate) {
+          return {
+            id: index + 2,
+            fullName: String(row[fullNameHeader]),
+            comment: String(row[commentHeader]),
+            company: companyHeader ? String(row[companyHeader]) : undefined,
+            createdAt: recordDate.toISOString(),
+            status: 'error' as const,
+            error: 'Įrašas senesnis nei 5 metai.',
+          };
+        }
+
+        return {
           id: index + 2,
-          fullName: String(row[fullNameHeader] || 'Nežinomas vairuotojas'),
-          comment: String(row[commentHeader] || ''),
+          fullName: String(row[fullNameHeader]),
+          comment: String(row[commentHeader]),
           company: companyHeader ? String(row[companyHeader]) : undefined,
-          createdAt:
-            dateHeader && row[dateHeader]
-              ? new Date(row[dateHeader]).toISOString()
-              : new Date().toISOString(),
+          createdAt: recordDate.toISOString(),
           status: 'pending' as const,
-          aiCategory: '',
-          aiTags: [],
-        }))
-        .filter((rec) => rec.fullName && rec.comment);
+        };
+      });
 
       if (clientRecords.length === 0) {
         toast({
@@ -158,8 +191,9 @@ export default function ReportsImportPage() {
       }
 
       setRecords(clientRecords);
-      // Pradedame AI analizę
-      await processRecordsWithAI(clientRecords);
+      // Start AI processing for records that are not already marked as errors
+      await processRecordsWithAI(clientRecords.filter(r => r.status === 'pending'));
+
     } catch (error: any) {
       console.error(error);
       toast({
@@ -175,36 +209,31 @@ export default function ReportsImportPage() {
   const processRecordsWithAI = async (recordsToProcess: ClientParsedRecord[]) => {
     for (const record of recordsToProcess) {
       if (isCancelledRef.current) break;
-
-      if (!record.comment) {
-        updateRecordStatus(record.id, {
-          status: 'error' as const,
-          error: t('reports.import.error.noCommentForAi'),
-        });
-        continue;
-      }
+      if (record.status === 'error') continue;
 
       updateRecordStatus(record.id, { status: 'processing' as const });
       
       try {
-        // Kviečiame serverio akciją (Server Action)
         const result = await categorizeReportAction(record.comment);
         
-        // Debug: matysime naršyklės konsolėje ką AI grąžino
-        console.log(`AI result for record ${record.id}:`, result);
-
-        updateRecordStatus(record.id, {
-          status: 'completed' as const,
-          aiCategory: result.categoryId,
-          aiTags: result.suggestedTags,
-        });
+        if (result.isValid) {
+          updateRecordStatus(record.id, {
+            status: 'completed' as const,
+            aiCategory: result.categoryId,
+            aiTags: result.suggestedTags,
+            error: undefined
+          });
+        } else {
+          updateRecordStatus(record.id, {
+            status: 'error' as const,
+            error: result.rejectionReason || "AI atmetė įrašą be priežasties."
+          });
+        }
       } catch (error: any) {
         console.error(`AI Error for record ${record.id}:`, error);
         updateRecordStatus(record.id, {
           status: 'error' as const,
           error: error.message || t('reports.import.error.aiGenericError'),
-          aiCategory: 'other_category',
-          aiTags: [],
         });
       }
     }
@@ -220,9 +249,16 @@ export default function ReportsImportPage() {
     if (!user || !targetCompany) return;
 
     const recordsToImport = records.filter((r) =>
-      ['completed', 'error', 'skipped_quota'].includes(r.status)
+      r.status === 'completed' || (r.status === 'error' && !r.error?.includes('senesnis nei'))
     );
-    if (recordsToImport.length === 0) return;
+    if (recordsToImport.length === 0) {
+        toast({
+            variant: "destructive",
+            title: "Nėra įrašų importavimui",
+            description: "Nėra paruoštų arba AI atmestų įrašų, kuriuos būtų galima importuoti."
+        });
+        return;
+    };
 
     setIsImporting(true);
     try {
@@ -338,31 +374,13 @@ export default function ReportsImportPage() {
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <span className="flex items-center gap-2 text-destructive cursor-pointer">
-                  <AlertTriangle className="h-4 w-4" />
-                  {t('reports.import.status.aiError')}
+                 <span className="flex items-center gap-2 text-destructive cursor-help">
+                  <AlertTriangle className="h-4 w-4 shrink-0" />
+                  <span className="truncate">{error || t('reports.import.status.aiError')}</span>
                 </span>
               </TooltipTrigger>
               <TooltipContent>
                 <p className="max-w-xs">{error}</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        );
-      case 'skipped_quota':
-        return (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span className="flex items-center gap-2 text-amber-600 cursor-pointer">
-                  <Info className="h-4 w-4" />
-                  {t('reports.import.status.skippedQuota')}
-                </span>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p className="max-w-xs">
-                  {t('reports.import.status.skippedQuotaTooltip')}
-                </p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -374,7 +392,7 @@ export default function ReportsImportPage() {
   
   const canImport = useMemo(() => {
     if (isParsing || isImporting) return false;
-    return records.some(r => ['completed', 'error', 'skipped_quota'].includes(r.status));
+    return records.some(r => r.status === 'completed' || r.status === 'error');
   }, [isParsing, isImporting, records]);
 
 
@@ -481,9 +499,7 @@ export default function ReportsImportPage() {
                 {isImporting
                   ? t('reports.import.button.importing')
                   : t('reports.import.button.importAll', {
-                      count: records.filter((r) =>
-                        ['completed', 'error', 'skipped_quota'].includes(r.status)
-                      ).length,
+                      count: records.filter((r) => r.status === 'completed').length,
                     })}
               </Button>
             </div>
@@ -512,12 +528,8 @@ export default function ReportsImportPage() {
                         {record.comment}
                       </TableCell>
                       <TableCell>
-                        {record.aiCategory && (
-                          <Badge
-                            variant={
-                              record.status === 'error' ? 'destructive' : 'secondary'
-                            }
-                          >
+                        {record.aiCategory && record.status === 'completed' && (
+                          <Badge variant="secondary">
                             {getCategoryNameForDisplay(record.aiCategory, t)}
                           </Badge>
                         )}
