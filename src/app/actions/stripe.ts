@@ -44,6 +44,7 @@ export async function createCheckoutSession(data: CreateCheckoutSessionData): Pr
 
         const userDocRef = adminDb.collection('users').doc(userId);
 
+        // Jei neturime stripeCustomerId, bandome gauti iš DB arba sukurti naują
         if (!stripeCustomerId) {
             const userDoc = await userDocRef.get();
             stripeCustomerId = userDoc.data()?.stripeCustomerId;
@@ -67,10 +68,17 @@ export async function createCheckoutSession(data: CreateCheckoutSessionData): Pr
                 quantity: 1,
             }],
             success_url: `${origin}/dashboard?payment=success`,
-            cancel_url: `${origin}/account?tab=payment&payment=cancelled`,
+            cancel_url: `${origin}/account?tab=payment`,
+            
+            // --- ŠTAI PATAISYMAS (BŪTINAS B2B MOKESČIAMS) ---
             tax_id_collection: {
                 enabled: true,
             },
+            customer_update: {
+                name: 'auto',
+                address: 'auto',
+            },
+            // ------------------------------------------------
         });
         
         if (!session.url) {
