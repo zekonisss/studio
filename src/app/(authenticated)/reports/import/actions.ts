@@ -1,11 +1,13 @@
 'use server';
 
-import { adminDb } from '@/lib/firebase-admin';
+import { adminDb, adminAuth } from '@/lib/firebase-admin';
 import { detailedReportCategories } from '@/lib/constants';
 import { Timestamp } from 'firebase-admin/firestore';
 import { getCategoryNameForDisplay } from '@/lib/utils';
 import { categorizeReport } from '@/ai/flows/categorize-report-flow';
 import { translationsMaster } from '@/lib/translations-master';
+import crypto from 'crypto';
+
 
 // PAGRINDINĖ TAISYKLĖ: Tik 'async function' gali būti eksportuojamos šiame faile.
 // Visi pagalbiniai kintamieji turi būti funkcijų viduje arba kituose failuose.
@@ -17,16 +19,65 @@ export async function categorizeReportAction(comment: string) {
 export async function importAllReports(
   reports: any[],
   adminUid: string,
-  adminCompanyName: string
+  targetCompanyName: string
 ) {
-  if (!adminUid || !adminDb) {
+  if (!adminUid || !adminDb || !adminAuth) {
     return {
       success: false,
       error: 'Serverio konfigūracijos klaida (Admin SDK nepasiekiamas).',
     };
   }
+   if (!targetCompanyName?.trim()) {
+      return { success: false, error: 'Įmonės pavadinimas yra privalomas.' };
+  }
+
 
   try {
+    // Step 1: Find or create the target company and its owner
+    const companiesRef = adminDb.collection('companies');
+    const companyQuery = await companiesRef.where('name', '==', targetCompanyName).limit(1).get();
+    
+    let reportOwnerId: string;
+    
+    if (companyQuery.empty) {
+        // Company doesn't exist, create a new one with a placeholder owner
+        const dummyEmail = `placeholder-${Date.now()}@drivercheck.lt`;
+        const newAuthUser = await adminAuth.createUser({
+            email: dummyEmail,
+            password: crypto.randomBytes(20).toString('hex'),
+            disabled: true, // This account should not be used for login
+        });
+        reportOwnerId = newAuthUser.uid;
+
+        const companyData = {
+            name: targetCompanyName,
+            ownerId: reportOwnerId,
+            plan: 'imported',
+            subscriptionStatus: 'inactive',
+            createdAt: Timestamp.now(),
+        };
+        const newCompanyRef = await companiesRef.add(companyData);
+
+        const userData = {
+            email: dummyEmail,
+            companyId: newCompanyRef.id,
+            companyName: targetCompanyName,
+            fullName: `${targetCompanyName} (Imported)`,
+            contactPerson: `${targetCompanyName} (Imported)`,
+            role: 'owner',
+            paymentStatus: 'inactive',
+            isAdmin: false,
+            createdAt: Timestamp.now(),
+            registeredAt: Timestamp.now(),
+        };
+        await adminDb.collection('users').doc(reportOwnerId).set(userData);
+
+    } else {
+        // Company exists, use its owner
+        reportOwnerId = companyQuery.docs[0].data().ownerId;
+    }
+
+    // Step 2: Batch import the reports
     const chunkSize = 450;
     let totalImported = 0;
 
@@ -40,8 +91,8 @@ export async function importAllReports(
         batch.set(docRef, {
           fullName: report.fullName || 'Nežinomas',
           comment: report.comment || '',
-          reporterId: adminUid,
-          reporterCompanyName: adminCompanyName,
+          reporterId: reportOwnerId,
+          reporterCompanyName: targetCompanyName,
           category: report.aiCategory || 'other_category',
           tags: report.aiTags || [],
           createdAt: report.createdAt ? Timestamp.fromDate(new Date(report.createdAt)) : Timestamp.now(),

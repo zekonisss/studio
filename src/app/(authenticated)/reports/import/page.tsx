@@ -43,6 +43,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { Label } from '@/components/ui/label';
 
 export interface ParsedRecord {
   id: number;
@@ -69,6 +70,7 @@ export default function ReportsImportPage() {
   const [isParsing, setIsParsing] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [targetCompany, setTargetCompany] = useState('');
   const isCancelledRef = useRef(false);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -215,7 +217,7 @@ export default function ReportsImportPage() {
   };
 
   const handleImportAll = async () => {
-    if (!user) return;
+    if (!user || !targetCompany) return;
 
     const recordsToImport = records.filter((r) =>
       ['completed', 'error', 'skipped_quota'].includes(r.status)
@@ -227,7 +229,7 @@ export default function ReportsImportPage() {
       const result = await importAllReports(
         recordsToImport,
         user.id,
-        user.companyName
+        targetCompany
       );
 
       if (result.success) {
@@ -239,6 +241,7 @@ export default function ReportsImportPage() {
         });
         setFile(null);
         setRecords([]);
+        setTargetCompany('');
       } else {
         toast({
           variant: 'destructive',
@@ -457,11 +460,19 @@ export default function ReportsImportPage() {
 
         {records.length > 0 && (
           <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h3 className="text-lg font-semibold">
-                {t('reports.import.previewTitle')} ({records.length})
-              </h3>
-              <Button onClick={handleImportAll} disabled={!canImport}>
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+              <div className="w-full md:w-auto">
+                 <Label htmlFor="targetCompany" className="text-xs font-semibold text-muted-foreground">Importuoti į įmonę:</Label>
+                 <Input
+                    id="targetCompany"
+                    placeholder="Įveskite įmonės pavadinimą..."
+                    value={targetCompany}
+                    onChange={(e) => setTargetCompany(e.target.value)}
+                    disabled={isImporting}
+                    className="w-full md:w-72 mt-1"
+                  />
+              </div>
+              <Button onClick={handleImportAll} disabled={!canImport || !targetCompany}>
                 {isImporting ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
