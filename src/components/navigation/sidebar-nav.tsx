@@ -91,7 +91,8 @@ export function SidebarNav({ isInSheet = false }: SidebarNavProps) {
   const renderLinks = (items: { href: string; label: string; icon: React.ElementType }[]) => {
     return items.map((item) => {
       let isActive: boolean;
-      if (item.href === '/dashboard' || item.href === '/search' || item.href === '/account/team') {
+      // The Account link should only be active for its own page, not for sub-pages like Team.
+      if (item.href === '/account') {
         isActive = pathname === item.href;
       } else {
         isActive = pathname.startsWith(item.href);
