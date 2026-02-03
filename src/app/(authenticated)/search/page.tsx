@@ -37,6 +37,8 @@ export default function SearchPage() {
         defaultValues: { query: "" },
     });
 
+    const hasSearchCredits = user && (user.paymentStatus === 'active' || (user.paymentStatus === 'trial' && (user.searchCredits ?? 0) > 0));
+
     const onSubmit = async (values: SearchFormValues) => {
         setIsLoading(true);
         setHasSearched(true);
@@ -105,8 +107,6 @@ export default function SearchPage() {
         return { firstName, lastName };
     };
 
-    const hasSearchCredits = user && (user.paymentStatus === 'active' || (user.paymentStatus === 'trial' && (user.searchCredits ?? 0) > 0));
-
     return (
         <div className="space-y-6 max-w-7xl mx-auto">
             <Card className="border-none shadow-none bg-transparent">
@@ -123,57 +123,44 @@ export default function SearchPage() {
                 </CardHeader>
                 <CardContent className="px-0">
                     
-                    {hasSearchCredits ? (
-                        <Form {...form}>
-                            <form onSubmit={form.handleSubmit(onSubmit)} className="w-full space-y-3 mb-10">
-                                <fieldset disabled={isLoading}>
-                                    <div className="flex flex-col sm:flex-row gap-3">
-                                        <div className="flex-grow relative group">
-                                            <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg blur opacity-20 group-hover:opacity-40 transition duration-1000"></div>
-                                            <FormField
-                                                control={form.control}
-                                                name="query"
-                                                render={({ field }) => (
-                                                    <FormItem className="relative bg-background rounded-lg">
-                                                        <FormControl>
-                                                            <div className="relative">
-                                                                <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                                                                <Input 
-                                                                    placeholder={t('search.queryPlaceholder')} 
-                                                                    {...field} 
-                                                                    className="pl-12 h-14 text-lg shadow-sm border-slate-200 dark:border-slate-800 focus-visible:ring-2 focus-visible:ring-primary/50" 
-                                                                />
-                                                            </div>
-                                                        </FormControl>
-                                                        <FormMessage className="pl-4" />
-                                                    </FormItem>
-                                                )}
-                                            />
-                                        </div>
-                                        <Button 
-                                            type="submit" 
-                                            disabled={isLoading} 
-                                            className="h-14 px-8 text-lg font-medium shadow-lg hover:shadow-primary/25 transition-all"
-                                        >
-                                            {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Search className="h-5 w-5" />}
-                                            <span className="hidden sm:inline ml-2">{t('search.searchButton')}</span>
-                                        </Button>
+                    <Form {...form}>
+                        <form onSubmit={form.handleSubmit(onSubmit)} className="w-full space-y-3 mb-10">
+                            <fieldset disabled={isLoading || !hasSearchCredits}>
+                                <div className="flex flex-col sm:flex-row gap-3">
+                                    <div className="flex-grow relative group">
+                                        <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg blur opacity-20 group-hover:opacity-40 transition duration-1000"></div>
+                                        <FormField
+                                            control={form.control}
+                                            name="query"
+                                            render={({ field }) => (
+                                                <FormItem className="relative bg-background rounded-lg">
+                                                    <FormControl>
+                                                        <div className="relative">
+                                                            <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                                                            <Input 
+                                                                placeholder={t('search.queryPlaceholder')} 
+                                                                {...field} 
+                                                                className="pl-12 h-14 text-lg shadow-sm border-slate-200 dark:border-slate-800 focus-visible:ring-2 focus-visible:ring-primary/50" 
+                                                            />
+                                                        </div>
+                                                    </FormControl>
+                                                    <FormMessage className="pl-4" />
+                                                </FormItem>
+                                            )}
+                                        />
                                     </div>
-                                </fieldset>
-                            </form>
-                        </Form>
-                    ) : (
-                        user?.paymentStatus === 'trial' && (
-                            <Alert variant="destructive" className="mb-6 border-red-500/50 bg-red-500/10">
-                                <ShieldAlert className="h-4 w-4" />
-                                <AlertTitle>Paieškos kreditai baigėsi</AlertTitle>
-                                <AlertDescription>
-                                    Jūs išnaudojote nemokamų paieškų limitą. Norėdami tęsti, prašome{" "}
-                                    <Link href="/account?tab=payment" className="font-semibold underline hover:text-white">aktyvuoti prenumeratą</Link>.
-                                </AlertDescription>
-                            </Alert>
-                        )
-                    )}
+                                    <Button 
+                                        type="submit" 
+                                        disabled={isLoading || !hasSearchCredits} 
+                                        className="h-14 px-8 text-lg font-medium shadow-lg hover:shadow-primary/25 transition-all"
+                                    >
+                                        {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Search className="h-5 w-5" />}
+                                        <span className="hidden sm:inline ml-2">{t('search.searchButton')}</span>
+                                    </Button>
+                                </div>
+                            </fieldset>
+                        </form>
+                    </Form>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
                         <div className="lg:col-span-2 space-y-6">
