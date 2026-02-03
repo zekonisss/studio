@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import type { Report } from '@/types';
-import { getAllReports, reviewDeletionRequest, addAuditLogEntry, deleteAllReports, fixMissingStatus } from '@/lib/storage';
+import { useState, useEffect, useMemo } from 'react';
+import type { Report, UserProfile } from '@/types';
+import { getAllReports, reviewDeletionRequest, addAuditLogEntry, deleteAllReports, fixMissingStatus, getAllUsers } from '@/lib/storage';
 import { useLanguage } from '@/contexts/language-context';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -19,6 +19,7 @@ import { DeleteEntryDialog } from './modals/delete-entry-dialog';
 import { DeleteAllEntriesDialog } from './modals/delete-all-entries-dialog';
 import { AdminEntryDetailsModal } from './modals/admin-entry-details-modal';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function EntryManagementTab() {
   const { t, locale } = useLanguage();
@@ -26,7 +27,9 @@ export default function EntryManagementTab() {
   const { user: adminUser } = useAuth();
 
   const [reports, setReports] = useState<Report[]>([]);
+  const [users, setUsers] = useState<UserProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedCompany, setSelectedCompany] = useState<string>('all');
 
   // State for single entry deletion
   const [reportToDelete, setReportToDelete] = useState<Report | null>(null);
@@ -43,21 +46,49 @@ export default function EntryManagementTab() {
   // State for status fixing
   const [isFixing, setIsFixing] = useState(false);
 
-  const fetchReports = async () => {
-    setIsLoading(true);
-    try {
-      const reportList = await getAllReports(true);
-      setReports(reportList.filter(r => r.status === 'active'));
-    } catch (error) {
-      console.error("Error fetching reports:", error);
-    } finally {
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      setIsLoading(true);
+      try {
+        const [reportList, userList] = await Promise.all([
+          getAllReports(true),
+          getAllUsers(),
+        ]);
+        setReports(reportList.filter(r => r.status === 'active'));
+        setUsers(userList);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        toast({ variant: "destructive", title: "Klaida", description: "Nepavyko gauti duomenų." });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (adminUser?.isAdmin) {
+      fetchInitialData();
+    } else {
       setIsLoading(false);
     }
-  };
+  }, [adminUser, toast]);
 
-  useEffect(() => {
-    fetchReports();
-  }, []);
+  const userMap = useMemo(() => {
+    return users.reduce((acc, user) => {
+        acc[user.id] = user;
+        return acc;
+    }, {} as Record<string, UserProfile>);
+  }, [users]);
+  
+  const uniqueCompanies = useMemo(() => {
+      const companyNames = reports.map(r => r.reporterCompanyName).filter((name): name is string => !!name);
+      return [...new Set(companyNames)].sort();
+  }, [reports]);
+
+  const filteredReports = useMemo(() => {
+      if (selectedCompany === 'all') {
+          return reports;
+      }
+      return reports.filter(r => r.reporterCompanyName === selectedCompany);
+  }, [reports, selectedCompany]);
   
   const handleViewDetails = (report: Report) => {
     setReportToView(report);
@@ -115,7 +146,7 @@ export default function EntryManagementTab() {
             description: t('admin.entries.toast.allEntriesDeleted.description', { count: deletedCount }),
         });
         
-        await fetchReports();
+        setReports(prev => prev.filter(r => r.status !== 'active'));
     } catch (error) {
         console.error("Error deleting all reports:", error);
         toast({ variant: "destructive", title: "Klaida", description: "Nepavyko ištrinti visų įrašų." });
@@ -168,7 +199,20 @@ export default function EntryManagementTab() {
               <CardTitle>{t('admin.entries.title')}</CardTitle>
               <CardDescription>Čia rodomi visi aktyvūs sistemos įrašai. Prašymai ištrinti ir ištrinti įrašai valdomi kituose skirtukuose.</CardDescription>
             </div>
-            <div className="flex flex-col sm:flex-row gap-2">
+            <div className="flex flex-col sm:flex-row items-center gap-2">
+                 <div className="w-full sm:w-52">
+                    <Select value={selectedCompany} onValueChange={setSelectedCompany}>
+                        <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Filtruoti pagal įmonę" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">Visos įmonės</SelectItem>
+                            {uniqueCompanies.map(company => (
+                                <SelectItem key={company} value={company}>{company}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
                 <Button
                     variant="outline"
                     onClick={handleFixStatus}
@@ -194,7 +238,7 @@ export default function EntryManagementTab() {
                 <TableRow>
                   <TableHead>{t('admin.entries.table.personInEntry')}</TableHead>
                   <TableHead>{t('admin.entries.table.category')}</TableHead>
-                  <TableHead>{t('admin.entries.table.submittedByCompany')}</TableHead>
+                  <TableHead>Įkėlė</TableHead>
                   <TableHead>{t('admin.entries.table.submissionDate')}</TableHead>
                   <TableHead className="text-right">{t('admin.entries.table.actions')}</TableHead>
                 </TableRow>
@@ -210,14 +254,14 @@ export default function EntryManagementTab() {
                         <TableCell className="text-right"><Skeleton className="h-8 w-8 ml-auto rounded-full" /></TableCell>
                     </TableRow>
                   ))
-                ) : reports.length === 0 ? (
+                ) : filteredReports.length === 0 ? (
                   <TableRow>
                       <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
-                          {t('admin.entries.noEntriesFound')}
+                          {selectedCompany === 'all' ? t('admin.entries.noEntriesFound') : 'Pasirinkta įmonė neturi aktyvių įrašų.'}
                       </TableCell>
                   </TableRow>
                 ) : (
-                  reports.map((report) => (
+                  filteredReports.map((report) => (
                     <TableRow key={report.id}>
                       <TableCell className="font-medium">{report.fullName}</TableCell>
                       <TableCell>
@@ -225,7 +269,10 @@ export default function EntryManagementTab() {
                           {getCategoryNameForDisplay(report.category, t)}
                         </Badge>
                       </TableCell>
-                      <TableCell>{report.reporterCompanyName}</TableCell>
+                      <TableCell>
+                         <div className="font-medium">{report.reporterCompanyName}</div>
+                         <div className="text-xs text-muted-foreground">{userMap[report.reporterId]?.email}</div>
+                      </TableCell>
                       <TableCell>{new Date(report.createdAt).toLocaleDateString(locale)}</TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
