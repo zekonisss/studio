@@ -10,7 +10,6 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Checkbox } from "@/components/ui/checkbox";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Loader2, UserPlus } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/contexts/language-context";
@@ -25,7 +24,7 @@ export default function SignupPage() {
   const { toast } = useToast();
   const { t } = useLanguage();
 
-  const form = useForm<SignupFormValuesExtended>({
+  const form = useForm<Omit<SignupFormValuesExtended, 'subscriptionType'>>({
     resolver: zodResolver(SignupFormSchema),
     defaultValues: {
         email: "",
@@ -42,14 +41,14 @@ export default function SignupPage() {
     },
   });
 
-  const onSubmit = async (data: SignupFormValuesExtended) => {
+  const onSubmit = async (data: Omit<SignupFormValuesExtended, 'subscriptionType'>) => {
     try {
       await signup(data);
       toast({
         title: t('toast.signup.success.title'),
         description: t('toast.signup.success.description'),
       });
-      router.push("/activation-pending");
+      // Redirect handled by the signup function
     } catch (error: any) {
        let description = t('toast.signup.error.descriptionGeneric');
        if (error.code === 'auth/email-already-in-use') {
@@ -83,6 +82,7 @@ export default function SignupPage() {
                         <FormField control={form.control} name="companyCode" render={({ field }) => (
                             <FormItem>
                                 <FormLabel>{t('signup.form.companyCode.label')}</FormLabel>
+
                                 <FormControl><Input placeholder={t('signup.form.companyCode.placeholder')} {...field} /></FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -146,41 +146,6 @@ export default function SignupPage() {
                             </FormItem>
                         )} />
                     </div>
-
-                    <FormField
-                        control={form.control}
-                        name="subscriptionType"
-                        render={({ field }) => (
-                            <FormItem className="space-y-3 rounded-md border p-4 shadow-sm">
-                            <FormLabel>Pasirinkite narystės planą</FormLabel>
-                            <FormControl>
-                                <RadioGroup
-                                onValueChange={field.onChange}
-                                defaultValue={field.value}
-                                className="flex flex-col space-y-2"
-                                >
-                                <FormItem className="flex items-center space-x-3 space-y-0">
-                                    <FormControl>
-                                    <RadioGroupItem value="trial" />
-                                    </FormControl>
-                                    <FormLabel className="font-normal">
-                                    Išbandyti nemokamai (3 paieškos ir 1 įrašas)
-                                    </FormLabel>
-                                </FormItem>
-                                <FormItem className="flex items-center space-x-3 space-y-0">
-                                    <FormControl>
-                                    <RadioGroupItem value="paid" />
-                                    </FormControl>
-                                    <FormLabel className="font-normal">
-                                    Mokama metinė prenumerata
-                                    </FormLabel>
-                                </FormItem>
-                                </RadioGroup>
-                            </FormControl>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                        />
 
                      <FormField control={form.control} name="agreeToTerms" render={({ field }) => (
                         <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow-sm">

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useAuth } from '@/hooks/use-auth';
@@ -64,6 +65,7 @@ export default function AuthenticatedLayout({
     const status = user.paymentStatus?.toLowerCase();
     const isAllowedInApp = status === 'active' || status === 'trial';
 
+    // Admins have access to everything and should be redirected from pending page
     if (user.isAdmin) {
       if (pathname === '/activation-pending') {
         window.location.replace('/dashboard');
@@ -71,11 +73,16 @@ export default function AuthenticatedLayout({
       return;
     }
 
+    // For regular users, check their status
     if (!isAllowedInApp && !isAccountPage) {
+      // If user is not approved and not trying to access their account,
+      // redirect them to the pending page.
       if (pathname !== '/activation-pending') {
         window.location.replace('/activation-pending');
       }
     } else if (isAllowedInApp) {
+      // If user IS approved but somehow lands on the pending page,
+      // redirect them to the dashboard.
       if (pathname === '/activation-pending') {
         window.location.replace('/dashboard');
       }

@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -26,7 +27,7 @@ interface AuthContextType {
   firebaseUser: FirebaseUser | null;
   isLoading: boolean;
   login: (values: LoginFormValues) => Promise<UserProfile>;
-  signup: (data: SignupFormValuesExtended) => Promise<void>;
+  signup: (data: Omit<SignupFormValuesExtended, 'subscriptionType'>) => Promise<void>;
   logout: () => void;
   updateUserInContext: (data: Partial<UserProfile>) => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -112,10 +113,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     window.location.assign('/login');
   };
 
-  const signup = async (data: SignupFormValuesExtended) => {
+  const signup = async (data: Omit<SignupFormValuesExtended, 'subscriptionType'>) => {
      if (!auth || !db) throw new Error("Firebase not initialized");
      
-     const { email, password, companyName, companyCode, vatCode, address, contactPerson, position, phone, subscriptionType, agreeToTerms } = data;
+     const { email, password, companyName, companyCode, vatCode, address, contactPerson, position, phone, agreeToTerms } = data;
      
      if (!email || typeof email !== 'string' || !email.includes('@')) {
        throw new Error("Būtinas teisingas el. paštas.");
@@ -128,15 +129,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
      const uid = userCredential.user.uid;
      
-     const isTrial = subscriptionType === 'trial';
-
      // 2. Create Company
      const companyRef = await addDoc(collection(db, "companies"), {
         name: companyName,
         ownerId: uid,
-        plan: isTrial ? 'trial' : 'corporate', 
-        maxSeats: isTrial ? 1 : 20,
-        subscriptionStatus: isTrial ? 'trial' : 'pending_verification',
+        plan: 'corporate', 
+        maxSeats: 1, // Default seats for a new company
+        subscriptionStatus: 'pending_verification',
         createdAt: serverTimestamp(),
         vatCode: vatCode || '',
         address: address,
@@ -153,22 +152,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         contactPerson: contactPerson,
         position,
         phone,
-        subscriptionType,
+        subscriptionType: 'paid', // All new users start as 'paid' pending verification
         agreeToTerms,
         
         companyId: companyRef.id,
         role: 'owner', // First user is the owner
         
-        paymentStatus: isTrial ? 'trial' : 'pending_verification', 
-        isAdmin: false, // Regular users are not platform admins
+        paymentStatus: 'pending_verification', 
+        isAdmin: false,
         
         createdAt: serverTimestamp() as any, 
         registeredAt: serverTimestamp() as any,
-        accountActivatedAt: isTrial ? serverTimestamp() as any : null,
+        accountActivatedAt: null,
 
-        // Correct credits based on plan
-        searchCredits: isTrial ? 3 : 0,
-        reportCredits: isTrial ? 1 : 0,
+        searchCredits: 0,
+        reportCredits: 0,
      };
 
      await setDoc(doc(db, "users", uid), newUserProfile);
@@ -176,12 +174,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
      const createdProfile = await getUserProfile(uid);
      setUser(createdProfile);
      
-     // Redirect based on plan
-     if (isTrial) {
-        router.push("/dashboard");
-     } else {
-        router.push("/activation-pending");
-     }
+     router.push("/activation-pending");
   };
   
   const updateUserInContext = async (data: Partial<UserProfile>) => {
