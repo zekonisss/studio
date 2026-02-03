@@ -92,3 +92,76 @@ export async function createCheckoutSession(data: CreateCheckoutSessionData): Pr
         return { url: null, error: error.message || 'Įvyko netikėta klaida.' };
     }
 }
+
+
+export async function getSubscriptionStatus(userId: string): Promise<{ isSubscribed: boolean; planName?: string | null; interval?: string; endDate?: number }> {
+    try {
+        if (!userId || !adminDb) {
+            throw new Error('User not authenticated or server misconfigured.');
+        }
+
+        const userDocRef = adminDb.collection('users').doc(userId);
+        const userDoc = await userDocRef.get();
+        const stripeCustomerId = userDoc.data()?.stripeCustomerId;
+
+        if (!stripeCustomerId) {
+            return { isSubscribed: false };
+        }
+
+        const subscriptions = await stripe.subscriptions.list({
+            customer: stripeCustomerId,
+            status: 'active',
+            limit: 1,
+        });
+
+        if (subscriptions.data.length === 0) {
+            return { isSubscribed: false };
+        }
+
+        const sub = subscriptions.data[0];
+        
+        return {
+            isSubscribed: true,
+            planName: sub.items.data[0]?.price.nickname,
+            interval: sub.items.data[0]?.plan.interval,
+            endDate: sub.current_period_end,
+        };
+
+    } catch (error) {
+        console.error('Error getting subscription status:', error);
+        return { isSubscribed: false };
+    }
+}
+
+export async function createCustomerPortalSession(userId: string): Promise<{ url: string | null; error?: string }> {
+    const origin = headers().get('origin') || 'http://localhost:3000';
+
+    try {
+        if (!userId || !adminDb) {
+            return { url: null, error: 'User not authenticated or server misconfigured.' };
+        }
+
+        const userDocRef = adminDb.collection('users').doc(userId);
+        const userDoc = await userDocRef.get();
+        const stripeCustomerId = userDoc.data()?.stripeCustomerId;
+
+        if (!stripeCustomerId) {
+            return { url: null, error: 'Stripe customer not found for this user.' };
+        }
+
+        const portalSession = await stripe.billingPortal.sessions.create({
+            customer: stripeCustomerId,
+            return_url: `${origin}/account?tab=payment`,
+        });
+
+        if (!portalSession.url) {
+             return { url: null, error: 'Could not create customer portal session.' };
+        }
+
+        return { url: portalSession.url };
+
+    } catch (error: any) {
+        console.error('Error creating customer portal session:', error);
+        return { url: null, error: error.message || 'An unexpected error occurred.' };
+    }
+}
