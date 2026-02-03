@@ -47,7 +47,7 @@ export async function createInvitation(email: string, companyId: string, company
               <!-- Header -->
               <tr>
                 <td align="center" style="padding: 30px 40px 20px 40px;">
-                  <h1 style="color: #2563EB; font-size: 28px; font-weight: bold; margin: 0; font-style: italic;">DriverCheck</h1>
+                  <img src="${process.env.NEXT_PUBLIC_APP_URL}/logo.png" alt="Drivercheck Logo" style="width: 150px; height: auto; display: block; margin: 0 auto 20px auto;">
                 </td>
               </tr>
               <!-- Body -->
