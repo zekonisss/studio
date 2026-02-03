@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, CheckCircle, AlertTriangle, Building, UserCheck } from "lucide-react";
 import { verifyInvitation, acceptInvitation } from "./actions";
+import { useLanguage } from "@/contexts/language-context";
 
 interface InvitationDetails {
     companyName: string;
@@ -20,6 +21,7 @@ export default function JoinPage() {
     const router = useRouter();
     const { toast } = useToast();
     const token = searchParams.get('token');
+    const { t } = useLanguage();
 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -30,7 +32,7 @@ export default function JoinPage() {
 
     useEffect(() => {
         if (!token) {
-            setError("Pakvietimo nuoroda negaliojanti arba jos trūksta.");
+            setError(t('join.invalidLink'));
             setLoading(false);
             return;
         }
@@ -41,16 +43,21 @@ export default function JoinPage() {
                 if (result.success && result.data) {
                     setInvitation(result.data);
                 } else {
-                    setError(result.error || "Įvyko nežinoma klaida.");
+                    let errorMessage = result.error || t('join.unknownError');
+                    if (result.error?.includes("Pakvietimas nerastas")) errorMessage = t('join.tokenNotFound');
+                    if (result.error?.includes("panaudotas")) errorMessage = t('join.tokenUsed');
+                    if (result.error?.includes("baigėsi")) errorMessage = t('join.tokenExpired');
+                    if (result.error?.includes("jau egzistuoja")) errorMessage = t('join.userExists');
+                    setError(errorMessage);
                 }
             } catch (err) {
-                setError("Nepavyko susisiekti su serveriu.");
+                setError(t('join.serverContactError'));
             }
             setLoading(false);
         };
 
         checkToken();
-    }, [token]);
+    }, [token, t]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -58,8 +65,8 @@ export default function JoinPage() {
         if (!token || !fullName || password.length < 6) {
             toast({
                 variant: "destructive",
-                title: "Klaida",
-                description: "Prašome užpildyti visus laukus teisingai (slaptažodis bent 6 simbolių).",
+                title: t('common.error'),
+                description: t('join.fillFieldsError'),
             });
             return;
         }
@@ -70,22 +77,22 @@ export default function JoinPage() {
             
             if (result.success) {
                 toast({
-                    title: "Sveikiname prisijungus!",
-                    description: `Jūs sėkmingai prisijungėte prie ${invitation?.companyName}. Dabar galite prisijungti.`,
+                    title: t('join.welcomeToast.title'),
+                    description: t('join.welcomeToast.description', { companyName: invitation?.companyName }),
                 });
                 window.location.replace('/login');
             } else {
                 toast({
                     variant: "destructive",
-                    title: "Klaida",
+                    title: t('common.error'),
                     description: result.error,
                 });
             }
         } catch (err) {
             toast({
                 variant: "destructive",
-                title: "Klaida",
-                description: "Įvyko netikėta klaida registruojantis.",
+                title: t('common.error'),
+                description: t('join.genericRegisterError'),
             });
         } finally {
             setIsSubmitting(false);
@@ -106,13 +113,13 @@ export default function JoinPage() {
                 <Card className="w-full max-w-md border-red-200">
                     <CardHeader className="text-center">
                         <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-2" />
-                        <CardTitle className="text-red-700">Klaida</CardTitle>
+                        <CardTitle className="text-red-700">{t('join.errorCard.title')}</CardTitle>
                         <CardDescription className="text-red-600 font-medium text-lg mt-2">
                            {error}
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="text-center text-gray-500 text-sm">
-                        Patikrinkite nuorodą arba paprašykite administratoriaus atsiųsti naują pakvietimą.
+                        {t('join.errorCard.checkLink')}
                     </CardContent>
                  </Card>
              </div>
@@ -127,29 +134,29 @@ export default function JoinPage() {
                         <div className="mx-auto bg-primary/10 p-3 rounded-full w-fit">
                             <Building className="h-8 w-8 text-primary" />
                         </div>
-                        <CardTitle className="text-2xl pt-2">Sveiki atvykę!</CardTitle>
+                        <CardTitle className="text-2xl pt-2">{t('join.form.title')}</CardTitle>
                         <CardDescription className="text-base">
-                            Jūs kviečiamas prisijungti prie komandos: <br/>
+                            {t('join.form.description')}<br/>
                             <span className="font-bold text-foreground text-lg">{invitation.companyName}</span>
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div className="space-y-2">
-                                <Label>El. paštas</Label>
+                                <Label>{t('join.form.emailLabel')}</Label>
                                 <Input value={invitation.email} disabled className="bg-muted" />
                             </div>
                             <div className="space-y-2">
-                                <Label>Jūsų Vardas Pavardė</Label>
+                                <Label>{t('join.form.fullNameLabel')}</Label>
                                 <Input 
-                                    placeholder="Vardenis Pavardenis" 
+                                    placeholder={t('reports.add.form.fullName.placeholder')} 
                                     value={fullName}
                                     onChange={(e) => setFullName(e.target.value)}
                                     required
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label>Slaptažodis</Label>
+                                <Label>{t('join.form.passwordLabel')}</Label>
                                 <Input 
                                     type="password" 
                                     placeholder="******" 
@@ -161,7 +168,7 @@ export default function JoinPage() {
                             </div>
                             <Button type="submit" className="w-full h-11 text-base" disabled={isSubmitting}>
                                 {isSubmitting ? <Loader2 className="animate-spin mr-2"/> : <UserCheck className="mr-2 h-4 w-4" />}
-                                Sukurti paskyrą ir Prisijungti
+                                {t('join.form.createAccountButton')}
                             </Button>
                         </form>
                     </CardContent>

@@ -67,7 +67,7 @@ export default function MyEntriesTab() {
 
   const handleRequestDeletion = async () => {
     if (!reportForDeletion || !deletionReason.trim()) {
-        toast({ variant: 'destructive', title: 'Klaida', description: 'Būtina nurodyti ištrynimo priežastį.' });
+        toast({ variant: 'destructive', title: t('common.error'), description: t('account.entries.toast.reasonRequired') });
         return;
     }
 
@@ -75,13 +75,13 @@ export default function MyEntriesTab() {
     try {
         await requestReportDeletion(reportForDeletion.id, deletionReason);
         toast({
-            title: 'Prašymas išsiųstas',
-            description: 'Jūsų prašymas ištrinti įrašą buvo sėkmingai pateiktas administratoriui.',
+            title: t('account.entries.toast.requestSent.title'),
+            description: t('account.entries.toast.requestSent.description'),
         });
         await fetchReports(); // Re-fetch all reports to update lists
     } catch (error) {
         console.error("Error requesting report deletion:", error);
-        toast({ variant: 'destructive', title: 'Klaida', description: 'Nepavyko išsiųsti prašymo.' });
+        toast({ variant: 'destructive', title: t('common.error'), description: t('account.entries.toast.requestError') });
     } finally {
         setIsSubmitting(false);
         setReportForDeletion(null);
@@ -98,8 +98,8 @@ export default function MyEntriesTab() {
             showButton: true
         },
         pending: {
-            title: 'Nėra laukiančių prašymų',
-            message: 'Kai pateiksite prašymą ištrinti įrašą, jis atsiras čia.',
+            title: t('account.entries.noPending.title'),
+            message: t('account.entries.noPending.description'),
             buttonText: '',
             showButton: false
         },
@@ -131,7 +131,7 @@ export default function MyEntriesTab() {
   const getStatusBadge = (status: Report['status']) => {
     switch(status) {
         case 'pending_delete':
-            return <Badge variant="secondary" className="bg-yellow-500 text-yellow-900"><Hourglass className="mr-1 h-3 w-3" />Laukia patvirtinimo</Badge>;
+            return <Badge variant="secondary" className="bg-yellow-500 text-yellow-900"><Hourglass className="mr-1 h-3 w-3" />{t('account.entries.status.pending')}</Badge>;
         default:
             return null; // Active and Deleted tabs don't need a status badge here
     }
@@ -144,7 +144,7 @@ export default function MyEntriesTab() {
           <TableRow>
             <TableHead>{t('admin.entries.table.personInEntry')}</TableHead>
             <TableHead>{t('admin.entries.table.category')}</TableHead>
-            {tab === 'pending' && <TableHead>Būsena</TableHead>}
+            {tab === 'pending' && <TableHead>{t('account.entries.status')}</TableHead>}
             <TableHead>{tab === 'deleted' ? t('account.entries.deletedOn') : t('admin.entries.table.submissionDate')}</TableHead>
             <TableHead className="text-right">{t('admin.entries.table.actions')}</TableHead>
           </TableRow>
@@ -176,7 +176,7 @@ export default function MyEntriesTab() {
                     {tab === 'active' && (
                       <DropdownMenuItem onClick={() => setReportForDeletion(report)} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
                         <Send className="mr-2 h-4 w-4" />
-                        <span>Pateikti trynimui</span>
+                        <span>{t('account.entries.requestDeletionButton')}</span>
                       </DropdownMenuItem>
                     )}
                   </DropdownMenuContent>
@@ -200,22 +200,22 @@ export default function MyEntriesTab() {
         <AlertDialog open={!!reportForDeletion} onOpenChange={(isOpen) => !isOpen && setReportForDeletion(null)}>
             <AlertDialogContent>
                 <AlertDialogHeader>
-                <AlertDialogTitle>Pateikti įrašo trynimo prašymą?</AlertDialogTitle>
+                <AlertDialogTitle>{t('account.entries.requestDeletionModal.title')}</AlertDialogTitle>
                 <AlertDialogDescription>
-                    Prašome nurodyti priežastį, kodėl norite ištrinti šį įrašą. Administratorius peržiūrės jūsų prašymą.
+                    {t('account.entries.requestDeletionModal.description')}
                 </AlertDialogDescription>
                  <Textarea 
-                    placeholder="Trynimo priežastis..."
+                    placeholder={t('account.entries.requestDeletionModal.reasonPlaceholder')}
                     value={deletionReason}
                     onChange={(e) => setDeletionReason(e.target.value)}
                     className="mt-4"
                 />
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                <AlertDialogCancel disabled={isSubmitting}>Atšaukti</AlertDialogCancel>
+                <AlertDialogCancel disabled={isSubmitting}>{t('common.cancel')}</AlertDialogCancel>
                 <AlertDialogAction onClick={handleRequestDeletion} disabled={isSubmitting || !deletionReason.trim()}>
                     {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Pateikti prašymą
+                    {t('account.entries.requestDeletionModal.submit')}
                 </AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>
@@ -243,9 +243,9 @@ export default function MyEntriesTab() {
             ) : (
                   <Tabs defaultValue="active" className="w-full">
                     <TabsList className="grid w-full grid-cols-3">
-                        <TabsTrigger value="active">Aktyvūs ({activeReports.length})</TabsTrigger>
-                        <TabsTrigger value="pending">Laukiantys ({pendingReports.length})</TabsTrigger>
-                        <TabsTrigger value="deleted">Ištrinti ({deletedReports.length})</TabsTrigger>
+                        <TabsTrigger value="active">{t('account.entries.tabs.active', { count: activeReports.length })}</TabsTrigger>
+                        <TabsTrigger value="pending">{t('account.entries.tabs.pending', { count: pendingReports.length })}</TabsTrigger>
+                        <TabsTrigger value="deleted">{t('account.entries.tabs.deleted', { count: deletedReports.length })}</TabsTrigger>
                     </TabsList>
                     <TabsContent value="active">
                         {activeReports.length > 0 ? (

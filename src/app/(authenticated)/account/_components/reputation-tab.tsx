@@ -25,7 +25,7 @@ export function ReputationTab() {
     </svg>
     <div style="line-height:1.2;">
         <span style="font-size:16px;font-weight:700;font-style:italic;color:#1e293b;">DriverCheck</span>
-        <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Trusted Partner ${currentYear}</div>
+        <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">${t('reputation.trustedPartner', { year: currentYear })}</div>
     </div>
   </div>
 </a>
@@ -35,8 +35,8 @@ export function ReputationTab() {
     navigator.clipboard.writeText(embedCode);
     setCopied(true);
     toast({
-      title: "Nukopijuota!",
-      description: "HTML kodas sėkmingai nukopijuotas.",
+      title: t('reputation.toast.copied.title'),
+      description: t('reputation.toast.copied.description'),
     });
     setTimeout(() => setCopied(false), 2000);
   };
@@ -50,21 +50,21 @@ export function ReputationTab() {
                <BadgeCheck className="h-6 w-6 text-primary" />
             </div>
             <div>
-               <CardTitle>Reputacijos ženklas</CardTitle>
-               <CardDescription>Parodykite klientams, kad rūpinatės saugumu.</CardDescription>
+               <CardTitle>{t('reputation.title')}</CardTitle>
+               <CardDescription>{t('reputation.description')}</CardDescription>
             </div>
           </div>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="signature" className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-8">
-              <TabsTrigger value="signature">El. pašto parašui</TabsTrigger>
-              <TabsTrigger value="website">Svetainei (Badge)</TabsTrigger>
+              <TabsTrigger value="signature">{t('reputation.tabs.signature')}</TabsTrigger>
+              <TabsTrigger value="website">{t('reputation.tabs.website')}</TabsTrigger>
             </TabsList>
 
             <TabsContent value="signature" className="space-y-6">
               <div className="border rounded-xl p-8 flex flex-col items-center justify-center bg-white dark:bg-slate-950/50">
-                 <p className="text-sm text-muted-foreground mb-4">Peržiūra:</p>
+                 <p className="text-sm text-muted-foreground mb-4">{t('reputation.preview')}</p>
                  {/* NAUJAS KODAS: Atnaujinta peržiūra */}
                  <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 px-4 py-3 rounded-lg shadow-sm">
                     <UserSearch className="h-8 w-8 text-primary" />
@@ -73,7 +73,7 @@ export function ReputationTab() {
                             DriverCheck
                         </span>
                         <span className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">
-                            Trusted Partner {currentYear}
+                            {t('reputation.trustedPartner', { year: currentYear })}
                         </span>
                     </div>
                  </div>
@@ -90,7 +90,7 @@ export function ReputationTab() {
                   onClick={handleCopy}
                 >
                   {copied ? <Check className="h-4 w-4 mr-1" /> : <Copy className="h-4 w-4 mr-1" />}
-                  {copied ? "Nukopijuota" : "Kopijuoti HTML"}
+                  {copied ? t('reputation.copied') : t('reputation.copyHtml')}
                 </Button>
               </div>
             </TabsContent>
@@ -106,7 +106,7 @@ export function ReputationTab() {
                             DriverCheck
                         </span>
                         <span className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-                            Trusted Partner {currentYear}
+                           {t('reputation.trustedPartner', { year: currentYear })}
                         </span>
                     </div>
                 </div>
@@ -114,9 +114,9 @@ export function ReputationTab() {
               </div>
               
               <div className="flex justify-center gap-4">
-                  <Button variant="outline" onClick={() => toast({ title: "Atsisiuntimas", description: "Generuojamas aukštos kokybės PNG..." })}>
+                  <Button variant="outline" onClick={() => toast({ title: t('reputation.toast.downloading.title'), description: t('reputation.toast.downloading.description') })}>
                     <Download className="mr-2 h-4 w-4" />
-                    Atsisiųsti PNG
+                    {t('reputation.downloadPng')}
                   </Button>
               </div>
             </TabsContent>

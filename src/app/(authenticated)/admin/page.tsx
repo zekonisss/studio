@@ -29,7 +29,7 @@ export default function AdminPage() {
                         <TabsList className="grid w-full grid-cols-2 md:grid-cols-5">
                             <TabsTrigger value="users">{t('admin.tabs.userManagement')}</TabsTrigger>
                             <TabsTrigger value="entries">{t('admin.tabs.entryManagement')}</TabsTrigger>
-                            <TabsTrigger value="deletion-requests">Prašymai Ištrinti</TabsTrigger>
+                            <TabsTrigger value="deletion-requests">{t('admin.tabs.deletionRequests')}</TabsTrigger>
                             <TabsTrigger value="audit-log">{t('admin.tabs.auditLog')}</TabsTrigger>
                             <TabsTrigger value="statistics">{t('admin.tabs.statistics')}</TabsTrigger>
                         </TabsList>

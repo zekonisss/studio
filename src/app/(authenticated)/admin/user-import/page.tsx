@@ -19,7 +19,7 @@ export default function UserImportPage() {
                 </div>
             </CardHeader>
             <CardContent>
-                <p>User import functionality will be here.</p>
+                <p>{t('usersImport.wip')}</p>
             </CardContent>
         </Card>
     );

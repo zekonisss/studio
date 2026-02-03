@@ -69,10 +69,10 @@ export default function AuditLogTab() {
       return (
            <Card className="mt-6">
                 <CardHeader>
-                    <CardTitle>Prieiga negalima</CardTitle>
+                    <CardTitle>{t('admin.accessDenied')}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <p>Šis skydelis yra prieinamas tik administratoriams.</p>
+                    <p>{t('admin.adminOnly')}</p>
                 </CardContent>
            </Card>
       )

@@ -110,8 +110,8 @@ export default function SignupPage() {
                         )} />
                          <FormField control={form.control} name="position" render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Pareigos</FormLabel>
-                                <FormControl><Input placeholder="Pvz., direktorius, vadybininkas" {...field} /></FormControl>
+                                <FormLabel>{t('signup.form.position.label')}</FormLabel>
+                                <FormControl><Input placeholder={t('signup.form.position.placeholder')} {...field} /></FormControl>
                                 <FormMessage />
                             </FormItem>
                         )} />
