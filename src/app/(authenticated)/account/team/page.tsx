@@ -1,6 +1,8 @@
+
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import Link from "next/link";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -164,6 +166,29 @@ export default function TeamPage() {
   if (loading) {
     return <div className="flex justify-center p-12"><Loader2 className="animate-spin h-8 w-8 text-primary" /></div>;
   }
+  
+  if (user?.isAdmin) {
+      return (
+          <div className="max-w-4xl mx-auto p-6">
+              <Alert className="bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-900">
+                  <Shield className="h-4 w-4 text-green-600 dark:text-green-400" />
+                  <AlertTitle>Administratoriaus Prieiga</AlertTitle>
+                  <AlertDescription className="mt-2">
+                      Jūs esate prisijungęs kaip administratorius. Visi vartotojai ir įmonės yra valdomi centralizuotai.
+                      <br />
+                      Norėdami peržiūrėti ar valdyti vartotojus, eikite į administravimo panelę.
+                      <div className="mt-4">
+                        <Button asChild variant="default">
+                            <Link href="/admin">
+                                Eiti į Admin Panelę &rarr;
+                            </Link>
+                        </Button>
+                      </div>
+                  </AlertDescription>
+              </Alert>
+          </div>
+      );
+  }
 
   // Handle Solo Users (No Company yet)
   if (!companyInfo) {
@@ -177,7 +202,9 @@ export default function TeamPage() {
                       <br />
                       Jūs šiuo metu naudojate individualų planą. Atnaujinkite planą, kad galėtumėte valdyti kelis vartotojus.
                       <div className="mt-4">
-                        <Button variant="default">Atnaujinti planą &rarr;</Button>
+                        <Button asChild variant="default">
+                          <Link href="/account?tab=payment">Atnaujinti planą &rarr;</Link>
+                        </Button>
                       </div>
                   </AlertDescription>
               </Alert>
