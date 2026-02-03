@@ -8,10 +8,20 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Trash2, UserPlus } from "lucide-react";
+import { Loader2, Trash2, UserPlus, ChevronDown } from "lucide-react";
 import { collection, query, where, onSnapshot, orderBy, Firestore } from "firebase/firestore";
 import { db } from "@/lib/firebase"; 
 import { createInvitation, deleteTeamMember, updateMemberRole } from "./actions";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
 
 // Sukuriame tipą, kad TypeScript žinotų, ko tikėtis iš nario
 interface TeamMember {
@@ -87,7 +97,7 @@ const handleInvite = async () => {
      }
 
      if (result.success) {
-       toast({ title: "Išsiųsta!", description: "Pakvietimas išsiųstas el. paštu." });
+       toast({ title: "Išsiųsta!", description: "Pakvietimas sėkmingai išsiųstas nurodytu el. paštu." });
        setInviteEmail("");
      } else {
        // Čia lūžo tavo kodas. Dabar mes saugiai skaitome error.
@@ -189,15 +199,22 @@ const handleInvite = async () => {
                     
                     {/* ROLĖS KEITIMAS */}
                     {member.role !== 'owner' && (
-                        <select 
-                            className="h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                            value={member.role || 'member'}
-                            onChange={(e) => handleRoleChange(member.id, e.target.value)}
-                            disabled={member.id === currentUser?.uid} 
-                        >
-                            <option value="member">Narys</option>
-                            <option value="admin">Administratorius</option>
-                        </select>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline" className="w-[160px] justify-between" disabled={member.id === currentUser?.uid}>
+                                    {member.role === 'admin' ? 'Administratorius' : 'Narys'}
+                                    <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent className="w-56" align="end">
+                                <DropdownMenuLabel>Pakeisti rolę</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuRadioGroup value={member.role || 'member'} onValueChange={(value) => handleRoleChange(member.id, value)}>
+                                    <DropdownMenuRadioItem value="member">Narys</DropdownMenuRadioItem>
+                                    <DropdownMenuRadioItem value="admin">Administratorius</DropdownMenuRadioItem>
+                                </DropdownMenuRadioGroup>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     )}
 
                     {/* TRYNIMO MYGTUKAS */}
@@ -205,7 +222,7 @@ const handleInvite = async () => {
                         <Button 
                             variant="ghost" 
                             size="icon" 
-                            className="text-red-500 hover:text-red-600 hover:bg-red-100"
+                            className="text-red-500 hover:text-red-600 hover:bg-red-100 dark:hover:bg-red-900/50"
                             onClick={() => handleDelete(member.id)}
                             disabled={member.id === currentUser?.uid}
                         >
