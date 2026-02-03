@@ -1,8 +1,9 @@
+
 "use client";
 
 import { useLanguage } from '@/contexts/language-context';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { PricingTable } from '@/components/pricing-table';
+import { SubscriptionManager } from '@/components/subscription-manager';
 
 export default function PaymentsTab() {
   const { t } = useLanguage();
@@ -14,7 +15,7 @@ export default function PaymentsTab() {
         <CardDescription>{t('account.payments.description')}</CardDescription>
       </CardHeader>
       <CardContent>
-        <PricingTable />
+        <SubscriptionManager />
       </CardContent>
     </Card>
   );
