@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -91,6 +90,7 @@ export function SubscriptionManager() {
         )
     }
 
+    // State A: Active Subscription (Paid)
     if (status?.isSubscribed) {
         return (
             <Card className="border-green-200 dark:border-green-800 bg-green-50/50 dark:bg-green-900/10">
@@ -135,6 +135,19 @@ export function SubscriptionManager() {
         );
     }
     
-    // Not subscribed or in trial without an active Stripe sub
-    return <PricingTable />;
+    // State B: No Subscription (Free/Trial)
+    return (
+        <div>
+            <Card className="mb-8 bg-blue-50/50 border-blue-200 dark:bg-blue-900/10 dark:border-blue-800">
+                <CardHeader>
+                    <CardTitle>{t('account.payments.status.trial.title')}</CardTitle>
+                    <CardDescription>
+                         {t('account.payments.status.trial.description', { searchCredits: user?.searchCredits ?? 0, reportCredits: user?.reportCredits ?? 0})}
+                    </CardDescription>
+                </CardHeader>
+            </Card>
+            <h3 className="text-xl font-semibold mb-4 text-center">Norite daugiau galimybių? Pasirinkite planą:</h3>
+            <PricingTable />
+        </div>
+    );
 }
