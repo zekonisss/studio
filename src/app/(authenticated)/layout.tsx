@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useAuth } from '@/hooks/use-auth';
@@ -27,6 +26,7 @@ import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { UserSearch } from 'lucide-react';
 import { PremiumLoadingScreen } from '@/components/ui/premium-loading';
+import { TrialBanner } from '@/components/dashboard/trial-banner';
 
 
 export default function AuthenticatedLayout({
@@ -177,6 +177,7 @@ export default function AuthenticatedLayout({
               <UserNav />
             </div>
           </header>
+          <TrialBanner />
           <main className="flex-1 p-4 md:p-8 overflow-y-auto">
             {children}
           </main>
