@@ -14,7 +14,10 @@ import {
   ExternalLink,
   ChevronDown,
   ChevronUp,
-  Globe
+  Globe,
+  Languages,
+  Loader2,
+  Check
 } from "lucide-react";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
@@ -23,6 +26,7 @@ import { cn, getTagNameForDisplay } from "@/lib/utils";
 import type { Report } from "@/types";
 import { useLanguage } from "@/contexts/language-context";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { translateText } from "@/app/actions/translate";
 
 
 interface SearchResultCardProps {
@@ -32,6 +36,10 @@ interface SearchResultCardProps {
 export function SearchResultCard({ report }: SearchResultCardProps) {
   const { t, locale } = useLanguage();
   const [isExpanded, setIsExpanded] = useState(false);
+  
+  const [displayText, setDisplayText] = useState(report.comment || "");
+  const [isTranslating, setIsTranslating] = useState(false);
+  const [isTranslated, setIsTranslated] = useState(false);
 
   // Nustatome rizikos lygį pagal kategoriją
   const isHighRisk = DESTRUCTIVE_REPORT_MAIN_CATEGORIES.includes(report.category);
@@ -58,6 +66,22 @@ export function SearchResultCard({ report }: SearchResultCardProps) {
   const isImageUrl = (url?: string) => {
     if (!url) return false;
     return /\.(jpg|jpeg|png|gif|webp)$/i.test(url.split('?')[0]);
+  };
+  
+  const handleTranslate = async () => {
+    if (!report.comment || locale === 'lt' || isTranslated) return;
+    
+    setIsTranslating(true);
+    try {
+      const translated = await translateText(report.comment, locale);
+      setDisplayText(translated);
+      setIsTranslated(true);
+    } catch (error) {
+      console.error("Translation failed:", error);
+      // Optional: Show a toast to the user
+    } finally {
+      setIsTranslating(false);
+    }
   };
 
   return (
@@ -141,9 +165,32 @@ export function SearchResultCard({ report }: SearchResultCardProps) {
                 "relative p-4 rounded-lg border italic text-slate-700 dark:text-slate-300 leading-relaxed",
                 colors.subBg, colors.borderMain
             )}>
+                
+                 {locale !== 'lt' && report.comment && (
+                    <TooltipProvider delayDuration={100}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            onClick={handleTranslate}
+                            disabled={isTranslating || isTranslated}
+                            className="absolute top-2 right-2 p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-white rounded-lg hover:bg-slate-200/50 dark:hover:bg-slate-800 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            <span className="sr-only">Translate</span>
+                            {isTranslating ? <Loader2 className="w-4 h-4 animate-spin" /> : 
+                             isTranslated ? <Check className="w-4 h-4 text-green-500" /> : 
+                             <Languages className="w-4 h-4" />}
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                           {isTranslated ? <p>Išversta į {locale.toUpperCase()}</p> : <p>Versti į {locale.toUpperCase()}</p>}
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                )}
+                
                 <FileText className={cn("absolute top-4 left-4 w-4 h-4 opacity-50", colors.icon)} />
                 <p className={cn("pl-6 text-sm", !isExpanded && "line-clamp-2")}>
-                    {report.comment}
+                    {displayText}
                 </p>
                 
                 {report.comment && report.comment.length > 150 && (
