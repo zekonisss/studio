@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -9,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Loader2, UserSearch, ShieldCheck, ShieldAlert } from "lucide-react";
+import { Search, Loader2, UserSearch, ShieldCheck } from "lucide-react";
 import { SearchSchema, type SearchFormValues } from "@/lib/schemas";
 import { getAllReports } from "@/lib/storage";
 import type { Report } from "@/types";
@@ -19,8 +20,6 @@ import { logSearchActivity } from "./actions";
 import { LiveActivityFeed } from "@/components/shared/live-activity-feed";
 import { DriverSearchStats } from "@/components/search/driver-search-stats";
 import Link from "next/link";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-// NAUJAS KOMPONENTAS
 import { SearchResultCard } from "@/components/search/SearchResultCard";
 
 export default function SearchPage() {
@@ -107,6 +106,8 @@ export default function SearchPage() {
         return { firstName, lastName };
     };
 
+    const { firstName, lastName } = getNames(currentQuery);
+
     return (
         <div className="space-y-6 max-w-7xl mx-auto">
             <Card className="border-none shadow-none bg-transparent">
@@ -168,6 +169,7 @@ export default function SearchPage() {
                             {/* LOADING STATE */}
                             {isLoading && (
                                 <div className="space-y-4">
+                                    <Skeleton className="h-24 w-full" />
                                     {[...Array(3)].map((_, i) => (
                                         <div key={i} className="rounded-xl border border-slate-200 dark:border-slate-800 bg-card p-6 space-y-4">
                                             <div className="flex justify-between items-start">
@@ -186,54 +188,52 @@ export default function SearchPage() {
                                 </div>
                             )}
 
-                            {/* NO RESULTS STATE */}
-                            {!isLoading && hasSearched && searchResults.length === 0 && (() => {
-                                const { firstName, lastName } = getNames(currentQuery);
-                                return (
-                                    <div className="text-center py-12 border rounded-xl bg-green-50/50 dark:bg-green-900/10 border-green-200 dark:border-green-900/20 backdrop-blur-sm">
-                                        <div className="bg-green-100 dark:bg-green-900/20 w-20 h-20 mx-auto rounded-full flex items-center justify-center mb-4 shadow-inner">
-                                            <ShieldCheck className="h-10 w-10 text-green-600 dark:text-green-500" />
-                                        </div>
-                                        
-                                        <h3 className="text-2xl font-bold text-slate-800 dark:text-slate-100">
-                                            {t('search.noResults.title') || "Švaru!"}
-                                        </h3>
-                                        
-                                        <p className="mt-3 text-muted-foreground max-w-md mx-auto leading-relaxed">
-                                            Pagal užklausą <span className="font-semibold text-foreground">"{currentQuery}"</span> įrašų nerasta.
-                                        </p>
-                                        
-                                        <div className="max-w-md mx-auto mt-8">
-                                             <DriverSearchStats firstName={firstName} lastName={lastName} />
-                                        </div>
-                                        
-                                        <div className="mt-8 pt-6 border-t border-green-200/50 dark:border-green-900/30">
-                                            <p className="text-sm text-muted-foreground">
-                                                Turite informacijos apie šį asmenį? <Link href="/reports/add" className="font-medium underline text-primary hover:text-primary/80 transition-colors">Sukurti naują įrašą</Link>.
-                                            </p>
-                                        </div>
-                                    </div>
-                                )
-                            })()}
-
-                            {/* RESULTS LIST */}
-                            {!isLoading && hasSearched && searchResults.length > 0 && (
-                                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                                    <div className="flex items-center justify-between">
-                                        <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200">
-                                            {t('search.results.title', { count: searchResults.length })}
-                                        </h3>
-                                        <span className="text-sm text-muted-foreground">
-                                            Rasti {searchResults.length} įrašai
-                                        </span>
+                            {/* RENDER AFTER SEARCH */}
+                            {!isLoading && hasSearched && (
+                                <>
+                                    <div className="max-w-md">
+                                        <DriverSearchStats firstName={firstName} lastName={lastName} />
                                     </div>
                                     
-                                    <div className="space-y-4">
-                                        {searchResults.map((report) => (
-                                            <SearchResultCard key={report.id} report={report} />
-                                        ))}
-                                    </div>
-                                </div>
+                                    {searchResults.length === 0 ? (
+                                        <div className="text-center py-12 border rounded-xl bg-green-50/50 dark:bg-green-900/10 border-green-200 dark:border-green-900/20 backdrop-blur-sm">
+                                            <div className="bg-green-100 dark:bg-green-900/20 w-20 h-20 mx-auto rounded-full flex items-center justify-center mb-4 shadow-inner">
+                                                <ShieldCheck className="h-10 w-10 text-green-600 dark:text-green-500" />
+                                            </div>
+                                            
+                                            <h3 className="text-2xl font-bold text-slate-800 dark:text-slate-100">
+                                                {t('search.noResults.title') || "Švaru!"}
+                                            </h3>
+                                            
+                                            <p className="mt-3 text-muted-foreground max-w-md mx-auto leading-relaxed">
+                                                Pagal užklausą <span className="font-semibold text-foreground">"{currentQuery}"</span> įrašų nerasta.
+                                            </p>
+                                            
+                                            <div className="mt-8 pt-6 border-t border-green-200/50 dark:border-green-900/30">
+                                                <p className="text-sm text-muted-foreground">
+                                                    Turite informacijos apie šį asmenį? <Link href="/reports/add" className="font-medium underline text-primary hover:text-primary/80 transition-colors">Sukurti naują įrašą</Link>.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-6 animate-in fade-in-from-bottom-4 duration-500">
+                                            <div className="flex items-center justify-between">
+                                                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200">
+                                                    {t('search.results.title', { count: searchResults.length })}
+                                                </h3>
+                                                <span className="text-sm text-muted-foreground">
+                                                    Rasti {searchResults.length} įrašai
+                                                </span>
+                                            </div>
+                                            
+                                            <div className="space-y-4">
+                                                {searchResults.map((report) => (
+                                                    <SearchResultCard key={report.id} report={report} />
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </>
                             )}
 
                             {/* INITIAL STATE */}
@@ -258,3 +258,5 @@ export default function SearchPage() {
         </div>
     );
 }
+
+    
