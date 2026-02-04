@@ -20,7 +20,7 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
                 DriverCheck
             </span>
         </a>
-        <div className="relative z-10 flex w-full justify-center px-4">
+        <div className="relative z-10 flex flex-grow w-full items-center justify-center px-4">
           {children}
         </div>
     </div>
