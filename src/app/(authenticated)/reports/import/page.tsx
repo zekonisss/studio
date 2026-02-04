@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useRef, useMemo } from 'react';
@@ -32,6 +33,9 @@ import {
   Download,
   Copy,
   CalendarX,
+  Check,
+  Building,
+  Globe,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { importAllReports, getAllReportsForExport } from './actions';
@@ -47,6 +51,8 @@ import {
 } from '@/components/ui/tooltip';
 import { Label } from '@/components/ui/label';
 import { normalizeName } from '@/lib/driverHash';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
 
 export type ClientParsedRecord = {
   id: number;
@@ -70,6 +76,7 @@ export default function ReportsImportPage() {
   const [isImporting, setIsImporting] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [targetCompany, setTargetCompany] = useState('');
+  const [selectedSource, setSelectedSource] = useState<'verified_company' | 'external_web'>('external_web');
   const isCancelledRef = useRef(false);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -250,7 +257,7 @@ export default function ReportsImportPage() {
 
     setIsImporting(true);
     try {
-      const result = await importAllReports(recordsToImport, user.id, targetCompany);
+      const result = await importAllReports(recordsToImport, user.id, targetCompany, selectedSource);
 
       if (result.success) {
         toast({
@@ -369,9 +376,33 @@ export default function ReportsImportPage() {
         {records.length > 0 && (
           <div className="space-y-4">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
-              <div className="w-full md:w-auto">
-                 <Label htmlFor="targetCompany" className="text-xs font-semibold text-muted-foreground">Importuoti į įmonę:</Label>
-                 <Input id="targetCompany" placeholder="Įveskite įmonės pavadinimą..." value={targetCompany} onChange={(e) => setTargetCompany(e.target.value)} disabled={isImporting} className="w-full md:w-72 mt-1" />
+              <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
+                  <div>
+                     <Label htmlFor="targetCompany" className="text-xs font-semibold text-muted-foreground">Importuoti į įmonę:</Label>
+                     <Input id="targetCompany" placeholder="Įveskite įmonės pavadinimą..." value={targetCompany} onChange={(e) => setTargetCompany(e.target.value)} disabled={isImporting} className="w-full md:w-72 mt-1" />
+                  </div>
+                  <div>
+                      <Label htmlFor="sourceSelect" className="text-xs font-semibold text-muted-foreground">Duomenų šaltinis:</Label>
+                      <Select value={selectedSource} onValueChange={(value: 'verified_company' | 'external_web') => setSelectedSource(value)} disabled={isImporting}>
+                          <SelectTrigger id="sourceSelect" className="w-full md:w-64 mt-1">
+                              <SelectValue placeholder="Pasirinkite šaltinį" />
+                          </SelectTrigger>
+                          <SelectContent>
+                              <SelectItem value="external_web">
+                                  <div className="flex items-center gap-2">
+                                      <Globe className="h-4 w-4 text-amber-500" />
+                                      <span>Viešas internetas (Online Source)</span>
+                                  </div>
+                              </SelectItem>
+                              <SelectItem value="verified_company">
+                                   <div className="flex items-center gap-2">
+                                      <Check className="h-4 w-4 text-green-500" />
+                                      <span>Patvirtintas įmonės (Verified)</span>
+                                  </div>
+                              </SelectItem>
+                          </SelectContent>
+                      </Select>
+                  </div>
               </div>
               <Button onClick={handleImportAll} disabled={!canImport || !targetCompany}>
                 {isImporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UploadCloud className="mr-2 h-4 w-4" />}
@@ -422,3 +453,5 @@ export default function ReportsImportPage() {
     </Card>
   );
 }
+
+    

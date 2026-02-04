@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { adminDb, adminAuth } from '@/lib/firebase-admin';
@@ -13,7 +14,8 @@ import { normalizeName } from '@/lib/driverHash';
 export async function importAllReports(
   records: ClientParsedRecord[],
   adminUid: string,
-  targetCompanyName: string
+  targetCompanyName: string,
+  source: 'verified_company' | 'external_web'
 ) {
   if (!adminUid || !adminDb || !adminAuth) {
     return { success: false, error: 'Serverio konfigūracijos klaida.' };
@@ -118,7 +120,7 @@ export async function importAllReports(
           statusUpdatedAt: Timestamp.now(),
           subjectCompany: record.company || '',
           // New fields
-          source: 'external_web',
+          source: source,
           matchQuality: record.aiResult!.birthYear ? 'high' : 'low',
           fingerprint: fingerprint,
         });
@@ -172,3 +174,5 @@ export async function getAllReportsForExport(companyName: string) {
     };
   });
 }
+
+    
