@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { 
   AlertTriangle, 
@@ -37,9 +37,17 @@ export function SearchResultCard({ report }: SearchResultCardProps) {
   const { t, locale } = useLanguage();
   const [isExpanded, setIsExpanded] = useState(false);
   
-  const [displayText, setDisplayText] = useState(report.comment || "");
+  const [translatedText, setTranslatedText] = useState<string | null>(null);
   const [isTranslating, setIsTranslating] = useState(false);
   const [isTranslated, setIsTranslated] = useState(false);
+
+  // Reset translation state when the global language changes
+  useEffect(() => {
+    setTranslatedText(null);
+    setIsTranslated(false);
+  }, [locale]);
+  
+  const displayText = translatedText || report.comment || "";
 
   // Nustatome rizikos lygį pagal kategoriją
   const isHighRisk = DESTRUCTIVE_REPORT_MAIN_CATEGORIES.includes(report.category);
@@ -74,7 +82,7 @@ export function SearchResultCard({ report }: SearchResultCardProps) {
     setIsTranslating(true);
     try {
       const translated = await translateText(report.comment, locale);
-      setDisplayText(translated);
+      setTranslatedText(translated);
       setIsTranslated(true);
     } catch (error) {
       console.error("Translation failed:", error);
@@ -111,23 +119,6 @@ export function SearchResultCard({ report }: SearchResultCardProps) {
                 {isHighRisk ? <AlertTriangle className="w-3.5 h-3.5" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
                 <span>{report.category ? t(`categories.${report.category}`) : report.category}</span>
               </div>
-              
-              {/* Source Badge */}
-              {report.source === 'external_web' && (
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Badge variant="outline" className="border-amber-500/50 bg-amber-500/10 text-amber-700 dark:text-amber-400 font-medium cursor-help">
-                          <Globe className="w-3.5 h-3.5 mr-1.5" />
-                          Viešas šaltinis
-                        </Badge>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p className="max-w-xs">Šis įrašas automatiškai surinktas iš viešų interneto šaltinių. Tekstas buvo apdorotas Dirbtinio Intelekto (DI), siekiant pašalinti necenzūrinę leksiką ir palikti tik faktus. Prašome vertinti kritiškai.</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-              )}
             </div>
 
             {/* Meta duomenys */}
@@ -147,15 +138,32 @@ export function SearchResultCard({ report }: SearchResultCardProps) {
             </div>
           </div>
 
-          <div className="text-xs text-slate-400 flex flex-col items-end gap-1">
+          <div className="text-xs text-slate-400 flex flex-col items-end gap-2 shrink-0">
              <span className="flex items-center gap-1">
                 <Calendar className="w-3 h-3" />
                 {format(new Date(report.createdAt), "yyyy-MM-dd")}
              </span>
-             <span className="flex items-center gap-1 opacity-70">
-                <Building2 className="w-3 h-3" />
-                {report.reporterCompanyName}
-             </span>
+             {report.source === 'external_web' && (
+                  <TooltipProvider delayDuration={0}>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <Badge variant="outline" className="border-amber-500/50 bg-amber-500/10 text-amber-700 dark:text-amber-400 font-medium cursor-help">
+                          <AlertTriangle className="w-3 h-3 mr-1" />
+                          Viešas šaltinis
+                        </Badge>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="max-w-xs">Šis įrašas automatiškai surinktas iš viešų interneto šaltinių. Tekstas buvo apdorotas Dirbtinio Intelekto (DI), siekiant pašalinti necenzūrinę leksiką ir palikti tik faktus. Prašome vertinti kritiškai.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+              )}
+              {report.source === 'verified_company' && (
+                  <Badge variant="outline" className="border-green-500/50 bg-green-500/10 text-green-700 dark:text-green-400 font-medium">
+                      <CheckCircle2 className="w-3 h-3 mr-1" />
+                      Patvirtintas
+                  </Badge>
+              )}
           </div>
         </div>
 
