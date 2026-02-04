@@ -6,6 +6,7 @@ import { getCategoryNameForDisplay } from '@/lib/utils';
 import { translationsMaster } from '@/lib/translations-master';
 import crypto from 'crypto';
 import type { ClientParsedRecord } from './page';
+import { normalizeName } from '@/lib/driverHash';
 
 
 export async function importAllReports(
@@ -65,35 +66,66 @@ export async function importAllReports(
         finalCompanyName = companyOwner.data().companyName;
     }
 
+    const validRecords = records.filter(r => r.status === 'completed' && r.aiResult?.isValid);
+
+    if (validRecords.length === 0) {
+      return { success: true, importedCount: 0 };
+    }
+
+    // Server-side deduplication
+    const incomingFingerprints = validRecords.map(record => {
+      return `${normalizeName(record.fullName)}|${new Date(record.createdAt).toISOString().split('T')[0]}`;
+    });
+
+    const existingFingerprints = new Set<string>();
+    if (incomingFingerprints.length > 0) {
+        const q = adminDb.collection('reports').where('fingerprint', 'in', incomingFingerprints);
+        const snapshot = await q.get();
+        snapshot.forEach(doc => {
+            if (doc.data().fingerprint) {
+                existingFingerprints.add(doc.data().fingerprint);
+            }
+        });
+    }
+
     const chunkSize = 450;
     let totalImported = 0;
 
-    for (let i = 0; i < records.length; i += chunkSize) {
+    for (let i = 0; i < validRecords.length; i += chunkSize) {
       const batch = adminDb.batch();
-      const chunk = records.slice(i, i + chunkSize);
+      const chunk = validRecords.slice(i, i + chunkSize);
 
       chunk.forEach((record) => {
-        if (record.status !== 'completed' || !record.aiResult) return;
+        const fingerprint = `${normalizeName(record.fullName)}|${new Date(record.createdAt).toISOString().split('T')[0]}`;
+        
+        if (existingFingerprints.has(fingerprint)) {
+            return; // Skip duplicate
+        }
 
         const docRef = adminDb.collection('reports').doc();
-
+        
         batch.set(docRef, {
           fullName: record.fullName,
-          comment: record.aiResult.sanitizedText,
-          birthYear: record.aiResult.birthYear ? parseInt(record.aiResult.birthYear, 10) : null,
+          comment: record.aiResult!.sanitizedText,
+          birthYear: record.aiResult!.birthYear ? parseInt(record.aiResult!.birthYear, 10) : null,
           reporterId: reportOwnerId,
           reporterCompanyName: finalCompanyName,
-          category: record.aiResult.categoryId || 'other_category',
-          tags: record.aiResult.suggestedTags || [],
+          category: record.aiResult!.categoryId || 'other_category',
+          tags: record.aiResult!.suggestedTags || [],
           createdAt: record.createdAt ? Timestamp.fromDate(new Date(record.createdAt)) : Timestamp.now(),
           status: 'active',
           statusUpdatedAt: Timestamp.now(),
           subjectCompany: record.company || '',
+          // New fields
+          source: 'external_web',
+          matchQuality: record.aiResult!.birthYear ? 'high' : 'low',
+          fingerprint: fingerprint,
         });
+
+        totalImported++;
       });
 
       await batch.commit();
-      totalImported += chunk.filter(r => r.status === 'completed').length;
     }
 
     return { success: true, importedCount: totalImported };

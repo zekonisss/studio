@@ -20,6 +20,10 @@ export interface Report {
   deletedAt?: any;
   dataAiHint?: string | null;
   subjectCompany?: string;
+  // New fields for import
+  source?: string;
+  matchQuality?: 'low' | 'high';
+  fingerprint?: string;
 }
 
 export interface Company {
