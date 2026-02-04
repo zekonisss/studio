@@ -29,13 +29,15 @@ import {
   AlertTriangle,
   FileX2,
   XCircle,
-  Info,
   Download,
+  Copy,
+  CalendarX,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { importAllReports, getAllReportsForExport, categorizeReportAction } from './actions';
+import { importAllReports, getAllReportsForExport } from './actions';
+import { cleanImportRecord, type CleanImportResult } from '@/app/actions/genkit-import';
 import { useAuth } from '@/hooks/use-auth';
-import { getCategoryNameForDisplay } from '@/lib/utils';
+import { getCategoryNameForDisplay, cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import {
   Tooltip,
@@ -44,19 +46,16 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { Label } from '@/components/ui/label';
+import { normalizeName } from '@/lib/driverHash';
 
-export interface ParsedRecord {
+export type ClientParsedRecord = {
   id: number;
   fullName: string;
   company?: string;
   comment: string;
   createdAt: string;
-}
-
-export type ClientParsedRecord = ParsedRecord & {
-  status: 'pending' | 'processing' | 'completed' | 'error' | 'skipped_quota' | 'active';
-  aiCategory?: string;
-  aiTags?: string[];
+  status: 'pending' | 'processing' | 'completed' | 'error';
+  aiResult?: CleanImportResult;
   error?: string;
 };
 
@@ -82,6 +81,7 @@ export default function ReportsImportPage() {
       ) {
         setFile(selectedFile);
         setRecords([]);
+        setTargetCompany('');
       } else {
         toast({
           variant: 'destructive',
@@ -108,9 +108,7 @@ export default function ReportsImportPage() {
       const findHeader = (possibleNames: string[]): string | undefined => {
         const headerRow = jsonData.length > 0 ? Object.keys(jsonData[0]) : [];
         for (const name of possibleNames) {
-          const found = headerRow.find(
-            (h) => h.trim().toLowerCase() === name.toLowerCase()
-          );
+          const found = headerRow.find(h => h.trim().toLowerCase() === name.toLowerCase());
           if (found) return found;
         }
         return undefined;
@@ -132,68 +130,62 @@ export default function ReportsImportPage() {
       }
       
       const cutoffDate = new Date();
-      cutoffDate.setFullYear(cutoffDate.getFullYear() - 5);
+      cutoffDate.setFullYear(cutoffDate.getFullYear() - 10);
+      const uniqueFingerprints = new Set<string>();
+      let recordsToProcess: ClientParsedRecord[] = [];
 
-      const filteredJsonData = jsonData.filter(row => row[fullNameHeader] && row[commentHeader]);
+      for (const [index, row] of jsonData.entries()) {
+        const fullName = String(row[fullNameHeader] || '').trim();
+        const comment = String(row[commentHeader] || '').trim();
 
-      const clientRecords: ClientParsedRecord[] = filteredJsonData.map((row, index) => {
+        if (!fullName || !comment) continue;
+
         const recordDateStr = row[dateHeader] || new Date().toISOString();
-        // Handle Excel's date format (serial number)
-        let recordDate;
+        let recordDate: Date;
         if (typeof recordDateStr === 'number') {
-            recordDate = new Date(XLSX.SSF.format('yyyy-mm-dd', recordDateStr));
+            recordDate = XLSX.SSF.parse_date_code(recordDateStr) as any;
         } else {
             recordDate = new Date(recordDateStr);
         }
 
-        if (isNaN(recordDate.getTime())) { // Invalid date
-            return {
-                id: index + 2,
-                fullName: String(row[fullNameHeader]),
-                comment: String(row[commentHeader]),
-                company: companyHeader ? String(row[companyHeader]) : undefined,
-                createdAt: new Date().toISOString(),
-                status: 'error' as const,
-                error: 'Neteisingas datos formatas.',
-            };
-        }
-        
-        if (recordDate < cutoffDate) {
-          return {
-            id: index + 2,
-            fullName: String(row[fullNameHeader]),
-            comment: String(row[commentHeader]),
-            company: companyHeader ? String(row[companyHeader]) : undefined,
-            createdAt: recordDate.toISOString(),
-            status: 'error' as const,
-            error: 'Įrašas senesnis nei 5 metai.',
-          };
-        }
-
-        return {
+        const baseRecord = {
           id: index + 2,
-          fullName: String(row[fullNameHeader]),
-          comment: String(row[commentHeader]),
-          company: companyHeader ? String(row[companyHeader]) : undefined,
+          fullName,
+          comment,
+          company: companyHeader ? String(row[companyHeader] || '') : undefined,
           createdAt: recordDate.toISOString(),
-          status: 'pending' as const,
         };
-      });
 
-      if (clientRecords.length === 0) {
+        if (isNaN(recordDate.getTime())) {
+          recordsToProcess.push({ ...baseRecord, status: 'error', error: 'Neteisingas datos formatas.' });
+          continue;
+        }
+
+        const fingerprint = `${normalizeName(fullName)}|${recordDate.toISOString().split('T')[0]}`;
+        if (uniqueFingerprints.has(fingerprint)) {
+          recordsToProcess.push({ ...baseRecord, status: 'error', error: 'Pasikartojantis įrašas faile.' });
+          continue;
+        }
+        uniqueFingerprints.add(fingerprint);
+
+        if (recordDate < cutoffDate) {
+          recordsToProcess.push({ ...baseRecord, status: 'error', error: 'Įrašas senesnis nei 10 metų.' });
+          continue;
+        }
+
+        recordsToProcess.push({ ...baseRecord, status: 'pending' });
+      }
+
+      if (recordsToProcess.length === 0) {
         toast({
           variant: 'destructive',
           title: t('reports.import.toast.emptyFile.title'),
           description: t('reports.import.toast.emptyFile.description'),
         });
-        setIsParsing(false);
-        return;
+      } else {
+        setRecords(recordsToProcess);
+        processRecordsWithAI(recordsToProcess.filter(r => r.status === 'pending'));
       }
-
-      setRecords(clientRecords);
-      // Start AI processing for records that are not already marked as errors
-      await processRecordsWithAI(clientRecords.filter(r => r.status === 'pending'));
-
     } catch (error: any) {
       console.error(error);
       toast({
@@ -209,30 +201,28 @@ export default function ReportsImportPage() {
   const processRecordsWithAI = async (recordsToProcess: ClientParsedRecord[]) => {
     for (const record of recordsToProcess) {
       if (isCancelledRef.current) break;
-      if (record.status === 'error') continue;
 
-      updateRecordStatus(record.id, { status: 'processing' as const });
+      updateRecordStatus(record.id, { status: 'processing' });
       
       try {
-        const result = await categorizeReportAction(record.comment);
+        const result = await cleanImportRecord({ text: record.comment, recordDate: record.createdAt });
         
         if (result.isValid) {
           updateRecordStatus(record.id, {
-            status: 'completed' as const,
-            aiCategory: result.categoryId,
-            aiTags: result.suggestedTags,
-            error: undefined
+            status: 'completed',
+            aiResult: result,
+            error: undefined,
           });
         } else {
           updateRecordStatus(record.id, {
-            status: 'error' as const,
+            status: 'error',
             error: result.rejectionReason || "AI atmetė įrašą be priežasties."
           });
         }
       } catch (error: any) {
         console.error(`AI Error for record ${record.id}:`, error);
         updateRecordStatus(record.id, {
-          status: 'error' as const,
+          status: 'error',
           error: error.message || t('reports.import.error.aiGenericError'),
         });
       }
@@ -248,49 +238,33 @@ export default function ReportsImportPage() {
   const handleImportAll = async () => {
     if (!user || !targetCompany) return;
 
-    const recordsToImport = records.filter((r) =>
-      r.status === 'completed' || (r.status === 'error' && !r.error?.includes('senesnis nei'))
-    );
+    const recordsToImport = records.filter(r => r.status === 'completed');
     if (recordsToImport.length === 0) {
         toast({
             variant: "destructive",
             title: "Nėra įrašų importavimui",
-            description: "Nėra paruoštų arba AI atmestų įrašų, kuriuos būtų galima importuoti."
+            description: "Nėra sėkmingai apdorotų įrašų, kuriuos būtų galima importuoti."
         });
         return;
     };
 
     setIsImporting(true);
     try {
-      const result = await importAllReports(
-        recordsToImport,
-        user.id,
-        targetCompany
-      );
+      const result = await importAllReports(recordsToImport, user.id, targetCompany);
 
       if (result.success) {
         toast({
           title: t('reports.import.toast.importSuccess.title'),
-          description: t('reports.import.toast.importSuccess.description', {
-            count: result.importedCount,
-          }),
+          description: t('reports.import.toast.importSuccess.description', { count: result.importedCount }),
         });
         setFile(null);
         setRecords([]);
         setTargetCompany('');
       } else {
-        toast({
-          variant: 'destructive',
-          title: t('reports.import.toast.importError.title'),
-          description: result.error,
-        });
+        toast({ variant: 'destructive', title: t('reports.import.toast.importError.title'), description: result.error });
       }
     } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: t('reports.import.toast.importError.title'),
-        description: error.message,
-      });
+      toast({ variant: 'destructive', title: t('reports.import.toast.importError.title'), description: error.message });
     } finally {
       setIsImporting(false);
     }
@@ -298,32 +272,19 @@ export default function ReportsImportPage() {
   
   const handleExport = async () => {
     if (!user) return;
-
     setIsExporting(true);
     try {
         const reportsToExport = await getAllReportsForExport(user.companyName);
-
         if (reportsToExport.length === 0) {
-            toast({
-                title: "Nėra duomenų eksportui",
-                description: "Nėra įrašų, kuriuos būtų galima eksportuoti jūsų įmonei.",
-            });
+            toast({ title: "Nėra duomenų eksportui" });
             return;
         }
-
         const worksheet = XLSX.utils.json_to_sheet(reportsToExport);
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, "Reports");
-
         XLSX.writeFile(workbook, `DriverCheck_Reports_${user.companyName}_${new Date().toISOString().split('T')[0]}.xlsx`);
-
     } catch (error: any) {
-        console.error("Export error:", error);
-        toast({
-            variant: "destructive",
-            title: "Eksportavimo klaida",
-            description: "Nepavyko paruošti failo eksportavimui."
-        });
+        toast({ variant: "destructive", title: "Eksportavimo klaida" });
     } finally {
         setIsExporting(false);
     }
@@ -334,77 +295,47 @@ export default function ReportsImportPage() {
     setRecords((prev) =>
       prev.map((r) =>
         r.status === 'processing' || r.status === 'pending'
-          ? { ...r, status: 'error' as const, error: 'Atšaukta vartotojo' }
+          ? { ...r, status: 'error', error: 'Atšaukta vartotojo' }
           : r
       )
     );
   };
 
-  const StatusIndicator = ({
-    status,
-    error,
-  }: {
-    status: ClientParsedRecord['status'];
-    error?: string;
-  }) => {
+  const StatusIndicator = ({ record }: { record: ClientParsedRecord }) => {
+    const { status, error } = record;
     switch (status) {
-      case 'pending':
-        return (
-          <span className="flex items-center gap-2 text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            {t('reports.import.status.pending')}
-          </span>
-        );
-      case 'processing':
-        return (
-          <span className="flex items-center gap-2 text-blue-500">
-            <BrainCircuit className="h-4 w-4 animate-spin" />
-            {t('reports.import.status.processing')}
-          </span>
-        );
-      case 'completed':
-        return (
-          <span className="flex items-center gap-2 text-green-600">
-            <CheckCircle2 className="h-4 w-4" />
-            {t('reports.import.status.completed')}
-          </span>
-        );
+      case 'pending': return <span className="flex items-center gap-2 text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" />Laukiama</span>;
+      case 'processing': return <span className="flex items-center gap-2 text-blue-500"><BrainCircuit className="h-4 w-4 animate-spin" />Analizuojama</span>;
+      case 'completed': return <span className="flex items-center gap-2 text-green-600"><CheckCircle2 className="h-4 w-4" />Paruošta</span>;
       case 'error':
+        let icon = <AlertTriangle className="h-4 w-4 shrink-0" />;
+        if (error?.includes('Pasikartojantis')) icon = <Copy className="h-4 w-4 shrink-0" />;
+        if (error?.includes('senesnis')) icon = <CalendarX className="h-4 w-4 shrink-0" />;
         return (
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                 <span className="flex items-center gap-2 text-destructive cursor-help">
-                  <AlertTriangle className="h-4 w-4 shrink-0" />
-                  <span className="truncate">{error || t('reports.import.status.aiError')}</span>
-                </span>
+                 <span className="flex items-center gap-2 text-destructive cursor-help">{icon}<span className="truncate">{error || 'Klaida'}</span></span>
               </TooltipTrigger>
-              <TooltipContent>
-                <p className="max-w-xs">{error}</p>
-              </TooltipContent>
+              <TooltipContent><p className="max-w-xs">{error}</p></TooltipContent>
             </Tooltip>
           </TooltipProvider>
         );
-      default:
-        return null;
+      default: return null;
     }
   };
   
   const canImport = useMemo(() => {
     if (isParsing || isImporting) return false;
-    return records.some(r => r.status === 'completed' || r.status === 'error');
+    return records.some(r => r.status === 'completed');
   }, [isParsing, isImporting, records]);
 
 
   if (!user?.isAdmin) {
     return (
       <Card>
-        <CardHeader>
-          <CardTitle>Prieiga negalima</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p>Šis puslapis prieinamas tik administratoriams.</p>
-        </CardContent>
+        <CardHeader><CardTitle>Prieiga negalima</CardTitle></CardHeader>
+        <CardContent><p>Šis puslapis prieinamas tik administratoriams.</p></CardContent>
       </Card>
     );
   }
@@ -416,64 +347,23 @@ export default function ReportsImportPage() {
           <FileSpreadsheet className="h-8 w-8 text-primary" />
           <div>
             <CardTitle>{t('reports.import.title')}</CardTitle>
-            <CardDescription>
-              {t('reports.import.description')}
-            </CardDescription>
+            <CardDescription>{t('reports.import.description')}</CardDescription>
           </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="flex flex-col sm:flex-row gap-4 items-start">
           <div className="w-full sm:w-auto flex-grow">
-            <Input
-              type="file"
-              accept=".xlsx, .xls"
-              onChange={handleFileChange}
-              disabled={isParsing || isImporting}
-            />
-            {file && (
-              <p className="text-sm text-muted-foreground mt-2">
-                {t('reports.import.selectedFile')}: {file.name}
-              </p>
-            )}
+            <Input type="file" accept=".xlsx, .xls" onChange={handleFileChange} disabled={isParsing || isImporting} />
+            {file && <p className="text-sm text-muted-foreground mt-2">{t('reports.import.selectedFile')}: {file.name}</p>}
           </div>
-          <Button
-            onClick={handleFileParse}
-            disabled={!file || isParsing || isImporting}
-            className="w-full sm:w-auto"
-          >
-            {isParsing ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <BrainCircuit className="mr-2 h-4 w-4" />
-            )}
-            {isParsing
-              ? t('reports.import.button.parsing')
-              : t('reports.import.button.parseFile')}
+          <Button onClick={handleFileParse} disabled={!file || isParsing || isImporting} className="w-full sm:w-auto">
+            {isParsing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <BrainCircuit className="mr-2 h-4 w-4" />}
+            {isParsing ? t('reports.import.button.parsing') : t('reports.import.button.parseFile')}
           </Button>
-          {isParsing && (
-            <Button
-              onClick={handleCancel}
-              variant="destructive"
-              className="w-full sm:w-auto"
-            >
-              <XCircle className="mr-2 h-4 w-4" />
-              Stabdyti analizę
-            </Button>
-          )}
-           <Button
-            onClick={handleExport}
-            disabled={isExporting}
-            variant="outline"
-            className="w-full sm:w-auto"
-          >
-            {isExporting ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <Download className="mr-2 h-4 w-4" />
-            )}
-            Eksportuoti į Excel
-          </Button>
+          {isParsing && <Button onClick={handleCancel} variant="destructive" className="w-full sm:w-auto"><XCircle className="mr-2 h-4 w-4" />Stabdyti analizę</Button>}
+           <Button onClick={handleExport} disabled={isExporting} variant="outline" className="w-full sm:w-auto">
+            {isExporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}Eksportuoti į Excel</Button>
         </div>
 
         {records.length > 0 && (
@@ -481,74 +371,38 @@ export default function ReportsImportPage() {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
               <div className="w-full md:w-auto">
                  <Label htmlFor="targetCompany" className="text-xs font-semibold text-muted-foreground">Importuoti į įmonę:</Label>
-                 <Input
-                    id="targetCompany"
-                    placeholder="Įveskite įmonės pavadinimą..."
-                    value={targetCompany}
-                    onChange={(e) => setTargetCompany(e.target.value)}
-                    disabled={isImporting}
-                    className="w-full md:w-72 mt-1"
-                  />
+                 <Input id="targetCompany" placeholder="Įveskite įmonės pavadinimą..." value={targetCompany} onChange={(e) => setTargetCompany(e.target.value)} disabled={isImporting} className="w-full md:w-72 mt-1" />
               </div>
               <Button onClick={handleImportAll} disabled={!canImport || !targetCompany}>
-                {isImporting ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <UploadCloud className="mr-2 h-4 w-4" />
-                )}
-                {isImporting
-                  ? t('reports.import.button.importing')
-                  : t('reports.import.button.importAll', {
-                      count: records.filter((r) => r.status === 'completed').length,
-                    })}
+                {isImporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UploadCloud className="mr-2 h-4 w-4" />}
+                {isImporting ? t('reports.import.button.importing') : t('reports.import.button.importAll', { count: records.filter((r) => r.status === 'completed').length })}
               </Button>
             </div>
             <div className="border rounded-md max-h-[50vh] overflow-auto">
               <Table>
-                <TableHeader className="sticky top-0 bg-muted/50">
+                <TableHeader className="sticky top-0 bg-muted/50 z-10">
                   <TableRow>
-                    <TableHead>{t('reports.import.table.fullName')}</TableHead>
-                    <TableHead>Company</TableHead>
-                    <TableHead>{t('reports.import.table.comment')}</TableHead>
-                    <TableHead>{t('reports.import.table.categoryAI')}</TableHead>
-                    <TableHead>{t('reports.import.table.tagsAI')}</TableHead>
-                    <TableHead className="text-right">
-                      {t('reports.import.table.status')}
-                    </TableHead>
+                    <TableHead>Vairuotojas</TableHead>
+                    <TableHead>Originalus tekstas</TableHead>
+                    <TableHead>AI išvalytas tekstas</TableHead>
+                    <TableHead>Kategorija</TableHead>
+                    <TableHead>Gim. metai (AI)</TableHead>
+                    <TableHead className="text-right">Būsena</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {records.map((record) => (
-                    <TableRow key={record.id}>
-                      <TableCell className="font-medium">
-                        {record.fullName}
-                      </TableCell>
-                      <TableCell>{record.company}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground max-w-xs truncate">
-                        {record.comment}
+                    <TableRow key={record.id} className={cn(record.status === 'error' && 'bg-red-500/10 opacity-70')}>
+                      <TableCell className="font-medium">{record.fullName}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground max-w-xs truncate">{record.comment}</TableCell>
+                      <TableCell className={cn("text-sm max-w-xs truncate", record.status === 'completed' && 'text-green-700 dark:text-green-400')}>
+                        {record.aiResult?.sanitizedText}
                       </TableCell>
                       <TableCell>
-                        {record.aiCategory && record.status === 'completed' && (
-                          <Badge variant="secondary">
-                            {getCategoryNameForDisplay(record.aiCategory, t)}
-                          </Badge>
-                        )}
+                        {record.aiResult?.categoryId && record.status === 'completed' && <Badge variant="secondary">{getCategoryNameForDisplay(record.aiResult.categoryId, t)}</Badge>}
                       </TableCell>
-                      <TableCell>
-                        <div className="flex flex-wrap gap-1">
-                          {record.aiTags?.map((tag) => (
-                            <Badge key={tag} variant="outline">
-                              {t(`tags.${tag}`)}
-                            </Badge>
-                          ))}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <StatusIndicator
-                          status={record.status}
-                          error={record.error}
-                        />
-                      </TableCell>
+                      <TableCell>{record.aiResult?.birthYear}</TableCell>
+                      <TableCell className="text-right"><StatusIndicator record={record} /></TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -561,9 +415,7 @@ export default function ReportsImportPage() {
           <div className="text-center py-16 px-6 border-2 border-dashed rounded-lg">
             <FileX2 className="mx-auto h-12 w-12 text-muted-foreground" />
             <h3 className="mt-4 text-lg font-semibold">Pasirinkite failą</h3>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Norėdami pradėti, įkelkite .xlsx arba .xls formato failą.
-            </p>
+            <p className="mt-2 text-sm text-muted-foreground">Norėdami pradėti, įkelkite .xlsx arba .xls formato failą.</p>
           </div>
         )}
       </CardContent>

@@ -1,118 +1,106 @@
 'use server';
 
 import { adminDb, adminAuth } from '@/lib/firebase-admin';
-import { detailedReportCategories } from '@/lib/constants';
 import { Timestamp } from 'firebase-admin/firestore';
 import { getCategoryNameForDisplay } from '@/lib/utils';
-import { categorizeReport } from '@/ai/flows/categorize-report-flow';
 import { translationsMaster } from '@/lib/translations-master';
 import crypto from 'crypto';
+import type { ClientParsedRecord } from './page';
 
-
-// PAGRINDINĖ TAISYKLĖ: Tik 'async function' gali būti eksportuojamos šiame faile.
-// Visi pagalbiniai kintamieji turi būti funkcijų viduje arba kituose failuose.
-
-export async function categorizeReportAction(comment: string) {
-  return categorizeReport({ comment });
-}
 
 export async function importAllReports(
-  reports: any[],
+  records: ClientParsedRecord[],
   adminUid: string,
   targetCompanyName: string
 ) {
   if (!adminUid || !adminDb || !adminAuth) {
-    return {
-      success: false,
-      error: 'Serverio konfigūracijos klaida (Admin SDK nepasiekiamas).',
-    };
+    return { success: false, error: 'Serverio konfigūracijos klaida.' };
   }
-   if (!targetCompanyName?.trim()) {
-      return { success: false, error: 'Įmonės pavadinimas yra privalomas.' };
+  if (!targetCompanyName?.trim()) {
+    return { success: false, error: 'Įmonės pavadinimas yra privalomas.' };
   }
-
 
   try {
-    // Step 1: Find or create the target company and its owner
-    const companiesRef = adminDb.collection('companies');
-    const companyQuery = await companiesRef.where('name', '==', targetCompanyName).limit(1).get();
+    const usersRef = adminDb.collection('users');
+    const companyQuery = await usersRef.where('companyName', '==', targetCompanyName).where('role', '==', 'owner').limit(1).get();
     
     let reportOwnerId: string;
-    
+    let finalCompanyName: string;
+
     if (companyQuery.empty) {
-        // Company doesn't exist, create a new one with a placeholder owner
         const dummyEmail = `placeholder-${Date.now()}@drivercheck.lt`;
         const newAuthUser = await adminAuth.createUser({
             email: dummyEmail,
             password: crypto.randomBytes(20).toString('hex'),
-            disabled: true, // This account should not be used for login
+            disabled: true,
         });
         reportOwnerId = newAuthUser.uid;
+        finalCompanyName = targetCompanyName;
 
         const companyData = {
-            name: targetCompanyName,
+            name: finalCompanyName,
             ownerId: reportOwnerId,
             plan: 'imported',
             subscriptionStatus: 'inactive',
             createdAt: Timestamp.now(),
         };
-        const newCompanyRef = await companiesRef.add(companyData);
+        const newCompanyRef = await adminDb.collection('companies').add(companyData);
 
         const userData = {
             email: dummyEmail,
             companyId: newCompanyRef.id,
-            companyName: targetCompanyName,
-            fullName: `${targetCompanyName} (Imported)`,
-            contactPerson: `${targetCompanyName} (Imported)`,
+            companyName: finalCompanyName,
+            contactPerson: `${finalCompanyName} (Importuota)`,
             role: 'owner',
             paymentStatus: 'inactive',
             isAdmin: false,
             createdAt: Timestamp.now(),
             registeredAt: Timestamp.now(),
         };
-        await adminDb.collection('users').doc(reportOwnerId).set(userData);
+        await usersRef.doc(reportOwnerId).set(userData);
 
     } else {
-        // Company exists, use its owner
-        reportOwnerId = companyQuery.docs[0].data().ownerId;
+        const companyOwner = companyQuery.docs[0];
+        reportOwnerId = companyOwner.id;
+        finalCompanyName = companyOwner.data().companyName;
     }
 
-    // Step 2: Batch import the reports
     const chunkSize = 450;
     let totalImported = 0;
 
-    for (let i = 0; i < reports.length; i += chunkSize) {
+    for (let i = 0; i < records.length; i += chunkSize) {
       const batch = adminDb.batch();
-      const chunk = reports.slice(i, i + chunkSize);
+      const chunk = records.slice(i, i + chunkSize);
 
-      chunk.forEach((report) => {
+      chunk.forEach((record) => {
+        if (record.status !== 'completed' || !record.aiResult) return;
+
         const docRef = adminDb.collection('reports').doc();
 
         batch.set(docRef, {
-          fullName: report.fullName || 'Nežinomas',
-          comment: report.comment || '',
+          fullName: record.fullName,
+          comment: record.aiResult.sanitizedText,
+          birthYear: record.aiResult.birthYear ? parseInt(record.aiResult.birthYear, 10) : null,
           reporterId: reportOwnerId,
-          reporterCompanyName: targetCompanyName,
-          category: report.aiCategory || 'other_category',
-          tags: report.aiTags || [],
-          createdAt: report.createdAt ? Timestamp.fromDate(new Date(report.createdAt)) : Timestamp.now(),
+          reporterCompanyName: finalCompanyName,
+          category: record.aiResult.categoryId || 'other_category',
+          tags: record.aiResult.suggestedTags || [],
+          createdAt: record.createdAt ? Timestamp.fromDate(new Date(record.createdAt)) : Timestamp.now(),
           status: 'active',
           statusUpdatedAt: Timestamp.now(),
-          subjectCompany: report.company || '',
+          subjectCompany: record.company || '',
         });
       });
 
       await batch.commit();
-      totalImported += chunk.length;
+      totalImported += chunk.filter(r => r.status === 'completed').length;
     }
 
     return { success: true, importedCount: totalImported };
+
   } catch (error: any) {
     console.error('Firestore batch error:', error);
-    return {
-      success: false,
-      error: error.message || 'Nepavyko išsaugoti įrašų.',
-    };
+    return { success: false, error: error.message || 'Nepavyko išsaugoti įrašų.' };
   }
 }
 
@@ -125,23 +113,16 @@ export async function getAllReportsForExport(companyName: string) {
     .orderBy('createdAt', 'desc')
     .get();
 
-  if (snapshot.empty) {
-    return [];
-  }
+  if (snapshot.empty) return [];
 
-  // PATAISYMAS: Sukurta teisinga server-side vertimo funkcija
   const tForServer = (key: string): string => {
     const translationsForKey = translationsMaster[key];
-    if (!translationsForKey) {
-      return key;
-    }
-    // Eksportui naudojame lietuvišką vertimą kaip numatytąjį
+    if (!translationsForKey) return key;
     return translationsForKey['lt'] ?? key;
   };
 
   return snapshot.docs.map((doc) => {
     const d = doc.data();
-    
     let createdAtString = '';
     if (d.createdAt && typeof d.createdAt.toDate === 'function') {
         createdAtString = d.createdAt.toDate().toLocaleString('lt-LT');
