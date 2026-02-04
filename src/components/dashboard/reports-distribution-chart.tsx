@@ -48,7 +48,7 @@ export function ReportsDistributionChart({ reports }: { reports: any[] }) {
     <Card className="flex flex-col h-full transition-shadow duration-300 hover:shadow-glow-primary">
       <CardHeader className="items-center pb-2">
         <CardTitle className="text-lg">Nusižengimų statistika</CardTitle>
-        <CardDescription>Pasiskirstymas pagal AI kategorijas</CardDescription>
+        <CardDescription>Pasiskirstymas pagal kategorijas</CardDescription>
       </CardHeader>
       <CardContent className="flex-1">
         <div className="h-[250px] w-full">
