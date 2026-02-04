@@ -17,6 +17,8 @@ export async function importAllReports(
   targetCompanyName: string,
   source: 'verified_company' | 'external_web'
 ) {
+  console.log(`Receiving records: ${records.length}, Source: ${source}, Target: ${targetCompanyName}`);
+
   if (!adminUid || !adminDb || !adminAuth) {
     return { success: false, error: 'Serverio konfigūracijos klaida.' };
   }
@@ -32,6 +34,7 @@ export async function importAllReports(
     let finalCompanyName: string;
 
     if (companyQuery.empty) {
+        console.log(`Company '${targetCompanyName}' not found. Creating placeholder...`);
         const dummyEmail = `placeholder-${Date.now()}@drivercheck.lt`;
         const newAuthUser = await adminAuth.createUser({
             email: dummyEmail,
@@ -62,17 +65,19 @@ export async function importAllReports(
             registeredAt: Timestamp.now(),
         };
         await usersRef.doc(reportOwnerId).set(userData);
-
+        console.log(`Created placeholder company '${finalCompanyName}' with owner ID ${reportOwnerId}`);
     } else {
         const companyOwner = companyQuery.docs[0];
         reportOwnerId = companyOwner.id;
         finalCompanyName = companyOwner.data().companyName;
+        console.log(`Found existing company '${finalCompanyName}' with owner ID ${reportOwnerId}`);
     }
 
     const validRecords = records.filter(r => r.status === 'completed' && r.aiResult?.isValid);
+    console.log(`Found ${validRecords.length} valid records to process.`);
 
     if (validRecords.length === 0) {
-      return { success: true, importedCount: 0 };
+      return { success: true, importedCount: 0, skippedCount: records.length };
     }
 
     // Server-side deduplication
@@ -89,10 +94,12 @@ export async function importAllReports(
                 existingFingerprints.add(doc.data().fingerprint);
             }
         });
+        console.log(`Found ${existingFingerprints.size} existing fingerprints in the database.`);
     }
 
     const chunkSize = 450;
     let totalImported = 0;
+    let totalSkipped = 0;
 
     for (let i = 0; i < validRecords.length; i += chunkSize) {
       const batch = adminDb.batch();
@@ -102,7 +109,9 @@ export async function importAllReports(
         const fingerprint = `${normalizeName(record.fullName)}|${new Date(record.createdAt).toISOString().split('T')[0]}`;
         
         if (existingFingerprints.has(fingerprint)) {
-            return; // Skip duplicate
+            console.log('Skipping DB duplicate:', fingerprint);
+            totalSkipped++;
+            return;
         }
 
         const docRef = adminDb.collection('reports').doc();
@@ -129,9 +138,10 @@ export async function importAllReports(
       });
 
       await batch.commit();
+      console.log(`Committed a chunk of ${chunk.length} records. Imported in this chunk: ${totalImported}, Skipped: ${totalSkipped}`);
     }
 
-    return { success: true, importedCount: totalImported };
+    return { success: true, importedCount: totalImported, skippedCount: totalSkipped };
 
   } catch (error: any) {
     console.error('Firestore batch error:', error);

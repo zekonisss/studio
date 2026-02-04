@@ -243,8 +243,8 @@ export default function ReportsImportPage() {
   };
 
   const handleImportAll = async () => {
-    if (!user || !targetCompany) return;
-
+    if (!user) return;
+    
     const recordsToImport = records.filter(r => r.status === 'completed');
     if (recordsToImport.length === 0) {
         toast({
@@ -254,15 +254,19 @@ export default function ReportsImportPage() {
         });
         return;
     };
-
+    
+    const finalTargetCompany = (selectedSource === 'external_web' && !targetCompany.trim())
+      ? 'DriverCheck (Viešas šaltinis)'
+      : targetCompany;
+      
     setIsImporting(true);
     try {
-      const result = await importAllReports(recordsToImport, user.id, targetCompany, selectedSource);
+      const result = await importAllReports(recordsToImport, user.id, finalTargetCompany, selectedSource);
 
       if (result.success) {
         toast({
           title: t('reports.import.toast.importSuccess.title'),
-          description: t('reports.import.toast.importSuccess.description', { count: result.importedCount }),
+          description: `Sėkmingai importuota: ${result.importedCount}. Praleista (dublikatai): ${result.skippedCount}.`,
         });
         setFile(null);
         setRecords([]);
@@ -404,7 +408,7 @@ export default function ReportsImportPage() {
                       </Select>
                   </div>
               </div>
-              <Button onClick={handleImportAll} disabled={!canImport || !targetCompany}>
+              <Button onClick={handleImportAll} disabled={!canImport || (selectedSource === 'verified_company' && !targetCompany)}>
                 {isImporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UploadCloud className="mr-2 h-4 w-4" />}
                 {isImporting ? t('reports.import.button.importing') : t('reports.import.button.importAll', { count: records.filter((r) => r.status === 'completed').length })}
               </Button>
