@@ -41,7 +41,7 @@ const plans = [
         name: 'SCALE',
         title: 'ENTERPRISE',
         description: 'Didelėms organizacijoms ir integracijoms.',
-        prices: { monthly: 'Custom', yearly: 'Custom' },
+        prices: { monthly: 'Susisiekti', yearly: 'Susisiekti' },
         features: ['Neriboti vartotojai', 'Neribotos paieškos', 'API Integracija (Greitai)', 'Prioritetinis apdorojimas', 'Didelės apimties importas'],
     },
 ];
@@ -106,8 +106,16 @@ export function PricingTable() {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
                 {plans.map((plan) => {
-                    const price = billingCycle === 'monthly' ? plan.prices.monthly : Math.round(plan.prices.yearly / 12);
-                    const oldPrice = billingCycle === 'monthly' ? plan.oldPrices?.monthly : plan.oldPrices ? Math.round(plan.oldPrices.yearly / 12) : undefined;
+                    const isCustomPrice = typeof plan.prices.monthly === 'string';
+                    let price: string | number;
+                    let oldPrice: number | undefined;
+
+                    if (isCustomPrice) {
+                        price = plan.prices.monthly;
+                    } else {
+                        price = billingCycle === 'monthly' ? plan.prices.monthly : Math.round(plan.prices.yearly / 12);
+                        oldPrice = billingCycle === 'monthly' ? plan.oldPrices?.monthly : plan.oldPrices ? Math.round(plan.oldPrices.yearly / 12) : undefined;
+                    }
                     
                     return (
                         <Card key={plan.name} className={cn(
@@ -156,7 +164,7 @@ export function PricingTable() {
                                 </ul>
                             </CardContent>
                             
-                            <CardFooter className="mt-8 border-t pt-6">
+                            <CardFooter className="mt-auto border-t pt-6">
                                 {plan.name === 'SCALE' ? (
                                     <Button asChild className="w-full" size="lg">
                                         <a href="mailto:info@drivercheck.lt">
