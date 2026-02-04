@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -17,7 +18,7 @@ import {
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { DESTRUCTIVE_REPORT_MAIN_CATEGORIES } from "@/lib/constants";
-import { cn } from "@/lib/utils";
+import { cn, getTagNameForDisplay } from "@/lib/utils";
 import type { Report } from "@/types";
 import { useLanguage } from "@/contexts/language-context";
 
@@ -146,7 +147,7 @@ export function SearchResultCard({ report }: SearchResultCardProps) {
             {report.tags.map(tag => (
               <Badge key={tag} variant="outline" className="text-xs font-normal text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-900">
                 <Tag className="w-3 h-3 mr-1 opacity-50" />
-                {t(`tags.${tag}`)}
+                {getTagNameForDisplay(tag, t)}
               </Badge>
             ))}
           </div>

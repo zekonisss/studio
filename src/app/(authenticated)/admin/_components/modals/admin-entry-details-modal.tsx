@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
@@ -6,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import { useLanguage } from '@/contexts/language-context';
 import type { Report } from '@/types';
-import { getCategoryNameForDisplay } from '@/lib/utils';
+import { getCategoryNameForDisplay, getTagNameForDisplay } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface AdminEntryDetailsModalProps {
@@ -53,7 +54,7 @@ export function AdminEntryDetailsModal({ isOpen, onClose, report }: AdminEntryDe
                     <div className="grid grid-cols-3 gap-4">
                         <div className="col-span-1 font-semibold">{t('admin.entryDetailsModal.tags')}:</div>
                         <div className="col-span-2 flex flex-wrap gap-2">
-                           {report.tags.map(tag => <Badge key={tag} variant="outline">{t(`tags.${tag}`)}</Badge>)}
+                           {report.tags.map(tag => <Badge key={tag} variant="outline">{getTagNameForDisplay(tag, t)}</Badge>)}
                         </div>
                     </div>
                  )}

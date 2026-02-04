@@ -12,6 +12,29 @@ export function getCategoryNameForDisplay(categoryId: string, t: (key: string) =
   return category ? t(category.nameKey) : categoryId;
 }
 
+export function getTagNameForDisplay(tag: string, t: (key: string) => string): string {
+  if (!tag) return '';
+  
+  // First, try to translate directly if it's already a full key e.g. "tags.skolos"
+  let translation = t(tag);
+  if (translation !== tag) {
+      return translation;
+  }
+  
+  // Second, try to prepend "tags." and translate e.g. "kuro_vagyste" -> "tags.kuro_vagyste"
+  const prefixedKey = `tags.${tag}`;
+  translation = t(prefixedKey);
+  if (translation !== prefixedKey) {
+      return translation;
+  }
+
+  // If both fail, it's likely a malformed key or a raw value. Just clean and return.
+  // e.g. "tags.Žala transporto priemonei" -> "Žala transporto priemonei"
+  // e.g. "Žala transporto priemonei" -> "Žala transporto priemonei"
+  return tag.startsWith('tags.') ? tag.substring(5) : tag;
+}
+
+
 export const migrateTagIfNeeded = (tagValue: string): string => {
   if (typeof tagValue !== 'string') return tagValue; 
 
