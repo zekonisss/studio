@@ -22,62 +22,37 @@ export async function importAllReports(
   if (!adminUid || !adminDb || !adminAuth) {
     return { success: false, error: 'Serverio konfigūracijos klaida.' };
   }
-  if (!targetCompanyName?.trim()) {
-    return { success: false, error: 'Įmonės pavadinimas yra privalomas.' };
+  if (source === 'verified_company' && !targetCompanyName?.trim()) {
+    return { success: false, error: 'Pasirinkus "Patvirtinta įmonė", pavadinimas yra privalomas.' };
   }
 
   try {
     const usersRef = adminDb.collection('users');
-    const companyQuery = await usersRef.where('companyName', '==', targetCompanyName).where('role', '==', 'owner').limit(1).get();
-    
     let reportOwnerId: string;
     let finalCompanyName: string;
 
-    if (companyQuery.empty) {
-        console.log(`Company '${targetCompanyName}' not found. Creating placeholder...`);
-        const dummyEmail = `placeholder-${Date.now()}@drivercheck.lt`;
-        const newAuthUser = await adminAuth.createUser({
-            email: dummyEmail,
-            password: crypto.randomBytes(20).toString('hex'),
-            disabled: true,
-        });
-        reportOwnerId = newAuthUser.uid;
-        finalCompanyName = targetCompanyName;
-
-        const companyData = {
-            name: finalCompanyName,
-            ownerId: reportOwnerId,
-            plan: 'imported',
-            subscriptionStatus: 'inactive',
-            createdAt: Timestamp.now(),
-        };
-        const newCompanyRef = await adminDb.collection('companies').add(companyData);
-
-        const userData = {
-            email: dummyEmail,
-            companyId: newCompanyRef.id,
-            companyName: finalCompanyName,
-            contactPerson: `${finalCompanyName} (Importuota)`,
-            role: 'owner',
-            paymentStatus: 'inactive',
-            isAdmin: false,
-            createdAt: Timestamp.now(),
-            registeredAt: Timestamp.now(),
-        };
-        await usersRef.doc(reportOwnerId).set(userData);
-        console.log(`Created placeholder company '${finalCompanyName}' with owner ID ${reportOwnerId}`);
-    } else {
-        const companyOwner = companyQuery.docs[0];
-        reportOwnerId = companyOwner.id;
-        finalCompanyName = companyOwner.data().companyName;
-        console.log(`Found existing company '${finalCompanyName}' with owner ID ${reportOwnerId}`);
+    if (source === 'verified_company') {
+      const companyQuery = await usersRef.where('companyName', '==', targetCompanyName).where('role', '==', 'owner').limit(1).get();
+       if (companyQuery.empty) {
+            return { success: false, error: `Įmonė '${targetCompanyName}' nerasta. Patikrinkite pavadinimą.` };
+       } else {
+            const companyOwner = companyQuery.docs[0];
+            reportOwnerId = companyOwner.id;
+            finalCompanyName = companyOwner.data().companyName;
+            console.log(`Found existing company '${finalCompanyName}' with owner ID ${reportOwnerId}`);
+       }
+    } else { // For 'external_web'
+        finalCompanyName = targetCompanyName; // Usually 'DriverCheck (Viešas šaltinis)'
+        const adminUser = await adminAuth.getUser(adminUid);
+        reportOwnerId = adminUser.uid;
+        console.log(`Using admin user ID ${reportOwnerId} for public source import.`);
     }
 
     const validRecords = records.filter(r => r.status === 'completed' && r.aiResult?.isValid);
     console.log(`Found ${validRecords.length} valid records to process.`);
 
     if (validRecords.length === 0) {
-      return { success: true, importedCount: 0, skippedCount: records.length };
+      return { success: true, created: 0, updated: 0 };
     }
 
     // Server-side deduplication
@@ -98,8 +73,8 @@ export async function importAllReports(
     }
 
     const chunkSize = 450;
-    let totalImported = 0;
-    let totalSkipped = 0;
+    let createdCount = 0;
+    let updatedCount = 0;
 
     for (let i = 0; i < validRecords.length; i += chunkSize) {
       const batch = adminDb.batch();
@@ -110,7 +85,7 @@ export async function importAllReports(
         
         if (existingFingerprints.has(fingerprint)) {
             console.log('Skipping DB duplicate:', fingerprint);
-            totalSkipped++;
+            updatedCount++;
             return;
         }
 
@@ -128,20 +103,19 @@ export async function importAllReports(
           status: 'active',
           statusUpdatedAt: Timestamp.now(),
           subjectCompany: record.company || '',
-          // New fields
           source: source,
           matchQuality: record.aiResult!.birthYear ? 'high' : 'low',
           fingerprint: fingerprint,
         });
 
-        totalImported++;
+        createdCount++;
       });
 
       await batch.commit();
-      console.log(`Committed a chunk of ${chunk.length} records. Imported in this chunk: ${totalImported}, Skipped: ${totalSkipped}`);
+      console.log(`Committed a chunk of ${chunk.length} records. Created in this chunk: ${createdCount}, Skipped: ${updatedCount}`);
     }
 
-    return { success: true, importedCount: totalImported, skippedCount: totalSkipped };
+    return { success: true, created: createdCount, updated: updatedCount };
 
   } catch (error: any) {
     console.error('Firestore batch error:', error);
@@ -184,5 +158,3 @@ export async function getAllReportsForExport(companyName: string) {
     };
   });
 }
-
-    

@@ -265,8 +265,8 @@ export default function ReportsImportPage() {
 
       if (result.success) {
         toast({
-          title: t('reports.import.toast.importSuccess.title'),
-          description: `Sėkmingai importuota: ${result.importedCount}. Praleista (dublikatai): ${result.skippedCount}.`,
+          title: "Importas baigtas!",
+          description: `Sukurta: ${result.created}, Praleista (dublikatai): ${result.updated}.`,
         });
         setFile(null);
         setRecords([]);
@@ -338,8 +338,11 @@ export default function ReportsImportPage() {
   
   const canImport = useMemo(() => {
     if (isParsing || isImporting) return false;
-    return records.some(r => r.status === 'completed');
-  }, [isParsing, isImporting, records]);
+    const hasCompletedRecords = records.some(r => r.status === 'completed');
+    if (!hasCompletedRecords) return false;
+    if (selectedSource === 'verified_company' && !targetCompany.trim()) return false;
+    return true;
+  }, [isParsing, isImporting, records, selectedSource, targetCompany]);
 
 
   if (!user?.isAdmin) {
@@ -383,7 +386,7 @@ export default function ReportsImportPage() {
               <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
                   <div>
                      <Label htmlFor="targetCompany" className="text-xs font-semibold text-muted-foreground">Importuoti į įmonę:</Label>
-                     <Input id="targetCompany" placeholder="Įveskite įmonės pavadinimą..." value={targetCompany} onChange={(e) => setTargetCompany(e.target.value)} disabled={isImporting} className="w-full md:w-72 mt-1" />
+                     <Input id="targetCompany" placeholder="Palikti tuščią viešam šaltiniui" value={targetCompany} onChange={(e) => setTargetCompany(e.target.value)} disabled={isImporting} className="w-full md:w-72 mt-1" />
                   </div>
                   <div>
                       <Label htmlFor="sourceSelect" className="text-xs font-semibold text-muted-foreground">Duomenų šaltinis:</Label>
@@ -400,15 +403,15 @@ export default function ReportsImportPage() {
                               </SelectItem>
                               <SelectItem value="verified_company">
                                    <div className="flex items-center gap-2">
-                                      <Check className="h-4 w-4 text-green-500" />
-                                      <span>Patvirtintas įmonės (Verified)</span>
+                                      <Building className="h-4 w-4 text-green-500" />
+                                      <span>Patvirtinta įmonė (Verified)</span>
                                   </div>
                               </SelectItem>
                           </SelectContent>
                       </Select>
                   </div>
               </div>
-              <Button onClick={handleImportAll} disabled={!canImport || (selectedSource === 'verified_company' && !targetCompany)}>
+              <Button onClick={handleImportAll} disabled={!canImport}>
                 {isImporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UploadCloud className="mr-2 h-4 w-4" />}
                 {isImporting ? t('reports.import.button.importing') : t('reports.import.button.importAll', { count: records.filter((r) => r.status === 'completed').length })}
               </Button>
