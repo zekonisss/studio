@@ -19,12 +19,6 @@ import { cn } from "@/lib/utils";
 
 type FormValues = Omit<SignupFormValuesExtended, 'subscriptionType' | 'confirmPassword'>;
 
-const STEPS = [
-    { id: 1, name: 'Įmonės Identitetas', fields: ['companyName', 'companyCode'] },
-    { id: 2, name: 'Kontaktinė Informacija', fields: ['vatCode', 'address', 'phone'] },
-    { id: 3, name: 'Paskyros Kūrimas', fields: ['contactPerson', 'position', 'email', 'password', 'agreeToTerms'] }
-];
-
 export default function SignupPage() {
     const { signup, isLoading: isAuthLoading } = useAuth();
     const { toast } = useToast();
@@ -32,6 +26,12 @@ export default function SignupPage() {
     const [currentStep, setCurrentStep] = useState(0);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    
+    const STEPS = [
+        { id: 1, name: t('signup.step1.title'), fields: ['companyName', 'companyCode'] },
+        { id: 2, name: t('signup.step2.title'), fields: ['vatCode', 'address', 'phone'] },
+        { id: 3, name: t('signup.step3.title'), fields: ['contactPerson', 'position', 'email', 'password', 'agreeToTerms'] }
+    ];
 
     const form = useForm<FormValues>({
         resolver: zodResolver(SignupFormSchema),
@@ -94,35 +94,35 @@ export default function SignupPage() {
                 {/* Marketing Sidebar */}
                 <div className="hidden lg:block p-12 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-950/50 border-r">
                     <div className="space-y-6">
-                         <h2 className="text-3xl font-bold text-slate-800 dark:text-white">Jūsų verslo saugiklis.</h2>
-                         <p className="text-slate-600 dark:text-slate-400">Prisijunkite prie bendro saugumo tinklo ir sumažinkite riziką.</p>
+                         <h2 className="text-3xl font-bold text-slate-800 dark:text-white">{t('signup.marketing.headline')}</h2>
+                         <p className="text-slate-600 dark:text-slate-400">{t('signup.marketing.subheadline')}</p>
                          <ul className="space-y-6 pt-4">
                             <li className="flex gap-4 items-start">
                                 <div className="p-2 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm"><TrendingDown className="h-5 w-5 text-primary" /></div>
                                 <div>
-                                    <h4 className="font-semibold text-slate-800 dark:text-slate-200">Išvenkite tūkstantinių nuostolių</h4>
-                                    <p className="text-sm text-slate-500 dark:text-slate-400">Vienas blogas vairuotojas kainuoja tūkstančius (kuras, remontas, baudos). DriverCheck padeda juos atfiltruoti.</p>
+                                    <h4 className="font-semibold text-slate-800 dark:text-slate-200">{t('signup.marketing.feature1.title')}</h4>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">{t('signup.marketing.feature1.description')}</p>
                                 </div>
                             </li>
                             <li className="flex gap-4 items-start">
                                 <div className="p-2 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm"><Scale className="h-5 w-5 text-primary" /></div>
                                 <div>
-                                    <h4 className="font-semibold text-slate-800 dark:text-slate-200">Svertas be advokatų</h4>
-                                    <p className="text-sm text-slate-500 dark:text-slate-400">Vairuotojai linkę atlyginti žalą ir spręsti konfliktus, kai žino, kad problema liks jų istorijoje ir bus matoma kitiems.</p>
+                                    <h4 className="font-semibold text-slate-800 dark:text-slate-200">{t('signup.marketing.feature2.title')}</h4>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">{t('signup.marketing.feature2.description')}</p>
                                 </div>
                             </li>
                             <li className="flex gap-4 items-start">
                                 <div className="p-2 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm"><ShieldCheck className="h-5 w-5 text-primary" /></div>
                                 <div>
-                                    <h4 className="font-semibold text-slate-800 dark:text-slate-200">Prevencija per žinojimą</h4>
-                                    <p className="text-sm text-slate-500 dark:text-slate-400">Vien faktas, kad įmonė naudoja DriverCheck (lipdukai, patikra), sumažina vagysčių ir piktnaudžiavimo riziką.</p>
+                                    <h4 className="font-semibold text-slate-800 dark:text-slate-200">{t('signup.marketing.feature3.title')}</h4>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">{t('signup.marketing.feature3.description')}</p>
                                 </div>
                             </li>
                              <li className="flex gap-4 items-start">
                                 <div className="p-2 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm"><Network className="h-5 w-5 text-primary" /></div>
                                 <div>
-                                    <h4 className="font-semibold text-slate-800 dark:text-slate-200">Bendras tinklas</h4>
-                                    <p className="text-sm text-slate-500 dark:text-slate-400">Kuo daugiau vežėjų dalyvauja, tuo sistema tikslesnė. Būkite saugios bendruomenės dalimi.</p>
+                                    <h4 className="font-semibold text-slate-800 dark:text-slate-200">{t('signup.marketing.feature4.title')}</h4>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">{t('signup.marketing.feature4.description')}</p>
                                 </div>
                             </li>
                          </ul>
@@ -132,7 +132,7 @@ export default function SignupPage() {
                 {/* Form Section */}
                 <div className="p-8 md:p-12 flex flex-col">
                     <div className="mb-8">
-                         <p className="text-sm font-medium text-primary">Žingsnis {currentStep + 1} iš {STEPS.length}</p>
+                         <p className="text-sm font-medium text-primary">{t('signup.step', { currentStep: currentStep + 1, totalSteps: STEPS.length })}</p>
                          <h2 className="text-2xl font-bold mt-1">{STEPS[currentStep].name}</h2>
                     </div>
                     
@@ -199,8 +199,8 @@ export default function SignupPage() {
                                     )} />
                                     <FormField control={form.control} name="position" render={({ field }) => (
                                       <FormItem>
-                                          <FormLabel>{t('signup.form.position.label', { fallback: 'Pareigos' })}</FormLabel>
-                                          <FormControl><Input placeholder={t('signup.form.position.placeholder', { fallback: 'Vadybininkas, Direktorius...' })} {...field} /></FormControl>
+                                          <FormLabel>{t('signup.form.position.label')}</FormLabel>
+                                          <FormControl><Input placeholder={t('signup.form.position.placeholder')} {...field} /></FormControl>
                                           <FormMessage />
                                       </FormItem>
                                     )} />
@@ -248,12 +248,12 @@ export default function SignupPage() {
                                 <div className="flex gap-4 pt-4">
                                     {currentStep > 0 && (
                                         <Button type="button" variant="outline" onClick={goToPrevStep} className="w-full">
-                                            Atgal
+                                            {t('signup.button.back')}
                                         </Button>
                                     )}
                                     {currentStep < STEPS.length - 1 ? (
                                         <Button type="button" onClick={goToNextStep} className="w-full">
-                                            Toliau <ArrowRight className="ml-2 h-4 w-4" />
+                                            {t('signup.button.next')} <ArrowRight className="ml-2 h-4 w-4" />
                                         </Button>
                                     ) : (
                                         <Button type="submit" className="w-full" disabled={isSubmitting || isAuthLoading}>
@@ -276,4 +276,3 @@ export default function SignupPage() {
         </div>
     );
 }
-

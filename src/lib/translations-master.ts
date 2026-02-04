@@ -1,3 +1,4 @@
+
 export type Locale = 'lt' | 'en' | 'ru' | 'lv' | 'et' | 'pl';
 
 // Visi vertimai dabar yra centralizuoti ir įtraukti tiesiogiai į šį failą.
@@ -93,6 +94,22 @@ export const translationsMaster: Record<string, Partial<Record<Locale, string>>>
   'toast.login.error.descriptionGeneric': { lt: 'Įvyko nenumatyta klaida.', en: 'An unexpected error occurred.', ru: 'Произошла непредвиденная ошибка.', pl: 'Wystąpił nieoczekiwany błąd.', lv: 'Notikusi neparedzēta kļūda.', et: 'Ilmnes ootamatu viga.' },
   'toast.login.error.invalidCredentials': { lt: 'Neteisingas el. paštas arba slaptažodis.', en: 'Incorrect email or password.', ru: 'Неверный адрес электронной почты или пароль.', pl: 'Nieprawidłowy email lub hasło.', lv: 'Nepareizs e-pasts vai parole.', et: 'Vale e-posti aadress või parool.' },
   'signup.title': { lt: 'Sukurti paskyrą', en: 'Create an account', ru: 'Создать аккаунт', pl: 'Utwórz konto', lv: 'Izveidot kontu', et: 'Loo konto' },
+  'signup.marketing.headline': { lt: 'Jūsų verslo saugiklis.', en: 'Your business\'s safeguard.', ru: 'Предохранитель вашего бизнеса.', pl: 'Bezpiecznik Twojego biznesu.' },
+  'signup.marketing.subheadline': { lt: 'Prisijunkite prie bendro saugumo tinklo ir sumažinkite riziką.', en: 'Join the shared security network and reduce risk.', ru: 'Присоединяйтесь к общей сети безопасности и снижайте риски.', pl: 'Dołącz do wspólnej sieci bezpieczeństwa i zredukuj ryzyko.' },
+  'signup.marketing.feature1.title': { lt: 'Išvenkite tūkstantinių nuostolių', en: 'Avoid thousands in losses', ru: 'Избегайте тысячных убытков', pl: 'Unikaj tysięcznych strat' },
+  'signup.marketing.feature1.description': { lt: 'Vienas blogas vairuotojas kainuoja tūkstančius (kuras, remontas, baudos). DriverCheck padeda juos atfiltruoti.', en: 'One bad driver costs thousands (fuel, repairs, fines). DriverCheck helps filter them out.', ru: 'Один плохой водитель стоит тысячи (топливо, ремонт, штрафы). DriverCheck помогает их отфильтровать.', pl: 'Jeden zły kierowca kosztuje tysiące (paliwo, naprawy, mandaty). DriverCheck pomaga ich odfiltrować.' },
+  'signup.marketing.feature2.title': { lt: 'Svertas be advokatų', en: 'Leverage without lawyers', ru: 'Рычаг без адвокатов', pl: 'Dźwignia bez prawników' },
+  'signup.marketing.feature2.description': { lt: 'Vairuotojai linkę atlyginti žalą ir spręsti konfliktus, kai žino, kad problema liks jų istorijoje ir bus matoma kitiems.', en: 'Drivers are more likely to compensate for damages and resolve conflicts when they know the issue will remain in their history for others to see.', ru: 'Водители более склонны возмещать ущерб и разрешать конфликты, когда знают, что проблема останется в их истории и будет видна другим.', pl: 'Kierowcy są bardziej skłonni do rekompensaty szkód i rozwiązywania konfliktów, gdy wiedzą, że problem pozostanie w ich historii i będzie widoczny для innych.' },
+  'signup.marketing.feature3.title': { lt: 'Prevencija per žinojimą', en: 'Prevention through awareness', ru: 'Профилактика через осведомленность', pl: 'Prewencja przez świadomość' },
+  'signup.marketing.feature3.description': { lt: 'Vien faktas, kad įmonė naudoja DriverCheck (lipdukai, patikra), sumažina vagysčių ir piktnaudžiavimo riziką.', en: 'The mere fact that a company uses DriverCheck (stickers, checks) reduces the risk of theft and abuse.', ru: 'Сам факт использования компанией DriverCheck (наклейки, проверки) снижает риск краж и злоупотреблений.', pl: 'Sam fakt, że firma korzysta z DriverCheck (naklejki, kontrole), zmniejsza ryzyko kradzieży i nadużyć.' },
+  'signup.marketing.feature4.title': { lt: 'Bendras tinklas', en: 'Shared Network', ru: 'Общая сеть', pl: 'Wspólna sieć' },
+  'signup.marketing.feature4.description': { lt: 'Kuo daugiau vežėjų dalyvauja, tuo sistema tikslesnė. Būkite saugios bendruomenės dalimi.', en: 'The more carriers participate, the more accurate the system becomes. Be part of a secure community.', ru: 'Чем больше перевозчиков участвует, тем точнее система. Будьте частью безопасного сообщества.', pl: 'Im więcej przewoźników bierze udział, tym dokładniejszy jest system. Bądź częścią bezpiecznej społeczności.' },
+  'signup.step': { lt: 'Žingsnis {currentStep} iš {totalSteps}', en: 'Step {currentStep} of {totalSteps}', ru: 'Шаг {currentStep} из {totalSteps}', pl: 'Krok {currentStep} z {totalSteps}' },
+  'signup.step1.title': { lt: 'Įmonės Identitetas', en: 'Company Identity', ru: 'Идентификация компании', pl: 'Tożsamość firmy' },
+  'signup.step2.title': { lt: 'Kontaktinė Informacija', en: 'Contact Information', ru: 'Контактная информация', pl: 'Informacje kontaktowe' },
+  'signup.step3.title': { lt: 'Paskyros Kūrimas', en: 'Account Creation', ru: 'Создание аккаунта', pl: 'Tworzenie konta' },
+  'signup.button.next': { lt: 'Toliau', en: 'Next', ru: 'Далее', pl: 'Dalej' },
+  'signup.button.back': { lt: 'Atgal', en: 'Back', ru: 'Назад', pl: 'Wstecz' },
   'signup.form.companyName.label': { lt: 'Įmonės pavadinimas', en: 'Company Name', ru: 'Название компании', pl: 'Nazwa firmy', lv: 'Uzņēmuma nosaukums', et: 'Ettevõtte nimi' },
   'signup.form.companyName.placeholder': { lt: 'UAB "Jūsų Įmonė"', en: 'Your Company LLC', ru: 'ООО "Ваша Компания"', pl: 'Twoja Firma Sp. z o.o.', lv: 'SIA "Jūsu Uzņēmums"', et: 'Teie Ettevõte OÜ' },
   'signup.form.companyCode.label': { lt: 'Įmonės kodas', en: 'Company Code', ru: 'Код компании', pl: 'Kod firmy', lv: 'Uzņēmuma kods', et: 'Ettevõtte registrikood' },
@@ -773,6 +790,7 @@ export const translationsMaster: Record<string, Partial<Record<Locale, string>>>
 };
 
     
+
 
 
 
