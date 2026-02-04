@@ -323,14 +323,12 @@ export default function ReportsImportPage() {
         if (error?.includes('Pasikartojantis')) icon = <Copy className="h-4 w-4 shrink-0" />;
         if (error?.includes('senesnis')) icon = <CalendarX className="h-4 w-4 shrink-0" />;
         return (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                 <span className="flex items-center gap-2 text-destructive cursor-help">{icon}<span className="truncate">{error || 'Klaida'}</span></span>
-              </TooltipTrigger>
-              <TooltipContent><p className="max-w-xs">{error}</p></TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+                <span className="flex items-center gap-2 text-destructive cursor-help">{icon}<span className="truncate">{error || 'Klaida'}</span></span>
+            </TooltipTrigger>
+            <TooltipContent><p className="max-w-xs">{error}</p></TooltipContent>
+          </Tooltip>
         );
       default: return null;
     }
@@ -416,36 +414,63 @@ export default function ReportsImportPage() {
                 {isImporting ? t('reports.import.button.importing') : t('reports.import.button.importAll', { count: records.filter((r) => r.status === 'completed').length })}
               </Button>
             </div>
-            <div className="border rounded-md max-h-[50vh] overflow-auto">
-              <Table>
-                <TableHeader className="sticky top-0 bg-muted/50 z-10">
-                  <TableRow>
-                    <TableHead>Vairuotojas</TableHead>
-                    <TableHead>Originalus tekstas</TableHead>
-                    <TableHead>AI išvalytas tekstas</TableHead>
-                    <TableHead>Kategorija</TableHead>
-                    <TableHead>Gim. metai (AI)</TableHead>
-                    <TableHead className="text-right">Būsena</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {records.map((record) => (
-                    <TableRow key={record.id} className={cn(record.status === 'error' && 'bg-red-500/10 opacity-70')}>
-                      <TableCell className="font-medium">{record.fullName}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground max-w-xs truncate">{record.comment}</TableCell>
-                      <TableCell className={cn("text-sm max-w-xs truncate", record.status === 'completed' && 'text-green-700 dark:text-green-400')}>
-                        {record.aiResult?.sanitizedText}
-                      </TableCell>
-                      <TableCell>
-                        {record.aiResult?.categoryId && record.status === 'completed' && <Badge variant="secondary">{getCategoryNameForDisplay(record.aiResult.categoryId, t)}</Badge>}
-                      </TableCell>
-                      <TableCell>{record.aiResult?.birthYear}</TableCell>
-                      <TableCell className="text-right"><StatusIndicator record={record} /></TableCell>
+            <TooltipProvider>
+                <div className="border rounded-md max-h-[50vh] overflow-auto">
+                <Table>
+                    <TableHeader className="sticky top-0 bg-muted/50 z-10">
+                    <TableRow>
+                        <TableHead>Vairuotojas</TableHead>
+                        <TableHead>Originalus tekstas</TableHead>
+                        <TableHead>AI išvalytas tekstas</TableHead>
+                        <TableHead>Kategorija</TableHead>
+                        <TableHead>Gim. metai (AI)</TableHead>
+                        <TableHead className="text-right">Būsena</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                    </TableHeader>
+                    <TableBody>
+                    {records.map((record) => (
+                        <TableRow key={record.id} className={cn(record.status === 'error' && 'bg-red-500/10 opacity-70')}>
+                        <TableCell className="font-medium">{record.fullName}</TableCell>
+                        
+                        <TableCell className="text-xs text-muted-foreground max-w-xs">
+                            {record.comment && (
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <p className="truncate">{record.comment}</p>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p className="max-w-md">{record.comment}</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            )}
+                        </TableCell>
+
+                        <TableCell className="max-w-xs">
+                            {record.aiResult?.sanitizedText && (
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <p className={cn("truncate text-sm", record.status === 'completed' && 'text-green-700 dark:text-green-400')}>
+                                            {record.aiResult.sanitizedText}
+                                        </p>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p className="max-w-md">{record.aiResult.sanitizedText}</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            )}
+                        </TableCell>
+                        
+                        <TableCell>
+                            {record.aiResult?.categoryId && record.status === 'completed' && <Badge variant="secondary">{getCategoryNameForDisplay(record.aiResult.categoryId, t)}</Badge>}
+                        </TableCell>
+                        <TableCell>{record.aiResult?.birthYear}</TableCell>
+                        <TableCell className="text-right"><StatusIndicator record={record} /></TableCell>
+                        </TableRow>
+                    ))}
+                    </TableBody>
+                </Table>
+                </div>
+            </TooltipProvider>
           </div>
         )}
 
@@ -460,5 +485,3 @@ export default function ReportsImportPage() {
     </Card>
   );
 }
-
-    
