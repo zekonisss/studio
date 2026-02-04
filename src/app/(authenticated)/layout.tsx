@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useAuth } from '@/hooks/use-auth';
@@ -155,7 +156,7 @@ export default function AuthenticatedLayout({
         <div className="hidden border-r bg-card md:block md:w-72">
           <SidebarNav isInSheet={false} />
         </div>
-        <div className="flex flex-1 flex-col">
+        <div className="flex flex-1 flex-col min-w-0">
           <header className="sticky top-0 z-30 flex h-16 items-center border-b bg-card px-4 shadow-sm sm:px-6">
             <div className="md:hidden">
               <Sheet>
