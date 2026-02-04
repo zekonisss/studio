@@ -173,7 +173,6 @@ export interface DetailedCategory {
 export interface SignupFormValuesExtended {
   email: string;
   password: string;
-  confirmPassword?: string;
   companyName: string;
   companyCode: string;
   vatCode?: string;

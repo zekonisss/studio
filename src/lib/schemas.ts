@@ -8,7 +8,6 @@ const ACCEPTED_FILE_TYPES = ["image/jpeg", "image/png", "image/webp", "applicati
 export const SignupFormSchema = z.object({
   email: z.string().email({ message: "Neteisingas el. pašto formatas." }),
   password: z.string().min(8, { message: "Slaptažodis turi būti bent 8 simbolių ilgio." }),
-  confirmPassword: z.string().min(8, { message: "Slaptažodis turi būti bent 8 simbolių ilgio." }),
   companyName: z.string().min(2, { message: "Įmonės pavadinimas turi būti bent 2 simbolių ilgio." }),
   companyCode: z.string().regex(/^\d{9}$/, { message: "Įmonės kodas turi būti 9 skaitmenys." }),
   vatCode: z.string().optional(),
@@ -17,9 +16,6 @@ export const SignupFormSchema = z.object({
   position: z.string().min(2, { message: "Pareigos turi būti bent 2 simbolių ilgio." }),
   phone: z.string().regex(/^\+?\d{7,15}$/, { message: "Neteisingas telefono numerio formatas." }),
   agreeToTerms: z.boolean().refine(val => val === true, { message: "Privalote sutikti su taisyklėmis." }),
-}).refine(data => data.password === data.confirmPassword, {
-  message: "Slaptažodžiai nesutampa.",
-  path: ["confirmPassword"],
 });
 
 
