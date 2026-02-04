@@ -19,6 +19,7 @@ import { CoverageSection } from "@/components/landing/CoverageSection";
 import { Hero } from "@/components/landing/Hero";
 import { DataSourcesSection } from "@/components/landing/DataSourcesSection";
 import { ApiSection } from "@/components/landing/ApiSection";
+import { cn } from "@/lib/utils";
 
 export default function HomePage() {
   const { t } = useLanguage();
@@ -50,7 +51,7 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div className="flex flex-col min-h-screen bg-background text-foreground selection:bg-primary/30">
+    <div className={cn("flex flex-col min-h-screen bg-background text-foreground selection:bg-primary/30", "hero-aurora")}>
       {/* HEADER */}
       <header className="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur-xl transition-all duration-300">
         <div className="container mx-auto flex h-20 items-center justify-between px-6">
