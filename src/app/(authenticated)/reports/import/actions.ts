@@ -62,19 +62,32 @@ export async function importAllReports(
 
     const existingFingerprints = new Set<string>();
     if (incomingFingerprints.length > 0) {
-        const q = adminDb.collection('reports').where('fingerprint', 'in', incomingFingerprints);
-        const snapshot = await q.get();
-        snapshot.forEach(doc => {
-            if (doc.data().fingerprint) {
-                existingFingerprints.add(doc.data().fingerprint);
-            }
-        });
-        console.log(`Found ${existingFingerprints.size} existing fingerprints in the database.`);
+        // Chunk fingerprints because 'in' query has a limit of 30 items
+        const fingerprintChunks = [];
+        for (let i = 0; i < incomingFingerprints.length; i += 30) {
+            fingerprintChunks.push(incomingFingerprints.slice(i, i + 30));
+        }
+
+        for (const chunk of fingerprintChunks) {
+            if (chunk.length === 0) continue;
+            const q = adminDb.collection('reports').where('fingerprint', 'in', chunk);
+            const snapshot = await q.get();
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                // FIX: Only consider a record a duplicate if it's active or pending deletion.
+                // Records marked as 'deleted' can be re-imported.
+                if (data.fingerprint && (data.status === 'active' || data.status === 'pending_delete')) {
+                    existingFingerprints.add(data.fingerprint);
+                }
+            });
+        }
+        console.log(`Found ${existingFingerprints.size} existing (active) fingerprints in the database.`);
     }
+
 
     const chunkSize = 450;
     let createdCount = 0;
-    let updatedCount = 0;
+    let updatedCount = 0; // Represents skipped duplicates
 
     for (let i = 0; i < validRecords.length; i += chunkSize) {
       const batch = adminDb.batch();
@@ -84,7 +97,7 @@ export async function importAllReports(
         const fingerprint = `${normalizeName(record.fullName)}|${new Date(record.createdAt).toISOString().split('T')[0]}`;
         
         if (existingFingerprints.has(fingerprint)) {
-            console.log('Skipping DB duplicate:', fingerprint);
+            console.log('Skipping DB duplicate (active or pending):', fingerprint);
             updatedCount++;
             return;
         }
