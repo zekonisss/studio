@@ -1,3 +1,4 @@
+
 'use server';
 
 import { ai } from '@/ai/genkit';
@@ -55,10 +56,19 @@ export async function cleanImportRecord(input: { text: string; recordDate?: stri
         - Record Date: ${input.recordDate || 'Not specified'} (This is the INCIDENT date, NOT birth date).
 
         RULES:
-        1. **Manager Filter:** If the text attacks a manager/owner (e.g., 'manager didn't pay'), mark isValid: false. Only process DRIVER faults.
-        2. **Sanitization:** Rewrite text to professional Lithuanian. Remove all profanity/slang. Translate from Russian/English if needed. (e.g., 'vagia salerka' -> 'Kuro pasisavinimas'). This becomes 'sanitizedText'.
-        3. **Birth Year:** Look for birth years (e.g., '1985', 'gim. 90') INSIDE the text. If found, extract to 'birthYear'. Do NOT use Record Date as birth year.
-        4. **Category:** Assign a valid category ID from this list: ${categoryIds.join(', ')}.
+        1. **CRITICAL FILTERING: ANALYZE INFORMATIONAL VALUE.** Does the text describe a specific WORK-related incident (theft, damage, intoxication, lateness)?
+          - **IF YES:** Proceed to the next steps.
+          - **IF NO:** If the text is purely a stream of insults, slang, personal attacks, or emotional venting without a clear factual event (e.g., 'TU SENAS... ŠLIUXA... STERVA...'), MARK AS INVALID (\`isValid: false\`) and set the rejectionReason to 'Maža informacinė vertė / Tik įžeidimai'. DO NOT PROCEED FURTHER.
+
+        2. **Manager Filter:** If the text attacks a manager/owner (e.g., 'manager didn't pay'), mark isValid: false. Only process DRIVER faults.
+
+        3. **SANITIZATION & PRIVACY:**
+          - Rewrite the text to a professional Lithuanian description of the incident. Remove all profanity and slang. Translate from Russian/English if needed. This becomes 'sanitizedText'.
+          - During sanitization, strictly REMOVE all phone numbers (any format), email addresses, and phrases soliciting contact (e.g., 'skambinti...', 'daugiau info PM'). Keep only the description of the incident.
+
+        4. **Birth Year:** Look for birth years (e.g., '1985', 'gim. 90') INSIDE the text. If found, extract to 'birthYear'. Do NOT use Record Date as birth year.
+
+        5. **Category:** Assign a valid category ID from this list: ${categoryIds.join(', ')}.
 
         Respond ONLY with a JSON object that matches the requested schema.
       `,
