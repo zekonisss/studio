@@ -13,7 +13,8 @@ import {
   Tag,
   ExternalLink,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Globe
 } from "lucide-react";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +22,8 @@ import { DESTRUCTIVE_REPORT_MAIN_CATEGORIES } from "@/lib/constants";
 import { cn, getTagNameForDisplay } from "@/lib/utils";
 import type { Report } from "@/types";
 import { useLanguage } from "@/contexts/language-context";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
 
 interface SearchResultCardProps {
   report: Report;
@@ -84,6 +87,23 @@ export function SearchResultCard({ report }: SearchResultCardProps) {
                 {isHighRisk ? <AlertTriangle className="w-3.5 h-3.5" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
                 <span>{report.category ? t(`categories.${report.category}`) : report.category}</span>
               </div>
+              
+              {/* Source Badge */}
+              {report.source === 'external_web' && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Badge variant="outline" className="border-amber-500/50 bg-amber-500/10 text-amber-700 dark:text-amber-400 font-medium cursor-help">
+                          <Globe className="w-3.5 h-3.5 mr-1.5" />
+                          Viešas šaltinis
+                        </Badge>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="max-w-xs">Šis įrašas automatiškai surinktas iš viešų interneto šaltinių. Tekstas buvo apdorotas Dirbtinio Intelekto (DI), siekiant pašalinti necenzūrinę leksiką ir palikti tik faktus. Prašome vertinti kritiškai.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+              )}
             </div>
 
             {/* Meta duomenys */}

@@ -44,7 +44,7 @@ export async function addReportWithCreditCheck(
       const newReportRef = adminDb.collection('reports').doc();
       const finalReportData = {
           ...reportData,
-          // PATAISYMAS: Užtikriname, kad žymos visada būtų išsaugotos teisingu "rakto" formatu.
+          source: 'verified_company', // Set the source for manual entries
           tags: Array.isArray(reportData.tags) ? reportData.tags.map(migrateTagIfNeeded) : [],
           createdAt: Timestamp.now(),
           status: 'active',
