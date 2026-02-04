@@ -104,6 +104,8 @@ export const translationsMaster: Record<string, Partial<Record<Locale, string>>>
   'signup.form.address.description': { lt: '', en: '', ru: '', pl: '' },
   'signup.form.contactPerson.label': { lt: 'Kontaktinis asmuo', en: 'Contact Person', ru: 'Контактное лицо', pl: 'Osoba kontaktowa', lv: 'Kontaktpersona', et: 'Kontaktisik' },
   'signup.form.contactPerson.placeholder': { lt: 'Vardenis Pavardenis', en: 'John Doe', ru: 'Иван Иванов', pl: 'Jan Kowalski', lv: 'Jānis Bērziņš', et: 'Jaan Tamm' },
+  'signup.form.position.label': { lt: 'Pareigos', en: 'Position', ru: 'Должность', pl: 'Stanowisko', lv: 'Amats', et: 'Ametikoht' },
+  'signup.form.position.placeholder': { lt: 'Vadybininkas, Direktorius...', en: 'Manager, Director...', ru: 'Менеджер, Директор...', pl: 'Menedżer, Dyrektor...', lv: 'Vadītājs, Direktors...', et: 'Juhataja, direktor...' },
   'signup.form.phone.label': { lt: 'Telefono numeris', en: 'Phone Number', ru: 'Номер телефона', pl: 'Numer telefonu', lv: 'Tālruņa numurs', et: 'Telefoni number' },
   'signup.form.phone.placeholder': { lt: '+37000000000', en: '+37000000000', ru: '+37000000000', pl: '+48000000000', lv: '+37100000000', et: '+37200000000' },
   'signup.form.email.label': { lt: 'El. paštas', en: 'Email', ru: 'Эл. почта', pl: 'Email', lv: 'E-pasts', et: 'E-post' },
@@ -315,7 +317,7 @@ export const translationsMaster: Record<string, Partial<Record<Locale, string>>>
   'account.payments.status.active.description': { lt: 'Jūs turite pilną prieigą prie visų platformos funkcijų.', en: 'You have full access to all platform features.', ru: 'У вас есть полный доступ ко всем функциям платформы.', pl: 'Masz pełny dostęp do wszystkich funkcji platformy.', lv: 'Jums ir pilna piekļuve visām platformas funkcijām.', et: 'Teil on täielik juurdepääs kõigile platvormi funktsioonidele.' },
   'account.payments.status.active.validUntil': { lt: 'Galioja iki', en: 'Valid until', ru: 'Действительно до', pl: 'Ważne do', lv: 'Derīgs līdz', et: 'Kehtiv kuni' },
   'account.payments.status.active.priceInfo': { lt: 'Metinė kaina {annualPrice} €.', en: 'Annual price {annualPrice} €.', ru: 'Годовая цена {annualPrice} €.', pl: 'Cena roczna {annualPrice} €.', lv: 'Gada cena {annualPrice} €.', et: 'Aastane hind {annualPrice} €.' },
-  'account.payments.status.pending_payment.title': { lt: 'Laukiama mokėjimo', en: 'Pending Payment', ru: 'Ожидается оплата', pl: 'Oczekuje na płatność', lv: 'Gaida maksājumu', et: 'Ootab makset' },
+  'account.payments.status.pending_payment.title': { lt: 'Laukia mokėjimo', en: 'Pending Payment', ru: 'Ожидается оплата', pl: 'Oczekuje na płatność', lv: 'Gaida maksājumu', et: 'Ootab makset' },
   'account.payments.status.pending_payment.description': { lt: 'Jūsų paskyra bus aktyvuota, kai gausime mokėjimą.', en: 'Your account will be activated once we receive the payment.', ru: 'Ваш аккаунт будет активирован после получения оплаты.', pl: 'Twoje konto zostanie aktywowane po otrzymaniu płatności.', lv: 'Jūsu konts tiks aktivizēts, kad saņemsim maksājumu.', et: 'Teie konto aktiveeritakse, kui oleme makse kätte saanud.' },
   'account.payments.status.pending_verification.title': { lt: 'Laukia patvirtinimo', en: 'Pending Verification', ru: 'Ожидает проверки', pl: 'Oczekuje na weryfikację', lv: 'Gaida apstiprinājumu', et: 'Ootab kinnitamist' },
   'account.payments.status.pending_verification.description': { lt: 'Jūsų paskyra yra peržiūrima administratoriaus. Apie patvirtinimą būsite informuoti el. paštu.', en: 'Your account is being reviewed by an administrator. You will be notified by email upon approval.', ru: 'Ваша учетная запись проверяется администратором. Вы будете уведомлены по электронной почте после утверждения.', pl: 'Twoje konto jest weryfikowane przez administratora. Zostaniesz powiadomiony e-mailem po zatwierdzeniu.', lv: 'Jūsu kontu pārbauda administrators. Pēc apstiprināšanas jūs saņemsiet paziņojumu pa e-pastu.', et: 'Teie konto vaatab administraator üle. Kinnitamisest teavitatakse teid e-posti teel.' },
@@ -771,6 +773,7 @@ export const translationsMaster: Record<string, Partial<Record<Locale, string>>>
 };
 
     
+
 
 
 

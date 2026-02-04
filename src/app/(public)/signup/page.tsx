@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, ArrowRight, Eye, EyeOff, ShieldCheck, Search, Globe, UserPlus } from "lucide-react";
+import { Loader2, ArrowRight, Eye, EyeOff, ShieldCheck, Scale, TrendingDown, Users, Network } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/contexts/language-context";
 import { useToast } from "@/hooks/use-toast";
@@ -20,9 +20,9 @@ import { cn } from "@/lib/utils";
 type FormValues = Omit<SignupFormValuesExtended, 'subscriptionType' | 'confirmPassword'>;
 
 const STEPS = [
-    { id: 1, name: 'Identitetas', fields: ['companyName', 'companyCode'] },
-    { id: 2, name: 'Detalės', fields: ['vatCode', 'address', 'phone', 'position'] },
-    { id: 3, name: 'Paskyra', fields: ['contactPerson', 'email', 'password', 'agreeToTerms'] }
+    { id: 1, name: 'Įmonės Identitetas', fields: ['companyName', 'companyCode'] },
+    { id: 2, name: 'Kontaktinė Informacija', fields: ['vatCode', 'address', 'phone'] },
+    { id: 3, name: 'Paskyros Kūrimas', fields: ['contactPerson', 'position', 'email', 'password', 'agreeToTerms'] }
 ];
 
 export default function SignupPage() {
@@ -73,7 +73,7 @@ export default function SignupPage() {
                 title: t('toast.signup.success.title'),
                 description: t('toast.signup.success.description'),
             });
-            // Redirect is handled by the signup function/auth hook
+            // Redirect is handled by the auth hook/context
         } catch (error: any) {
             let description = t('toast.signup.error.descriptionGeneric');
             if (error.code === 'auth/email-already-in-use') {
@@ -94,28 +94,35 @@ export default function SignupPage() {
                 {/* Marketing Sidebar */}
                 <div className="hidden lg:block p-12 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-950/50 border-r">
                     <div className="space-y-6">
-                         <h2 className="text-3xl font-bold text-slate-800 dark:text-white">Daugiau nei duomenų bazė.</h2>
-                         <p className="text-slate-600 dark:text-slate-400">DriverCheck ne tik padeda rasti informaciją, bet ir veikia kaip prevencija.</p>
+                         <h2 className="text-3xl font-bold text-slate-800 dark:text-white">Jūsų verslo saugiklis.</h2>
+                         <p className="text-slate-600 dark:text-slate-400">Prisijunkite prie bendro saugumo tinklo ir sumažinkite riziką.</p>
                          <ul className="space-y-6 pt-4">
+                            <li className="flex gap-4 items-start">
+                                <div className="p-2 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm"><TrendingDown className="h-5 w-5 text-primary" /></div>
+                                <div>
+                                    <h4 className="font-semibold text-slate-800 dark:text-slate-200">Išvenkite tūkstantinių nuostolių</h4>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">Vienas blogas vairuotojas kainuoja tūkstančius (kuras, remontas, baudos). DriverCheck padeda juos atfiltruoti.</p>
+                                </div>
+                            </li>
+                            <li className="flex gap-4 items-start">
+                                <div className="p-2 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm"><Scale className="h-5 w-5 text-primary" /></div>
+                                <div>
+                                    <h4 className="font-semibold text-slate-800 dark:text-slate-200">Svertas be advokatų</h4>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">Vairuotojai linkę atlyginti žalą ir spręsti konfliktus, kai žino, kad problema liks jų istorijoje ir bus matoma kitiems.</p>
+                                </div>
+                            </li>
                             <li className="flex gap-4 items-start">
                                 <div className="p-2 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm"><ShieldCheck className="h-5 w-5 text-primary" /></div>
                                 <div>
-                                    <h4 className="font-semibold text-slate-800 dark:text-slate-200">Atgrasymo efektas</h4>
-                                    <p className="text-sm text-slate-500 dark:text-slate-400">Vien žinojimas, kad naudojate DriverCheck, skatina vairuotojus elgtis sąžiningai.</p>
-                                </div>
-                            </li>
-                            <li className="flex gap-4 items-start">
-                                <div className="p-2 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm"><Search className="h-5 w-5 text-primary" /></div>
-                                <div>
-                                    <h4 className="font-semibold text-slate-800 dark:text-slate-200">Momentinė patikra</h4>
-                                    <p className="text-sm text-slate-500 dark:text-slate-400">10 metų istorija per 3 sekundes.</p>
+                                    <h4 className="font-semibold text-slate-800 dark:text-slate-200">Prevencija per žinojimą</h4>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">Vien faktas, kad įmonė naudoja DriverCheck (lipdukai, patikra), sumažina vagysčių ir piktnaudžiavimo riziką.</p>
                                 </div>
                             </li>
                              <li className="flex gap-4 items-start">
-                                <div className="p-2 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm"><Globe className="h-5 w-5 text-primary" /></div>
+                                <div className="p-2 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm"><Network className="h-5 w-5 text-primary" /></div>
                                 <div>
-                                    <h4 className="font-semibold text-slate-800 dark:text-slate-200">Tarptautinis standartas</h4>
-                                    <p className="text-sm text-slate-500 dark:text-slate-400">Prisijunkite prie skaidraus verslo bendruomenės.</p>
+                                    <h4 className="font-semibold text-slate-800 dark:text-slate-200">Bendras tinklas</h4>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">Kuo daugiau vežėjų dalyvauja, tuo sistema tikslesnė. Būkite saugios bendruomenės dalimi.</p>
                                 </div>
                             </li>
                          </ul>
@@ -123,145 +130,150 @@ export default function SignupPage() {
                 </div>
 
                 {/* Form Section */}
-                <div className="p-8 md:p-12">
-                    <div className="flex items-center justify-between mb-8">
-                        <div>
-                             <p className="text-sm font-medium text-primary">Žingsnis {currentStep + 1} iš {STEPS.length}</p>
-                             <h2 className="text-2xl font-bold mt-1">{STEPS[currentStep].name}</h2>
-                        </div>
-                        <UserPlus className="h-8 w-8 text-muted-foreground/50" />
+                <div className="p-8 md:p-12 flex flex-col">
+                    <div className="mb-8">
+                         <p className="text-sm font-medium text-primary">Žingsnis {currentStep + 1} iš {STEPS.length}</p>
+                         <h2 className="text-2xl font-bold mt-1">{STEPS[currentStep].name}</h2>
                     </div>
+                    
+                    {/* Progress Bar */}
+                    <div className="w-full bg-muted rounded-full h-1.5 mb-8">
+                        <div className="bg-primary h-1.5 rounded-full transition-all duration-300" style={{ width: `${((currentStep + 1) / STEPS.length) * 100}%` }}></div>
+                    </div>
+
 
                     <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                            
-                            {/* Step 1: Company Identity */}
-                            <div className={cn("space-y-6", currentStep !== 0 && "hidden")}>
-                                <FormField control={form.control} name="companyName" render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>{t('signup.form.companyName.label')}</FormLabel>
-                                        <FormControl><Input placeholder={t('signup.form.companyName.placeholder')} {...field} /></FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )} />
-                                <FormField control={form.control} name="companyCode" render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>{t('signup.form.companyCode.label')}</FormLabel>
-                                        <FormControl><Input placeholder={t('signup.form.companyCode.placeholder')} {...field} /></FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )} />
-                            </div>
-
-                            {/* Step 2: Company Details */}
-                            <div className={cn("space-y-6", currentStep !== 1 && "hidden")}>
-                                <FormField control={form.control} name="vatCode" render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>{t('signup.form.vatCode.label')}</FormLabel>
-                                        <FormControl><Input placeholder={t('signup.form.vatCode.placeholder')} {...field} /></FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )} />
-                                 <FormField control={form.control} name="address" render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>{t('signup.form.address.label')}</FormLabel>
-                                        <FormControl><Input placeholder={t('signup.form.address.placeholder')} {...field} /></FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )} />
-                                 <FormField control={form.control} name="phone" render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>{t('signup.form.phone.label')}</FormLabel>
-                                        <FormControl><Input placeholder={t('signup.form.phone.placeholder')} {...field} /></FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )} />
-                                <FormField control={form.control} name="position" render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>{t('signup.form.position.label')}</FormLabel>
-                                        <FormControl><Input placeholder={t('signup.form.position.placeholder')} {...field} /></FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )} />
-                            </div>
-                            
-                            {/* Step 3: Account Credentials */}
-                            <div className={cn("space-y-6", currentStep !== 2 && "hidden")}>
-                                <FormField control={form.control} name="contactPerson" render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>{t('signup.form.contactPerson.label')}</FormLabel>
-                                        <FormControl><Input placeholder={t('signup.form.contactPerson.placeholder')} {...field} /></FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )} />
-                                <FormField control={form.control} name="email" render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>{t('signup.form.email.label')}</FormLabel>
-                                        <FormControl><Input type="email" placeholder={t('signup.form.email.placeholder')} {...field} /></FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )} />
-                                <FormField control={form.control} name="password" render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>{t('signup.form.password.label')}</FormLabel>
-                                        <FormControl>
-                                            <div className="relative">
-                                                 <Input type={showPassword ? "text" : "password"} placeholder={t('signup.form.password.placeholder')} {...field} />
-                                                 <Button type="button" variant="ghost" size="icon" className="absolute top-0 right-0 h-full px-3" onClick={() => setShowPassword(!showPassword)}>
-                                                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                                                 </Button>
-                                            </div>
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )} />
-                                <FormField control={form.control} name="agreeToTerms" render={({ field }) => (
-                                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 pt-2">
-                                        <FormControl>
-                                            <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                                        </FormControl>
-                                        <div className="space-y-1 leading-none">
-                                            <FormLabel className="font-normal text-muted-foreground">
-                                                {t('signup.form.agreeToTerms.labelPart1')}
-                                                <Link href="/terms" target="_blank" className="underline text-primary hover:text-primary/80">
-                                                    {t('signup.form.agreeToTerms.linkText')}
-                                                </Link>
-                                            </FormLabel>
+                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 flex-grow flex flex-col">
+                            <div className="flex-grow">
+                                {/* Step 1: Company Identity */}
+                                <div className={cn("space-y-6", currentStep !== 0 && "hidden")}>
+                                    <FormField control={form.control} name="companyName" render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>{t('signup.form.companyName.label')}</FormLabel>
+                                            <FormControl><Input placeholder={t('signup.form.companyName.placeholder')} {...field} /></FormControl>
                                             <FormMessage />
-                                        </div>
-                                    </FormItem>
-                                )} />
-                            </div>
+                                        </FormItem>
+                                    )} />
+                                    <FormField control={form.control} name="companyCode" render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>{t('signup.form.companyCode.label')}</FormLabel>
+                                            <FormControl><Input placeholder={t('signup.form.companyCode.placeholder')} {...field} /></FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )} />
+                                </div>
 
+                                {/* Step 2: Company Details */}
+                                <div className={cn("space-y-6", currentStep !== 1 && "hidden")}>
+                                    <FormField control={form.control} name="vatCode" render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>{t('signup.form.vatCode.label')}</FormLabel>
+                                            <FormControl><Input placeholder={t('signup.form.vatCode.placeholder')} {...field} /></FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )} />
+                                     <FormField control={form.control} name="address" render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>{t('signup.form.address.label')}</FormLabel>
+                                            <FormControl><Input placeholder={t('signup.form.address.placeholder')} {...field} /></FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )} />
+                                     <FormField control={form.control} name="phone" render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>{t('signup.form.phone.label')}</FormLabel>
+                                            <FormControl><Input placeholder={t('signup.form.phone.placeholder')} {...field} /></FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )} />
+                                </div>
+                                
+                                {/* Step 3: Account Credentials */}
+                                <div className={cn("space-y-6", currentStep !== 2 && "hidden")}>
+                                    <FormField control={form.control} name="contactPerson" render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>{t('signup.form.contactPerson.label')}</FormLabel>
+                                            <FormControl><Input placeholder={t('signup.form.contactPerson.placeholder')} {...field} /></FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )} />
+                                    <FormField control={form.control} name="position" render={({ field }) => (
+                                      <FormItem>
+                                          <FormLabel>{t('signup.form.position.label', { fallback: 'Pareigos' })}</FormLabel>
+                                          <FormControl><Input placeholder={t('signup.form.position.placeholder', { fallback: 'Vadybininkas, Direktorius...' })} {...field} /></FormControl>
+                                          <FormMessage />
+                                      </FormItem>
+                                    )} />
+                                    <FormField control={form.control} name="email" render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>{t('signup.form.email.label')}</FormLabel>
+                                            <FormControl><Input type="email" placeholder={t('signup.form.email.placeholder')} {...field} /></FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )} />
+                                    <FormField control={form.control} name="password" render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>{t('signup.form.password.label')}</FormLabel>
+                                            <FormControl>
+                                                <div className="relative">
+                                                     <Input type={showPassword ? "text" : "password"} placeholder={t('signup.form.password.placeholder')} {...field} />
+                                                     <Button type="button" variant="ghost" size="icon" className="absolute top-0 right-0 h-full px-3" onClick={() => setShowPassword(!showPassword)}>
+                                                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                                     </Button>
+                                                </div>
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )} />
+                                    <FormField control={form.control} name="agreeToTerms" render={({ field }) => (
+                                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 pt-2">
+                                            <FormControl>
+                                                <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                                            </FormControl>
+                                            <div className="space-y-1 leading-none">
+                                                <FormLabel className="font-normal text-muted-foreground">
+                                                    {t('signup.form.agreeToTerms.labelPart1')}
+                                                    <Link href="/terms" target="_blank" className="underline text-primary hover:text-primary/80">
+                                                        {t('signup.form.agreeToTerms.linkText')}
+                                                    </Link>
+                                                </FormLabel>
+                                                <FormMessage />
+                                            </div>
+                                        </FormItem>
+                                    )} />
+                                </div>
+                            </div>
                             {/* Navigation Buttons */}
-                            <div className="flex gap-4 pt-4">
-                                {currentStep > 0 && (
-                                    <Button type="button" variant="outline" onClick={goToPrevStep} className="w-full">
-                                        Atgal
-                                    </Button>
-                                )}
-                                {currentStep < STEPS.length - 1 ? (
-                                    <Button type="button" onClick={goToNextStep} className="w-full">
-                                        Toliau <ArrowRight className="ml-2 h-4 w-4" />
-                                    </Button>
-                                ) : (
-                                    <Button type="submit" className="w-full" disabled={isSubmitting || isAuthLoading}>
-                                        {(isSubmitting || isAuthLoading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                        {t('signup.form.submitButton')}
-                                    </Button>
-                                )}
+                            <div className="mt-auto space-y-4">
+                                <div className="flex gap-4 pt-4">
+                                    {currentStep > 0 && (
+                                        <Button type="button" variant="outline" onClick={goToPrevStep} className="w-full">
+                                            Atgal
+                                        </Button>
+                                    )}
+                                    {currentStep < STEPS.length - 1 ? (
+                                        <Button type="button" onClick={goToNextStep} className="w-full">
+                                            Toliau <ArrowRight className="ml-2 h-4 w-4" />
+                                        </Button>
+                                    ) : (
+                                        <Button type="submit" className="w-full" disabled={isSubmitting || isAuthLoading}>
+                                            {(isSubmitting || isAuthLoading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                            {t('signup.form.submitButton')}
+                                        </Button>
+                                    )}
+                                </div>
+                                <div className="text-center text-sm text-muted-foreground">
+                                    {t('signup.form.alreadyHaveAccount')}
+                                    <Link href="/login" className="underline text-primary hover:text-primary/80">
+                                        {t('signup.form.loginLink')}
+                                    </Link>
+                                </div>
                             </div>
-
                         </form>
                     </Form>
-                    <div className="mt-6 text-center text-sm text-muted-foreground">
-                        {t('signup.form.alreadyHaveAccount')}
-                        <Link href="/login" className="underline text-primary hover:text-primary/80">
-                            {t('signup.form.loginLink')}
-                        </Link>
-                    </div>
                 </div>
             </div>
         </div>
     );
 }
+
