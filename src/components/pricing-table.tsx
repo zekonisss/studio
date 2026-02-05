@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { createCheckoutSession } from '@/app/actions/stripe';
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
+import { buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -87,6 +87,16 @@ export function PricingTable() {
             setIsLoading(null);
         }
     };
+    
+    const handleCardClick = (planName: PlanName) => {
+        if (isLoading) return;
+
+        if (planName === 'SCALE') {
+            window.location.href = 'mailto:info@drivercheck.lt';
+        } else {
+            handleCheckout(planName);
+        }
+    };
 
     return (
         <div className="w-full max-w-6xl mx-auto py-12">
@@ -118,10 +128,21 @@ export function PricingTable() {
                     }
                     
                     return (
-                        <Card key={plan.name} className={cn(
-                            'flex flex-col transition-all duration-300 hover:shadow-xl hover:border-primary/50 dark:hover:border-primary', 
-                            plan.isPopular && 'border-primary dark:border-primary/80 ring-2 ring-primary/50 shadow-2xl'
-                        )}>
+                        <Card 
+                            key={plan.name}
+                            onClick={() => handleCardClick(plan.name as PlanName)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                    handleCardClick(plan.name as PlanName);
+                                }
+                            }}
+                            tabIndex={0}
+                            role="button"
+                            className={cn(
+                                'flex flex-col cursor-pointer transition-all duration-300 ease-in-out hover:shadow-xl hover:shadow-primary/20 hover:border-primary/50 dark:hover:border-primary hover:scale-[1.02] hover:-translate-y-1 active:scale-95',
+                                plan.isPopular && 'border-primary dark:border-primary/80 ring-2 ring-primary/50 shadow-2xl'
+                            )}
+                        >
                             
                             <CardHeader className="pb-4">
                                 {plan.badge && (
@@ -165,24 +186,23 @@ export function PricingTable() {
                             </CardContent>
                             
                             <CardFooter className="mt-auto border-t pt-6">
-                                {plan.name === 'SCALE' ? (
-                                    <Button asChild className="w-full" size="lg">
-                                        <a href="mailto:info@drivercheck.lt">
+                                 <div
+                                    className={cn(buttonVariants({ 
+                                        size: 'lg', 
+                                        variant: plan.isPopular ? 'default' : 'secondary' 
+                                    }), "w-full")}
+                                >
+                                    {plan.name === 'SCALE' ? (
+                                        <>
                                             <Mail className="mr-2 h-4 w-4" />
                                             Gauti pasiūlymą
-                                        </a>
-                                    </Button>
-                                ) : (
-                                    <Button
-                                        className="w-full"
-                                        size="lg"
-                                        variant={plan.isPopular ? 'default' : 'secondary'}
-                                        onClick={() => handleCheckout(plan.name as PlanName)}
-                                        disabled={!!isLoading}
-                                    >
-                                        {isLoading === plan.name ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Pasirinkti planą'}
-                                    </Button>
-                                )}
+                                        </>
+                                    ) : (
+                                        <>
+                                            {isLoading === plan.name ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Pasirinkti planą'}
+                                        </>
+                                    )}
+                                </div>
                             </CardFooter>
                         </Card>
                     );
