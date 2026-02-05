@@ -5,7 +5,7 @@ import Link from "next/link";
 
 export function ApiSection() {
   return (
-    <section className="py-24 bg-slate-50 dark:bg-slate-950 transition-colors duration-300 border-t border-slate-200 dark:border-slate-800 overflow-hidden">
+    <section className="py-24 bg-transparent transition-colors duration-300 border-t border-slate-200 dark:border-slate-800 overflow-hidden">
       <div className="container mx-auto px-4 md:px-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           

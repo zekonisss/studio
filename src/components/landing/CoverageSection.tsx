@@ -7,7 +7,7 @@ import { useLanguage } from "@/contexts/language-context";
 export function CoverageSection() {
   const { t } = useLanguage();
   return (
-    <section className="bg-slate-50 dark:bg-slate-950 py-24 overflow-hidden relative transition-colors duration-300">
+    <section className="py-24 overflow-hidden relative transition-colors duration-300">
       
       {/* Tinklelis tamsiam režimui */}
       

@@ -6,7 +6,7 @@ import { useLanguage } from "@/contexts/language-context";
 export function DataSourcesSection() {
   const { t } = useLanguage();
   return (
-    <section id="sources" className="py-24 bg-white dark:bg-slate-950 transition-colors duration-300 border-t border-slate-200 dark:border-slate-800">
+    <section id="sources" className="py-24 bg-transparent transition-colors duration-300 border-t border-slate-200 dark:border-slate-800">
       <div className="container mx-auto px-4 md:px-6">
         
         {/* Antraštė */}

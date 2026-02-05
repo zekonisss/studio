@@ -100,7 +100,7 @@ export default function HomePage() {
 
       </main>
 
-      <footer className="border-t border-border py-12 bg-background">
+      <footer className="border-t border-border py-12 bg-transparent">
         <div className="container mx-auto flex flex-col md:flex-row items-center justify-between gap-6 px-6 text-sm text-muted-foreground">
           <p>&copy; {new Date().getFullYear()} {t('app.name')}. {t('landing.footer.rights')}</p>
           <div className="flex gap-8">

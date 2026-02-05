@@ -12,7 +12,7 @@ interface HeroProps {
 // SVARBU: Čia priimame tą skaičių
 export function Hero({ count }: HeroProps) {
   return (
-    <section className="relative pt-32 pb-20 md:pt-48 md:pb-32 overflow-hidden bg-white dark:bg-slate-950 transition-colors duration-300">
+    <section className="relative pt-32 pb-20 md:pt-48 md:pb-32 overflow-hidden bg-transparent transition-colors duration-300">
       
       {/* Fono efektas */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1200px] h-[600px] bg-blue-100 dark:bg-blue-900/10 rounded-full blur-[100px] -z-10 opacity-60"></div>
