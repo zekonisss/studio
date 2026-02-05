@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Fuel, Car, Wine, FileWarning, Gavel, AlertOctagon, HelpCircle, UserX, ShieldAlert } from "lucide-react";
@@ -21,6 +22,9 @@ const getCategoryStyle = (id: string) => {
   if (lowerId.includes('driving_safety'))
     return { icon: ShieldAlert, color: "text-cyan-500", bg: "bg-cyan-500/10", border: "border-cyan-200 hover:border-cyan-500" };
   
+  if (lowerId.includes('substance_abuse'))
+    return { icon: Wine, color: "text-purple-500", bg: "bg-purple-500/10", border: "border-purple-200 hover:border-purple-500" };
+
   if (lowerId.includes('behavior'))
     return { icon: UserX, color: "text-indigo-500", bg: "bg-indigo-500/10", border: "border-indigo-200 hover:border-indigo-500" };
   
@@ -50,7 +54,7 @@ export function IncidentCategorySelector({ value, onChange }: CategorySelectorPr
   const { t } = useLanguage();
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
       {detailedReportCategories.map((cat) => {
         const isSelected = value === cat.id;
         const style = getCategoryStyle(cat.id);
@@ -70,7 +74,7 @@ export function IncidentCategorySelector({ value, onChange }: CategorySelectorPr
             <Icon className={cn("w-8 h-8 mb-3", style.color)} />
             <span className={cn("text-xs font-bold uppercase tracking-wide text-center leading-tight", isSelected ? "text-slate-900 dark:text-white" : "text-slate-500")}>
               {/* Naudojame tavo vertimų sistemą */}
-              {t(`categories.${cat.id}`) || cat.id}
+              {t(cat.nameKey) || cat.id}
             </span>
             
             {isSelected && (

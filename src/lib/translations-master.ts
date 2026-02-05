@@ -698,6 +698,7 @@ export const translationsMaster: Record<string, Partial<Record<Locale, string>>>
   'categories.fuel_theft': { lt: 'Kuro / turto vagystės', en: 'Fuel / Property Theft' },
   'categories.driving_safety': { lt: 'Vairavimo saugumas', en: 'Driving Safety' },
   'categories.behavior': { lt: 'Elgesio problemos', en: 'Behavioral Issues' },
+  'categories.substance_abuse': { lt: 'Svaigalų vartojimas', en: 'Substance Abuse', ru: 'Употребление веществ', pl: 'Nadużywanie substancji', lv: 'Vielu lietošana', et: 'Ainete kuritarvitamine' },
   'categories.discipline': { lt: 'Darbo drausmė', en: 'Work Discipline' },
   'categories.technical_damage': { lt: 'Technikos gadinimas', en: 'Technical Damage' },
   'categories.legal_reputation': { lt: 'Teisinės / reputacinės problemos', en: 'Legal / Reputational Issues' },
@@ -790,6 +791,7 @@ export const translationsMaster: Record<string, Partial<Record<Locale, string>>>
 };
 
     
+
 
 
 

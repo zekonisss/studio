@@ -276,15 +276,18 @@ export const detailedReportCategories: DetailedCategory[] = [
     nameKey: "categories.driving_safety",
     tags: ["avaringumas", "pavojingas_vairavimas", "dazni_ket_pazeidimai", "kita_tag"],
   },
+   {
+    id: "substance_abuse",
+    nameKey: "categories.substance_abuse",
+    tags: ["neblaivus_darbo_metu", "psichotropiniu_medziagu_vartojimas", "kita_tag"],
+  },
   {
     id: "behavior",
     nameKey: "categories.behavior",
     tags: [
       "grasinimai_agresija",
       "netinkamas_elgesys_kolegu_atzvilgiu",
-      "psichotropiniu_medziagu_vartojimas",
       "konfliktiskas_asmuo",
-      "neblaivus_darbo_metu",
       "kita_tag"
     ],
   },
@@ -324,7 +327,7 @@ export const detailedReportCategories: DetailedCategory[] = [
   },
 ];
 
-export const DESTRUCTIVE_REPORT_MAIN_CATEGORIES: string[] = ['fuel_theft', 'discipline', 'technical_damage', 'driving_safety'];
+export const DESTRUCTIVE_REPORT_MAIN_CATEGORIES: string[] = ['fuel_theft', 'discipline', 'technical_damage', 'driving_safety', 'substance_abuse'];
 
     
 
