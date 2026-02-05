@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm } from "react-hook-form";
@@ -199,33 +200,6 @@ export default function AddReportPage() {
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                         <fieldset disabled={isSubmitting || !canSubmit} className="space-y-6">
                             
-                            <Card className={cn("border-slate-200 dark:border-slate-800 shadow-sm transition-all", isAiHighlight && "ring-2 ring-primary border-primary")}>
-                                <CardHeader>
-                                    <CardTitle>{t("reports.add.form.incidentType.title")}</CardTitle>
-                                    <CardDescription>{t("reports.add.form.incidentType.description")}</CardDescription>
-                                </CardHeader>
-                                <CardContent>
-                                    <FormField 
-                                        control={form.control} 
-                                        name="category" 
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormControl>
-                                                    <IncidentCategorySelector 
-                                                        value={field.value} 
-                                                        onChange={(val) => {
-                                                            field.onChange(val);
-                                                            setSelectedCategory(val);
-                                                        }} 
-                                                    />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )} 
-                                    />
-                                </CardContent>
-                            </Card>
-
                             <Card className="border-slate-200 dark:border-slate-800 shadow-sm">
                                 <CardHeader>
                                     <CardTitle>{t("reports.add.form.driverData.title")}</CardTitle>
@@ -270,6 +244,33 @@ export default function AddReportPage() {
                                             <FormMessage />
                                         </FormItem>
                                     )} />
+                                </CardContent>
+                            </Card>
+
+                            <Card className={cn("border-slate-200 dark:border-slate-800 shadow-sm transition-all", isAiHighlight && "ring-2 ring-primary border-primary")}>
+                                <CardHeader>
+                                    <CardTitle>{t("reports.add.form.incidentType.title")}</CardTitle>
+                                    <CardDescription>{t("reports.add.form.incidentType.description")}</CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <FormField 
+                                        control={form.control} 
+                                        name="category" 
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormControl>
+                                                    <IncidentCategorySelector 
+                                                        value={field.value} 
+                                                        onChange={(val) => {
+                                                            field.onChange(val);
+                                                            setSelectedCategory(val);
+                                                        }} 
+                                                    />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )} 
+                                    />
                                 </CardContent>
                             </Card>
 
