@@ -1,3 +1,4 @@
+
 "use client";
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/use-auth';
@@ -160,8 +161,8 @@ export default function DashboardPage() {
           
           <Card className="lg:col-span-3 h-full transition-shadow duration-300 hover:shadow-glow-primary">
             <CardHeader>
-              <CardTitle className="text-lg">Paskutinė veikla</CardTitle>
-              <CardDescription>Naujausi sistemoje užregistruoti nusižengimai</CardDescription>
+              <CardTitle className="text-lg">Platformos aktyvumas</CardTitle>
+              <CardDescription>Naujausi sistemoje uzregistruoti irasai</CardDescription>
             </CardHeader>
             <CardContent>
               {isStatsLoading ? (
