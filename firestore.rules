@@ -54,6 +54,10 @@ service cloud.firestore {
                   (isAllowedToRead(request.auth.uid) && request.query.where[0][1] == 'userId');
       allow update, delete: if false;
     }
+    
+    match /loginLogs/{logId} {
+      allow read, write: if false; // Only accessible by server/admin SDK
+    }
 
     match /auditLogs/{logId} {
       allow read, create: if isAdmin(request.auth.uid);

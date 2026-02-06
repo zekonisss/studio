@@ -1,4 +1,3 @@
-
 // src/types/index.ts
 
 export interface Report {
@@ -76,6 +75,9 @@ export interface UserProfile {
   subscriptionEndDate?: string;
   stripeCustomerId?: string;
   
+  // Session Management
+  currentSessionToken?: string;
+
   // Credits
   searchCredits: number;
   reportCredits: number;
@@ -147,6 +149,19 @@ export interface AuditLogEntry {
 export interface AuditLogEntryFirestore extends Omit<AuditLogEntry, 'id' | 'timestamp'> {
     timestamp: any;
 }
+
+export interface LoginLog {
+  id: string;
+  userId: string;
+  ipAddress: string;
+  userAgent: string;
+  timestamp: string;
+}
+
+export interface LoginLogFirestore extends Omit<LoginLog, 'id' | 'timestamp'> {
+  timestamp: any; // Firestore Timestamp
+}
+
 
 // Notification types
 export interface UserNotification {

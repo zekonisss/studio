@@ -7,6 +7,7 @@ import {
   useState,
   useEffect,
   ReactNode,
+  useCallback,
 } from 'react';
 import {
   onAuthStateChanged,
@@ -21,6 +22,7 @@ import type { UserProfile, UserProfileFirestore, SignupFormValuesExtended } from
 import { useRouter } from 'next/navigation';
 import { useToast } from './use-toast';
 import type { LoginFormValues } from '@/lib/schemas';
+import { handleSuccessfulLogin } from '@/app/actions/auth';
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -65,6 +67,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return null;
   };
   
+  const logout = useCallback(async () => {
+    if (!auth) return;
+    await signOut(auth);
+    setUser(null);
+    setFirebaseUser(null);
+    window.location.assign('/login');
+  }, []);
+
   useEffect(() => {
     if (!auth) {
         setIsLoading(false);
@@ -73,12 +83,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
       setFirebaseUser(fbUser);
       if (fbUser) {
-        try {
-          const userProfile = await getUserProfile(fbUser.uid);
-          setUser(userProfile);
-        } catch (error) {
-          console.error("Error fetching user profile:", error);
-          setUser(null);
+        // For session watching, we need to get the user profile
+        // but we don't set it here directly to avoid race conditions with login.
+        // The login function will set the user with the session token.
+        if (!user) { // Only fetch if user is not already set by login flow
+             const userProfile = await getUserProfile(fbUser.uid);
+             setUser(userProfile);
         }
       } else {
         setUser(null);
@@ -89,29 +99,63 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => unsubscribe();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  
+  // Concurrent session checker
+  useEffect(() => {
+    if (!user || !user.currentSessionToken) {
+      return; 
+    }
+
+    const intervalId = setInterval(async () => {
+      if (auth.currentUser) {
+        const latestProfile = await getUserProfile(auth.currentUser.uid);
+        if (latestProfile && latestProfile.currentSessionToken !== user.currentSessionToken) {
+          clearInterval(intervalId); // Stop checking
+          toast({
+            variant: "destructive",
+            title: "Sesija nutraukta",
+            description: "Jūs buvote atjungtas, nes prisijungta kitame įrenginyje.",
+            duration: 5000,
+          });
+          setTimeout(() => logout(), 1000); 
+        }
+      }
+    }, 60000); // Check every 60 seconds
+
+    return () => clearInterval(intervalId);
+  }, [user, toast, logout]);
+
 
   
   const login = async (values: LoginFormValues): Promise<UserProfile> => {
     if (!auth) throw new Error("Firebase auth not initialized");
     const { email, password } = values;
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    const userProfile = await getUserProfile(userCredential.user.uid);
 
+    // 1. Client signs in with Firebase Auth
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const uid = userCredential.user.uid;
+
+    // 2. Call server action to log the login and get a session token
+    const { success, token, error } = await handleSuccessfulLogin(uid);
+    if (!success || !token) {
+        await signOut(auth); // Log out if server-side logic fails
+        throw new Error(error || "Server-side session handling failed.");
+    }
+
+    // 3. Get the user profile from Firestore
+    const userProfile = await getUserProfile(uid);
     if (!userProfile) {
       await signOut(auth);
       throw new Error("User profile not found in database.");
     }
-    setUser(userProfile);
-    return userProfile;
+
+    // 4. Set the user in context, WITH the new session token
+    const userWithSession: UserProfile = { ...userProfile, currentSessionToken: token };
+    setUser(userWithSession);
+    
+    return userWithSession;
   };
 
-  const logout = async () => {
-    if (!auth) return;
-    await signOut(auth);
-    setUser(null);
-    setFirebaseUser(null);
-    window.location.assign('/login');
-  };
 
   const signup = async (data: Omit<SignupFormValuesExtended, 'subscriptionType'>) => {
      if (!auth || !db) throw new Error("Firebase not initialized");
