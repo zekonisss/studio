@@ -56,7 +56,10 @@ service cloud.firestore {
     }
     
     match /loginLogs/{logId} {
-      allow read, write: if false; // Only accessible by server/admin SDK
+      // PATAISYMAS: Leisti adminams skaityti prisijungimų žurnalą.
+      // Rašyti vis dar gali tik serveris.
+      allow read: if isAdmin(request.auth.uid);
+      allow write: if false;
     }
 
     match /auditLogs/{logId} {
