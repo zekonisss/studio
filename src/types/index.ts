@@ -1,3 +1,4 @@
+
 // src/types/index.ts
 
 export interface Report {
@@ -153,6 +154,8 @@ export interface AuditLogEntryFirestore extends Omit<AuditLogEntry, 'id' | 'time
 export interface LoginLog {
   id: string;
   userId: string;
+  userName?: string;
+  userEmail?: string;
   ipAddress: string;
   userAgent: string;
   timestamp: string;

@@ -1,36 +1,43 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
-import type { AuditLogEntry } from '@/types';
-import { getAuditLogs, getUserById } from '@/lib/storage';
+import type { AuditLogEntry, LoginLog } from '@/types';
+import { getAuditLogs, getLoginLogsWithUsers } from '@/lib/storage';
 import { useLanguage } from '@/contexts/language-context';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Loader2 } from 'lucide-react';
-import { useAuth } from '@/hooks/use-auth';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useAuth } from '@/hooks/use-auth';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function AuditLogTab() {
   const { t, locale } = useLanguage();
   const { user } = useAuth();
-  const [logs, setLogs] = useState<AuditLogEntry[]>([]);
+  
+  const [adminLogs, setAdminLogs] = useState<AuditLogEntry[]>([]);
+  const [loginLogs, setLoginLogs] = useState<LoginLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (user?.isAdmin) {
-      const fetchLogs = async () => {
+      const fetchAllLogs = async () => {
         setIsLoading(true);
         try {
-          const logEntries = await getAuditLogs();
-          setLogs(logEntries);
+          const [adminLogEntries, userLoginLogs] = await Promise.all([
+            getAuditLogs(),
+            getLoginLogsWithUsers(),
+          ]);
+          setAdminLogs(adminLogEntries);
+          setLoginLogs(userLoginLogs);
         } catch (error) {
-          console.error("Error fetching audit logs:", error);
+          console.error("Error fetching logs:", error);
         } finally {
           setIsLoading(false);
         }
       };
-      fetchLogs();
+      fetchAllLogs();
     } else {
         setIsLoading(false);
     }
@@ -85,7 +92,14 @@ export default function AuditLogTab() {
         <CardDescription>{t('admin.auditLog.description')}</CardDescription>
       </CardHeader>
       <CardContent>
-        <ScrollArea className="h-[400px]">
+        <Tabs defaultValue="admin-actions">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="admin-actions">{t('admin.tabs.adminActions')}</TabsTrigger>
+            <TabsTrigger value="user-logins">{t('admin.tabs.userLogins')}</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="admin-actions" className="mt-4">
+            <ScrollArea className="h-[400px]">
              <Table>
                 <TableHeader>
                     <TableRow>
@@ -103,14 +117,14 @@ export default function AuditLogTab() {
                                 <TableCell><Skeleton className="h-5 w-full max-w-lg" /></TableCell>
                             </TableRow>
                         ))
-                    ) : logs.length === 0 ? (
+                    ) : adminLogs.length === 0 ? (
                         <TableRow>
                             <TableCell colSpan={3} className="h-24 text-center text-muted-foreground">
                                 {t('admin.auditLog.noLogsFound')}
                             </TableCell>
                         </TableRow>
                    ) : (
-                       logs.map(log => (
+                       adminLogs.map(log => (
                            <TableRow key={log.id}>
                                <TableCell>{new Date(log.timestamp).toLocaleString(locale)}</TableCell>
                                <TableCell>{log.adminName}</TableCell>
@@ -120,7 +134,54 @@ export default function AuditLogTab() {
                    )}
                 </TableBody>
             </Table>
-        </ScrollArea>
+            </ScrollArea>
+          </TabsContent>
+          
+          <TabsContent value="user-logins" className="mt-4">
+            <ScrollArea className="h-[400px]">
+              <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead>{t('admin.loginLog.table.user')}</TableHead>
+                        <TableHead>{t('admin.loginLog.table.ipAddress')}</TableHead>
+                        <TableHead>{t('admin.loginLog.table.device')}</TableHead>
+                        <TableHead className="text-right">{t('admin.auditLog.table.timestamp')}</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {isLoading ? (
+                    [...Array(10)].map((_, i) => (
+                        <TableRow key={i}>
+                            <TableCell><Skeleton className="h-5 w-48" /></TableCell>
+                            <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                            <TableCell><Skeleton className="h-5 w-full max-w-xs" /></TableCell>
+                            <TableCell><Skeleton className="h-5 w-36 ml-auto" /></TableCell>
+                        </TableRow>
+                    ))
+                  ) : loginLogs.length === 0 ? (
+                    <TableRow>
+                        <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
+                            {t('admin.loginLog.noLogsFound')}
+                        </TableCell>
+                    </TableRow>
+                  ) : (
+                    loginLogs.map(log => (
+                      <TableRow key={log.id}>
+                        <TableCell>
+                          <div className="font-medium">{log.userName}</div>
+                          <div className="text-xs text-muted-foreground">{log.userEmail}</div>
+                        </TableCell>
+                        <TableCell className="font-mono text-xs">{log.ipAddress}</TableCell>
+                        <TableCell className="max-w-xs truncate text-xs text-muted-foreground" title={log.userAgent}>{log.userAgent}</TableCell>
+                        <TableCell className="text-right">{new Date(log.timestamp).toLocaleString(locale)}</TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </ScrollArea>
+          </TabsContent>
+        </Tabs>
       </CardContent>
     </Card>
   );

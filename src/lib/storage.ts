@@ -1,6 +1,7 @@
+
 "use client";
 
-import type { Report, ReportFirestore, UserProfile, UserProfileFirestore, SearchLog, SearchLogFirestore, AuditLogEntry, AuditLogEntryFirestore, UserNotification, UserNotificationFirestore } from '@/types';
+import type { Report, ReportFirestore, UserProfile, UserProfileFirestore, SearchLog, SearchLogFirestore, AuditLogEntry, AuditLogEntryFirestore, UserNotification, UserNotificationFirestore, LoginLog, LoginLogFirestore } from '@/types';
 import { db, storage as fbStorage } from './firebase'; 
 import { 
   collection, 
@@ -237,6 +238,33 @@ export async function getAuditLogs(): Promise<AuditLogEntry[]> {
     const querySnapshot = await getDocs(q);
     const logList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AuditLogEntryFirestore));
     return logList.map(log => processDoc<AuditLogEntry>(log));
+}
+
+export async function getLoginLogsWithUsers(): Promise<LoginLog[]> {
+    const [usersSnapshot, logsSnapshot] = await Promise.all([
+        getDocs(collection(db, "users")),
+        getDocs(query(collection(db, "loginLogs"), orderBy("timestamp", "desc"), limit(200)))
+    ]);
+
+    const userMap = new Map<string, { name: string, email: string }>();
+    usersSnapshot.forEach(doc => {
+        const data = doc.data();
+        userMap.set(doc.id, { name: data.contactPerson || data.fullName || 'Nenurodytas', email: data.email });
+    });
+
+    const logList = logsSnapshot.docs.map(doc => {
+        const firestoreData = { id: doc.id, ...doc.data() };
+        const processedLog = processDoc<LoginLog>(firestoreData);
+        const user = userMap.get(processedLog.userId);
+        
+        return {
+            ...processedLog,
+            userName: user?.name || 'N/A',
+            userEmail: user?.email || 'N/A'
+        };
+    });
+
+    return logList;
 }
 
 export async function addAuditLogEntry(entryData: Omit<AuditLogEntry, 'id' | 'timestamp'>): Promise<void> {

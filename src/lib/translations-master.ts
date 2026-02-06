@@ -1,4 +1,5 @@
 
+
 export type Locale = 'lt' | 'en' | 'ru' | 'lv' | 'et' | 'pl';
 
 // Visi vertimai dabar yra centralizuoti ir įtraukti tiesiogiai į šį failą.
@@ -343,7 +344,6 @@ export const translationsMaster: Record<string, Partial<Record<Locale, string>>>
   'account.payments.status.trial.title': { lt: 'Bandomasis laikotarpis', en: 'Trial Period', ru: 'Пробный период', pl: 'Okres próbny', lv: 'Izmēģinājuma periods', et: 'Prooviperiood' },
   'account.payments.status.trial.description': { lt: 'Jūs naudojatės bandomąja versija. Likę kreditai: {searchCredits} paieškų, {reportCredits} įrašų.', en: 'You are using a trial version. Remaining credits: {searchCredits} searches, {reportCredits} reports.', ru: 'Вы используете пробную версию. Оставшиеся кредиты: {searchCredits} поисков, {reportCredits} записей.', pl: 'Korzystasz z wersji próbnej. Pozostałe kredyty: {searchCredits} wyszukiwań, {reportCredits} wpisów.', lv: 'Jūs izmantojat izmēģinājuma versiju. Atlikušie kredīti: {searchCredits} meklējumi, {reportCredits} ieraksti.', et: 'Kasutate prooviversiooni. Järelejäänud krediidid: {searchCredits} otsingut, {reportCredits} kirjet.' },
   'account.payments.manageSubscriptionButton': { lt: 'Valdyti prenumeratą', en: 'Manage Subscription', ru: 'Управлять подпиской', pl: 'Zarządzaj subskrypcją', lv: 'Pārvaldīt abonementu', et: 'Halda tellimust' },
-  'account.payments.manageSubscriptionNote': { lt: 'Būsite nukreipti į Stripe klientų portalą, kur galėsite keisti mokėjimo metodą, atsisiųsti sąskaitas ar atšaukti prenumeratą.', en: 'You will be redirected to the Stripe customer portal to manage your payment method, download invoices, or cancel your subscription.', ru: 'Вы будете перенаправлены на портал клиентов Stripe для управления способом оплаты, загрузки счетов или отмены подписки.', pl: 'Zostaniesz przekierowany do portalu klienta Stripe, aby zarządzać metodą płatności, pobierać faktury lub anulować subskrypcję.', lv: 'Jūs tiksiet novirzīts uz Stripe klientu portālu, lai pārvaldītu savu maksājuma veidu, lejupielādētu rēķinus vai atceltu abonementu.', et: 'Teid suunatakse Stripe\'i kliendiportaali, et hallata oma makseviisi, alla laadida arveid või tühistada tellimus.' },
   'account.payments.paymentHistoryTitle': { lt: 'Mokėjimų istorija', en: 'Payment History', ru: 'История платежей', pl: 'Historia płatności', lv: 'Maksājumu vēsture', et: 'Maksete ajalugu' },
   'account.payments.paymentHistoryDescription': { lt: 'Visi jūsų atlikti mokėjimai ir sąskaitos.', en: 'All your payments and invoices.', ru: 'Все ваши платежи и счета.', pl: 'Wszystkie Twoje płatności i faktury.', lv: 'Visi jūsu veiktie maksājumi un rēķini.', et: 'Kõik teie tehtud maksed ja arved.' },
   'account.payments.footerNote': { lt: 'Mokėjimus saugiai apdoroja Stripe. Mes nesaugome jūsų mokėjimo kortelių duomenų.', en: 'Payments are securely processed by Stripe. We do not store your payment card details.', ru: 'Платежи безопасно обрабатываются Stripe. Мы не храним данные ваших платежных карт.', pl: 'Płatności są bezpiecznie przetwarzane przez Stripe. Nie przechowujemy danych Twojej karty płatniczej.', lv: 'Maksājumus droši apstrādā Stripe. Mēs neglabājam jūsu maksājumu karšu datus.', et: 'Maksed töödeldakse turvaliselt Stripe\'i kaudu. Me ei salvesta teie maksekaardi andmeid.' },
@@ -358,6 +358,12 @@ export const translationsMaster: Record<string, Partial<Record<Locale, string>>>
   'admin.tabs.entryManagement': { lt: 'Įrašai', en: 'Entries', ru: 'Записи', pl: 'Wpisy', lv: 'Ieraksti', et: 'Kirjed' },
   'admin.tabs.auditLog': { lt: 'Auditai', en: 'Audit Log', ru: 'Журнал аудита', pl: 'Dziennik audytu', lv: 'Audita žurnāls', et: 'Auditi logi' },
   'admin.tabs.statistics': { lt: 'Statistika', en: 'Statistics', ru: 'Статистика', pl: 'Statystyki', lv: 'Statistika', et: 'Statistika' },
+  'admin.tabs.adminActions': { lt: 'Administratorių Veiksmai', en: 'Admin Actions' },
+  'admin.tabs.userLogins': { lt: 'Vartotojų Prisijungimai', en: 'User Logins' },
+  'admin.loginLog.table.user': { lt: 'Vartotojas', en: 'User' },
+  'admin.loginLog.table.ipAddress': { lt: 'IP Adresas', en: 'IP Address' },
+  'admin.loginLog.table.device': { lt: 'Įrenginys', en: 'Device' },
+  'admin.loginLog.noLogsFound': { lt: 'Prisijungimo įrašų nerasta.', en: 'No login logs found.' },
   'admin.users.title': { lt: 'Vartotojų valdymas', en: 'User Management', ru: 'Управление пользователями', pl: 'Zarządzanie użytkownikami', lv: 'Lietotāju pārvaldība', et: 'Kasutajate haldamine' },
   'admin.users.description': { lt: 'Peržiūrėkite, redaguokite ir valdykite visus sistemos vartotojus.', en: 'View, edit, and manage all system users.', ru: 'Просмотр, редактирование и управление всеми пользователями системы.', pl: 'Przeglądaj, edytuj i zarządzaj wszystkimi użytkownikami systemu.', lv: 'Skatiet, rediģējiet un pārvaldiet visus sistēmas lietotājus.', et: 'Vaadake, muutke ja hallake kõiki süsteemi kasutajaid.' },
   'admin.users.table.companyName': { lt: 'Įmonė', en: 'Company', ru: 'Компания', pl: 'Firma', lv: 'Uzņēmums', et: 'Ettevõte' },
@@ -791,6 +797,7 @@ export const translationsMaster: Record<string, Partial<Record<Locale, string>>>
 };
 
     
+
 
 
 
