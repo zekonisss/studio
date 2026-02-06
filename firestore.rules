@@ -55,13 +55,16 @@ service cloud.firestore {
     }
     
     match /loginLogs/{logId} {
-      // Allow any logged-in user to CREATE a log entry (essential for tracking).
+      // 1. ALLOW WRITES: Any logged-in user must be able to create a log entry.
       allow create: if request.auth != null;
-      
-      // Allow Admins to see all logs, and Users to see only their own history.
-      allow read, list: if isRequestingUserAdmin() || resource.data.userId == request.auth.uid;
-      
-      // Prevent modification or deletion of history.
+
+      // 2. ALLOW READS: Admins see all. Users see their own.
+      allow read, list: if request.auth != null && (
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true || 
+          resource.data.userId == request.auth.uid
+      );
+
+      // 3. SECURITY: No updates or deletes allowed.
       allow update, delete: if false;
     }
 
