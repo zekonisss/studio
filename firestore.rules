@@ -56,14 +56,14 @@ service cloud.firestore {
     }
     
     match /loginLogs/{logId} {
-      // PATAISYMAS: Leisti adminams skaityti prisijungimų žurnalą.
-      // Rašyti vis dar gali tik serveris.
-      allow read: if isAdmin(request.auth.uid);
+      // PATAISYMAS: Suteikiam ne tik `read`, bet ir `list` teisę, kad veiktų sąrašo užklausos.
+      allow read, list: if isAdmin(request.auth.uid);
       allow write: if false;
     }
 
     match /auditLogs/{logId} {
-      allow read, create: if isAdmin(request.auth.uid);
+      // PATAISYMAS: Suteikiam `list` teisę, kad veiktų sąrašo užklausos.
+      allow read, list, create: if isAdmin(request.auth.uid);
       allow update, delete: if false;
     }
 
