@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useAuth } from '@/hooks/use-auth';
@@ -26,7 +27,7 @@ export function TrialBanner() {
         </div>
         <Button asChild size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground flex-shrink-0">
           <Link href="/account?tab=payment">
-            Tapti Partneriu
+            Įsigyti prieigą
           </Link>
         </Button>
       </div>
