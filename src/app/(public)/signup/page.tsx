@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, ArrowRight, Eye, EyeOff, ShieldCheck, Scale, TrendingDown, Users, Network } from "lucide-react";
+import { Loader2, ArrowRight, Eye, EyeOff, ShieldCheck, Scale, Banknote, Users, Network } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/contexts/language-context";
 import { useToast } from "@/hooks/use-toast";
@@ -61,7 +61,7 @@ export default function SignupPage() {
     
     const goToPrevStep = () => {
         if (currentStep > 0) {
-            setCurrentStep(step => step - 1);
+            setCurrentStep(step => step + 1);
         }
     };
 
@@ -98,7 +98,7 @@ export default function SignupPage() {
                          <p className="text-slate-600 dark:text-slate-400">{t('signup.marketing.subheadline')}</p>
                          <ul className="space-y-6 pt-4">
                             <li className="flex gap-4 items-start">
-                                <div className="p-2 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm"><TrendingDown className="h-5 w-5 text-primary" /></div>
+                                <div className="p-2 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm"><Banknote className="h-5 w-5 text-primary" /></div>
                                 <div>
                                     <h4 className="font-semibold text-slate-800 dark:text-slate-200">{t('signup.marketing.feature1.title')}</h4>
                                     <p className="text-sm text-slate-500 dark:text-slate-400">{t('signup.marketing.feature1.description')}</p>
