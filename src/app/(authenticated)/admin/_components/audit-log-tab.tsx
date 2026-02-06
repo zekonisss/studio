@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -11,10 +10,12 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/hooks/use-auth';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from '@/hooks/use-toast';
 
 export default function AuditLogTab() {
   const { t, locale } = useLanguage();
   const { user } = useAuth();
+  const { toast } = useToast();
   
   const [adminLogs, setAdminLogs] = useState<AuditLogEntry[]>([]);
   const [loginLogs, setLoginLogs] = useState<LoginLog[]>([]);
@@ -32,7 +33,11 @@ export default function AuditLogTab() {
           setAdminLogs(adminLogEntries);
           setLoginLogs(userLoginLogs);
         } catch (error) {
-          console.error("Error fetching logs:", error);
+          toast({
+            variant: "destructive",
+            title: t('common.error'),
+            description: "Nepavyko užkrauti audito įrašų.",
+          });
         } finally {
           setIsLoading(false);
         }
@@ -41,7 +46,7 @@ export default function AuditLogTab() {
     } else {
         setIsLoading(false);
     }
-  }, [user]);
+  }, [user, t, toast]);
 
   const getActionDetails = (log: AuditLogEntry): string => {
     const { actionKey, details } = log;
