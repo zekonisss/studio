@@ -55,9 +55,14 @@ service cloud.firestore {
     }
     
     match /loginLogs/{logId} {
-      // Corrected Rule: Allow admins to list and read logs. Writes are server-side only.
-      allow read, list: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
-      allow write: if false;
+      // Allow any logged-in user to CREATE a log entry (essential for tracking).
+      allow create: if request.auth != null;
+      
+      // Allow Admins to see all logs, and Users to see only their own history.
+      allow read, list: if isRequestingUserAdmin() || resource.data.userId == request.auth.uid;
+      
+      // Prevent modification or deletion of history.
+      allow update, delete: if false;
     }
 
     match /auditLogs/{logId} {
