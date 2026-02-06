@@ -6,7 +6,10 @@ import crypto from 'crypto';
 import { Timestamp } from 'firebase-admin/firestore';
 
 export async function handleSuccessfulLogin(userId: string): Promise<{ success: boolean; token?: string; error?: string }> {
+    console.log(`--- ATTEMPTING TO LOG LOGIN for user ID: ${userId} ---`);
+
     if (!adminDb) {
+        console.error("--- LOGIN LOG FAILED: adminDb not initialized ---");
         return { success: false, error: 'Serverio konfigūracijos klaida.' };
     }
 
@@ -37,10 +40,11 @@ export async function handleSuccessfulLogin(userId: string): Promise<{ success: 
 
         await batch.commit();
 
+        console.log(`--- LOGIN LOG SUCCESS for user ID: ${userId} ---`);
         return { success: true, token: newSessionToken };
 
     } catch (error: any) {
-        console.error("Server-side login handling error:", error);
+        console.error("--- LOGIN LOG FAILED: Server-side login handling error:", error);
         return { success: false, error: 'Nepavyko atnaujinti sesijos duomenų.' };
     }
 }
