@@ -55,12 +55,14 @@ service cloud.firestore {
     }
     
     match /loginLogs/{logId} {
-      allow read, list: if isRequestingUserAdmin();
+      // Corrected Rule: Allow admins to list and read logs. Writes are server-side only.
+      allow read, list: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
       allow write: if false;
     }
 
     match /auditLogs/{logId} {
-      allow read, list, create: if isRequestingUserAdmin();
+      // Corrected Rule: Allow admins to create, read and list logs.
+      allow create, read, list: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
       allow update, delete: if false;
     }
 
