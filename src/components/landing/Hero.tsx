@@ -1,3 +1,4 @@
+
 "use client";
 
 import { ArrowRight, Info, ShieldCheck, CheckCircle } from "lucide-react";
@@ -62,14 +63,6 @@ export function Hero({ count }: HeroProps) {
             </button>
           </a>
           
-          {/* Scrollinimas iki #sources */}
-          <a href="#sources">
-            <button className="group px-8 py-4 rounded-xl bg-slate-100 border border-slate-200 dark:bg-slate-900/50 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium text-lg transition-all flex items-center gap-2 backdrop-blur-sm cursor-pointer">
-              <Info className="w-5 h-5 text-slate-500 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white transition-colors" />
-              <span className="group-hover:text-slate-900 dark:group-hover:text-white transition-colors">Apie duomenų šaltinius</span>
-            </button>
-          </a>
-
         </div>
 
         {/* TRUST MARKERS */}
