@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -17,7 +18,6 @@ import { ThemeToggle } from "@/components/navigation/theme-toggle";
 // Mūsų komponentai
 import { CoverageSection } from "@/components/landing/CoverageSection";
 import { Hero } from "@/components/landing/Hero";
-import { DataSourcesSection } from "@/components/landing/DataSourcesSection";
 import { ApiSection } from "@/components/landing/ApiSection";
 import { cn } from "@/lib/utils";
 
@@ -89,13 +89,10 @@ export default function HomePage() {
         {/* 1. HERO (Su dinaminiu skaičiumi) */}
         <Hero count={totalReports} />
         
-        {/* 2. DUOMENŲ ŠALTINIAI (Trust) */}
-        <DataSourcesSection />
-        
-        {/* 3. ŽEMĖLAPIS (Scale) */}
+        {/* 2. ŽEMĖLAPIS (Scale) */}
         <CoverageSection />
 
-        {/* 4. API SEKCIJA (Enterprise) */}
+        {/* 3. API SEKCIJA (Enterprise) */}
         <ApiSection />
 
       </main>
