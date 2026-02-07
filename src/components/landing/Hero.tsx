@@ -4,6 +4,7 @@
 import { ArrowRight, Info, ShieldCheck, CheckCircle } from "lucide-react";
 import Link from "next/link";
 import { AnimatedCounter } from "@/components/shared/animated-counter"; 
+import { useLanguage } from "@/contexts/language-context";
 
 // SVARBU: Čia aprašome, kad komponentas gaus skaičių
 interface HeroProps {
@@ -12,6 +13,7 @@ interface HeroProps {
 
 // SVARBU: Čia priimame tą skaičių
 export function Hero({ count }: HeroProps) {
+  const { t } = useLanguage();
   return (
     <section className="relative pt-32 pb-20 md:pt-48 md:pb-32 overflow-hidden bg-transparent transition-colors duration-300">
       
@@ -27,7 +29,7 @@ export function Hero({ count }: HeroProps) {
             <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
           </span>
           <span>
-            Duomenų bazė atnaujinta šiandien. Įrašų:{" "}
+            {t('landing.hero.badge.text')}{" "}
             <strong className="text-slate-900 dark:text-white">
                {/* Jei count dar neužsikrovė (yra 0), rodom 1542 */}
                <AnimatedCounter value={count > 0 ? count : 1542} />
@@ -37,16 +39,14 @@ export function Hero({ count }: HeroProps) {
 
         {/* ANTRAŠTĖ */}
         <h1 className="text-4xl md:text-6xl font-bold text-slate-900 dark:text-white tracking-tight mb-6 leading-tight max-w-5xl mx-auto transition-colors">
-          Mažinkite veiklos riziką <br />
+          {t('landing.hero.title.line1')} <br />
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500 dark:from-blue-400 dark:to-cyan-300">
-            transporto versle.
+            {t('landing.hero.title.line2')}
           </span>
         </h1>
 
         <p className="text-lg md:text-xl text-slate-600 dark:text-slate-400 mb-10 max-w-2xl mx-auto leading-relaxed transition-colors">
-          Daugiau informacijos – mažiau netikėtumų. Vieningas informacijos šaltinis, 
-          padedantis transporto vadovams priimti pagrįstus sprendimus 
-          ir kurti skaidrų bendradarbiavimą.
+          {t('landing.hero.subtitle')}
         </p>
 
         {/* MYGTUKAI */}
@@ -57,7 +57,7 @@ export function Hero({ count }: HeroProps) {
               <div className="absolute inset-0 bg-white/20 opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
               <div className="absolute -inset-[100%] top-0 block h-full w-1/2 -skew-x-12 bg-gradient-to-r from-transparent to-white opacity-20 group-hover:animate-shine" />
               <span className="relative flex items-center gap-3 font-bold text-lg tracking-wide transition-transform duration-300 group-hover:translate-x-1">
-                Gauti prieigą
+                {t('landing.hero.cta')}
                 <ArrowRight className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
               </span>
             </button>
@@ -69,15 +69,15 @@ export function Hero({ count }: HeroProps) {
         <div className="mt-16 pt-8 border-t border-slate-200 dark:border-slate-800/40 flex flex-wrap justify-center gap-x-12 gap-y-6 opacity-80">
             <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400 text-sm md:text-base font-medium">
                 <ShieldCheck className="w-5 h-5 text-emerald-600 dark:text-emerald-500" />
-                <span>Prevencinė informacija</span>
+                <span>{t('landing.hero.trust1')}</span>
             </div>
             <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400 text-sm md:text-base font-medium">
                 <CheckCircle className="w-5 h-5 text-blue-600 dark:text-blue-500" />
-                <span>Pagrįsti sprendimai</span>
+                <span>{t('landing.hero.trust2')}</span>
             </div>
              <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400 text-sm md:text-base font-medium">
                 <Info className="w-5 h-5 text-slate-500" />
-                <span>Skaidrus procesas</span>
+                <span>{t('landing.hero.trust3')}</span>
             </div>
         </div>
 

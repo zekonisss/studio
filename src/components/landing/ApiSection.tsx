@@ -2,8 +2,10 @@
 
 import { Terminal, Code2, Zap, ArrowRight, Check } from "lucide-react";
 import Link from "next/link";
+import { useLanguage } from "@/contexts/language-context";
 
 export function ApiSection() {
+  const { t } = useLanguage();
   return (
     <section className="py-24 bg-transparent transition-colors duration-300 border-t border-slate-200 dark:border-slate-800 overflow-hidden">
       <div className="container mx-auto px-4 md:px-6">
@@ -13,30 +15,28 @@ export function ApiSection() {
           <div className="space-y-8">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-100 border border-purple-200 text-purple-700 dark:bg-purple-900/30 dark:border-purple-800 dark:text-purple-400 text-sm font-medium transition-colors">
               <Code2 className="w-4 h-4" />
-              <span>Developers & Integrations</span>
+              <span>{t('landing.api.badge')}</span>
             </div>
 
             <h2 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white leading-tight transition-colors">
-              Integruokite patikras tiesiai į savo <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400">TMS sistemą.</span>
+              {t('landing.api.title.part1')} <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400">{t('landing.api.title.part2')}</span>
             </h2>
             
             <p className="text-lg text-slate-600 dark:text-slate-400 leading-relaxed transition-colors">
-              Nereikia rankinio darbo. Sujunkite savo HR ar Transporto valdymo sistemą 
-              su mūsų API ir gaukite vairuotojo rizikos įvertinimą automatiškai 
-              įdarbinimo proceso metu.
+              {t('landing.api.subtitle')}
             </p>
 
             <div className="space-y-4">
-              <BenefitItem text="REST API dokumentacija" />
-              <BenefitItem text="Webhooks pranešimams apie naujus incidentus" />
-              <BenefitItem text="99.9% veikimo laikas (SLA)" />
-              <BenefitItem text="Suderinama su SAP, Workday ir Navision" />
+              <BenefitItem text={t('landing.api.benefit1')} />
+              <BenefitItem text={t('landing.api.benefit2')} />
+              <BenefitItem text={t('landing.api.benefit3')} />
+              <BenefitItem text={t('landing.api.benefit4')} />
             </div>
 
             <div className="pt-4">
               <Link href="/api-docs">
                 <button className="group flex items-center gap-2 text-purple-600 dark:text-purple-400 font-bold hover:gap-3 transition-all">
-                  Skaityti dokumentaciją <ArrowRight className="w-5 h-5" />
+                  {t('landing.api.cta')} <ArrowRight className="w-5 h-5" />
                 </button>
               </Link>
             </div>
@@ -76,12 +76,12 @@ export function ApiSection() {
                     {"\n"}  {"}"})
                     {"\n"}{"}"});
                     {"\n"}
-                    {"\n"}<span className="text-slate-500">// Atsakymas iš sistemos:</span>
+                    {"\n"}<span className="text-slate-500">// {t('landing.api.code.comment1')}</span>
                     {"\n"}console.log(<span className="text-purple-400">await</span> response.json());
                     {"\n"}
                     {"\n"}<span className="text-yellow-400">{"{"}</span>
                     {"\n"}  <span className="text-blue-400">"status"</span>: <span className="text-green-400">"active"</span>,
-                    {"\n"}  <span className="text-blue-400">"riskScore"</span>: <span className="text-red-400">85</span>, <span className="text-slate-500">// Aukšta rizika!</span>
+                    {"\n"}  <span className="text-blue-400">"riskScore"</span>: <span className="text-red-400">85</span>, <span className="text-slate-500">// {t('landing.api.code.comment2')}</span>
                     {"\n"}  <span className="text-blue-400">"incidents"</span>: <span className="text-yellow-400">3</span>
                     {"\n"}<span className="text-yellow-400">{"}"}</span>
                   </code>
