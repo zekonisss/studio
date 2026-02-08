@@ -23,17 +23,41 @@ export default function OpsCenterPage() {
     }, 1500);
   };
   
-  const generateAppealPDF = () => {
+  const generateAppealPDF = async () => {
     const doc = new jsPDF();
+    
+    // 1. Fetch the font from a reliable CDN (Roboto-Regular)
+    const fontUrl = 'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/fonts/Roboto/Roboto-Regular.ttf';
+    const response = await fetch(fontUrl);
+    const blob = await response.blob();
+    
+    // 2. Convert to Base64/Binary for jsPDF
+    const reader = new FileReader();
+    reader.readAsDataURL(blob);
+    
+    await new Promise<void>((resolve) => {
+      reader.onloadend = () => {
+        const base64data = reader.result as string;
+        // Extract just the base64 part (remove "data:application/..." prefix)
+        const cleanBase64 = base64data.split(',')[1];
+        
+        // 3. Add to VFS and Register
+        doc.addFileToVFS('Roboto-Regular.ttf', cleanBase64);
+        doc.addFont('Roboto-Regular.ttf', 'Roboto', 'normal');
+        doc.setFont('Roboto'); // Set as active font
+        resolve();
+      };
+    });
+
     const currentDate = new Date().toLocaleDateString('lt-LT');
     const driverName = "Jonas Jonaitis";
 
-    doc.setFont("helvetica", "bold");
+    doc.setFont(undefined, 'bold');
     doc.setFontSize(14);
     doc.text("PAAIŠKINIMAS DĖL VAIRAVIMO REŽIMO PAŽEIDIMO", 105, 20, { align: 'center' });
 
     doc.setFontSize(12);
-    doc.setFont("helvetica", "normal");
+    doc.setFont(undefined, 'normal');
     doc.text(`Vairuotojas: ${driverName}`, 20, 40);
     doc.text(`Data: ${currentDate}`, 20, 50);
 
@@ -41,10 +65,10 @@ export default function OpsCenterPage() {
     const splitBody = doc.splitTextToSize(bodyText, 170);
     doc.text(splitBody, 20, 70);
     
-    doc.setFont("helvetica", "bold");
+    doc.setFont(undefined, 'bold');
     doc.text("Užfiksuotas laikas: 12:30 (Poilsis pagal Tacho) vs 12:30 (Bauda).", 20, 110);
     
-    doc.setFont("helvetica", "normal");
+    doc.setFont(undefined, 'normal');
     doc.text("Parašas: _________________", 20, 140);
     
     doc.save(`apeliacija_${driverName.replace(/\s+/g, '_')}.pdf`);
