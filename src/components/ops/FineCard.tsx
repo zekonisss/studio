@@ -1,11 +1,19 @@
-
 "use client";
 
 import { Badge } from '@/components/ui/badge';
-import { FileCode2, Calendar, MapPin, Euro } from 'lucide-react';
+import { FileCode2, Calendar, MapPin, Euro, AlertCircle } from 'lucide-react';
 
-export function FineCard() {
-  const status = "Pending"; // or "Paid"
+interface FineData {
+    date: string;
+    time: string;
+    amount: string;
+    location: string;
+    violation: string;
+    status: 'Pending' | 'Paid';
+}
+
+export function FineCard({ data }: { data: FineData }) {
+  const { date, time, amount, location, violation, status } = data;
 
   return (
     <div className="bg-white dark:bg-gray-900/50 border border-gray-200/80 dark:border-gray-800 rounded-2xl p-6 shadow-sm">
@@ -21,17 +29,21 @@ export function FineCard() {
             </Badge>
         </div>
         <div className="space-y-4 text-sm">
+             <div className="flex items-center justify-between">
+                <span className="text-gray-500 dark:text-gray-400 flex items-center gap-2"><AlertCircle className="w-4 h-4" /> Pažeidimas</span>
+                <span className="font-medium text-gray-800 dark:text-gray-200 text-right">{violation}</span>
+            </div>
             <div className="flex items-center justify-between">
                 <span className="text-gray-500 dark:text-gray-400 flex items-center gap-2"><Calendar className="w-4 h-4" /> Data ir laikas</span>
-                <span className="font-medium text-gray-800 dark:text-gray-200">2026-02-05 14:30</span>
+                <span className="font-medium text-gray-800 dark:text-gray-200">{date} {time}</span>
             </div>
             <div className="flex items-center justify-between">
                 <span className="text-gray-500 dark:text-gray-400 flex items-center gap-2"><Euro className="w-4 h-4" /> Suma</span>
-                <span className="font-medium text-gray-800 dark:text-gray-200">150.00 €</span>
+                <span className="font-medium text-gray-800 dark:text-gray-200">{amount}</span>
             </div>
             <div className="flex items-center justify-between">
                 <span className="text-gray-500 dark:text-gray-400 flex items-center gap-2"><MapPin className="w-4 h-4" /> Vieta</span>
-                <span className="font-medium text-gray-800 dark:text-gray-200">A2, Vokietija</span>
+                <span className="font-medium text-gray-800 dark:text-gray-200">{location}</span>
             </div>
         </div>
     </div>

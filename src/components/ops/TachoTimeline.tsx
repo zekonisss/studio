@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -20,18 +19,6 @@ const addMinutes = (time: string, mins: number): string => {
   return `${newHours}:${newMinutes}`;
 };
 
-const MOCK_ACTIVITIES: Activity[] = [
-  { type: 'REST',    startTime: '00:00', duration: 360 }, // 6h rest
-  { type: 'WORK',    startTime: '06:00', duration: 15 },  // 15m pre-drive check
-  { type: 'DRIVE',   startTime: '06:15', duration: 270 }, // 4.5h drive
-  { type: 'BREAK',   startTime: '10:45', duration: 45 },  // 45m break
-  { type: 'DRIVE',   startTime: '11:30', duration: 150 }, // 2.5h drive
-  { type: 'WORK',    startTime: '14:00', duration: 30 },  // 30m unloading
-  { type: 'DRIVE',   startTime: '14:30', duration: 90 },  // 1.5h drive
-  { type: 'UNKNOWN', startTime: '16:00', duration: 15 },  // 15m unknown error
-  { type: 'REST',    startTime: '16:15', duration: 465 }, // Remaining rest
-];
-
 const statusStyles: Record<Activity['type'], string> = {
   DRIVE: 'bg-green-500',
   WORK: 'bg-blue-500',
@@ -48,14 +35,18 @@ const statusLabels: Record<Activity['type'], string> = {
     UNKNOWN: 'Neatpažinta / Klaida',
 }
 
-export function TachoTimeline() {
+export function TachoTimeline({ activities }: { activities: Activity[] }) {
   const totalMinutesInDay = 1440;
+
+  if (!activities || activities.length === 0) {
+      return null;
+  }
 
   return (
     <TooltipProvider>
       <div className="w-full space-y-3">
         <div className="flex w-full h-10 rounded-lg overflow-hidden border dark:border-gray-700 bg-gray-100 dark:bg-gray-800">
-          {MOCK_ACTIVITIES.map((activity, index) => {
+          {activities.map((activity, index) => {
             const widthPercent = (activity.duration / totalMinutesInDay) * 100;
             const endTime = addMinutes(activity.startTime, activity.duration);
             const durationHours = Math.floor(activity.duration / 60);
