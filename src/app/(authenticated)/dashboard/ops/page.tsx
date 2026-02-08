@@ -7,6 +7,7 @@ import { TachoTimeline } from "@/components/ops/TachoTimeline";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertTriangle, GanttChartSquare, Loader2 } from 'lucide-react';
+import jsPDF from 'jspdf';
 
 export default function OpsCenterPage() {
   const showDiscrepancy = true; // For mockup purposes
@@ -20,6 +21,33 @@ export default function OpsCenterPage() {
       setIsProcessing(false);
       setAnalysisData(true); // Trigger the view change
     }, 1500);
+  };
+  
+  const generateAppealPDF = () => {
+    const doc = new jsPDF();
+    const currentDate = new Date().toLocaleDateString('lt-LT');
+    const driverName = "Jonas Jonaitis";
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(14);
+    doc.text("PAAIŠKINIMAS DĖL VAIRAVIMO REŽIMO PAŽEIDIMO", 105, 20, { align: 'center' });
+
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Vairuotojas: ${driverName}`, 20, 40);
+    doc.text(`Data: ${currentDate}`, 20, 50);
+
+    const bodyText = `Vadovaujantis Europos Parlamento ir Tarybos reglamentu (EB) Nr. 561/2006, noriu paaiškinti, kad užfiksuotas vairavimo laiko pažeidimas įvyko dėl nenumatytų aplinkybių (kamščių / priverstinio sustojimo), siekiant užtikrinti krovinio ir transporto priemonės saugumą.`;
+    const splitBody = doc.splitTextToSize(bodyText, 170);
+    doc.text(splitBody, 20, 70);
+    
+    doc.setFont("helvetica", "bold");
+    doc.text("Užfiksuotas laikas: 12:30 (Poilsis pagal Tacho) vs 12:30 (Bauda).", 20, 110);
+    
+    doc.setFont("helvetica", "normal");
+    doc.text("Parašas: _________________", 20, 140);
+    
+    doc.save(`apeliacija_${driverName.replace(/\s+/g, '_')}.pdf`);
   };
 
   const renderContent = () => {
@@ -40,7 +68,11 @@ export default function OpsCenterPage() {
             <OpsUploadZone onFileSelected={handleUpload} />
             <FineCard />
             <div className="space-y-4 pt-4">
-                <Button size="lg" className="w-full bg-black hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-200 h-12 text-base font-semibold">
+                <Button 
+                    size="lg" 
+                    className="w-full bg-black hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-200 h-12 text-base font-semibold"
+                    onClick={generateAppealPDF}
+                >
                     Generuoti Apeliaciją
                 </Button>
                 <Button size="lg" variant="outline" className="w-full text-red-600 border-red-500 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:border-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-300 h-12 text-base font-semibold">
