@@ -28,6 +28,7 @@ export const translationsMaster: Record<string, Partial<Record<Locale, string>>>
   'common.localeForDate': { lt: 'lt-LT', en: 'en-GB', ru: 'ru-RU', pl: 'pl-PL', lv: 'lv-LV', et: 'et-EE' },
   'sidebar.toggleTheme': { lt: 'Pakeisti temą', en: 'Toggle theme', ru: 'Переключить тему', pl: 'Zmień motyw', lv: 'Mainīt tēmu', et: 'Muuda teemat' },
   'sidebar.dashboard': { lt: 'Skydelis', en: 'Dashboard', ru: 'Панель', pl: 'Pulpit', lv: 'Panelis', et: 'Töölaud' },
+  'sidebar.opsCenter': { lt: 'OPS Centras', en: 'OPS Center', ru: 'OPS Центр', pl: 'Centrum OPS', lv: 'OPS Centrs', et: 'OPS Keskus' },
   'sidebar.search': { lt: 'Paieška', en: 'Search', ru: 'Поиск', pl: 'Szukaj', lv: 'Meklēt', et: 'Otsing' },
   'sidebar.addReport': { lt: 'Pridėti įrašą', en: 'Add Report', ru: 'Добавить запись', pl: 'Dodaj wpis', lv: 'Pievienot ierakstu', et: 'Lisa kirje' },
   'sidebar.reportsHistory': { lt: 'Įrašų istorija', en: 'Reports History', ru: 'История записей', pl: 'Historia wpisów', lv: 'Ierakstu vēsture', et: 'Kirjete ajalugu' },
@@ -453,7 +454,7 @@ export const translationsMaster: Record<string, Partial<Record<Locale, string>>>
   'admin.auditLog.table.admin': { lt: 'Administratorius', en: 'Admin', ru: 'Администратор', pl: 'Administrator', lv: 'Administrators', et: 'Administraator' },
   'admin.auditLog.table.details': { lt: 'Veiksmo detalės', en: 'Action Details', ru: 'Детали действия', pl: 'Szczegóły akcji', lv: 'Darbības detaļas', et: 'Toimingu üksikasjad' },
   'admin.auditLog.noLogsFound': { lt: 'Auditų įrašų kol kas nėra.', en: 'No audit log entries yet.', ru: 'Записей в журнале аудита пока нет.', pl: 'Brak wpisów w dzienniku audytu.', lv: 'Pagaidām nav audita žurnāla ierakstu.', et: 'Auditilogi kirjeid veel pole.' },
-  'admin.auditLog.action.userStatusChanged': { lt: 'Pakeista vartotojo {userEmail} ({companyName}) būsena iš "{oldStatus}" į "{newStatus}".', en: 'Changed status for user {userEmail} ({companyName}) from "{oldStatus}" to "{newStatus}".', ru: 'Изменен статус пользователя {userEmail} ({companyName}) с "{oldStatus}" на "{newStatus}".', pl: 'Zmieniono status użytkownika {email} ({companyName}) został zmieniony na "{status}".', lv: 'Mainīts lietotāja {email} ({companyName}) statuss no "{oldStatus}" uz "{newStatus}".', et: 'Muudetud kasutaja {userEmail} ({companyName}) olek olekust "{oldStatus}" olekusse "{newStatus}".' },
+  'admin.auditLog.action.userStatusChanged': { lt: 'Pakeista vartotojo {userEmail} ({companyName}) būsena iš "{oldStatus}" į "{newStatus}".', en: 'Changed status for user {userEmail} ({companyName}) from "{oldStatus}" to "{newStatus}".', ru: 'Изменен статус пользователя {userEmail} ({companyName}) с "{oldStatus}" на "{newStatus}".', pl: 'Status użytkownika {email} ({companyName}) został zmieniony na "{status}".', lv: 'Mainīts lietotāja {email} ({companyName}) statuss no "{oldStatus}" uz "{newStatus}".', et: 'Muudetud kasutaja {userEmail} ({companyName}) olek olekust "{oldStatus}" olekusse "{newStatus}".' },
   'admin.auditLog.action.reportDeleted': { lt: 'Ištrintas įrašas apie vairuotoją {driverFullName} (ID: {reportId}).', en: 'Deleted report for driver {driverFullName} (ID: {reportId}).', ru: 'Удалена запись о водителе {driverFullName} (ID: {reportId}).', pl: 'Usunięto wpis dotyczący kierowcy {driverFullName} (ID: {reportId}).', lv: 'Dzēsts ieraksts par vadītāju {driverFullName} (ID: {reportId}).', et: 'Kustutatud aruanne juhi {driverFullName} kohta (ID: {reportId}).' },
   'admin.auditLog.action.allReportsDeleted': { lt: 'Ištrinti visi aktyvūs įrašai (iš viso: {count}).', en: 'Deleted all active reports (total: {count}).', ru: 'Удалены все активные записи (всего: {count}).', pl: 'Usunięto wszystkie aktywne wpisy (łącznie: {count}).', lv: 'Dzēsti visi aktīvie ieraksti (kopā: {count}).', et: 'Kustutatud kõik aktiivsed aruanded (kokku: {count}).' },
   'admin.auditLog.action.userDetailsUpdated': { lt: 'Atnaujinti vartotojo {userEmail} ({companyName}) duomenys. Pakeisti laukai: {updatedFields}.', en: 'Updated details for user {userEmail} ({companyName}). Changed fields: {updatedFields}.', ru: 'Обновлены данные пользователя {userEmail} ({companyName}). Измененные поля: {updatedFields}.', pl: 'Zaktualizowano dane użytkownika {userEmail} ({companyName}). Zmienione pola: {updatedFields}.', lv: 'Atjauninātas detaļas lietotājam {userEmail} ({companyName}). Mainītie lauki: {updatedFields}.', et: 'Uuendatud üksikasjad kasutajale {userEmail} ({companyName}). Muudetud väljad: {updatedFields}.' },
@@ -812,6 +813,7 @@ export const translationsMaster: Record<string, Partial<Record<Locale, string>>>
 };
 
     
+
 
 
 

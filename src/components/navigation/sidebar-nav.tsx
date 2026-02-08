@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -20,7 +21,8 @@ import {
   LogOut,
   ScrollText,
   ShieldCheck,
-  Users
+  Users,
+  GanttChartSquare
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import type { ReactNode } from "react";
@@ -28,6 +30,7 @@ import { useLanguage } from "@/contexts/language-context";
 
 const mainNavItemsBase = [
   { href: "/dashboard", labelKey: "sidebar.dashboard", icon: LayoutDashboard },
+  { href: "/dashboard/ops", labelKey: "sidebar.opsCenter", icon: GanttChartSquare },
   { href: "/search", labelKey: "sidebar.search", icon: Search },
   { href: "/reports/add", labelKey: "sidebar.addReport", icon: FilePlus2 },
 ];
@@ -91,11 +94,13 @@ export function SidebarNav({ isInSheet = false }: SidebarNavProps) {
   const renderLinks = (items: { href: string; label: string; icon: React.ElementType }[]) => {
     return items.map((item) => {
       let isActive: boolean;
-      // The Account link should only be active for its own page, not for sub-pages like Team.
-      if (item.href === '/account') {
-        isActive = pathname === item.href;
+      // Pages that should only be active on an exact match
+      const exactMatchPaths = ['/dashboard', '/account'];
+      
+      if (exactMatchPaths.includes(item.href)) {
+          isActive = pathname === item.href;
       } else {
-        isActive = pathname.startsWith(item.href);
+          isActive = pathname.startsWith(item.href);
       }
 
       return (
