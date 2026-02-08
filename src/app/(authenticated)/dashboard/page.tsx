@@ -143,8 +143,8 @@ export default function DashboardPage() {
             title={t('dashboard.overview.totalPlatformReports')}
             value={totalReportsCount}
             icon={BarChart}
-            link="/search"
-            linkText={t('dashboard.overview.viewAll')}
+            link="/reports/add"
+            linkText={t('sidebar.addReport')}
             isLoading={isStatsLoading}
           />
         </div>
