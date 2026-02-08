@@ -17,7 +17,9 @@ export function OpsUploadZone({ title, description, accept, onFileSelect, icon =
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
+      console.log("File selected via click:", e.target.files[0].name);
       onFileSelect(e.target.files[0]);
+      // Reset input to allow re-selecting the same file
       e.target.value = '';
     }
   };
@@ -26,15 +28,19 @@ export function OpsUploadZone({ title, description, accept, onFileSelect, icon =
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      onFileSelect(e.dataTransfer.files[0]);
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      console.log("File dropped:", files[0].name);
+      onFileSelect(files[0]);
     }
   };
   
   const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsDragging(true);
+    if (!isDragging) {
+        setIsDragging(true);
+    }
   };
   
   const handleDragLeave = (e: DragEvent<HTMLDivElement>) => {
