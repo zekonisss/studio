@@ -1,19 +1,24 @@
 "use client";
 
-import { UploadCloud } from 'lucide-react';
+import { UploadCloud, FileText, HardDrive } from 'lucide-react';
 import { type ChangeEvent, type DragEvent, useState } from 'react';
 import { cn } from '@/lib/utils';
 
 interface Props {
-  onFilesSelected: (files: File[]) => void;
+  title: string;
+  description: string;
+  accept: string; // HTML input accept format
+  onFileSelect: (file: File) => void;
+  icon?: 'document' | 'tacho';
 }
 
-export function OpsUploadZone({ onFilesSelected }: Props) {
+export function OpsUploadZone({ title, description, accept, onFileSelect, icon = 'document' }: Props) {
   const [isDragging, setIsDragging] = useState(false);
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      onFilesSelected(Array.from(e.target.files));
+      onFileSelect(e.target.files[0]);
+      e.target.value = '';
     }
   };
   
@@ -22,7 +27,7 @@ export function OpsUploadZone({ onFilesSelected }: Props) {
     e.stopPropagation();
     setIsDragging(false);
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      onFilesSelected(Array.from(e.dataTransfer.files));
+      onFileSelect(e.dataTransfer.files[0]);
     }
   };
   
@@ -37,33 +42,34 @@ export function OpsUploadZone({ onFilesSelected }: Props) {
     e.stopPropagation();
     setIsDragging(false);
   };
+  
+  const Icon = icon === 'tacho' ? HardDrive : FileText;
 
   return (
     <div 
       className={cn(
-        "relative w-full h-64 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-2xl flex flex-col justify-center items-center text-center p-6 cursor-pointer hover:bg-gray-100/50 dark:hover:bg-gray-800/20 transition-colors duration-300",
+        "relative w-full h-48 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-2xl flex flex-col justify-center items-center text-center p-4 cursor-pointer hover:bg-gray-100/50 dark:hover:bg-gray-800/20 transition-colors duration-300",
         isDragging && "border-primary bg-primary/10"
       )}
       onDrop={handleDrop}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
-      onClick={() => document.getElementById('ops-file-input')?.click()}
+      onClick={() => document.getElementById(`ops-file-input-${icon}`)?.click()}
     >
-        <div className="p-4 bg-gray-100 dark:bg-gray-800 rounded-full mb-4">
-            <UploadCloud className="w-10 h-10 text-gray-500 dark:text-gray-400" />
+        <div className="p-3 bg-gray-100 dark:bg-gray-800 rounded-full mb-3">
+            <Icon className="w-8 h-8 text-gray-500 dark:text-gray-400" />
         </div>
-        <h3 className="font-semibold text-lg text-gray-800 dark:text-gray-200">
-            Įkelkite Baudą arba Tacho failą analizei
+        <h3 className="font-semibold text-base text-gray-800 dark:text-gray-200">
+            {title}
         </h3>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-            Palaikomi formatai: .ddd, .pdf, .jpg
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            {description}
         </p>
         <input 
-          id="ops-file-input"
+          id={`ops-file-input-${icon}`}
           type="file"
-          multiple
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" 
-          accept=".pdf,.jpg,.jpeg,.png,.ddd"
+          accept={accept}
           onChange={handleFileChange}
         />
     </div>
