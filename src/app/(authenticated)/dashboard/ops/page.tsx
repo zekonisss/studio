@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -6,23 +7,13 @@ import { FineCard } from "@/components/ops/FineCard";
 import { TachoTimeline } from "@/components/ops/TachoTimeline";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertTriangle, GanttChartSquare, CheckCircle2, Info } from 'lucide-react';
+import { AlertTriangle, GanttChartSquare, CheckCircle2, Info, Loader2 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import { analyzeDiscrepancy, type FineData, type Activity, type AnalysisResult } from '@/lib/ops/cross-check';
+import { useToast } from '@/hooks/use-toast';
 
 
-// --- Mock Data ---
-const MOCK_FINE_DATA: FineData = {
-    date: '2024-02-09',
-    time: '09:00', // This time falls within the BREAK period below
-    amount: '150.00 €',
-    location: 'A1, Kaunas',
-    violation: 'Greičio viršijimas',
-    status: 'Pending'
-};
-
-
-
+// --- Mock Data for Tacho ---
 const MOCK_TACHO_DATA: Activity[] = [
   { type: 'REST',    startTime: '00:00', duration: 360 }, // 6h rest
   { type: 'WORK',    startTime: '06:00', duration: 15 },  // 15m pre-drive check
@@ -37,9 +28,11 @@ const MOCK_TACHO_DATA: Activity[] = [
 
 
 export default function OpsCenterPage() {
+  const { toast } = useToast();
   const [fineData, setFineData] = useState<FineData | null>(null);
   const [tachoData, setTachoData] = useState<Activity[] | null>(null);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
 
   useEffect(() => {
@@ -51,9 +44,40 @@ export default function OpsCenterPage() {
     }
   }, [fineData, tachoData]);
 
-  const handleFineUpload = (file: File) => {
-    console.log("Fine protocol uploaded:", file.name);
-    setFineData(MOCK_FINE_DATA);
+  const handleFineUpload = async (file: File) => {
+    setIsProcessing(true);
+    setFineData(null); // Clear previous fine data
+
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    try {
+      const response = await fetch('/api/ops/analyze-fine', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Nepavyko nuskaityti failo');
+      }
+      
+      const realData = await response.json();
+      setFineData({ ...realData, status: 'Pending' }); 
+      toast({
+          title: "Sėkmė",
+          description: "Baudos protokolas sėkmingai nuskaitytas!",
+      });
+    } catch (error: any) {
+      console.error(error);
+      toast({
+        variant: "destructive",
+        title: "Klaida",
+        description: error.message || "Klaida analizuojant failą. Bandykite dar kartą.",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
   };
   
   const handleTachoUpload = (file: File) => {
@@ -143,72 +167,32 @@ export default function OpsCenterPage() {
 
     return null;
   }
+  
+  const renderInitialView = () => (
+     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <OpsUploadZone 
+          title="Baudos Protokolas"
+          description="PDF, JPG arba PNG"
+          accept={{ 'application/pdf': [], 'image/jpeg': [], 'image/png': [] }}
+          onFileSelect={handleFineUpload}
+          icon="document"
+        />
+        <OpsUploadZone 
+          title="Tacho Failas"
+          description=".ddd, .v1b"
+          accept={{ 'application/octet-stream': ['.ddd', '.v1b'] }}
+          onFileSelect={handleTachoUpload}
+          icon="tacho"
+        />
+    </div>
+  );
 
-  const renderContent = () => {
-    const showDashboard = fineData || tachoData;
-
-    if (showDashboard) {
-        return (
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start animate-in fade-in-50">
-            {/* Left Column */}
-            <div className="lg:col-span-2 space-y-8">
-              {fineData ? (
-                  <FineCard data={fineData} />
-              ) : (
-                  <OpsUploadZone 
-                    title="Baudos Protokolas"
-                    description="PDF, JPG arba PNG"
-                    accept={{ 'application/pdf': [], 'image/jpeg': [], 'image/png': [] }}
-                    onFileSelect={handleFineUpload}
-                    icon="document"
-                  />
-              )}
-            </div>
-            
-            {/* Right Column */}
-            <div className="lg:col-span-3 space-y-8">
-                {tachoData ? (
-                    <div className="p-6 bg-card border rounded-2xl shadow-sm">
-                        <div className="flex items-center gap-3 mb-6">
-                            <div className="p-2 bg-muted rounded-lg">
-                                <GanttChartSquare className="w-6 h-6 text-muted-foreground"/>
-                            </div>
-                            <h3 className="text-xl font-semibold text-foreground">Vairuotojo laiko juosta (24h)</h3>
-                        </div>
-                        <TachoTimeline activities={tachoData} />
-                    </div>
-                ) : (
-                  <OpsUploadZone 
-                    title="Tacho Failas"
-                    description=".ddd, .v1b"
-                    accept={{ 'application/octet-stream': ['.ddd', '.v1b'] }}
-                    onFileSelect={handleTachoUpload}
-                    icon="tacho"
-                  />
-                )}
-                
-                {/* Analysis & Actions */}
-                <div className="space-y-4 pt-4">
-                  <AnalysisAlert />
-
-                  {analysisResult?.status === 'CONFLICT' && (
-                       <Button 
-                          size="lg" 
-                          className="w-full bg-black hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-200 h-12 text-base font-semibold"
-                          onClick={generateAppealPDF}
-                      >
-                          Generuoti Apeliaciją
-                      </Button>
-                  )}
-                </div>
-            </div>
-          </div>
-        );
-    }
-
-    // Initial View
-    return (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+  const renderAnalysisView = () => (
+    <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start animate-in fade-in-50">
+      <div className="lg:col-span-2 space-y-8">
+        {fineData ? (
+            <FineCard data={fineData} />
+        ) : (
             <OpsUploadZone 
               title="Baudos Protokolas"
               description="PDF, JPG arba PNG"
@@ -216,6 +200,21 @@ export default function OpsCenterPage() {
               onFileSelect={handleFineUpload}
               icon="document"
             />
+        )}
+      </div>
+      
+      <div className="lg:col-span-3 space-y-8">
+          {tachoData ? (
+              <div className="p-6 bg-card border rounded-2xl shadow-sm">
+                  <div className="flex items-center gap-3 mb-6">
+                      <div className="p-2 bg-muted rounded-lg">
+                          <GanttChartSquare className="w-6 h-6 text-muted-foreground"/>
+                      </div>
+                      <h3 className="text-xl font-semibold text-foreground">Vairuotojo laiko juosta (24h)</h3>
+                  </div>
+                  <TachoTimeline activities={tachoData} />
+              </div>
+          ) : (
             <OpsUploadZone 
               title="Tacho Failas"
               description=".ddd, .v1b"
@@ -223,8 +222,43 @@ export default function OpsCenterPage() {
               onFileSelect={handleTachoUpload}
               icon="tacho"
             />
-        </div>
-    );
+          )}
+          
+          {fineData && tachoData && (
+             <div className="space-y-4 pt-4">
+                <AnalysisAlert />
+
+                {analysisResult?.status === 'CONFLICT' && (
+                     <Button 
+                        size="lg" 
+                        className="w-full bg-black hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-200 h-12 text-base font-semibold"
+                        onClick={generateAppealPDF}
+                    >
+                        Generuoti Apeliaciją
+                    </Button>
+                )}
+              </div>
+          )}
+      </div>
+    </div>
+  );
+  
+  const renderContent = () => {
+    if (isProcessing) {
+        return (
+             <div className="flex flex-col items-center justify-center text-center py-20">
+                <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+                <p className="text-lg font-medium text-muted-foreground">Analizuojamas failas...</p>
+                <p className="text-sm text-muted-foreground">Tai gali užtrukti kelias akimirkas.</p>
+            </div>
+        )
+    }
+
+    if(fineData || tachoData) {
+        return renderAnalysisView();
+    }
+    
+    return renderInitialView();
   };
 
   return (
