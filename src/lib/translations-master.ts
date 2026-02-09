@@ -850,11 +850,15 @@ export const translationsMaster: Record<string, Partial<Record<Locale, string>>>
   'ops.pdf.body': { lt: 'Vadovaujantis Europos Parlamento ir Tarybos reglamentu (EB) Nr. 561/2006, noriu paaiškinti, kad užfiksuotas pažeidimas įvyko, kai transporto priemonė stovėjo pertraukos/poilsio metu. Tachografo duomenys patvirtina, kad {fineTime} val. vairavimas nebuvo vykdomas. Prašome panaikinti baudą.', en: 'In accordance with Regulation (EC) No 561/2006 of the European Parliament and of the Council, I would like to explain that the recorded violation occurred while the vehicle was stationary during a break/rest period. The tachograph data confirms that driving was not performed at {fineTime}. Please cancel the fine.', ru: 'В соответствии с Регламентом (ЕС) № 561/2006 Европейского парламента и Совета, я хотел бы пояснить, что зафиксированное нарушение произошло, когда транспортное средство находилось на стоянке во время перерыва/отдыха. Данные тахографа подтверждают, что в {fineTime} вождение не осуществлялось. Прошу отменить штраф.', pl: 'Zgodnie z rozporządzeniem (WE) nr 561/2006 Parlamentu Europejskiego i Rady chciałbym wyjaśnić, że odnotowane naruszenie miało miejsce, gdy pojazd stał w okresie przerwy/odpoczynku. Dane z tachografu potwierdzają, że o godzinie {fineTime} jazda nie była wykonywana. Proszę o anulowanie mandatu.', lv: 'Saskaņā ar Eiropas Parlamenta un Padomes Regulu (EK) Nr. 561/2006 es vēlos paskaidrot, ka reģistrētais pārkāpums notika, kad transportlīdzeklis stāvēja pārtraukuma/atpūtas periodā. Tahogrāfa dati apstiprina, ka {fineTime} braukšana netika veikta. Lūdzu, atceliet sodu.', et: 'Vastavalt Euroopa Parlamendi ja nõukogu määrusele (EÜ) nr 561/2006 soovin selgitada, et registreeritud rikkumine toimus sõiduki seistes pausi/puhkeperioodi ajal. Sõidumeeriku andmed kinnitavad, et kell {fineTime} sõitu ei toimunud. Palun tühistage trahv.' },
   'ops.pdf.discrepancy': { lt: 'Užfiksuotas neatitikimas', en: 'Discrepancy found', ru: 'Обнаружено несоответствие', pl: 'Wykryto niezgodność', lv: 'Konstatēta neatbilstība', et: 'Leiti lahknevus' },
   'ops.pdf.signature': { lt: 'Parašas', en: 'Signature', ru: 'Подпись', pl: 'Podpis', lv: 'Paraksts', et: 'Allkiri' },
-  'ops.pdf.fileName': { lt: 'apeliacija_{driverName}', en: 'appeal_{driverName}', ru: 'апелляция_{driverName}', pl: 'odwolanie_{driverName}', lv: 'apelacija_{driverName}', et: 'edasikaebus_{driverName}' }
+  'ops.pdf.fileName': { lt: 'apeliacija_{driverName}', en: 'appeal_{driverName}', ru: 'апелляция_{driverName}', pl: 'odwolanie_{driverName}', lv: 'apelacija_{driverName}', et: 'edasikaebus_{driverName}' },
+  'ops.daySelector.prevDay': { lt: 'Ankstesnė diena', en: 'Previous Day' },
+  'ops.daySelector.nextDay': { lt: 'Kita diena', en: 'Next Day' },
+  'ops.daySelector.fineDay': { lt: 'Baudos diena', en: 'Day of Fine' },
 };
 
     
 
     
+
 
 
