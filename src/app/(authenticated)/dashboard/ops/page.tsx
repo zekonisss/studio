@@ -14,12 +14,14 @@ import { analyzeDiscrepancy, type FineData, type Activity, type AnalysisResult }
 // --- Mock Data ---
 const MOCK_FINE_DATA: FineData = {
     date: '2024-02-09',
-    time: '10:50', // This time falls within the BREAK period below
+    time: '09:00', // This time falls within the BREAK period below
     amount: '150.00 €',
-    location: 'A2, Vokietija',
-    violation: 'Neleistinas sustojimas',
+    location: 'A1, Kaunas',
+    violation: 'Greičio viršijimas',
     status: 'Pending'
 };
+
+
 
 const MOCK_TACHO_DATA: Activity[] = [
   { type: 'REST',    startTime: '00:00', duration: 360 }, // 6h rest
