@@ -137,10 +137,16 @@ export default function SearchPage() {
                     requesterId: user?.id,
                 }),
             });
+            
+            const data = await response.json();
     
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || "Serverio klaida siunčiant užklausą.");
+                throw new Error(data.error || "Serverio klaida siunčiant užklausą.");
+            }
+            
+            if (data.debugLink) {
+              console.log("LINKAS:", data.debugLink); // Show in Browser Console (F12)
+              alert(`DEBUG: Laiškas išsiųstas! Nuoroda: \n${data.debugLink}`); // Show Popup
             }
     
             toast({
@@ -336,4 +342,5 @@ export default function SearchPage() {
         </div>
     );
 }
+
 

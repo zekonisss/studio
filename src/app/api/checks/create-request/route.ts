@@ -37,7 +37,11 @@ export async function POST(req: NextRequest) {
         const verificationLink = `http://localhost:3000/verify?token=${token}`;
         console.log(`[EMAIL MOCK] To: ${targetEmail}, Link: ${verificationLink}`);
 
-        return NextResponse.json({ success: true, message: 'Užklausa sėkmingai sukurta.' });
+        return NextResponse.json({ 
+          success: true, 
+          message: 'Užklausa sėkmingai sukurta.',
+          debugLink: verificationLink 
+        });
 
     } catch (error: any) {
         console.error('Error creating verification request:', error);
