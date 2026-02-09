@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Loader2, UserSearch, ShieldCheck } from "lucide-react";
+import { Search, Loader2, UserSearch, ShieldCheck, Send } from "lucide-react";
 import { SearchSchema, type SearchFormValues } from "@/lib/schemas";
 import { getAllReports } from "@/lib/storage";
 import type { Report } from "@/types";
@@ -21,6 +21,7 @@ import { LiveActivityFeed } from "@/components/shared/live-activity-feed";
 import { DriverSearchStats } from "@/components/search/driver-search-stats";
 import Link from "next/link";
 import { SearchResultCard } from "@/components/search/SearchResultCard";
+import { Label } from "@/components/ui/label";
 
 export default function SearchPage() {
     const { t } = useLanguage();
@@ -30,6 +31,11 @@ export default function SearchPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [hasSearched, setHasSearched] = useState(false);
     const [currentQuery, setCurrentQuery] = useState("");
+
+    // State for verification request form
+    const [targetEmail, setTargetEmail] = useState('');
+    const [targetCompany, setTargetCompany] = useState('');
+    const [isRequesting, setIsRequesting] = useState(false);
 
     const form = useForm<SearchFormValues>({
         resolver: zodResolver(SearchSchema),
@@ -42,6 +48,10 @@ export default function SearchPage() {
         setIsLoading(true);
         setHasSearched(true);
         setCurrentQuery(values.query);
+
+        // Reset verification form on new search
+        setTargetEmail('');
+        setTargetCompany('');
     
         try {
              if (user) {
@@ -106,6 +116,52 @@ export default function SearchPage() {
         return { firstName, lastName };
     };
 
+    const handleVerificationRequest = async () => {
+        if (!targetEmail || !targetCompany) {
+            toast({
+                variant: "destructive",
+                title: "Trūksta duomenų",
+                description: "Prašome užpildyti el. pašto ir įmonės laukus.",
+            });
+            return;
+        }
+        setIsRequesting(true);
+        try {
+            const response = await fetch('/api/checks/create-request', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    driverName: currentQuery,
+                    targetEmail,
+                    targetCompany,
+                    requesterId: user?.id,
+                }),
+            });
+    
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || "Serverio klaida siunčiant užklausą.");
+            }
+    
+            toast({
+                title: "Užklausa išsiųsta!",
+                description: "Buvęs darbdavys gavo patikros nuorodą.",
+            });
+    
+            setTargetEmail('');
+            setTargetCompany('');
+    
+        } catch (error: any) {
+            toast({
+                variant: "destructive",
+                title: "Klaida",
+                description: error.message || "Nepavyko išsiųsti užklausos.",
+            });
+        } finally {
+            setIsRequesting(false);
+        }
+    };
+
     const { firstName, lastName } = getNames(currentQuery);
 
     return (
@@ -166,7 +222,6 @@ export default function SearchPage() {
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
                         <div className="lg:col-span-2 space-y-6">
                             
-                            {/* LOADING STATE */}
                             {isLoading && (
                                 <div className="space-y-4">
                                     <Skeleton className="h-24 w-full" />
@@ -188,7 +243,6 @@ export default function SearchPage() {
                                 </div>
                             )}
 
-                            {/* RENDER AFTER SEARCH */}
                             {!isLoading && hasSearched && (
                                 <>
                                     <div className="max-w-md">
@@ -196,25 +250,51 @@ export default function SearchPage() {
                                     </div>
                                     
                                     {searchResults.length === 0 ? (
-                                        <div className="text-center py-12 border rounded-xl bg-green-50/50 dark:bg-green-900/10 border-green-200 dark:border-green-900/20 backdrop-blur-sm">
-                                            <div className="bg-green-100 dark:bg-green-900/20 w-20 h-20 mx-auto rounded-full flex items-center justify-center mb-4 shadow-inner">
-                                                <ShieldCheck className="h-10 w-10 text-green-600 dark:text-green-500" />
-                                            </div>
-                                            
-                                            <h3 className="text-2xl font-bold text-slate-800 dark:text-slate-100">
-                                                {t('search.noResults.title') || "Švaru!"}
-                                            </h3>
-                                            
-                                            <p className="mt-3 text-muted-foreground max-w-md mx-auto leading-relaxed">
-                                                Pagal užklausą <span className="font-semibold text-foreground">"{currentQuery}"</span> įrašų nerasta.
-                                            </p>
-                                            
-                                            <div className="mt-8 pt-6 border-t border-green-200/50 dark:border-green-900/30">
-                                                <p className="text-sm text-muted-foreground">
-                                                    Turite informacijos apie šį asmenį? <Link href="/reports/add" className="font-medium underline text-primary hover:text-primary/80 transition-colors">Sukurti naują įrašą</Link>.
-                                                </p>
-                                            </div>
-                                        </div>
+                                        <Card className="text-center py-12">
+                                            <CardHeader>
+                                                <div className="bg-green-100 dark:bg-green-900/20 w-20 h-20 mx-auto rounded-full flex items-center justify-center mb-4 shadow-inner">
+                                                    <ShieldCheck className="h-10 w-10 text-green-600 dark:text-green-500" />
+                                                </div>
+                                                <CardTitle className="text-2xl font-bold text-slate-800 dark:text-slate-100">
+                                                    {t('search.noResults.title')}
+                                                </CardTitle>
+                                                <CardDescription className="mt-3 text-muted-foreground max-w-md mx-auto leading-relaxed">
+                                                    Pagal užklausą <span className="font-semibold text-foreground">"{currentQuery}"</span> įrašų nerasta.
+                                                </CardDescription>
+                                            </CardHeader>
+                                            <CardContent>
+                                                <div className="mt-4 pt-6 border-t border-slate-200 dark:border-slate-800/50 w-full max-w-lg mx-auto">
+                                                    <h4 className="font-semibold text-foreground">Neturite įrašo? Išsiųskite patikros užklausą</h4>
+                                                    <p className="text-sm text-muted-foreground mt-1 mb-4">Nurodykite buvusio darbdavio el. paštą ir mes išsiųsime saugią nuorodą atsiliepimui pateikti.</p>
+                                                    <div className="space-y-4 text-left">
+                                                        <div>
+                                                            <Label htmlFor="targetEmail">Buvusio Darbdavio El. Paštas</Label>
+                                                            <Input
+                                                                id="targetEmail"
+                                                                placeholder="darbdavys@imone.lt"
+                                                                value={targetEmail}
+                                                                onChange={(e) => setTargetEmail(e.target.value)}
+                                                                disabled={isRequesting}
+                                                            />
+                                                        </div>
+                                                         <div>
+                                                            <Label htmlFor="targetCompany">Įmonės Pavadinimas</Label>
+                                                            <Input
+                                                                id="targetCompany"
+                                                                placeholder="UAB Pavyzdys"
+                                                                value={targetCompany}
+                                                                onChange={(e) => setTargetCompany(e.target.value)}
+                                                                disabled={isRequesting}
+                                                            />
+                                                        </div>
+                                                        <Button className="w-full" onClick={handleVerificationRequest} disabled={isRequesting || !targetEmail || !targetCompany}>
+                                                            {isRequesting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+                                                            Siųsti Užklausą
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            </CardContent>
+                                        </Card>
                                     ) : (
                                         <div className="space-y-6 animate-in fade-in-from-bottom-4 duration-500">
                                             <div className="flex items-center justify-between">
@@ -236,7 +316,6 @@ export default function SearchPage() {
                                 </>
                             )}
 
-                            {/* INITIAL STATE */}
                              {!isLoading && !hasSearched && (
                                 <div className="text-center py-16 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50/50 dark:bg-slate-900/20">
                                     <UserSearch className="h-12 w-12 mx-auto text-slate-300 dark:text-slate-600 mb-4" />
@@ -248,7 +327,6 @@ export default function SearchPage() {
                             )}
                         </div>
 
-                        {/* RIGHT SIDEBAR */}
                         <div className="lg:col-span-1">
                             <LiveActivityFeed />
                         </div>
@@ -259,4 +337,3 @@ export default function SearchPage() {
     );
 }
 
-    
