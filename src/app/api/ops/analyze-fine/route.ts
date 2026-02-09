@@ -6,8 +6,8 @@ import { z } from 'zod';
 
 // Zod Schema for structured data extraction
 const FineDataSchema = z.object({
-  date: z.string().describe("The date of the fine in YYYY-MM-DD format."),
-  time: z.string().describe("The time of the fine in HH:MM format."),
+  date: z.string().nullable().describe("The date of the fine in YYYY-MM-DD format, or null if not found."),
+  time: z.string().nullable().describe("The time of the fine in HH:MM format, or null if not found."),
   amount: z.string().describe("The total fine amount, including currency (e.g., 150.00 EUR)."),
   location: z.string().describe("The specific location of the incident (City, Street or Road name)."),
   violation: z.string().describe("A short description of the violation (e.g., Speeding, Parking violation)."),
@@ -38,15 +38,25 @@ export async function POST(req: NextRequest) {
     // Convert the file to a Data URI for the model
     const dataUri = await fileToDataURI(file);
 
-    const prompt = `
-      Analyze this traffic fine document. Your task is to act as a data extraction engine.
-      Extract the following information and return it as a raw JSON object, conforming to the provided schema.
-      Do not include any markdown, backticks, or explanatory text. Only the JSON object is allowed.
-    `;
+    const prompt = `Analyze this traffic fine document image/PDF. Extract structured data in JSON format:
+        {
+          "date": "YYYY-MM-DD" (or null),
+          "time": "HH:MM" (or null),
+          "amount": "100.00 EUR",
+          "location": "City/Road",
+          "violation": "Short description",
+          "licensePlate": "XX-0000"
+        }
+        
+        CRITICAL RULES:
+        1. If the TIME or DATE is not explicitly written on the document, set the value to null. DO NOT GUESS.
+        2. DO NOT invent a time from serial numbers or other random digits.
+        3. If you are not 100% sure, use null.
+        4. Return ONLY raw JSON.`;
     
     // Generate content using the Genkit AI instance
     const { output } = await ai.generate({
-      model: googleAI.model('gemini-1.5-flash-latest'),
+      model: googleAI.model('gemini-2.5-flash'),
       prompt: [
         { text: prompt },
         { media: { url: dataUri, contentType: file.type } }
