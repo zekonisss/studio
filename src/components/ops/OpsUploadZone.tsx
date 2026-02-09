@@ -1,3 +1,4 @@
+
 "use client";
 
 import { UploadCloud, FileText, HardDrive } from 'lucide-react';
@@ -17,10 +18,7 @@ export function OpsUploadZone({ title, description, accept, onFileSelect, icon =
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      console.log("File selected via click:", e.target.files[0].name);
       onFileSelect(e.target.files[0]);
-      // Reset input to allow re-selecting the same file
-      e.target.value = '';
     }
   };
   
@@ -30,7 +28,6 @@ export function OpsUploadZone({ title, description, accept, onFileSelect, icon =
     setIsDragging(false);
     const files = e.dataTransfer.files;
     if (files && files.length > 0) {
-      console.log("File dropped:", files[0].name);
       onFileSelect(files[0]);
     }
   };
@@ -77,6 +74,10 @@ export function OpsUploadZone({ title, description, accept, onFileSelect, icon =
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" 
           accept={accept}
           onChange={handleFileChange}
+          onClick={(event) => {
+            // This is the fix: reset the input value to allow re-selecting the same file.
+            (event.target as HTMLInputElement).value = '';
+          }}
         />
     </div>
   );

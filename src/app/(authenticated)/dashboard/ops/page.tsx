@@ -27,14 +27,24 @@ const MOCK_TACHO_DATA: Activity[] = [
   { type: 'REST',    startTime: '16:15', duration: 465 }, // Remaining rest
 ];
 
+const LoadingSpinner = ({ text }: { text: string }) => (
+    <div className="flex h-48 flex-col items-center justify-center text-center rounded-2xl border-2 border-dashed">
+        <Loader2 className="h-8 w-8 animate-spin text-primary mb-3" />
+        <p className="text-sm font-medium text-muted-foreground">{text}</p>
+    </div>
+);
+
 
 export default function OpsCenterPage() {
   const { toast } = useToast();
   const { t } = useLanguage();
+
   const [fineData, setFineData] = useState<FineData | null>(null);
   const [tachoData, setTachoData] = useState<Activity[] | null>(null);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
+  
+  const [isFineLoading, setIsFineLoading] = useState(false);
+  const [isTachoLoading, setIsTachoLoading] = useState(false);
 
 
   useEffect(() => {
@@ -47,7 +57,7 @@ export default function OpsCenterPage() {
   }, [fineData, tachoData]);
 
   const handleFineUpload = async (file: File) => {
-    setIsProcessing(true);
+    setIsFineLoading(true);
     setFineData(null); // Clear previous fine data
 
     const formData = new FormData();
@@ -78,13 +88,19 @@ export default function OpsCenterPage() {
         description: error.message || t('ops.toast.error.description'),
       });
     } finally {
-      setIsProcessing(false);
+      setIsFineLoading(false);
     }
   };
   
   const handleTachoUpload = (file: File) => {
-    console.log("Tacho file uploaded:", file.name);
-    setTachoData(MOCK_TACHO_DATA);
+    setIsTachoLoading(true);
+    setTachoData(null);
+    
+    // Simulate reading the binary file
+    setTimeout(() => {
+      setTachoData(MOCK_TACHO_DATA);
+      setIsTachoLoading(false);
+    }, 1500);
   };
   
   const generateAppealPDF = async () => {
@@ -171,32 +187,27 @@ export default function OpsCenterPage() {
 
     return null;
   }
-  
-  const renderInitialView = () => (
-     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <OpsUploadZone 
-          title={t('ops.fineProtocol.title')}
-          description={t('ops.fineProtocol.description')}
-          accept="application/pdf,image/jpeg,image/png"
-          onFileSelect={handleFineUpload}
-          icon="document"
-        />
-        <OpsUploadZone 
-          title={t('ops.tachoFile.title')}
-          description={t('ops.tachoFile.description')}
-          accept=".ddd,.v1b"
-          onFileSelect={handleTachoUpload}
-          icon="tacho"
-        />
-    </div>
-  );
 
-  const renderAnalysisView = () => (
-    <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start animate-in fade-in-50">
-      <div className="lg:col-span-2 space-y-8">
-        {fineData ? (
+  return (
+    <div className="max-w-7xl mx-auto space-y-8">
+      <header>
+        <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground">
+          {t('ops.title')}
+        </h1>
+        <p className="mt-2 text-lg text-muted-foreground">
+          {t('ops.description')}
+        </p>
+      </header>
+      
+       <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start">
+        
+        {/* Left Column */}
+        <div className="lg:col-span-2 space-y-8">
+          {isFineLoading ? (
+            <LoadingSpinner text={t('ops.processing.title')} />
+          ) : fineData ? (
             <FineCard data={fineData} />
-        ) : (
+          ) : (
             <OpsUploadZone 
               title={t('ops.fineProtocol.title')}
               description={t('ops.fineProtocol.description')}
@@ -204,20 +215,23 @@ export default function OpsCenterPage() {
               onFileSelect={handleFineUpload}
               icon="document"
             />
-        )}
-      </div>
-      
-      <div className="lg:col-span-3 space-y-8">
-          {tachoData ? (
-              <div className="p-6 bg-card border rounded-2xl shadow-sm">
-                  <div className="flex items-center gap-3 mb-6">
-                      <div className="p-2 bg-muted rounded-lg">
-                          <GanttChartSquare className="w-6 h-6 text-muted-foreground"/>
-                      </div>
-                      <h3 className="text-xl font-semibold text-foreground">{t('ops.timeline.title')}</h3>
-                  </div>
-                  <TachoTimeline activities={tachoData} />
-              </div>
+          )}
+        </div>
+        
+        {/* Right Column */}
+        <div className="lg:col-span-3 space-y-8">
+          {isTachoLoading ? (
+             <LoadingSpinner text={t('ops.processing.tacho')} />
+          ) : tachoData ? (
+            <div className="p-6 bg-card border rounded-2xl shadow-sm">
+                <div className="flex items-center gap-3 mb-6">
+                    <div className="p-2 bg-muted rounded-lg">
+                        <GanttChartSquare className="w-6 h-6 text-muted-foreground"/>
+                    </div>
+                    <h3 className="text-xl font-semibold text-foreground">{t('ops.timeline.title')}</h3>
+                </div>
+                <TachoTimeline activities={tachoData} />
+            </div>
           ) : (
             <OpsUploadZone 
               title={t('ops.tachoFile.title')}
@@ -243,40 +257,7 @@ export default function OpsCenterPage() {
                 )}
               </div>
           )}
-      </div>
-    </div>
-  );
-  
-  const renderContent = () => {
-    if (isProcessing) {
-        return (
-             <div className="flex flex-col items-center justify-center text-center py-20">
-                <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-                <p className="text-lg font-medium text-muted-foreground">{t('ops.processing.title')}</p>
-                <p className="text-sm text-muted-foreground">{t('ops.processing.description')}</p>
-            </div>
-        )
-    }
-
-    if(fineData || tachoData) {
-        return renderAnalysisView();
-    }
-    
-    return renderInitialView();
-  };
-
-  return (
-    <div className="max-w-7xl mx-auto space-y-8">
-      <header>
-        <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground">
-          {t('ops.title')}
-        </h1>
-        <p className="mt-2 text-lg text-muted-foreground">
-          {t('ops.description')}
-        </p>
-      </header>
-      <div>
-        {renderContent()}
+        </div>
       </div>
     </div>
   );

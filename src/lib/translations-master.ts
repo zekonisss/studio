@@ -236,7 +236,7 @@ export const translationsMaster: Record<string, Partial<Record<Locale, string>>>
   'reports.history.detailsModal.tags': { lt: 'Žymos', en: 'Tags', ru: 'Теги', pl: 'Tagi', lv: 'Birkas', et: 'Sildid' },
   'reports.history.detailsModal.comment': { lt: 'Komentaras', en: 'Comment', ru: 'Комментарий', pl: 'Komentarz', lv: 'Komentārs', et: 'Kommentaar' },
   'reports.history.detailsModal.attachedFile': { lt: 'Prisegtas failas', en: 'Attached File', ru: 'Прикрепленный файл', pl: 'Załączony plik', lv: 'Pievienotais fails', et: 'Lisatud fail' },
-  'reports.history.detailsModal.imageAlt': { lt: 'Priedas prie įrašo apie {fullName}', en: 'Attachment for the report about {fullName}', ru: 'Приложение к записи о {fullName}', pl: 'Załącznik do wpisu o {fullName}', lv: 'Pielikums ierakstam par {fullName}', et: 'Lisa kirjele {fullName} kohta' },
+  'reports.history.detailsModal.imageAlt': { lt: 'Priedas prie įrašo apie {fullName}', en: 'Attachment for report about {fullName}', ru: 'Приложение к записи о {fullName}', pl: 'Załącznik do wpisu o {fullName}', lv: 'Pielikums ierakstam par {fullName}', et: 'Lisa kirjele {fullName} kohta' },
   'reports.history.detailsModal.submittedByCompany': { lt: 'Pateikusi įmonė', en: 'Submitted by Company', ru: 'Компания-отправитель', pl: 'Firma zgłaszająca', lv: 'Iesniedzējs uzņēmums', et: 'Esitanud ettevõte' },
   'reports.history.detailsModal.submissionDate': { lt: 'Pateikimo data', en: 'Submission Date', ru: 'Дата отправки', pl: 'Data zgłoszenia', lv: 'Iesniegšanas datums', et: 'Esitamise kuupäev' },
   'reports.import.title': { lt: 'Masinis įrašų importas', en: 'Bulk Report Import', ru: 'Массовый импорт записей', pl: 'Import masowy wpisów', lv: 'Masveida ierakstu imports', et: 'Kirjete massimport' },
@@ -828,7 +828,8 @@ export const translationsMaster: Record<string, Partial<Record<Locale, string>>>
   'ops.analysis.match': { lt: 'Duomenys sutampa: Baudos laikas ({time}) sutampa su aktyvia veikla (\'{activityType}\').', en: 'Data matches: Fine time ({time}) coincides with active duty (\'{activityType}\').', ru: 'Данные совпадают: время штрафа ({time}) совпадает с активной деятельностью (\'{activityType}\').', pl: 'Dane zgodne: czas mandatu ({time}) zbiega się z aktywną pracą (\'{activityType}\').', lv: 'Dati sakrīt: soda laiks ({time}) sakrīt ar aktīvu darbību (\'{activityType}\').', et: 'Andmed ühtivad: trahviaeg ({time}) langeb kokku aktiivse tegevusega (\'{activityType}\').' },
   'ops.analysis.error': { lt: 'Nepavyko nustatyti veiklos baudos fiksavimo metu. Patikrinkite Tacho failo duomenis.', en: 'Failed to determine activity at the time of the fine. Please check the Tacho file data.', ru: 'Не удалось определить деятельность во время фиксации штрафа. Проверьте данные файла тахографа.', pl: 'Nie udało się ustalić aktywności w momencie nałożenia mandatu. Sprawdź dane pliku tacho.', lv: 'Neizdevās noteikt darbību soda fiksēšanas laikā. Lūdzu, pārbaudiet tahogrāfa faila datus.', et: 'Trahvi määramise ajal ei õnnestunud tegevust kindlaks teha. Palun kontrollige tahhograafi faili andmeid.' },
   'ops.generateAppealButton': { lt: 'Generuoti Apeliaciją', en: 'Generate Appeal', ru: 'Создать апелляцию', pl: 'Generuj odwołanie', lv: 'Ģenerēt apelāciju', et: 'Genereeri edasikaebus' },
-  'ops.processing.title': { lt: 'Analizuojamas failas...', en: 'Analyzing file...', ru: 'Анализ файла...', pl: 'Analizowanie pliku...', lv: 'Analizē failu...', et: 'Faili analüüsimine...' },
+  'ops.processing.title': { lt: 'Analizuojamas baudos protokolas...', en: 'Analyzing fine protocol...', ru: 'Анализ протокола о штрафе...', pl: 'Analizowanie protokołu mandatu...', lv: 'Analizē soda protokolu...', et: 'Trahviprotokolli analüüsimine...' },
+  'ops.processing.tacho': { lt: 'Analizuojamas Tacho failas...', en: 'Analyzing Tacho file...', ru: 'Анализ файла тахографа...', pl: 'Analizowanie pliku tacho...', lv: 'Analizē tahogrāfa failu...', et: 'Tahhograafi faili analüüsimine...' },
   'ops.processing.description': { lt: 'Tai gali užtrukti kelias akimirkas.', en: 'This may take a few moments.', ru: 'Это может занять несколько секунд.', pl: 'To może potrwać kilka chwil.', lv: 'Tas var aizņemt dažus mirkļus.', et: 'See võib võtta mõne hetke.' },
   'ops.fineCard.title': { lt: 'Baudos informacija', en: 'Fine Information', ru: 'Информация о штрафе', pl: 'Informacje o mandacie', lv: 'Informācija par sodu', et: 'Trahvi teave' },
   'ops.fineCard.status.paid': { lt: 'Apmokėta', en: 'Paid', ru: 'Оплачено', pl: 'Zapłacono', lv: 'Apmaksāts', et: 'Makstud' },
@@ -855,4 +856,5 @@ export const translationsMaster: Record<string, Partial<Record<Locale, string>>>
     
 
     
+
 
