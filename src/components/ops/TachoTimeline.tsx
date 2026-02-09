@@ -1,6 +1,8 @@
+
 "use client";
 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useLanguage } from '@/contexts/language-context';
 
 interface Activity {
   type: 'DRIVE' | 'WORK' | 'REST' | 'BREAK' | 'UNKNOWN';
@@ -27,19 +29,17 @@ const statusStyles: Record<Activity['type'], string> = {
   UNKNOWN: 'bg-red-500',
 };
 
-const statusLabels: Record<Activity['type'], string> = {
-    DRIVE: 'Vairavimas',
-    WORK: 'Kitas darbas',
-    REST: 'Poilsis',
-    BREAK: 'Pertrauka',
-    UNKNOWN: 'Neatpažinta / Klaida',
-}
-
 export function TachoTimeline({ activities }: { activities: Activity[] }) {
+  const { t } = useLanguage();
   const totalMinutesInDay = 1440;
 
   if (!activities || activities.length === 0) {
       return null;
+  }
+  
+  const getStatusLabel = (type: Activity['type']) => {
+      const key = `ops.timeline.activity.${type}`;
+      return t(key);
   }
 
   return (
@@ -51,7 +51,7 @@ export function TachoTimeline({ activities }: { activities: Activity[] }) {
             const endTime = addMinutes(activity.startTime, activity.duration);
             const durationHours = Math.floor(activity.duration / 60);
             const durationMins = activity.duration % 60;
-            const durationString = `${durationHours > 0 ? `${durationHours}h` : ''} ${durationMins > 0 ? `${durationMins}min` : ''}`.trim();
+            const durationString = t('ops.timeline.tooltip.duration', { hours: durationHours, minutes: durationMins });
 
             return (
               <Tooltip key={index} delayDuration={0}>
@@ -59,11 +59,11 @@ export function TachoTimeline({ activities }: { activities: Activity[] }) {
                   <div
                     className={`h-full ${statusStyles[activity.type]} transition-all duration-300 hover:brightness-110 cursor-pointer`}
                     style={{ width: `${widthPercent}%` }}
-                    title={`${statusLabels[activity.type]}: ${activity.startTime} - ${endTime}`}
+                    title={`${getStatusLabel(activity.type)}: ${activity.startTime} - ${endTime}`}
                   />
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p className="font-semibold">{statusLabels[activity.type]}</p>
+                  <p className="font-semibold">{getStatusLabel(activity.type)}</p>
                   <p className="text-sm text-muted-foreground">
                     {activity.startTime} - {endTime} ({durationString})
                   </p>

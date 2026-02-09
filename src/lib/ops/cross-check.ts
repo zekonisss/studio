@@ -19,7 +19,8 @@ export interface Activity {
 
 export interface AnalysisResult {
     status: 'CONFLICT' | 'MATCH' | 'ERROR' | 'NONE';
-    message: string;
+    messageKey: string;
+    messageParams?: Record<string, any>;
 }
 
 /**
@@ -69,16 +70,17 @@ export const analyzeDiscrepancy = (fine: FineData, activities: Activity[]): Anal
                 case 'UNKNOWN':
                     return {
                         status: 'CONFLICT',
-                        message: `Užfiksuotas neatitikimas: Baudos laikas (${fine.time}) patenka į '${activity.type}' periodą. Rekomenduojama apeliacija.`,
+                        messageKey: 'ops.analysis.conflict',
+                        messageParams: { time: fine.time, activityType: activity.type }
                     };
                 case 'DRIVE':
                 case 'WORK':
                     return {
                         status: 'MATCH',
-                        message: `Duomenys sutampa: Baudos laikas (${fine.time}) sutampa su aktyvia veikla ('${activity.type}').`,
+                        messageKey: 'ops.analysis.match',
+                        messageParams: { time: fine.time, activityType: activity.type }
                     };
                 default:
-                    // This case should not be reached if types are correct
                     continue;
             }
         }
@@ -86,6 +88,6 @@ export const analyzeDiscrepancy = (fine: FineData, activities: Activity[]): Anal
 
     return {
         status: 'ERROR',
-        message: 'Nepavyko nustatyti veiklos baudos fiksavimo metu. Patikrinkite Tacho failo duomenis.',
+        messageKey: 'ops.analysis.error',
     };
 };
