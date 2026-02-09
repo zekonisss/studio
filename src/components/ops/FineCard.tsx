@@ -2,7 +2,7 @@
 "use client";
 
 import { Badge } from '@/components/ui/badge';
-import { FileCode2, Calendar, MapPin, Euro, AlertCircle } from 'lucide-react';
+import { FileCode2, Calendar, MapPin, Euro, AlertCircle, Truck } from 'lucide-react';
 import { useLanguage } from '@/contexts/language-context';
 
 interface FineData {
@@ -11,12 +11,13 @@ interface FineData {
     amount: string;
     location: string;
     violation: string;
+    licensePlate?: string | null;
     status: 'Pending' | 'Paid';
 }
 
 export function FineCard({ data }: { data: FineData }) {
   const { t } = useLanguage();
-  const { date, time, amount, location, violation, status } = data;
+  const { date, time, amount, location, violation, licensePlate, status } = data;
 
   return (
     <div className="bg-white dark:bg-gray-900/50 border border-gray-200/80 dark:border-gray-800 rounded-2xl p-6 shadow-sm">
@@ -37,8 +38,12 @@ export function FineCard({ data }: { data: FineData }) {
                 <span className="font-medium text-gray-800 dark:text-gray-200 text-right">{violation}</span>
             </div>
             <div className="flex items-center justify-between">
+                <span className="text-gray-500 dark:text-gray-400 flex items-center gap-2"><Truck className="w-4 h-4" /> {t('ops.fineCard.licensePlate')}</span>
+                <span className="font-mono text-sm font-semibold bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded border border-gray-300 dark:border-gray-700">{licensePlate || t('ops.fineCard.notSet')}</span>
+            </div>
+            <div className="flex items-center justify-between">
                 <span className="text-gray-500 dark:text-gray-400 flex items-center gap-2"><Calendar className="w-4 h-4" /> {t('ops.fineCard.dateTime')}</span>
-                <span className="font-medium text-gray-800 dark:text-gray-200">{date} {time}</span>
+                <span className="font-medium text-gray-800 dark:text-gray-200">{date || t('ops.fineCard.notSet')} {time || ''}</span>
             </div>
             <div className="flex items-center justify-between">
                 <span className="text-gray-500 dark:text-gray-400 flex items-center gap-2"><Euro className="w-4 h-4" /> {t('ops.fineCard.amount')}</span>

@@ -11,7 +11,7 @@ const FineDataSchema = z.object({
   amount: z.string().describe("The total fine amount, including currency (e.g., 150.00 EUR)."),
   location: z.string().describe("The specific location of the incident (City, Street or Road name)."),
   violation: z.string().describe("A short description of the violation (e.g., Speeding, Parking violation)."),
-  licensePlate: z.string().optional().describe("The vehicle's license plate number, if found in the document."),
+  licensePlate: z.string().nullable().describe("The vehicle's license plate number. Can be one or two plates. Null if not found."),
 });
 
 // Helper function to convert a file to a Base64 Data URI
@@ -45,18 +45,19 @@ export async function POST(req: NextRequest) {
           "amount": "100.00 EUR",
           "location": "City/Road",
           "violation": "Short description",
-          "licensePlate": "XX-0000"
+          "licensePlate": "ABC-123" (or "ABC-123 / XY-999", or null if not found)
         }
         
         CRITICAL RULES:
         1. If the TIME or DATE is not explicitly written on the document, set the value to null. DO NOT GUESS.
         2. DO NOT invent a time from serial numbers or other random digits.
         3. If you are not 100% sure, use null.
-        4. Return ONLY raw JSON.`;
+        4. Extract 'licensePlate'. If both Truck and Trailer plates are visible, include both (e.g., 'ABC-123 / XY-999'). If unclear or not found, use null.
+        5. Return ONLY raw JSON.`;
     
     // Generate content using the Genkit AI instance
     const { output } = await ai.generate({
-      model: googleAI.model('gemini-2.5-flash'),
+      model: googleAI.model('gemini-1.5-flash'),
       prompt: [
         { text: prompt },
         { media: { url: dataUri, contentType: file.type } }

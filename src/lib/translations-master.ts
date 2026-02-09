@@ -835,6 +835,8 @@ export const translationsMaster: Record<string, Partial<Record<Locale, string>>>
   'ops.fineCard.status.paid': { lt: 'Apmokėta', en: 'Paid', ru: 'Оплачено', pl: 'Zapłacono', lv: 'Apmaksāts', et: 'Makstud' },
   'ops.fineCard.status.pending': { lt: 'Laukiama', en: 'Pending', ru: 'Ожидание', pl: 'Oczekuje', lv: 'Gaida', et: 'Ootel' },
   'ops.fineCard.violation': { lt: 'Pažeidimas', en: 'Violation', ru: 'Нарушение', pl: 'Naruszenie', lv: 'Pārkāpums', et: 'Rikkumine' },
+  'ops.fineCard.licensePlate': { lt: 'Valstybinis nr.', en: 'License Plate', ru: 'Номерной знак', pl: 'Numer rejestracyjny', lv: 'Valsts numurs', et: 'Numbrimärk' },
+  'ops.fineCard.notSet': { lt: 'Nenustatyta', en: 'Not Set', ru: 'Не установлено', pl: 'Nie ustawiono', lv: 'Nav iestatīts', et: 'Määramata' },
   'ops.fineCard.dateTime': { lt: 'Data ir laikas', en: 'Date and Time', ru: 'Дата и время', pl: 'Data i godzina', lv: 'Datums un laiks', et: 'Kuupäev ja kellaaeg' },
   'ops.fineCard.amount': { lt: 'Suma', en: 'Amount', ru: 'Сумма', pl: 'Kwota', lv: 'Summa', et: 'Summa' },
   'ops.fineCard.location': { lt: 'Vieta', en: 'Location', ru: 'Место', pl: 'Miejsce', lv: 'Vieta', et: 'Asukoht' },
@@ -859,6 +861,7 @@ export const translationsMaster: Record<string, Partial<Record<Locale, string>>>
     
 
     
+
 
 
 
