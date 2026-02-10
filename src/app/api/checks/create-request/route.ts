@@ -1,100 +1,134 @@
-
 import { NextRequest, NextResponse } from 'next/server';
-import { adminDb } from '@/lib/firebase-admin';
+import { getFirestore } from 'firebase-admin/firestore';
+import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import crypto from 'crypto';
-import { Timestamp } from 'firebase-admin/firestore';
 
-export async function POST(req: NextRequest) {
-    if (!adminDb) {
-        console.error("Firebase Admin not initialized.");
-        return NextResponse.json({ success: false, error: 'Serverio konfigūracijos klaida.' }, { status: 500 });
+if (!getApps().length) {
+  const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY as string);
+  initializeApp({ credential: cert(serviceAccount) });
+}
+
+const db = getFirestore();
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { 
+      requesterId, 
+      driverName, 
+      birthDate, 
+      targetCompany, 
+      targetEmail, 
+      startDate, 
+      endDate, 
+      isCurrentEmployer,
+      requesterCompanyName 
+    } = body;
+
+    // --- 1. GRIEŽTA DUBLIKATŲ PATIKRA (IN-MEMORY) ---
+    // Paimame visas vartotojo užklausas (kad išvengtume indekso klaidų)
+    const snapshot = await db.collection('verification_requests')
+      .where('requesterId', '==', requesterId)
+      .get();
+
+    // Normalizuojame naujus duomenis palyginimui (mažosios raidės, be tarpų)
+    const newDriverClean = driverName.trim().toLowerCase();
+    const newCompanyClean = targetCompany.trim().toLowerCase();
+
+    const activeDuplicate = snapshot.docs.find(doc => {
+      const data = doc.data();
+      
+      // 1. Tikriname statusą (turi būti aktyvi užklausa)
+      // Jei statusas 'PENDING' (Laukiama) arba 'COMPLETED' (Gauta) - tai dublikatas.
+      // Jei statusas 'NEW' (Nerastas el. paštas/Ieškoma) - leidžiame kurti iš naujo, gal dabar rasim.
+      const isActive = data.status === 'PENDING' || data.status === 'COMPLETED';
+      if (!isActive) return false;
+
+      // 2. Tikriname laiką (30 dienų)
+      const created = new Date(data.createdAt);
+      const now = new Date();
+      const diffTime = Math.abs(now.getTime() - created.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      if (diffDays > 30) return false;
+
+      // 3. Tikriname duomenų sutapimą (Griežtai)
+      const existingDriver = (data.driverName || '').trim().toLowerCase();
+      const existingCompany = (data.targetCompany || '').trim().toLowerCase();
+      const existingBirth = data.birthDate;
+
+      const nameMatch = existingDriver === newDriverClean;
+      const companyMatch = existingCompany === newCompanyClean;
+      // Gimimo datą tikriname tik jei ji nurodyta abiejuose
+      const birthMatch = birthDate ? (existingBirth === birthDate) : true;
+
+      return nameMatch && companyMatch && birthMatch;
+    });
+
+    if (activeDuplicate) {
+      console.log(`[DUPLICATE BLOCKED] Grąžinama sena užklausa ID: ${activeDuplicate.id}`);
+      return NextResponse.json({ 
+        success: true, 
+        id: activeDuplicate.id, 
+        token: activeDuplicate.data().token,
+        message: 'Active request already exists',
+        isDuplicate: true
+      });
     }
 
-    try {
-        const body = await req.json();
-        const { driverName, driverBirthDate, driverId, targetEmail, targetCompany, requesterId, startDate, endDate, isCurrentEmployer } = body;
+    // --- 2. LOGIKA: El. Pašto Suradimas (Jei nėra) ---
+    let finalEmail = targetEmail;
+    let emailSource = 'USER';
+    let initialStatus = 'PENDING'; // Pagal nutylėjimą - laukiama
 
-        if (!driverName || !targetCompany || !driverBirthDate) {
-            return NextResponse.json({ success: false, error: 'Trūksta būtinų duomenų (vairuotojo vardo, gimimo datos arba įmonės pavadinimo).' }, { status: 400 });
-        }
-        
-        // --- 1. DUBLIKATŲ PATIKRA (Anti-Spam) ---
-        const duplicateSnapshot = await adminDb.collection('verification_requests')
-          .where('requesterId', '==', requesterId)
-          .where('targetCompany', '==', targetCompany)
-          .where('driverName', '==', driverName)
-          .where('driverBirthDate', '==', driverBirthDate)
-          .get();
-
-        if (!duplicateSnapshot.empty) {
-            const activeDuplicate = duplicateSnapshot.docs.find(doc => {
-              const data = doc.data();
-              if (!data.createdAt || !data.createdAt.toDate) return false;
-
-              const created = data.createdAt.toDate();
-              const now = new Date();
-              const diffTime = Math.abs(now.getTime() - created.getTime());
-              const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-              
-              return diffDays < 30; 
-            });
-
-            if (activeDuplicate) {
-              console.log(`[DUPLICATE BLOCKED] Request already exists for ${driverName} at ${targetCompany}`);
-              return NextResponse.json({ 
-                success: true, 
-                id: activeDuplicate.id, 
-                token: activeDuplicate.data().token,
-                message: 'Active request already exists for this driver/company within the last 30 days.',
-                isDuplicate: true
-              });
-            }
-        }
-
-
-        const requestData: any = {
-            driverName,
-            driverBirthDate,
-            driverId: driverId || null,
-            targetCompany,
-            status: 'PENDING', // Default status
-            createdAt: Timestamp.now(),
-            requesterId: requesterId || 'mock-user-id',
-            startDate: startDate || null,
-            endDate: endDate || null,
-            isCurrentEmployer: isCurrentEmployer || false,
-        };
-        
-        // Smart email logic: if no email, mark for research
-        if (!targetEmail || targetEmail.trim() === '') {
-            requestData.status = 'RESEARCH'; 
-            requestData.targetEmail = null;
-            
-            await adminDb.collection('verification_requests').add(requestData);
-            
-            return NextResponse.json({ 
-                success: true, 
-                message: "Užklausa priimta. Mūsų komanda suras kontaktą ir išsiųs užklausą." 
-            });
-        }
-        
-        // If email IS provided, proceed with token generation
-        requestData.targetEmail = targetEmail;
-        const token = crypto.randomBytes(32).toString('hex');
-        requestData.token = token;
-        await adminDb.collection('verification_requests').add(requestData);
-
-        const verificationLink = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/verify?token=${token}`;
-        console.log(`[EMAIL MOCK] To: ${targetEmail}, Link: ${verificationLink}`);
-
-        return NextResponse.json({ 
-          success: true, 
-          message: 'Užklausa išsiųsta! Buvęs darbdavys gavo patikros nuorodą.',
-          debugLink: verificationLink 
-        });
-
-    } catch (error: any) {
-        console.error('Error creating verification request:', error);
-        return NextResponse.json({ success: false, error: error.message || 'Įvyko vidinė serverio klaida kuriant užklausą.' }, { status: 500 });
+    if (!finalEmail || finalEmail.trim() === '') {
+       // A. Ieškome Directory
+       const cleanCompanyId = targetCompany.trim().toLowerCase().replace(/\s+/g, '');
+       const directoryDoc = await db.collection('company_directory').doc(cleanCompanyId).get();
+       
+       if (directoryDoc.exists && directoryDoc.data()?.email) {
+         finalEmail = directoryDoc.data()?.email;
+         emailSource = 'DIRECTORY';
+         console.log(`[DIRECTORY] Found email for ${targetCompany}: ${finalEmail}`);
+       } else {
+         // B. AI Spėjimas (Kol kas "Mock")
+         // Jei neradome el. pašto, užklausos statusas lieka 'NEW' (Ieškoma),
+         // kad administratorius (Tu) matytų ir galėtų surasti,
+         // ARBA bandome spėti.
+         
+         // Sprendimas: Bandom spėti info@, bet pažymim, kad tai spėjimas
+         finalEmail = `info@${targetCompany.replace(/[^a-zA-Z0-9]/g, '').toLowerCase()}.lt`; 
+         emailSource = 'AI_GUESS';
+         // Statusą paliekame PENDING, nes vis tiek išsiųsime laišką
+       }
     }
+
+    // --- 3. NAUJOS UŽKLAUSOS KŪRIMAS ---
+    const token = crypto.randomBytes(32).toString('hex');
+    
+    const newRequest = {
+      requesterId,
+      requesterCompanyName: requesterCompanyName || '',
+      driverName,
+      birthDate,
+      targetCompany,
+      targetEmail: finalEmail,
+      emailSource,
+      startDate,
+      endDate: endDate || null,
+      isCurrentEmployer: isCurrentEmployer || false,
+      status: initialStatus,
+      token,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    const docRef = await db.collection('verification_requests').add(newRequest);
+    console.log(`[CREATED] New request ID: ${docRef.id}`);
+
+    return NextResponse.json({ success: true, id: docRef.id, token });
+
+  } catch (error: any) {
+    console.error('API Error:', error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
 }
