@@ -201,3 +201,16 @@ export interface SignupFormValuesExtended {
   subscriptionType: 'trial' | 'paid';
   agreeToTerms: boolean;
 }
+
+export interface VerificationRequest {
+  id: string;
+  driverName: string;
+  targetCompany: string;
+  status: 'PENDING' | 'RESEARCH' | 'COMPLETED' | 'EXPIRED' | 'REJECTED';
+  createdAt: string; // ISO String
+  response?: {
+    workedHere: boolean;
+    wouldRehire: boolean;
+    comment: string;
+  };
+}

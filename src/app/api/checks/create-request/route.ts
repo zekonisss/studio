@@ -22,35 +22,40 @@ export async function POST(req: NextRequest) {
             driverName,
             driverBirthDate,
             driverId: driverId || null,
-            targetEmail: targetEmail || null,
             targetCompany,
-            status: 'PENDING',
+            status: 'PENDING', // Default status
             createdAt: Timestamp.now(),
             requesterId: requesterId || 'mock-user-id',
             startDate: startDate || null,
             endDate: endDate || null,
             isCurrentEmployer: isCurrentEmployer || false,
         };
-
-        if (!targetEmail) {
-            requestData.status = 'RESEARCH'; // Special status for our team to find the contact
+        
+        // Smart email logic: if no email, mark for research
+        if (!targetEmail || targetEmail.trim() === '') {
+            requestData.status = 'RESEARCH'; 
+            requestData.targetEmail = null;
+            
             await adminDb.collection('verification_requests').add(requestData);
+            
             return NextResponse.json({ 
                 success: true, 
                 message: "Užklausa priimta. Mūsų komanda suras kontaktą ir išsiųs užklausą." 
             });
         }
         
+        // If email IS provided, proceed with token generation
+        requestData.targetEmail = targetEmail;
         const token = crypto.randomBytes(32).toString('hex');
         requestData.token = token;
         await adminDb.collection('verification_requests').add(requestData);
 
-        const verificationLink = `http://localhost:3000/verify?token=${token}`;
+        const verificationLink = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/verify?token=${token}`;
         console.log(`[EMAIL MOCK] To: ${targetEmail}, Link: ${verificationLink}`);
 
         return NextResponse.json({ 
           success: true, 
-          message: 'Užklausa sėkmingai sukurta.',
+          message: 'Užklausa išsiųsta! Buvęs darbdavys gavo patikros nuorodą.',
           debugLink: verificationLink 
         });
 
@@ -59,5 +64,3 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ success: false, error: error.message || 'Įvyko vidinė serverio klaida kuriant užklausą.' }, { status: 500 });
     }
 }
-
-    
