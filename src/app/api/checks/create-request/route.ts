@@ -12,28 +12,38 @@ export async function POST(req: NextRequest) {
 
     try {
         const body = await req.json();
-        const { driverName, driverId, targetEmail, targetCompany, requesterId } = body;
+        const { driverName, driverId, targetEmail, targetCompany, requesterId, startDate, endDate, isCurrentEmployer } = body;
 
-        if (!driverName || !targetEmail || !targetCompany) {
-            return NextResponse.json({ success: false, error: 'Trūksta būtinų duomenų (vairuotojo vardo, el. pašto arba įmonės pavadinimo).' }, { status: 400 });
+        if (!driverName || !targetCompany) {
+            return NextResponse.json({ success: false, error: 'Trūksta būtinų duomenų (vairuotojo vardo arba įmonės pavadinimo).' }, { status: 400 });
         }
 
-        const token = crypto.randomBytes(32).toString('hex');
-
-        const requestData = {
-            token,
+        const requestData: any = {
             driverName,
-            driverId: driverId || null, // Can be null if not provided
-            targetEmail,
+            driverId: driverId || null,
+            targetEmail: targetEmail || null,
             targetCompany,
             status: 'PENDING',
-            createdAt: Timestamp.now(), // Use Firestore Timestamp for consistency
-            requesterId: requesterId || 'mock-user-id', // Use provided or mock
+            createdAt: Timestamp.now(),
+            requesterId: requesterId || 'mock-user-id',
+            startDate: startDate || null,
+            endDate: endDate || null,
+            isCurrentEmployer: isCurrentEmployer || false,
         };
 
+        if (!targetEmail) {
+            requestData.status = 'RESEARCH'; // Special status for our team to find the contact
+            await adminDb.collection('verification_requests').add(requestData);
+            return NextResponse.json({ 
+                success: true, 
+                message: "Užklausa priimta. Mūsų komanda suras kontaktą ir išsiųs užklausą." 
+            });
+        }
+        
+        const token = crypto.randomBytes(32).toString('hex');
+        requestData.token = token;
         await adminDb.collection('verification_requests').add(requestData);
 
-        // Simulate Email Sending as requested
         const verificationLink = `http://localhost:3000/verify?token=${token}`;
         console.log(`[EMAIL MOCK] To: ${targetEmail}, Link: ${verificationLink}`);
 

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Suspense, useEffect, useState } from 'react';
@@ -8,14 +9,24 @@ import { Textarea } from '@/components/ui/textarea';
 import { Loader2, CheckCircle2, AlertTriangle, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 
+interface RequestDetails {
+    driverName: string;
+    requestingCompany: string;
+    startDate?: string | null;
+    endDate?: string | null;
+    isCurrentEmployer?: boolean;
+}
+
 // Helper component to use searchParams with Suspense
 function VerificationPageContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
 
   const [step, setStep] = useState<'loading' | 'form' | 'success' | 'invalid'>('loading');
-  const [driverName, setDriverName] = useState('Jonas Jonaitis'); // Mock
-  const [requestingCompany, setRequestingCompany] = useState('UAB Greitkelis'); // Mock
+  const [requestDetails, setRequestDetails] = useState<RequestDetails>({
+      driverName: 'Jonas Jonaitis', // Mock
+      requestingCompany: 'UAB Greitkelis', // Mock
+  });
   const [answers, setAnswers] = useState({
     workedHere: null as boolean | null,
     wouldRehire: null as boolean | null,
@@ -28,12 +39,23 @@ function VerificationPageContent() {
     setTimeout(() => {
       if (token) {
         // In a real app, you would fetch data based on the token
+        // For this mock, we'll read from URL params for testing.
+        const start = searchParams.get('start');
+        const end = searchParams.get('end');
+        const current = searchParams.get('current') === 'true';
+
+        setRequestDetails(prev => ({
+            ...prev,
+            startDate: start,
+            endDate: end,
+            isCurrentEmployer: current
+        }));
         setStep('form');
       } else {
         setStep('invalid');
       }
     }, 1500);
-  }, [token]);
+  }, [token, searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,6 +73,24 @@ function VerificationPageContent() {
     }, 1000);
   };
   
+  const renderQuestion1 = () => {
+    const { startDate, endDate, isCurrentEmployer } = requestDetails;
+    if (isCurrentEmployer) {
+      return `Ar šis asmuo šiuo metu dirba Jūsų įmonėje?`;
+    }
+    if (startDate && endDate) {
+      return `Ar šis asmuo dirbo Jūsų įmonėje laikotarpiu nuo ${startDate} iki ${endDate}?`;
+    }
+    return 'Ar šis asmuo dirbo Jūsų įmonėje?';
+  };
+
+  const renderQuestion2 = () => {
+    if (requestDetails.isCurrentEmployer) {
+      return 'Jei darbuotojas nuspręstų išeiti, ar priimtumėte jį atgal ateityje?';
+    }
+    return 'Ar priimtumėte šį asmenį dirbti atgal?';
+  };
+
   if (step === 'loading') {
     return (
       <div className="flex flex-col items-center justify-center text-center gap-4 p-8">
@@ -106,13 +146,13 @@ function VerificationPageContent() {
         <CardHeader>
           <CardTitle className="text-2xl">Prašymas Patvirtinti Reputaciją</CardTitle>
           <CardDescription>
-            Įmonė <span className="font-semibold text-foreground">{requestingCompany}</span> prašo informacijos apie vairuotoją <span className="font-semibold text-foreground">{driverName}</span>.
+            Įmonė <span className="font-semibold text-foreground">{requestDetails.requestingCompany}</span> prašo informacijos apie vairuotoją <span className="font-semibold text-foreground">{requestDetails.driverName}</span>.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           
           <div className="space-y-3">
-              <label className="font-medium">1. Ar šis asmuo dirbo Jūsų įmonėje?</label>
+              <label className="font-medium">1. {renderQuestion1()}</label>
               <div className="flex gap-3">
                   <Button type="button" variant={answers.workedHere === true ? 'default' : 'outline'} onClick={() => setAnswers(prev => ({...prev, workedHere: true}))} className="flex-1">Taip</Button>
                   <Button type="button" variant={answers.workedHere === false ? 'default' : 'outline'} onClick={() => setAnswers(prev => ({...prev, workedHere: false}))} className="flex-1">Ne</Button>
@@ -120,7 +160,7 @@ function VerificationPageContent() {
           </div>
 
           <div className="space-y-3">
-              <label className="font-medium">2. Ar priimtumėte šį asmenį dirbti atgal?</label>
+              <label className="font-medium">2. {renderQuestion2()}</label>
               <div className="flex gap-3">
                   <Button type="button" variant={answers.wouldRehire === true ? 'default' : 'outline'} onClick={() => setAnswers(prev => ({...prev, wouldRehire: true}))} className="flex-1">
                       <CheckCircle2 className="mr-2 h-4 w-4"/> Taip

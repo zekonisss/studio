@@ -22,6 +22,7 @@ import { DriverSearchStats } from "@/components/search/driver-search-stats";
 import Link from "next/link";
 import { SearchResultCard } from "@/components/search/SearchResultCard";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export default function SearchPage() {
     const { t } = useLanguage();
@@ -35,6 +36,9 @@ export default function SearchPage() {
     // State for verification request form
     const [targetEmail, setTargetEmail] = useState('');
     const [targetCompany, setTargetCompany] = useState('');
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
+    const [isCurrentEmployer, setIsCurrentEmployer] = useState(false);
     const [isRequesting, setIsRequesting] = useState(false);
 
     const form = useForm<SearchFormValues>({
@@ -52,6 +56,9 @@ export default function SearchPage() {
         // Reset verification form on new search
         setTargetEmail('');
         setTargetCompany('');
+        setStartDate('');
+        setEndDate('');
+        setIsCurrentEmployer(false);
     
         try {
              if (user) {
@@ -117,11 +124,11 @@ export default function SearchPage() {
     };
 
     const handleVerificationRequest = async () => {
-        if (!targetEmail || !targetCompany) {
+        if (!targetCompany) {
             toast({
                 variant: "destructive",
                 title: "Trūksta duomenų",
-                description: "Prašome užpildyti el. pašto ir įmonės laukus.",
+                description: "Prašome užpildyti įmonės pavadinimo lauką.",
             });
             return;
         }
@@ -135,6 +142,9 @@ export default function SearchPage() {
                     targetEmail,
                     targetCompany,
                     requesterId: user?.id,
+                    startDate,
+                    endDate: isCurrentEmployer ? null : endDate,
+                    isCurrentEmployer
                 }),
             });
             
@@ -144,18 +154,28 @@ export default function SearchPage() {
                 throw new Error(data.error || "Serverio klaida siunčiant užklausą.");
             }
             
+            if(data.message) {
+                toast({
+                    title: "Užklausa priimta!",
+                    description: data.message,
+                });
+            } else {
+                 toast({
+                    title: "Užklausa išsiųsta!",
+                    description: "Buvęs darbdavys gavo patikros nuorodą.",
+                });
+            }
+
             if (data.debugLink) {
               console.log("LINKAS:", data.debugLink); // Show in Browser Console (F12)
               alert(`DEBUG: Laiškas išsiųstas! Nuoroda: \n${data.debugLink}`); // Show Popup
             }
     
-            toast({
-                title: "Užklausa išsiųsta!",
-                description: "Buvęs darbdavys gavo patikros nuorodą.",
-            });
-    
             setTargetEmail('');
             setTargetCompany('');
+            setStartDate('');
+            setEndDate('');
+            setIsCurrentEmployer(false);
     
         } catch (error: any) {
             toast({
@@ -271,20 +291,10 @@ export default function SearchPage() {
                                             <CardContent>
                                                 <div className="mt-4 pt-6 border-t border-slate-200 dark:border-slate-800/50 w-full max-w-lg mx-auto">
                                                     <h4 className="font-semibold text-foreground">Neturite įrašo? Išsiųskite patikros užklausą</h4>
-                                                    <p className="text-sm text-muted-foreground mt-1 mb-4">Nurodykite buvusio darbdavio el. paštą ir mes išsiųsime saugią nuorodą atsiliepimui pateikti.</p>
+                                                    <p className="text-sm text-muted-foreground mt-1 mb-4">Nurodykite buvusio darbdavio duomenis ir mes išsiųsime saugią nuorodą atsiliepimui pateikti.</p>
                                                     <div className="space-y-4 text-left">
                                                         <div>
-                                                            <Label htmlFor="targetEmail">Buvusio Darbdavio El. Paštas</Label>
-                                                            <Input
-                                                                id="targetEmail"
-                                                                placeholder="darbdavys@imone.lt"
-                                                                value={targetEmail}
-                                                                onChange={(e) => setTargetEmail(e.target.value)}
-                                                                disabled={isRequesting}
-                                                            />
-                                                        </div>
-                                                         <div>
-                                                            <Label htmlFor="targetCompany">Įmonės Pavadinimas</Label>
+                                                            <Label htmlFor="targetCompany">Buvusio Darbdavio Įmonės Pavadinimas</Label>
                                                             <Input
                                                                 id="targetCompany"
                                                                 placeholder="UAB Pavyzdys"
@@ -293,7 +303,31 @@ export default function SearchPage() {
                                                                 disabled={isRequesting}
                                                             />
                                                         </div>
-                                                        <Button className="w-full" onClick={handleVerificationRequest} disabled={isRequesting || !targetEmail || !targetCompany}>
+                                                        <div className="grid grid-cols-2 gap-4">
+                                                           <div>
+                                                                <Label htmlFor="startDate">Darbo pradžia</Label>
+                                                                <Input id="startDate" value={startDate} onChange={(e) => setStartDate(e.target.value)} placeholder="MM/YYYY" disabled={isRequesting} />
+                                                            </div>
+                                                            <div>
+                                                                <Label htmlFor="endDate">Darbo pabaiga</Label>
+                                                                <Input id="endDate" value={endDate} onChange={(e) => setEndDate(e.target.value)} disabled={isRequesting || isCurrentEmployer} placeholder="MM/YYYY" />
+                                                            </div>
+                                                        </div>
+                                                         <div className="flex items-center space-x-2">
+                                                            <Checkbox id="isCurrentEmployer" checked={isCurrentEmployer} onCheckedChange={(checked) => setIsCurrentEmployer(!!checked)} disabled={isRequesting} />
+                                                            <Label htmlFor="isCurrentEmployer" className="text-sm font-normal">Šiuo metu dirba šioje įmonėje</Label>
+                                                        </div>
+                                                        <div>
+                                                            <Label htmlFor="targetEmail">Darbdavio El. Paštas (neprivaloma)</Label>
+                                                            <Input
+                                                                id="targetEmail"
+                                                                placeholder="Jei nežinote, palikite tuščią - mes surasime"
+                                                                value={targetEmail}
+                                                                onChange={(e) => setTargetEmail(e.target.value)}
+                                                                disabled={isRequesting}
+                                                            />
+                                                        </div>
+                                                        <Button className="w-full" onClick={handleVerificationRequest} disabled={isRequesting || !targetCompany}>
                                                             {isRequesting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
                                                             Siųsti Užklausą
                                                         </Button>
@@ -342,5 +376,3 @@ export default function SearchPage() {
         </div>
     );
 }
-
-
