@@ -1,94 +1,66 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getFirestore } from 'firebase-admin/firestore';
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenerativeAI } from '@google/generative-ai'; 
 import crypto from 'crypto';
 
-// --- INIT FIREBASE ---
 if (!getApps().length) {
   const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY as string);
   initializeApp({ credential: cert(serviceAccount) });
 }
 const db = getFirestore();
 
-// --- KONFIGURACIJA ---
-// Naudojame tavo turimą raktą.
-const API_KEY = process.env.GOOGLE_SEARCH_API_KEY || process.env.GEMINI_API_KEY;
-
-// --- GEMINI PAIEŠKOS LOGIKA 🧠 ---
-async function findSmartEmailWithGemini(companyName: string): Promise<{ email: string | null, source: string }> {
-  if (!API_KEY) {
-    console.warn("Nėra API rakto - praleidžiama AI paieška.");
-    return { email: null, source: 'NONE' };
+// --- SAUGI AI PAIEŠKA ---
+async function findEmailSafe(companyName: string) {
+  console.log(`[AI START] Searching for: ${companyName}`);
+  
+  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_SEARCH_API_KEY;
+  if (!apiKey) {
+    console.error("[AI SKIP] No API Key found.");
+    return null;
   }
 
   try {
-    const genAI = new GoogleGenerativeAI(API_KEY);
-    // Naudojame modelį, kuris palaiko įrankius (Flash yra greičiausias ir pigiausias)
-    const model = genAI.getGenerativeModel({ 
-      model: "gemini-1.5-flash",
-      // model: "gemini-2.0-flash", // Galima bandyti ir naujesnį jei veikia
-    });
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-    // Promptas be "Tools" (nes Search Grounding kartais reikalauja specifinės versijos),
-    // bet prašome AI elgtis kaip tyrėjui. 
-    // Jei turi mokamą planą, galima naudoti 'tools: [{googleSearch: {}}]'.
-    // Bet kol kas darome paprastai - AI žinios + logika.
+    const prompt = `Find the official driver recruitment email for transport company "${companyName}" in Lithuania. Return ONLY JSON: {"email": "example@com"}. If not found, return {"email": null}.`;
     
-    const prompt = `
-      Task: Find the official driver recruitment email for a transport company named "${companyName}" (Lithuania/Europe).
-      
-      Instructions:
-      1. Analyze the company name. If it's a major carrier (Girteka, Hegelmann, Manvesta, Vlantana, Finejas, etc.), return their known driver recruitment email.
-      2. If unknown, predict the most likely format (e.g., drivers@domain.com, karjera@domain.com).
-      3. Return ONLY a JSON object: {"email": "found_email@address.com", "confidence": "HIGH" | "LOW"}.
-      4. If you have absolutely no clue, return {"email": null}.
-    `;
-
     const result = await model.generateContent(prompt);
-    const response = result.response;
-    const text = response.text();
+    const text = result.response.text().replace(/```json|```/g, '').trim();
     
-    // Išvalome JSON
-    const jsonString = text.replace(/```json/g, '').replace(/```/g, '').trim();
-    try {
-        const data = JSON.parse(jsonString);
-        if (data.email) {
-            const source = data.confidence === 'HIGH' ? 'AI_SMART_SEARCH' : 'AI_PREDICTION';
-            return { email: data.email, source };
-        }
-    } catch (e) {
-        console.error("Failed to parse AI JSON", text);
-    }
+    // Bandome ištraukti JSON
+    const firstBrace = text.indexOf('{');
+    const lastBrace = text.lastIndexOf('}');
+    if (firstBrace === -1 || lastBrace === -1) return null;
+    
+    const jsonText = text.substring(firstBrace, lastBrace + 1);
+    const data = JSON.parse(jsonText);
+    
+    console.log(`[AI SUCCESS] Found: ${data.email}`);
+    return data.email;
 
   } catch (error) {
-    console.error("Gemini Search Error:", error);
+    console.error("[AI FAILED] AI search failed, proceeding without email.", error);
+    return null;
   }
-
-  return { email: null, source: 'NONE' };
 }
 
 export async function POST(request: NextRequest) {
   try {
+    console.log("[API] Processing new request...");
     const body = await request.json();
     
-    // --- Sanitarija ---
     const requesterId = body.requesterId;
-    const driverName = (body.driverName || '').trim();
-    const targetCompany = (body.targetCompany || '').trim();
-    // ... kiti laukai ...
-    const birthDate = body.birthDate || null;
-    const startDate = body.startDate || null;
-    const endDate = body.endDate || null;
-    let targetEmail = body.targetEmail ? body.targetEmail.trim() : null;
-    const isCurrentEmployer = body.isCurrentEmployer || false;
-    const requesterCompanyName = body.requesterCompanyName || '';
+    const driverName = body.driverName || '';
+    const targetCompany = body.targetCompany || '';
+    let targetEmail = body.targetEmail || null;
 
-    // --- Dublikatų Patikra (Standartinė) ---
+    // --- DUPLICATE CHECK ---
     const snapshot = await db.collection('verification_requests')
       .where('requesterId', '==', requesterId)
       .get();
-
+      
     const activeDuplicate = snapshot.docs.find(doc => {
       const data = doc.data();
       const isActive = data.status === 'PENDING' || data.status === 'COMPLETED';
@@ -99,66 +71,51 @@ export async function POST(request: NextRequest) {
              (data.targetCompany || '').toLowerCase() === targetCompany.toLowerCase();
     });
 
-    if (activeDuplicate) return NextResponse.json({ success: true, isDuplicate: true, message: 'Active request exists' });
+    if (activeDuplicate) {
+        return NextResponse.json({ success: true, isDuplicate: true, message: 'Request exists' });
+    }
 
-
-    // --- 🚀 PAGRINDINĖ LOGIKA: ATMINTIS + AI ---
+    // --- AI LOGIC ---
     let emailSource = 'USER';
     let status = 'PENDING';
 
     if (!targetEmail) {
-       // 1. ŽINGSNIS: ATMINTIS (Directory) 🧠
-       // Pirmiausia tikriname, gal jau žinome šią įmonę iš anksčiau?
-       const dirId = targetCompany.toLowerCase().replace(/[^a-z0-9]/g, '');
-       const dirDoc = await db.collection('company_directory').doc(dirId).get();
-       
-       if (dirDoc.exists && dirDoc.data()?.email) {
-         // Valio! Radome savo "užrašų knygutėje"
-         targetEmail = dirDoc.data()?.email;
-         emailSource = 'DIRECTORY'; 
+       const aiEmail = await findEmailSafe(targetCompany);
+       if (aiEmail) {
+         targetEmail = aiEmail;
+         emailSource = 'AI_GEMINI';
        } else {
-         // 2. ŽINGSNIS: AI SEARCH (Gemini) 🕵️‍♂️
-         // Jei atmintyje nėra - siunčiame AI
-         const result = await findSmartEmailWithGemini(targetCompany);
-         
-         if (result.email) {
-           targetEmail = result.email;
-           emailSource = result.source;
-           
-           // Jei AI pasitiki savimi (HIGH confidence) - IŠSAUGOME Į ATMINTĮ ATEIČIAI!
-           if (result.source === 'AI_SMART_SEARCH') {
-             await db.collection('company_directory').doc(dirId).set({
-                name: targetCompany,
-                email: result.email,
-                updatedAt: new Date().toISOString(),
-                source: 'AI_LEARNED'
-             }, { merge: true });
-           }
-
-           status = 'PENDING';
-         } else {
-           // 3. ŽINGSNIS: ADMIN (Rankinis) 🚨
-           targetEmail = null;
-           emailSource = 'NONE';
-           status = 'New'; // Raudona Adminui
-         }
+         targetEmail = null; 
+         emailSource = 'NONE';
+         status = 'New'; // Mark for Admin review
        }
     }
 
-    // --- Išsaugojimas ---
-    const token = crypto.randomBytes(32).toString('hex');
+    // --- SAVE TO DB ---
     const newRequest = {
-      requesterId, requesterCompanyName, driverName, birthDate, targetCompany,
-      targetEmail, emailSource, startDate, endDate, isCurrentEmployer,
-      status, token, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()
+      requesterId, 
+      driverName, 
+      targetCompany,
+      targetEmail, 
+      emailSource,
+      status,
+      requesterCompanyName: body.requesterCompanyName || '',
+      birthDate: body.birthDate || null,
+      startDate: body.startDate || null,
+      endDate: body.endDate || null,
+      isCurrentEmployer: body.isCurrentEmployer || false,
+      token: crypto.randomBytes(32).toString('hex'),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
     };
 
     const docRef = await db.collection('verification_requests').add(newRequest);
+    console.log("[API] Request saved with ID:", docRef.id);
 
-    return NextResponse.json({ success: true, id: docRef.id, token, status });
+    return NextResponse.json({ success: true, id: docRef.id });
 
   } catch (error: any) {
-    console.error('[API ERROR]', error);
+    console.error('[CRITICAL API ERROR]', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
