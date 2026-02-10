@@ -1,4 +1,3 @@
-
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 
@@ -32,12 +31,14 @@ export async function GET(req: NextRequest) {
         }
 
         // Fetch requester's company name
-        let requesterCompany = 'Nežinoma įmonė';
+        let requesterCompany = requestData.requesterCompanyName || 'Nežinoma įmonė';
         if (requestData.requesterId) {
             const userRef = adminDb.collection('users').doc(requestData.requesterId);
             const userDoc = await userRef.get();
-            if (userDoc.exists()) {
-                requesterCompany = userDoc.data()?.companyName || requesterCompany;
+            // FIX: In Admin SDK, .exists is a PROPERTY, not a function
+            if (userDoc.exists) { 
+                const userData = userDoc.data();
+                requesterCompany = userData?.companyName || requesterCompany;
             }
         }
         
