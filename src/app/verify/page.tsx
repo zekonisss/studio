@@ -126,17 +126,16 @@ function VerificationPageContent() {
            <div className="mx-auto bg-white p-3 rounded-full w-fit shadow-md mb-4">
               <CheckCircle2 className="h-12 w-12 text-green-600" />
            </div>
-           <CardTitle className="text-2xl text-green-800 dark:text-green-300">Ačiū!</CardTitle>
-           <CardDescription className="text-base text-green-700 dark:text-green-400">
-             Jūsų atsakymas užfiksuotas saugioje DriverCheck bazėje.
-           </CardDescription>
+           <CardTitle className="text-2xl font-bold text-green-800 dark:text-green-300">Ačiū už Jūsų indėlį į skaidrumą.</CardTitle>
         </CardHeader>
         <CardContent className="p-8">
-           <h3 className="font-bold text-lg text-foreground">Norite sužinoti, ar jūsų dabartiniai vairuotojai turi paslėptų pažeidimų?</h3>
-           <p className="text-muted-foreground mt-2 mb-6">Prisijunkite prie vežėjų tinklo ir priimkite saugesnius sprendimus.</p>
-           <Button asChild size="lg" className="w-full">
+            <h3 className="text-lg font-medium text-slate-800 dark:text-slate-200">Jūs ką tik padėjote kolegai. O kaip Jūs šiandien valdote savo vairuotojų rizikas?</h3>
+            <p className="text-base text-slate-600 dark:text-slate-400 mt-2 mb-6">
+            „Nuojauta“ transporto versle kainuoja per brangiai. Prisijunkite prie bendruomenės, kuri sprendimus priima remdamasi faktais.
+           </p>
+           <Button asChild className="w-full bg-black text-white py-3 rounded-lg font-medium hover:bg-gray-800 transition h-auto text-base">
               <Link href="/signup">
-                  Tikrinti Savo Vairuotojus (Nemokamai)
+                  Prisijungti prie Patikimų Vežėjų
                   <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
            </Button>
