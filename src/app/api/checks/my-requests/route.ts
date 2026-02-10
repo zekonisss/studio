@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
+import { Timestamp } from 'firebase-admin/firestore';
 
 export async function GET(req: NextRequest) {
     if (!adminDb) {
@@ -14,38 +15,56 @@ export async function GET(req: NextRequest) {
     }
 
     try {
+        // Remove .orderBy() to avoid needing a composite index. We'll sort in memory.
         const snapshot = await adminDb.collection('verification_requests')
             .where('requesterId', '==', requesterId)
-            .orderBy('createdAt', 'desc')
-            .limit(20)
             .get();
 
         if (snapshot.empty) {
             return NextResponse.json([], { status: 200 });
         }
 
+        // Map and then sort in memory
         const requests = snapshot.docs.map(doc => {
             const data = doc.data();
-            const responseData = data.response ? {
-                workedHere: data.response.workedHere,
-                wouldRehire: data.response.wouldRehire,
-                comment: data.response.comment,
-            } : null;
-
             return {
                 id: doc.id,
-                driverName: data.driverName,
-                targetCompany: data.targetCompany,
-                status: data.status,
-                createdAt: data.createdAt.toDate().toISOString(),
-                response: responseData,
+                ...data
             };
         });
 
-        return NextResponse.json(requests, { status: 200 });
+        // Sort by createdAt timestamp (Newest first)
+        requests.sort((a, b) => {
+            const timeA = a.createdAt instanceof Timestamp ? a.createdAt.toMillis() : 0;
+            const timeB = b.createdAt instanceof Timestamp ? b.createdAt.toMillis() : 0;
+            return timeB - timeA;
+        });
+        
+        // Take the latest 20 and map to a serializable format for JSON
+        const finalRequests = requests.slice(0, 20).map(req => {
+            const { createdAt, ...rest } = req;
+            const responseData = req.response ? {
+                workedHere: req.response.workedHere,
+                wouldRehire: req.response.wouldRehire,
+                comment: req.response.comment,
+            } : null;
+
+            return {
+                ...rest,
+                id: req.id,
+                driverName: req.driverName,
+                targetCompany: req.targetCompany,
+                status: req.status,
+                response: responseData,
+                createdAt: createdAt instanceof Timestamp ? createdAt.toDate().toISOString() : new Date().toISOString(),
+            };
+        });
+
+
+        return NextResponse.json(finalRequests, { status: 200 });
 
     } catch (error: any) {
-        console.error('Error fetching my-requests:', error);
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+        console.error('[API ERROR] My-Requests failed:', error);
+        return NextResponse.json({ error: 'Internal Server Error', details: error.message }, { status: 500 });
     }
 }
