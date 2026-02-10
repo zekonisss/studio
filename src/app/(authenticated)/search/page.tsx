@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Loader2, UserSearch, ShieldCheck, Send, Clock, CheckCircle, HelpCircle, AlertCircle } from "lucide-react";
+import { Search, Loader2, UserSearch, ShieldCheck, Send, Clock, CheckCircle, HelpCircle, AlertCircle, AlertTriangle } from "lucide-react";
 import { SearchSchema, type SearchFormValues } from "@/lib/schemas";
 import { getAllReports } from "@/lib/storage";
 import type { Report, VerificationRequest } from "@/types";
@@ -486,3 +486,5 @@ export default function SearchPage() {
         </div>
     );
 }
+
+    
