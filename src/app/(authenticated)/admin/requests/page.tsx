@@ -79,8 +79,8 @@ export default function AdminRequestsPage() {
   };
 
   const getRowStatus = (req: any) => {
-    if (!req.targetEmail || req.targetEmail.trim() === '') {
-      return 'ACTION_NEEDED';
+    if (req.status === 'NEW') {
+        return 'ACTION_NEEDED';
     }
     if (req.status === 'COMPLETED') {
       return 'COMPLETED';
@@ -149,7 +149,7 @@ export default function AdminRequestsPage() {
                           <Input 
                             type="email" 
                             placeholder="Įveskite el. paštą..."
-                            value={editingEmails[req.id] || ''}
+                            value={editingEmails[req.id] || req.targetEmail || ''}
                             onChange={(e) => setEditingEmails(prev => ({ ...prev, [req.id]: e.target.value }))}
                             onKeyDown={(e) => { if (e.key === 'Enter') handleFixEmail(req.id); }}
                             className="h-9"

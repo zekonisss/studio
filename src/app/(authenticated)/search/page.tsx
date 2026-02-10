@@ -225,6 +225,8 @@ export default function SearchPage() {
 
     const getStatusBadge = (status: VerificationRequest['status']) => {
         switch (status) {
+            case 'NEW':
+                return <Badge variant="destructive"><AlertTriangle className="mr-1 h-3 w-3"/>Reikia peržiūros</Badge>;
             case 'PENDING':
                 return <Badge variant="secondary" className="bg-yellow-500/10 text-yellow-700 border-yellow-500/20"><Clock className="mr-1 h-3 w-3"/>Laukiama</Badge>;
             case 'RESEARCH':
