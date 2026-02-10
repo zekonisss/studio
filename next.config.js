@@ -1,6 +1,9 @@
 // Force cache refresh for ChunkLoadError - attempt 3.
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  generateBuildId: async () => {
+    return new Date().getTime().toString();
+  },
   experimental: {
     serverComponentsExternalPackages: [
       "@genkit-ai/core", 
