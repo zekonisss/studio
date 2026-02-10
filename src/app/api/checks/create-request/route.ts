@@ -3,6 +3,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import crypto from 'crypto';
 
+// Initialize Firebase Admin
 if (!getApps().length) {
   const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY as string);
   initializeApp({ credential: cert(serviceAccount) });
@@ -13,109 +14,109 @@ const db = getFirestore();
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { 
-      requesterId, 
-      driverName, 
-      birthDate, 
-      targetCompany, 
-      targetEmail, 
-      startDate, 
-      endDate, 
-      isCurrentEmployer,
-      requesterCompanyName 
-    } = body;
+    
+    // --- 1. SANITIZATION (Fixing "undefined" error) ---
+    // Firestore crashes on 'undefined'. We MUST convert missing fields to 'null'.
+    const requesterId = body.requesterId;
+    const driverName = (body.driverName || '').trim();
+    const targetCompany = (body.targetCompany || '').trim();
+    const birthDate = body.birthDate || null; // Fix: undefined -> null
+    const startDate = body.startDate || null; // Fix: undefined -> null
+    const endDate = body.endDate || null;     // Fix: undefined -> null
+    const targetEmail = body.targetEmail ? body.targetEmail.trim() : null;
+    const isCurrentEmployer = body.isCurrentEmployer || false;
+    const requesterCompanyName = body.requesterCompanyName || '';
 
-    // --- 1. GRIEŽTA DUBLIKATŲ PATIKRA (IN-MEMORY) ---
-    // Paimame visas vartotojo užklausas (kad išvengtume indekso klaidų)
+    // Basic Validation
+    if (!requesterId || !driverName || !targetCompany) {
+        return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
+    // --- 2. DUPLICATE DETECTION (Case-Insensitive) ---
+    // Fetch user's requests to compare in memory (avoids complex Firestore indexes)
     const snapshot = await db.collection('verification_requests')
       .where('requesterId', '==', requesterId)
       .get();
 
-    // Normalizuojame naujus duomenis palyginimui (mažosios raidės, be tarpų)
-    const newDriverClean = driverName.trim().toLowerCase();
-    const newCompanyClean = targetCompany.trim().toLowerCase();
+    const newDriverLower = driverName.toLowerCase();
+    const newCompanyLower = targetCompany.toLowerCase();
 
     const activeDuplicate = snapshot.docs.find(doc => {
       const data = doc.data();
       
-      // 1. Tikriname statusą (turi būti aktyvi užklausa)
-      // Jei statusas 'PENDING' (Laukiama) arba 'COMPLETED' (Gauta) - tai dublikatas.
-      // Jei statusas 'NEW' (Nerastas el. paštas/Ieškoma) - leidžiame kurti iš naujo, gal dabar rasim.
+      // Check A: Is it active? (Ignore 'NEW' or 'EXPIRED' - allow retrying those)
       const isActive = data.status === 'PENDING' || data.status === 'COMPLETED';
       if (!isActive) return false;
 
-      // 2. Tikriname laiką (30 dienų)
+      // Check B: Time window (30 days)
       const created = new Date(data.createdAt);
       const now = new Date();
-      const diffTime = Math.abs(now.getTime() - created.getTime());
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      const diffDays = (now.getTime() - created.getTime()) / (1000 * 3600 * 24);
       if (diffDays > 30) return false;
 
-      // 3. Tikriname duomenų sutapimą (Griežtai)
+      // Check C: Data Match (Normalized)
       const existingDriver = (data.driverName || '').trim().toLowerCase();
       const existingCompany = (data.targetCompany || '').trim().toLowerCase();
-      const existingBirth = data.birthDate;
+      
+      // If birthDate is provided in both, it must match.
+      // If birthDate is missing in one, rely on Name + Company.
+      let birthMatch = true;
+      if (birthDate && data.birthDate) {
+          birthMatch = birthDate === data.birthDate;
+      }
 
-      const nameMatch = existingDriver === newDriverClean;
-      const companyMatch = existingCompany === newCompanyClean;
-      // Gimimo datą tikriname tik jei ji nurodyta abiejuose
-      const birthMatch = birthDate ? (existingBirth === birthDate) : true;
-
-      return nameMatch && companyMatch && birthMatch;
+      return existingDriver === newDriverLower && 
+             existingCompany === newCompanyLower && 
+             birthMatch;
     });
 
     if (activeDuplicate) {
-      console.log(`[DUPLICATE BLOCKED] Grąžinama sena užklausa ID: ${activeDuplicate.id}`);
+      console.log(`[DUPLICATE BLOCKED] Found existing request: ${activeDuplicate.id}`);
       return NextResponse.json({ 
         success: true, 
         id: activeDuplicate.id, 
         token: activeDuplicate.data().token,
         message: 'Active request already exists',
-        isDuplicate: true
+        isDuplicate: true 
       });
     }
 
-    // --- 2. LOGIKA: El. Pašto Suradimas (Jei nėra) ---
+    // --- 3. SMART EMAIL DISCOVERY ---
     let finalEmail = targetEmail;
     let emailSource = 'USER';
-    let initialStatus = 'PENDING'; // Pagal nutylėjimą - laukiama
+    let initialStatus = 'PENDING';
 
-    if (!finalEmail || finalEmail.trim() === '') {
-       // A. Ieškome Directory
-       const cleanCompanyId = targetCompany.trim().toLowerCase().replace(/\s+/g, '');
-       const directoryDoc = await db.collection('company_directory').doc(cleanCompanyId).get();
+    if (!finalEmail) {
+       // A. Check Directory
+       // Normalize company ID for lookup (e.g. "UAB Manvesta" -> "manvesta")
+       const directoryId = targetCompany.toLowerCase().replace(/[^a-z0-9]/g, ''); 
+       const directoryDoc = await db.collection('company_directory').doc(directoryId).get();
        
        if (directoryDoc.exists && directoryDoc.data()?.email) {
          finalEmail = directoryDoc.data()?.email;
          emailSource = 'DIRECTORY';
-         console.log(`[DIRECTORY] Found email for ${targetCompany}: ${finalEmail}`);
        } else {
-         // B. AI Spėjimas (Kol kas "Mock")
-         // Jei neradome el. pašto, užklausos statusas lieka 'NEW' (Ieškoma),
-         // kad administratorius (Tu) matytų ir galėtų surasti,
-         // ARBA bandome spėti.
-         
-         // Sprendimas: Bandom spėti info@, bet pažymim, kad tai spėjimas
-         finalEmail = `info@${targetCompany.replace(/[^a-zA-Z0-9]/g, '').toLowerCase()}.lt`; 
+         // B. Smart Guess (Mock)
+         // Assuming format info@... for now.
+         finalEmail = `info@${directoryId}.lt`; 
          emailSource = 'AI_GUESS';
-         // Statusą paliekame PENDING, nes vis tiek išsiųsime laišką
        }
     }
 
-    // --- 3. NAUJOS UŽKLAUSOS KŪRIMAS ---
+    // --- 4. CREATE REQUEST ---
     const token = crypto.randomBytes(32).toString('hex');
     
     const newRequest = {
       requesterId,
-      requesterCompanyName: requesterCompanyName || '',
-      driverName,
-      birthDate,
-      targetCompany,
+      requesterCompanyName,
+      driverName,     // Sanitized
+      birthDate,      // Sanitized (null if empty)
+      targetCompany,  // Sanitized
       targetEmail: finalEmail,
       emailSource,
-      startDate,
-      endDate: endDate || null,
-      isCurrentEmployer: isCurrentEmployer || false,
+      startDate,      // Sanitized
+      endDate,        // Sanitized
+      isCurrentEmployer,
       status: initialStatus,
       token,
       createdAt: new Date().toISOString(),
@@ -128,7 +129,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, id: docRef.id, token });
 
   } catch (error: any) {
-    console.error('API Error:', error);
+    console.error('[API ERROR] Create Request Failed:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
