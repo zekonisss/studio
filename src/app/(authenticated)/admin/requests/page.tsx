@@ -1,192 +1,206 @@
+
 "use client";
 
-import { useState, useEffect } from 'react';
-import type { VerificationRequest } from '@/types';
-import { useAuth } from '@/hooks/use-auth';
-import { useToast } from '@/hooks/use-toast';
+import { useEffect, useState } from 'react';
+import { 
+  ShieldAlert, 
+  Clock, 
+  CheckCircle, 
+  Send, 
+  Search,
+  RefreshCw,
+  Inbox,
+  Loader2
+} from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Send, Loader2, Clock, CheckCircle, AlertCircle, HelpCircle } from 'lucide-react';
-import { format } from 'date-fns';
-import { lt } from 'date-fns/locale';
+import { Input } from '@/components/ui/input';
+import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
-import { cn } from '@/lib/utils';
 
 export default function AdminRequestsPage() {
-    const { user } = useAuth();
-    const { toast } = useToast();
+  const [requests, setRequests] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editingEmails, setEditingEmails] = useState<{ [key: string]: string }>({});
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const { toast } = useToast();
 
-    const [requests, setRequests] = useState<VerificationRequest[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [emailInputs, setEmailInputs] = useState<Record<string, string>>({});
-    const [submittingId, setSubmittingId] = useState<string | null>(null);
-
-    useEffect(() => {
-        const fetchRequests = async () => {
-            if (!user?.isAdmin) {
-                setIsLoading(false);
-                return;
-            }
-            try {
-                const response = await fetch('/api/admin/all-requests');
-                if (!response.ok) throw new Error('Failed to fetch requests');
-                const data: VerificationRequest[] = await response.json();
-                setRequests(data);
-            } catch (error: any) {
-                toast({ variant: 'destructive', title: 'Klaida', description: error.message });
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        fetchRequests();
-    }, [user, toast]);
-
-    const handleEmailChange = (requestId: string, email: string) => {
-        setEmailInputs(prev => ({ ...prev, [requestId]: email }));
-    };
-
-    const handleUpdateRequest = async (requestId: string) => {
-        const newEmail = emailInputs[requestId];
-        if (!newEmail || !newEmail.includes('@')) {
-            toast({ variant: 'destructive', title: 'Klaida', description: 'Prašome įvesti teisingą el. pašto adresą.' });
-            return;
-        }
-
-        setSubmittingId(requestId);
-        try {
-            const response = await fetch('/api/admin/update-request', {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ requestId, newEmail }),
-            });
-            const data = await response.json();
-            if (!response.ok) throw new Error(data.error || 'Serverio klaida');
-
-            toast({ title: 'Atnaujinta!', description: 'Užklausa persiųsta nauju el. paštu.' });
-            
-            // Update local state for instant feedback
-            setRequests(prev => prev.map(req => 
-                req.id === requestId 
-                    ? { ...req, status: 'PENDING', targetEmail: newEmail, emailSource: 'ADMIN_FIX' } 
-                    : req
-            ));
-
-        } catch (error: any) {
-            toast({ variant: 'destructive', title: 'Klaida atnaujinant', description: error.message });
-        } finally {
-            setSubmittingId(null);
-        }
-    };
-
-    const getStatusBadge = (status: VerificationRequest['status']) => {
-        switch (status) {
-            case 'NEW':
-                return <Badge className="bg-red-500/10 text-red-700 border-red-500/20"><AlertCircle className="mr-1 h-3 w-3"/>Trūksta el. pašto</Badge>;
-            case 'PENDING':
-                return <Badge className="bg-yellow-500/10 text-yellow-700 border-yellow-500/20"><Clock className="mr-1 h-3 w-3"/>Laukiama</Badge>;
-            case 'COMPLETED':
-                return <Badge className="bg-green-500/10 text-green-700 border-green-500/20"><CheckCircle className="mr-1 h-3 w-3"/>Atsakyta</Badge>;
-            case 'EXPIRED':
-                return <Badge variant="destructive" className="bg-gray-500/10 text-gray-500 border-gray-500/20"><HelpCircle className="mr-1 h-3 w-3"/>Neatsakė</Badge>;
-            default:
-                return <Badge variant="outline">{status}</Badge>;
-        }
-    };
-
-    if (!user?.isAdmin) {
-        return (
-            <Card>
-                <CardHeader><CardTitle>Prieiga negalima</CardTitle></CardHeader>
-                <CardContent><p>Šis puslapis prieinamas tik administratoriams.</p></CardContent>
-            </Card>
-        );
+  const fetchRequests = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/admin/all-requests');
+      if (res.ok) {
+        const data = await res.json();
+        setRequests(data);
+      } else {
+        throw new Error('Nepavyko užkrauti užklausų.');
+      }
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Klaida', description: error.message });
+    } finally {
+      setLoading(false);
     }
-    
+  };
+
+  useEffect(() => {
+    fetchRequests();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleFixEmail = async (requestId: string) => {
+    const newEmail = editingEmails[requestId];
+    if (!newEmail || !newEmail.includes('@')) {
+      toast({ variant: 'destructive', title: 'Klaida', description: 'Prašome įvesti validų el. paštą.' });
+      return;
+    }
+
+    setActionLoading(requestId);
+    try {
+      const res = await fetch('/api/admin/update-request', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ requestId, newEmail }),
+      });
+
+      if (res.ok) {
+        toast({ title: 'Atnaujinta!', description: 'Užklausa persiųsta nauju el. paštu.' });
+        setEditingEmails(prev => ({ ...prev, [requestId]: '' }));
+        await fetchRequests();
+      } else {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Nepavyko atnaujinti užklausos.');
+      }
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Klaida', description: error.message });
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    if (status === 'NEW') {
+      return (
+        <Badge variant="destructive" className="bg-red-500/10 text-red-500 border-red-500/20">
+          <ShieldAlert className="w-3 h-3 mr-1" />
+          RESEARCH
+        </Badge>
+      );
+    }
+    if (status === 'PENDING') {
+      return (
+        <Badge variant="secondary" className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20">
+          <Clock className="w-3 h-3 mr-1" />
+          Laukiama
+        </Badge>
+      );
+    }
     return (
-        <Card className="bg-card">
-            <CardHeader>
-                <CardTitle className="text-2xl">Užklausų Valdymo Centras</CardTitle>
-                <CardDescription>Peržiūrėkite, valdykite ir taisykite visas sistemos patikros užklausas.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <div className="border rounded-lg overflow-hidden">
-                    <Table>
-                        <TableHeader>
-                            <TableRow className="hover:bg-muted/50">
-                                <TableHead className="w-[180px]">Būsena</TableHead>
-                                <TableHead>Vairuotojas / Tikrinama Įmonė</TableHead>
-                                <TableHead>Užklausė</TableHead>
-                                <TableHead className="w-[350px]">El. paštas (Veiksmas)</TableHead>
-                                <TableHead className="text-right">Užklausos Data</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {isLoading ? (
-                                [...Array(5)].map((_, i) => (
-                                    <TableRow key={i}>
-                                        <TableCell><Skeleton className="h-6 w-32" /></TableCell>
-                                        <TableCell><Skeleton className="h-5 w-48" /></TableCell>
-                                        <TableCell><Skeleton className="h-5 w-40" /></TableCell>
-                                        <TableCell><Skeleton className="h-10 w-full" /></TableCell>
-                                        <TableCell className="text-right"><Skeleton className="h-5 w-24 ml-auto" /></TableCell>
-                                    </TableRow>
-                                ))
-                            ) : requests.length === 0 ? (
-                                <TableRow>
-                                    <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
-                                        Šiuo metu aktyvių užklausų nėra.
-                                    </TableCell>
-                                </TableRow>
-                            ) : (
-                                requests.map(req => (
-                                    <TableRow key={req.id} className={cn(
-                                        "hover:bg-muted/50",
-                                        req.status === 'NEW' && "bg-red-500/5"
-                                    )}>
-                                        <TableCell>{getStatusBadge(req.status)}</TableCell>
-                                        <TableCell>
-                                            <div className="font-medium">{req.driverName}</div>
-                                            <div className="text-xs text-muted-foreground">{req.targetCompany}</div>
-                                        </TableCell>
-                                         <TableCell className="text-xs text-muted-foreground">{req.requesterCompanyName || 'Nenurodyta'}</TableCell>
-                                        <TableCell>
-                                            {req.status === 'NEW' ? (
-                                                <div className="flex items-center gap-2">
-                                                    <Input
-                                                        type="email"
-                                                        placeholder="Įveskite teisingą el. paštą..."
-                                                        value={emailInputs[req.id] || ''}
-                                                        onChange={(e) => handleEmailChange(req.id, e.target.value)}
-                                                        disabled={submittingId === req.id}
-                                                        className="h-9"
-                                                    />
-                                                    <Button size="sm" onClick={() => handleUpdateRequest(req.id)} disabled={!emailInputs[req.id] || submittingId === req.id}>
-                                                        {submittingId === req.id ? <Loader2 className="h-4 w-4 animate-spin"/> : <Send className="h-4 w-4"/>}
-                                                    </Button>
-                                                </div>
-                                            ) : (
-                                                <div className="text-sm text-muted-foreground flex items-center gap-2">
-                                                    <span>{req.targetEmail}</span>
-                                                    {req.emailSource === 'ADMIN_FIX' && <Badge variant="secondary" className="bg-green-500/20 text-green-700">Pataisyta</Badge>}
-                                                    {req.emailSource === 'DIRECTORY' && <Badge variant="outline">Iš Adresų kn.</Badge>}
-                                                    {req.emailSource === 'AI_GUESS' && <Badge variant="outline" className="border-amber-500/50 text-amber-700">Spėjimas</Badge>}
-                                                </div>
-                                            )}
-                                        </TableCell>
-                                        <TableCell className="text-right text-xs text-muted-foreground font-mono">
-                                            {format(new Date(req.createdAt), 'yyyy-MM-dd HH:mm', { locale: lt })}
-                                        </TableCell>
-                                    </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
-                </div>
-            </CardContent>
-        </Card>
+      <Badge variant="secondary" className="bg-green-500/10 text-green-500 border-green-500/20">
+        <CheckCircle className="w-3 h-3 mr-1" />
+        {status}
+      </Badge>
     );
+  };
+
+  return (
+     <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="text-2xl">Užklausų Valdymo Centras</CardTitle>
+              <CardDescription>Čia taisomos "pakibusios" užklausos, kurioms trūksta kontaktinio el. pašto.</CardDescription>
+            </div>
+            <Button 
+              onClick={fetchRequests}
+              variant="outline"
+              size="icon"
+              disabled={loading}
+            >
+              <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
+            </Button>
+        </CardHeader>
+        <CardContent>
+            <div className="border rounded-lg overflow-hidden">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead className="w-40">Būsena</TableHead>
+                            <TableHead>Vairuotojas / Tikrinama Įmonė</TableHead>
+                            <TableHead>Užklausė</TableHead>
+                            <TableHead className="w-1/3">El. paštas (Veiksmas)</TableHead>
+                            <TableHead className="text-right">Data</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {loading ? (
+                           [...Array(5)].map((_, i) => (
+                             <TableRow key={i}>
+                               <TableCell><Skeleton className="h-6 w-32" /></TableCell>
+                               <TableCell><Skeleton className="h-5 w-48" /></TableCell>
+                               <TableCell><Skeleton className="h-5 w-40" /></TableCell>
+                               <TableCell><Skeleton className="h-10 w-full" /></TableCell>
+                               <TableCell className="text-right"><Skeleton className="h-5 w-24 ml-auto" /></TableCell>
+                             </TableRow>
+                           ))
+                        ) : requests.length === 0 ? (
+                             <TableRow>
+                                <TableCell colSpan={5} className="h-48 text-center text-muted-foreground">
+                                    <div className="flex flex-col items-center gap-2">
+                                        <Inbox className="h-12 w-12 text-slate-400" />
+                                        <span>"Pakibusių" užklausų nerasta.</span>
+                                    </div>
+                                </TableCell>
+                             </TableRow>
+                        ) : requests.map((req) => (
+                            <TableRow 
+                                key={req.id} 
+                                className={req.status === 'NEW' ? 'bg-red-500/5' : ''}
+                            >
+                                <TableCell>{getStatusBadge(req.status)}</TableCell>
+                                <TableCell>
+                                    <div className="font-medium text-foreground">{req.driverName}</div>
+                                    <div className="text-muted-foreground text-xs">{req.targetCompany}</div>
+                                </TableCell>
+                                <TableCell className="text-sm text-muted-foreground">{req.requesterCompanyName || 'Nenurodyta'}</TableCell>
+                                <TableCell>
+                                    {req.status === 'NEW' ? (
+                                        <div className="flex gap-2 items-center">
+                                            <Input
+                                                type="email"
+                                                placeholder="pvz. info@imone.lt"
+                                                value={editingEmails[req.id] || ''}
+                                                onChange={(e) => setEditingEmails(prev => ({...prev, [req.id]: e.target.value}))}
+                                                disabled={actionLoading === req.id}
+                                                className="h-9"
+                                            />
+                                            <Button
+                                                size="sm"
+                                                onClick={() => handleFixEmail(req.id)}
+                                                disabled={!editingEmails[req.id] || actionLoading === req.id}
+                                            >
+                                                {actionLoading === req.id ? <Loader2 className="h-4 w-4 animate-spin"/> : <Send className="h-4 w-4"/>}
+                                            </Button>
+                                        </div>
+                                    ) : (
+                                        <div className="text-sm text-muted-foreground flex items-center gap-2">
+                                            <span>{req.targetEmail}</span>
+                                            {req.emailSource === 'ADMIN_FIX' && <Badge variant="secondary" className="bg-blue-500/20 text-blue-700">Pataisyta</Badge>}
+                                            {req.emailSource === 'DIRECTORY' && <Badge variant="outline">Iš Adresų kn.</Badge>}
+                                            {req.emailSource === 'AI_GUESS' && <Badge variant="outline" className="border-amber-500/50 text-amber-700">Spėjimas</Badge>}
+                                        </div>
+                                    )}
+                                </TableCell>
+                                <td className="text-right text-xs text-muted-foreground font-mono">
+                                    {new Date(req.createdAt).toLocaleDateString('lt-LT')}
+                                </td>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </div>
+        </CardContent>
+     </Card>
+  );
 }
+
