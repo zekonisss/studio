@@ -6,7 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, CheckCircle, AlertTriangle, ArrowRight, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { Loader2, CheckCircle, AlertTriangle, ArrowRight, UserSearch } from 'lucide-react';
 import Link from 'next/link';
 
 interface RequestDetails {
@@ -181,7 +181,7 @@ function VerificationPageContent() {
               <label className="font-medium">2. {renderQuestion2()}</label>
               <div className="flex gap-3">
                   <Button type="button" variant={answers.wouldRehire === true ? 'default' : 'outline'} onClick={() => setAnswers(prev => ({...prev, wouldRehire: true}))} className="flex-1">
-                      <CheckCircle2 className="mr-2 h-4 w-4"/> Taip
+                      <CheckCircle className="mr-2 h-4 w-4"/> Taip
                   </Button>
                   <Button type="button" variant={answers.wouldRehire === false ? 'destructive' : 'outline'} onClick={() => setAnswers(prev => ({...prev, wouldRehire: false}))} className="flex-1">
                       <AlertTriangle className="mr-2 h-4 w-4"/> Ne
@@ -216,13 +216,19 @@ function VerificationPageContent() {
 export default function VerificationPage() {
     return (
         <div className="flex min-h-screen w-full items-center justify-center bg-slate-900 p-4 relative pt-20">
-            <div className="absolute top-6 left-0 right-0 flex justify-center z-10">
-              <div className="flex items-center gap-2">
-                <div className="bg-blue-600 p-2 rounded-lg">
-                  <ShieldCheck className="w-6 h-6 text-white" />
+            {/* Real Brand Header */}
+            <div className="absolute top-8 left-0 right-0 flex justify-center z-10">
+              <Link href="/" className="group flex items-center gap-3 hover:opacity-90 transition-opacity">
+                {/* Icon: User with Search (Blue) */}
+                <div className="relative">
+                  <UserSearch className="w-10 h-10 text-blue-500" strokeWidth={2.5} />
                 </div>
-                <span className="text-2xl font-bold text-white tracking-tight">DriverCheck</span>
-              </div>
+                
+                {/* Text: DriverCheck (Italic, Bold) */}
+                <span className="text-3xl font-bold text-white tracking-tight italic">
+                  Driver<span className="text-slate-300">Check</span>
+                </span>
+              </Link>
             </div>
 
             <Suspense fallback={<div className="flex flex-col items-center justify-center text-center gap-4 p-8"><Loader2 className="h-10 w-10 animate-spin text-primary" /><p className="text-muted-foreground">Kraunasi...</p></div>}>
