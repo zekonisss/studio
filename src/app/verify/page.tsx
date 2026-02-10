@@ -6,7 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, CheckCircle2, AlertTriangle, ArrowRight } from 'lucide-react';
+import { Loader2, CheckCircle, AlertTriangle, ArrowRight, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
 
 interface RequestDetails {
@@ -121,26 +121,35 @@ function VerificationPageContent() {
 
   if (step === 'success') {
     return (
-      <Card className="w-full max-w-lg text-center overflow-hidden">
-        <CardHeader className="bg-green-50 dark:bg-green-900/20 p-8">
-           <div className="mx-auto bg-white p-3 rounded-full w-fit shadow-md mb-4">
-              <CheckCircle2 className="h-12 w-12 text-green-600" />
-           </div>
-           <CardTitle className="text-2xl font-bold text-green-800 dark:text-green-300">Ačiū už Jūsų indėlį į skaidrumą.</CardTitle>
-        </CardHeader>
-        <CardContent className="p-8">
-            <h3 className="text-lg font-medium text-slate-800 dark:text-slate-200">Jūs ką tik padėjote kolegai. O kaip Jūs šiandien valdote savo vairuotojų rizikas?</h3>
-            <p className="text-base text-slate-600 dark:text-slate-400 mt-2 mb-6">
-            „Nuojauta“ transporto versle kainuoja per brangiai. Prisijunkite prie bendruomenės, kuri sprendimus priima remdamasi faktais.
-           </p>
-           <Button asChild className="w-full bg-black text-white py-3 rounded-lg font-medium hover:bg-gray-800 transition h-auto text-base">
-              <Link href="/signup">
-                  Prisijungti prie Patikimų Vežėjų
-                  <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-           </Button>
-        </CardContent>
-      </Card>
+        <div className="text-center space-y-6 py-4 w-full max-w-lg">
+          <div className="flex justify-center mb-4">
+            <div className="rounded-full bg-green-500/10 p-4 ring-1 ring-green-500/50">
+              <CheckCircle className="w-16 h-16 text-green-500" />
+            </div>
+          </div>
+          
+          <h2 className="text-2xl font-bold text-white">
+            Ačiū už Jūsų indėlį į skaidrumą.
+          </h2>
+          
+          <div className="bg-slate-800/50 p-6 rounded-xl border border-slate-700">
+            <p className="text-lg font-medium text-slate-200 mb-2">
+              Jūs ką tik padėjote kolegai. <br/>
+              <span className="text-blue-400">O kaip Jūs šiandien valdote savo vairuotojų rizikas?</span>
+            </p>
+            <p className="text-sm text-slate-400">
+              „Nuojauta“ transporto versle kainuoja per brangiai. Prisijunkite prie bendruomenės, kuri sprendimus priima remdamasi faktais.
+            </p>
+          </div>
+
+          <button 
+            onClick={() => window.location.href = '/signup'}
+            className="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-4 rounded-xl transition-all shadow-lg hover:shadow-blue-500/25 flex items-center justify-center gap-2 group"
+          >
+            Prisijungti prie Patikimų Vežėjų
+            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+          </button>
+        </div>
     )
   }
   
@@ -206,12 +215,19 @@ function VerificationPageContent() {
 // Main component that wraps content in Suspense
 export default function VerificationPage() {
     return (
-        <div className="flex min-h-screen w-full items-center justify-center bg-muted/40 p-4">
+        <div className="flex min-h-screen w-full items-center justify-center bg-slate-900 p-4 relative pt-20">
+            <div className="absolute top-6 left-0 right-0 flex justify-center z-10">
+              <div className="flex items-center gap-2">
+                <div className="bg-blue-600 p-2 rounded-lg">
+                  <ShieldCheck className="w-6 h-6 text-white" />
+                </div>
+                <span className="text-2xl font-bold text-white tracking-tight">DriverCheck</span>
+              </div>
+            </div>
+
             <Suspense fallback={<div className="flex flex-col items-center justify-center text-center gap-4 p-8"><Loader2 className="h-10 w-10 animate-spin text-primary" /><p className="text-muted-foreground">Kraunasi...</p></div>}>
                 <VerificationPageContent />
             </Suspense>
         </div>
     );
 }
-
-    
