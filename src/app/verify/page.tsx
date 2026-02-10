@@ -6,8 +6,12 @@ import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, CheckCircle, AlertTriangle, ArrowRight, UserSearch } from 'lucide-react';
+import { Loader2, CheckCircle, AlertTriangle, ArrowRight, UserSearch, Send } from "lucide-react";
 import Link from 'next/link';
+import { useToast } from '@/hooks/use-toast';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 interface RequestDetails {
     driverName: string;
@@ -21,6 +25,7 @@ interface RequestDetails {
 // Helper component to use searchParams with Suspense
 function VerificationPageContent() {
   const searchParams = useSearchParams();
+  const { toast } = useToast();
   const token = searchParams.get('token');
 
   const [step, setStep] = useState<'loading' | 'form' | 'success' | 'invalid'>('loading');
@@ -32,6 +37,12 @@ function VerificationPageContent() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>('Patvirtinimo nuoroda yra neteisinga arba nebegalioja.');
+
+  // State for delegation
+  const [isDelegating, setIsDelegating] = useState(false);
+  const [delegateEmail, setDelegateEmail] = useState('');
+  const [isSubmittingDelegate, setIsSubmittingDelegate] = useState(false);
+
 
   useEffect(() => {
     if (!token) {
@@ -74,6 +85,35 @@ function VerificationPageContent() {
     }, 1000);
   };
   
+  const handleDelegateSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!token || !delegateEmail) return;
+
+    setIsSubmittingDelegate(true);
+    try {
+        const response = await fetch('/api/checks/delegate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token, newEmail: delegateEmail }),
+        });
+
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Serverio klaida.');
+
+        toast({
+            title: "Sėkmingai persiųsta!",
+            description: "Užklausa persiųsta kolegai. Mes išsaugojome šį kontaktą ateičiai.",
+        });
+        setIsDelegating(false);
+        setStep('success'); // Also show success screen after delegating
+    } catch (error: any) {
+        toast({ variant: 'destructive', title: 'Klaida', description: error.message });
+    } finally {
+        setIsSubmittingDelegate(false);
+    }
+  };
+
+
   const renderQuestion1 = () => {
     if (!requestDetails) return 'Ar šis asmuo dirbo Jūsų įmonėje?';
     
@@ -154,61 +194,94 @@ function VerificationPageContent() {
   }
   
   return (
-    <Card className="w-full max-w-lg">
-      <form onSubmit={handleSubmit}>
-        <CardHeader>
-          <CardTitle className="text-2xl">Prašymas Patvirtinti Reputaciją</CardTitle>
-          <CardDescription>
-            Įmonė <span className="font-semibold text-foreground">{requestDetails?.requesterCompany}</span> prašo informacijos apie vairuotoją:
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="text-center border-b pb-4">
-            <h3 className="text-xl font-bold">{requestDetails?.driverName}
-                {requestDetails?.driverBirthDate && <span className="text-muted-foreground text-lg font-normal ml-2">(g. {requestDetails.driverBirthDate})</span>}
-            </h3>
-          </div>
-          
-          <div className="space-y-3">
-              <label className="font-medium">1. {renderQuestion1()}</label>
-              <div className="flex gap-3">
-                  <Button type="button" variant={answers.workedHere === true ? 'default' : 'outline'} onClick={() => setAnswers(prev => ({...prev, workedHere: true}))} className="flex-1">Taip</Button>
-                  <Button type="button" variant={answers.workedHere === false ? 'default' : 'outline'} onClick={() => setAnswers(prev => ({...prev, workedHere: false}))} className="flex-1">Ne</Button>
-              </div>
-          </div>
+    <>
+        <Dialog open={isDelegating} onOpenChange={setIsDelegating}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Persiųsti užklausą kolegai</DialogTitle>
+                    <DialogDescription>
+                        Įveskite kolegos (pvz., HR specialisto) el. paštą. Jam bus automatiškai persiųsta ši patikros užklausa.
+                    </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleDelegateSubmit}>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="delegate-email" className="text-right">El. paštas</Label>
+                            <Input id="delegate-email" type="email" value={delegateEmail} onChange={(e) => setDelegateEmail(e.target.value)} className="col-span-3" required />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button type="submit" disabled={isSubmittingDelegate}>
+                            {isSubmittingDelegate && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Persiųsti Užklausą
+                        </Button>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
 
-          <div className="space-y-3">
-              <label className="font-medium">2. {renderQuestion2()}</label>
-              <div className="flex gap-3">
-                  <Button type="button" variant={answers.wouldRehire === true ? 'default' : 'outline'} onClick={() => setAnswers(prev => ({...prev, wouldRehire: true}))} className="flex-1">
-                      <CheckCircle className="mr-2 h-4 w-4"/> Taip
-                  </Button>
-                  <Button type="button" variant={answers.wouldRehire === false ? 'destructive' : 'outline'} onClick={() => setAnswers(prev => ({...prev, wouldRehire: false}))} className="flex-1">
-                      <AlertTriangle className="mr-2 h-4 w-4"/> Ne
-                  </Button>
-              </div>
-          </div>
-          
-          <div className="space-y-3">
-              <label htmlFor="comment" className="font-medium">3. Komentaras (neprivaloma, bet rekomenduojama)</label>
-              <Textarea 
-                id="comment"
-                placeholder="Pateikite trumpą, dalykišką komentarą apie vairuotojo veiklą, pvz., 'kuro normos viršijimas', 'dažni vėlavimai', 'atsakingas darbuotojas'..."
-                value={answers.comment}
-                onChange={(e) => setAnswers(prev => ({...prev, comment: e.target.value}))}
-                rows={5}
-              />
-          </div>
-          
-        </CardContent>
-        <CardFooter>
-          <Button type="submit" className="w-full" disabled={isSubmitting || answers.workedHere === null}>
-            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Patvirtinti ir Išsiųsti
-          </Button>
-        </CardFooter>
-      </form>
-    </Card>
+        <Card className="w-full max-w-lg">
+        <form onSubmit={handleSubmit}>
+            <CardHeader>
+            <CardTitle className="text-2xl">Prašymas Patvirtinti Reputaciją</CardTitle>
+            <CardDescription>
+                Įmonė <span className="font-semibold text-foreground">{requestDetails?.requesterCompany}</span> prašo informacijos apie vairuotoją:
+            </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+            <div className="text-center border-b pb-4">
+                <h3 className="text-xl font-bold">{requestDetails?.driverName}
+                    {requestDetails?.driverBirthDate && <span className="text-muted-foreground text-lg font-normal ml-2">(g. {requestDetails.driverBirthDate})</span>}
+                </h3>
+            </div>
+            
+            <div className="space-y-3">
+                <label className="font-medium">1. {renderQuestion1()}</label>
+                <div className="flex gap-3">
+                    <Button type="button" variant={answers.workedHere === true ? 'default' : 'outline'} onClick={() => setAnswers(prev => ({...prev, workedHere: true}))} className="flex-1">Taip</Button>
+                    <Button type="button" variant={answers.workedHere === false ? 'default' : 'outline'} onClick={() => setAnswers(prev => ({...prev, workedHere: false}))} className="flex-1">Ne</Button>
+                </div>
+            </div>
+
+            <div className="space-y-3">
+                <label className="font-medium">2. {renderQuestion2()}</label>
+                <div className="flex gap-3">
+                    <Button type="button" variant={answers.wouldRehire === true ? 'default' : 'outline'} onClick={() => setAnswers(prev => ({...prev, wouldRehire: true}))} className="flex-1">
+                        <CheckCircle className="mr-2 h-4 w-4"/> Taip
+                    </Button>
+                    <Button type="button" variant={answers.wouldRehire === false ? 'destructive' : 'outline'} onClick={() => setAnswers(prev => ({...prev, wouldRehire: false}))} className="flex-1">
+                        <AlertTriangle className="mr-2 h-4 w-4"/> Ne
+                    </Button>
+                </div>
+            </div>
+            
+            <div className="space-y-3">
+                <label htmlFor="comment" className="font-medium">3. Komentaras (neprivaloma, bet rekomenduojama)</label>
+                <Textarea 
+                    id="comment"
+                    placeholder="Pateikite trumpą, dalykišką komentarą apie vairuotojo veiklą, pvz., 'kuro normos viršijimas', 'dažni vėlavimai', 'atsakingas darbuotojas'..."
+                    value={answers.comment}
+                    onChange={(e) => setAnswers(prev => ({...prev, comment: e.target.value}))}
+                    rows={5}
+                />
+            </div>
+            
+            </CardContent>
+            <CardFooter className="flex-col items-center gap-4">
+                <Button type="submit" className="w-full" disabled={isSubmitting || answers.workedHere === null}>
+                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Patvirtinti ir Išsiųsti
+                </Button>
+                <div className="text-center text-xs text-muted-foreground">
+                    <p>Ši užklausa skirta ne Jums?</p>
+                    <Button type="button" variant="link" className="h-auto p-0 text-primary" onClick={() => setIsDelegating(true)}>
+                        Nurodyti atsakingą kolegą
+                    </Button>
+                </div>
+            </CardFooter>
+        </form>
+        </Card>
+    </>
   );
 }
 
