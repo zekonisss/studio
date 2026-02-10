@@ -8,6 +8,7 @@ import EntryManagementTab from "./_components/entry-management-tab";
 import AuditLogTab from "./_components/audit-log-tab";
 import StatisticsTab from "./_components/statistics-tab";
 import DeletionRequestsTab from "./_components/deletion-requests-tab";
+import { VerificationRequestsTab } from "./_components/verification-requests-tab";
 
 export default function AdminPage() {
     const { t } = useLanguage();
@@ -26,9 +27,10 @@ export default function AdminPage() {
                 </CardHeader>
                 <CardContent>
                     <Tabs defaultValue="users" className="w-full">
-                        <TabsList className="grid w-full grid-cols-2 md:grid-cols-5">
+                        <TabsList className="grid w-full grid-cols-2 md:grid-cols-6">
                             <TabsTrigger value="users">{t('admin.tabs.userManagement')}</TabsTrigger>
                             <TabsTrigger value="entries">{t('admin.tabs.entryManagement')}</TabsTrigger>
+                            <TabsTrigger value="verification-requests">{t('admin.tabs.verificationRequests', { "defaultValue": "Patikros" })}</TabsTrigger>
                             <TabsTrigger value="deletion-requests">{t('admin.tabs.deletionRequests')}</TabsTrigger>
                             <TabsTrigger value="audit-log">{t('admin.tabs.auditLog')}</TabsTrigger>
                             <TabsTrigger value="statistics">{t('admin.tabs.statistics')}</TabsTrigger>
@@ -38,6 +40,9 @@ export default function AdminPage() {
                         </TabsContent>
                         <TabsContent value="entries">
                             <EntryManagementTab />
+                        </TabsContent>
+                        <TabsContent value="verification-requests">
+                            <VerificationRequestsTab />
                         </TabsContent>
                         <TabsContent value="deletion-requests">
                             <DeletionRequestsTab />
