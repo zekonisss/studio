@@ -11,6 +11,7 @@ import Link from 'next/link';
 
 interface RequestDetails {
     driverName: string;
+    driverBirthDate?: string | null;
     requesterCompany: string;
     startDate?: string | null;
     endDate?: string | null;
@@ -150,10 +151,15 @@ function VerificationPageContent() {
         <CardHeader>
           <CardTitle className="text-2xl">Prašymas Patvirtinti Reputaciją</CardTitle>
           <CardDescription>
-            Įmonė <span className="font-semibold text-foreground">{requestDetails?.requesterCompany}</span> prašo informacijos apie vairuotoją <span className="font-semibold text-foreground">{requestDetails?.driverName}</span>.
+            Įmonė <span className="font-semibold text-foreground">{requestDetails?.requesterCompany}</span> prašo informacijos apie vairuotoją:
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
+          <div className="text-center border-b pb-4">
+            <h3 className="text-xl font-bold">{requestDetails?.driverName}
+                {requestDetails?.driverBirthDate && <span className="text-muted-foreground text-lg font-normal ml-2">(g. {requestDetails.driverBirthDate})</span>}
+            </h3>
+          </div>
           
           <div className="space-y-3">
               <label className="font-medium">1. {renderQuestion1()}</label>
@@ -208,3 +214,5 @@ export default function VerificationPage() {
         </div>
     );
 }
+
+    

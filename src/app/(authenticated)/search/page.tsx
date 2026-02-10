@@ -34,6 +34,7 @@ export default function SearchPage() {
     const [currentQuery, setCurrentQuery] = useState("");
 
     // State for verification request form
+    const [driverBirthDate, setDriverBirthDate] = useState('');
     const [targetEmail, setTargetEmail] = useState('');
     const [targetCompany, setTargetCompany] = useState('');
     const [startDate, setStartDate] = useState('');
@@ -54,6 +55,7 @@ export default function SearchPage() {
         setCurrentQuery(values.query);
 
         // Reset verification form on new search
+        setDriverBirthDate('');
         setTargetEmail('');
         setTargetCompany('');
         setStartDate('');
@@ -124,11 +126,11 @@ export default function SearchPage() {
     };
 
     const handleVerificationRequest = async () => {
-        if (!targetCompany || !startDate) {
+        if (!targetCompany || !startDate || !driverBirthDate) {
             toast({
                 variant: "destructive",
                 title: "Trūksta duomenų",
-                description: "Prašome užpildyti bent įmonės pavadinimo ir darbo pradžios laukus.",
+                description: "Prašome užpildyti vairuotojo gimimo datą, įmonės pavadinimą ir darbo pradžios laukus.",
             });
             return;
         }
@@ -139,6 +141,7 @@ export default function SearchPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     driverName: currentQuery,
+                    driverBirthDate,
                     targetEmail,
                     targetCompany,
                     requesterId: user?.id,
@@ -171,6 +174,7 @@ export default function SearchPage() {
               alert(`DEBUG: Laiškas išsiųstas! Nuoroda: \n${data.debugLink}`); // Show Popup
             }
     
+            setDriverBirthDate('');
             setTargetEmail('');
             setTargetCompany('');
             setStartDate('');
@@ -294,6 +298,17 @@ export default function SearchPage() {
                                                     <p className="text-sm text-muted-foreground mt-1 mb-4">Nurodykite buvusio darbdavio duomenis ir mes išsiųsime saugią nuorodą atsiliepimui pateikti.</p>
                                                     <div className="space-y-4 text-left">
                                                         <div>
+                                                            <Label htmlFor="driverBirthDate">Vairuotojo Gimimo Data</Label>
+                                                            <Input
+                                                                id="driverBirthDate"
+                                                                type="date"
+                                                                value={driverBirthDate}
+                                                                onChange={(e) => setDriverBirthDate(e.target.value)}
+                                                                disabled={isRequesting}
+                                                                required
+                                                            />
+                                                        </div>
+                                                        <div>
                                                             <Label htmlFor="targetCompany">Buvusio Darbdavio Įmonės Pavadinimas</Label>
                                                             <Input
                                                                 id="targetCompany"
@@ -327,7 +342,7 @@ export default function SearchPage() {
                                                                 disabled={isRequesting}
                                                             />
                                                         </div>
-                                                        <Button className="w-full" onClick={handleVerificationRequest} disabled={isRequesting || !targetCompany || !startDate}>
+                                                        <Button className="w-full" onClick={handleVerificationRequest} disabled={isRequesting || !targetCompany || !startDate || !driverBirthDate}>
                                                             {isRequesting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
                                                             Siųsti Užklausą
                                                         </Button>
@@ -376,3 +391,5 @@ export default function SearchPage() {
         </div>
     );
 }
+
+    

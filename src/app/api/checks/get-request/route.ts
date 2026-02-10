@@ -1,3 +1,4 @@
+
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 
@@ -35,7 +36,6 @@ export async function GET(req: NextRequest) {
         if (requestData.requesterId) {
             const userRef = adminDb.collection('users').doc(requestData.requesterId);
             const userDoc = await userRef.get();
-            // FIX: In Admin SDK, .exists is a PROPERTY, not a function
             if (userDoc.exists) { 
                 const userData = userDoc.data();
                 requesterCompany = userData?.companyName || requesterCompany;
@@ -44,6 +44,7 @@ export async function GET(req: NextRequest) {
         
         const responseData = {
           driverName: requestData.driverName,
+          driverBirthDate: requestData.driverBirthDate || null,
           requesterCompany: requesterCompany,
           startDate: requestData.startDate || null,
           endDate: requestData.endDate || null,
@@ -57,3 +58,5 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ success: false, error: error.message || 'Įvyko vidinė serverio klaida.' }, { status: 500 });
     }
 }
+
+    

@@ -12,14 +12,15 @@ export async function POST(req: NextRequest) {
 
     try {
         const body = await req.json();
-        const { driverName, driverId, targetEmail, targetCompany, requesterId, startDate, endDate, isCurrentEmployer } = body;
+        const { driverName, driverBirthDate, driverId, targetEmail, targetCompany, requesterId, startDate, endDate, isCurrentEmployer } = body;
 
-        if (!driverName || !targetCompany) {
-            return NextResponse.json({ success: false, error: 'Trūksta būtinų duomenų (vairuotojo vardo arba įmonės pavadinimo).' }, { status: 400 });
+        if (!driverName || !targetCompany || !driverBirthDate) {
+            return NextResponse.json({ success: false, error: 'Trūksta būtinų duomenų (vairuotojo vardo, gimimo datos arba įmonės pavadinimo).' }, { status: 400 });
         }
 
         const requestData: any = {
             driverName,
+            driverBirthDate,
             driverId: driverId || null,
             targetEmail: targetEmail || null,
             targetCompany,
@@ -58,3 +59,5 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ success: false, error: error.message || 'Įvyko vidinė serverio klaida kuriant užklausą.' }, { status: 500 });
     }
 }
+
+    
