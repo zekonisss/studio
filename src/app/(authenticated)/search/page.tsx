@@ -185,10 +185,18 @@ export default function SearchPage() {
                 throw new Error(data.error || "Serverio klaida siunčiant užklausą.");
             }
             
-            toast({
-                title: "Užklausa apdorota!",
-                description: data.message,
-            });
+            if (data.isDuplicate) {
+                toast({
+                    variant: "default",
+                    title: "Užklausa jau egzistuoja",
+                    description: "Tokia patikros užklausa šiai įmonei apie šį vairuotoją jau buvo išsiųsta neseniai.",
+                });
+            } else {
+                toast({
+                    title: "Užklausa apdorota!",
+                    description: data.message,
+                });
+            }
 
             if (data.debugLink) {
               console.log("LINKAS:", data.debugLink);

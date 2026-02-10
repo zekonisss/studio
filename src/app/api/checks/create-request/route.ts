@@ -17,6 +17,40 @@ export async function POST(req: NextRequest) {
         if (!driverName || !targetCompany || !driverBirthDate) {
             return NextResponse.json({ success: false, error: 'Trūksta būtinų duomenų (vairuotojo vardo, gimimo datos arba įmonės pavadinimo).' }, { status: 400 });
         }
+        
+        // --- 1. DUBLIKATŲ PATIKRA (Anti-Spam) ---
+        const duplicateSnapshot = await adminDb.collection('verification_requests')
+          .where('requesterId', '==', requesterId)
+          .where('targetCompany', '==', targetCompany)
+          .where('driverName', '==', driverName)
+          .where('driverBirthDate', '==', driverBirthDate)
+          .get();
+
+        if (!duplicateSnapshot.empty) {
+            const activeDuplicate = duplicateSnapshot.docs.find(doc => {
+              const data = doc.data();
+              if (!data.createdAt || !data.createdAt.toDate) return false;
+
+              const created = data.createdAt.toDate();
+              const now = new Date();
+              const diffTime = Math.abs(now.getTime() - created.getTime());
+              const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+              
+              return diffDays < 30; 
+            });
+
+            if (activeDuplicate) {
+              console.log(`[DUPLICATE BLOCKED] Request already exists for ${driverName} at ${targetCompany}`);
+              return NextResponse.json({ 
+                success: true, 
+                id: activeDuplicate.id, 
+                token: activeDuplicate.data().token,
+                message: 'Active request already exists for this driver/company within the last 30 days.',
+                isDuplicate: true
+              });
+            }
+        }
+
 
         const requestData: any = {
             driverName,
