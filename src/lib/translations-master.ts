@@ -39,6 +39,7 @@ export const translationsMaster: Record<string, Partial<Record<Locale, string>>>
   'sidebar.terms': { lt: 'Taisyklės', en: 'Terms', ru: 'Условия', pl: 'Regulamin', lv: 'Noteikumi', et: 'Tingimused' },
   'sidebar.privacy': { lt: 'Privatumas', en: 'Privacy', ru: 'Приватность', pl: 'Prywatność', lv: 'Privātums', et: 'Privaatsus' },
   'sidebar.adminPanel': { lt: 'Admino Panelė', en: 'Admin Panel', ru: 'Админ-панель', pl: 'Panel admina', lv: 'Adminu panelis', et: 'Admini paneel' },
+  'sidebar.verificationRequests': { lt: 'Patikros Užklausos', en: 'Verification Requests', ru: 'Запросы на проверку', pl: 'Wnioski o weryfikację', lv: 'Verifikācijas pieprasījumi', et: 'Kinnitustaotlused' },
   'sidebar.importReports': { lt: 'Importuoti įrašus', en: 'Import Reports', ru: 'Импорт записей', pl: 'Importuj wpisy', lv: 'Importēt ierakstus', et: 'Impordi kirjed' },
   'sidebar.logout': { lt: 'Atsijungti', en: 'Log Out', ru: 'Выйти', pl: 'Wyloguj', lv: 'Iziet', et: 'Logi välja' },
   'sidebar.section.main': { lt: 'Pagrindinis', en: 'Main', ru: 'Главное', pl: 'Główne', lv: 'Galvenais', et: 'Põhiline' },
@@ -861,6 +862,7 @@ export const translationsMaster: Record<string, Partial<Record<Locale, string>>>
     
 
     
+
 
 
 
