@@ -124,11 +124,11 @@ export default function SearchPage() {
     };
 
     const handleVerificationRequest = async () => {
-        if (!targetCompany) {
+        if (!targetCompany || !startDate) {
             toast({
                 variant: "destructive",
                 title: "Trūksta duomenų",
-                description: "Prašome užpildyti įmonės pavadinimo lauką.",
+                description: "Prašome užpildyti bent įmonės pavadinimo ir darbo pradžios laukus.",
             });
             return;
         }
@@ -306,11 +306,11 @@ export default function SearchPage() {
                                                         <div className="grid grid-cols-2 gap-4">
                                                            <div>
                                                                 <Label htmlFor="startDate">Darbo pradžia</Label>
-                                                                <Input id="startDate" value={startDate} onChange={(e) => setStartDate(e.target.value)} placeholder="MM/YYYY" disabled={isRequesting} />
+                                                                <Input type="date" id="startDate" value={startDate} onChange={(e) => setStartDate(e.target.value)} disabled={isRequesting} required />
                                                             </div>
                                                             <div>
                                                                 <Label htmlFor="endDate">Darbo pabaiga</Label>
-                                                                <Input id="endDate" value={endDate} onChange={(e) => setEndDate(e.target.value)} disabled={isRequesting || isCurrentEmployer} placeholder="MM/YYYY" />
+                                                                <Input type="date" id="endDate" value={endDate} onChange={(e) => setEndDate(e.target.value)} disabled={isRequesting || isCurrentEmployer} />
                                                             </div>
                                                         </div>
                                                          <div className="flex items-center space-x-2">
@@ -327,7 +327,7 @@ export default function SearchPage() {
                                                                 disabled={isRequesting}
                                                             />
                                                         </div>
-                                                        <Button className="w-full" onClick={handleVerificationRequest} disabled={isRequesting || !targetCompany}>
+                                                        <Button className="w-full" onClick={handleVerificationRequest} disabled={isRequesting || !targetCompany || !startDate}>
                                                             {isRequesting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
                                                             Siųsti Užklausą
                                                         </Button>
@@ -359,7 +359,7 @@ export default function SearchPage() {
                              {!isLoading && !hasSearched && (
                                 <div className="text-center py-16 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50/50 dark:bg-slate-900/20">
                                     <UserSearch className="h-12 w-12 mx-auto text-slate-300 dark:text-slate-600 mb-4" />
-                                    <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100">Pradėkite paiešką</h3>
+                                    <h3 className="text-lg font-medium text-slate-900 dark:text-white">Pradėkite paiešką</h3>
                                     <p className="text-muted-foreground max-w-sm mx-auto mt-2">
                                         Įveskite vardą, pavardę arba asmens kodą, kad patikrintumėte duomenų bazę.
                                     </p>
