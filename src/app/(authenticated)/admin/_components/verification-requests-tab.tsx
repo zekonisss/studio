@@ -22,7 +22,7 @@ interface VerificationRequest {
   emailSource: string;
 }
 
-export function VerificationRequestsTab() {
+export default function VerificationRequestsTab() {
   const { t, locale } = useLanguage();
   const [requests, setRequests] = useState<VerificationRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);

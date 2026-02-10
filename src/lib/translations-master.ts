@@ -375,6 +375,7 @@ export const translationsMaster: Record<string, Partial<Record<Locale, string>>>
   'admin.tabs.entryManagement': { lt: 'Įrašai', en: 'Entries', ru: 'Записи', pl: 'Wpisy', lv: 'Ieraksti', et: 'Kirjed' },
   'admin.tabs.auditLog': { lt: 'Auditai', en: 'Audit Log', ru: 'Журнал аудита', pl: 'Dziennik audytu', lv: 'Audita žurnāls', et: 'Auditi logi' },
   'admin.tabs.statistics': { lt: 'Statistika', en: 'Statistics', ru: 'Статистика', pl: 'Statystyki', lv: 'Statistika', et: 'Statistika' },
+  'admin.tabs.requests': { lt: 'Užklausos', en: 'Requests', ru: 'Запросы', pl: 'Wnioski', lv: 'Pieprasījumi', et: 'Taotlused' },
   'admin.tabs.verificationRequests': { lt: 'Patikros Užklausos', en: 'Verification Requests' },
   'admin.tabs.adminActions': { lt: 'Administratorių Veiksmai', en: 'Admin Actions' },
   'admin.tabs.userLogins': { lt: 'Vartotojų Prisijungimai', en: 'User Logins' },
@@ -859,13 +860,3 @@ export const translationsMaster: Record<string, Partial<Record<Locale, string>>>
   'ops.daySelector.nextDay': { lt: 'Kita diena', en: 'Next Day' },
   'ops.daySelector.fineDay': { lt: 'Baudos diena', en: 'Day of Fine' },
 };
-
-    
-
-    
-
-
-
-
-
-
