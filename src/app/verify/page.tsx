@@ -11,7 +11,7 @@ import Link from 'next/link';
 
 interface RequestDetails {
     driverName: string;
-    requestingCompany: string;
+    requesterCompany: string;
     startDate?: string | null;
     endDate?: string | null;
     isCurrentEmployer?: boolean;
@@ -23,39 +23,39 @@ function VerificationPageContent() {
   const token = searchParams.get('token');
 
   const [step, setStep] = useState<'loading' | 'form' | 'success' | 'invalid'>('loading');
-  const [requestDetails, setRequestDetails] = useState<RequestDetails>({
-      driverName: 'Jonas Jonaitis', // Mock
-      requestingCompany: 'UAB Greitkelis', // Mock
-  });
+  const [requestDetails, setRequestDetails] = useState<RequestDetails | null>(null);
   const [answers, setAnswers] = useState({
     workedHere: null as boolean | null,
     wouldRehire: null as boolean | null,
     comment: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string>('Patvirtinimo nuoroda yra neteisinga arba nebegalioja.');
 
   useEffect(() => {
-    // Simulate API call to verify token
-    setTimeout(() => {
-      if (token) {
-        // In a real app, you would fetch data based on the token
-        // For this mock, we'll read from URL params for testing.
-        const start = searchParams.get('start');
-        const end = searchParams.get('end');
-        const current = searchParams.get('current') === 'true';
-
-        setRequestDetails(prev => ({
-            ...prev,
-            startDate: start,
-            endDate: end,
-            isCurrentEmployer: current
-        }));
-        setStep('form');
-      } else {
+    if (!token) {
         setStep('invalid');
-      }
-    }, 1500);
-  }, [token, searchParams]);
+        return;
+    }
+
+    const fetchRequestData = async () => {
+        try {
+            const response = await fetch(`/api/checks/get-request?token=${token}`);
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Nepavyko gauti užklausos duomenų.');
+            }
+            const data: RequestDetails = await response.json();
+            setRequestDetails(data);
+            setStep('form');
+        } catch (error: any) {
+            setErrorMessage(error.message);
+            setStep('invalid');
+        }
+    };
+    
+    fetchRequestData();
+  }, [token]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -74,18 +74,22 @@ function VerificationPageContent() {
   };
   
   const renderQuestion1 = () => {
-    const { startDate, endDate, isCurrentEmployer } = requestDetails;
+    if (!requestDetails) return 'Ar šis asmuo dirbo Jūsų įmonėje?';
+    
+    const { startDate, endDate, isCurrentEmployer, driverName } = requestDetails;
+    
+    let dateString = '';
     if (isCurrentEmployer) {
-      return `Ar šis asmuo šiuo metu dirba Jūsų įmonėje?`;
+      dateString = ' šiuo metu';
+    } else if (startDate) {
+      dateString = ` laikotarpiu nuo ${startDate}${endDate ? ` iki ${endDate}` : ''}`;
     }
-    if (startDate && endDate) {
-      return `Ar šis asmuo dirbo Jūsų įmonėje laikotarpiu nuo ${startDate} iki ${endDate}?`;
-    }
-    return 'Ar šis asmuo dirbo Jūsų įmonėje?';
+
+    return `Ar ${driverName || 'šis asmuo'} dirbo Jūsų įmonėje${dateString}?`;
   };
 
   const renderQuestion2 = () => {
-    if (requestDetails.isCurrentEmployer) {
+    if (requestDetails?.isCurrentEmployer) {
       return 'Jei darbuotojas nuspręstų išeiti, ar priimtumėte jį atgal ateityje?';
     }
     return 'Ar priimtumėte šį asmenį dirbti atgal?';
@@ -107,7 +111,7 @@ function VerificationPageContent() {
             <AlertTriangle className="h-10 w-10 text-destructive mb-2" />
             <CardTitle>Neteisinga Nuoroda</CardTitle>
             <CardDescription>
-                Ši patvirtinimo nuoroda yra neteisinga arba nebegalioja.
+                {errorMessage}
             </CardDescription>
         </CardHeader>
       </Card>
@@ -146,7 +150,7 @@ function VerificationPageContent() {
         <CardHeader>
           <CardTitle className="text-2xl">Prašymas Patvirtinti Reputaciją</CardTitle>
           <CardDescription>
-            Įmonė <span className="font-semibold text-foreground">{requestDetails.requestingCompany}</span> prašo informacijos apie vairuotoją <span className="font-semibold text-foreground">{requestDetails.driverName}</span>.
+            Įmonė <span className="font-semibold text-foreground">{requestDetails?.requesterCompany}</span> prašo informacijos apie vairuotoją <span className="font-semibold text-foreground">{requestDetails?.driverName}</span>.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
