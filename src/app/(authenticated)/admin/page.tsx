@@ -28,8 +28,8 @@ export default function AdminPage() {
                 <CardContent>
                     <Tabs defaultValue="requests" className="w-full">
                         <TabsList className="grid w-full grid-cols-2 md:grid-cols-6">
-                            <TabsTrigger value="users">{t('admin.tabs.userManagement')}</TabsTrigger>
                             <TabsTrigger value="requests">{t('admin.tabs.requests', { "defaultValue": "Užklausos" })}</TabsTrigger>
+                            <TabsTrigger value="users">{t('admin.tabs.userManagement')}</TabsTrigger>
                             <TabsTrigger value="entries">{t('admin.tabs.entryManagement')}</TabsTrigger>
                             <TabsTrigger value="deletion-requests">{t('admin.tabs.deletionRequests')}</TabsTrigger>
                             <TabsTrigger value="audit-log">{t('admin.tabs.auditLog')}</TabsTrigger>
