@@ -21,8 +21,7 @@ import {
   ScrollText,
   ShieldCheck,
   Users,
-  GanttChartSquare,
-  Send
+  GanttChartSquare
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import type { ReactNode } from "react";
@@ -58,7 +57,6 @@ const legalNavItemsBase = [
 
 const adminNavItemsBase = [
   { href: "/admin", labelKey: "sidebar.adminPanel", icon: ShieldAlert },
-  { href: "/admin/requests", labelKey: "sidebar.verificationRequests", icon: Send },
   { href: "/reports/import", labelKey: "sidebar.importReports", icon: FileSpreadsheet },
 ];
 
