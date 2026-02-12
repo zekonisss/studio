@@ -1,23 +1,35 @@
+
 import { NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
-import { QueryDocumentSnapshot } from 'firebase-admin/firestore'; // Importuojame tipą
+import { QueryDocumentSnapshot } from 'firebase-admin/firestore';
 
-export const dynamic = 'force-dynamic'; 
+// Force this route to be dynamically rendered and not cached
+export const dynamic = 'force-dynamic';
 
+/**
+ * Safely converts a Firestore Timestamp or an ISO string to a Date object.
+ * @param dateValue The value to convert.
+ * @returns A Date object. Returns epoch time if conversion fails.
+ */
 const toDate = (dateValue: any): Date => {
-    if (dateValue?.toDate) return dateValue.toDate();
+    if (dateValue?.toDate) { // Check if it's a Firestore Timestamp
+        return dateValue.toDate();
+    }
     if (typeof dateValue === 'string') {
         const d = new Date(dateValue);
-        if (!isNaN(d.getTime())) return d;
+        if (!isNaN(d.getTime())) {
+            return d;
+        }
     }
-    return new Date(0); 
+    // Return a default "invalid" date if conversion fails
+    return new Date(0);
 }
 
 export async function GET() {
-  // LOG 1: Start
-  console.log("⚡ [ADMIN API] Bandoma gauti užklausas (Live)...");
+  console.log("⚡ [ADMIN API] Initiating fetch for 'verification_requests' (Live)...");
 
   if (!adminDb) {
+    console.error("❌ [API ADMIN ERROR] Firebase Admin DB is not initialized.");
     return NextResponse.json({ error: 'Server configuration error.' }, { status: 500 });
   }
 
@@ -28,14 +40,12 @@ export async function GET() {
     const collectionRef = adminDb.collection('verification_requests');
     const snapshot = await collectionRef.get();
 
-    // LOG 2: Kiek radome?
-    console.log(`⚡ [ADMIN API] Rasta dokumentų DB: ${snapshot.size}`);
+    console.log(`⚡ [ADMIN API] Found ${snapshot.size} documents in 'verification_requests'.`);
 
     if (snapshot.empty) {
       return NextResponse.json([], { headers });
     }
 
-    // Čia pridedame tipą (doc: QueryDocumentSnapshot)
     const requests = snapshot.docs.map((doc: QueryDocumentSnapshot) => {
       const data = doc.data();
       return {
@@ -43,24 +53,26 @@ export async function GET() {
         ...data,
         createdAt: toDate(data.createdAt).toISOString(),
         updatedAt: data.updatedAt ? toDate(data.updatedAt).toISOString() : null,
-      } as any;
+      } as any; // Cast to any to simplify sorting function typing
     });
 
-    // Rūšiavimas su tipais (a: any, b: any)
+    // Enhanced sorting logic
     requests.sort((a: any, b: any) => {
-      const priority = ['NEW', 'New', 'RESEARCH', 'Researching', 'Action Needed'];
-      const aPrio = priority.includes(a.status);
-      const bPrio = priority.includes(b.status);
+      const priorityStatuses = ['NEW', 'New', 'RESEARCH', 'Researching', 'PENDING'];
+      const aIsPriority = priorityStatuses.includes(a.status);
+      const bIsPriority = priorityStatuses.includes(b.status);
 
-      if (aPrio && !bPrio) return -1;
-      if (!aPrio && bPrio) return 1;
+      if (aIsPriority && !bIsPriority) return -1; // a comes first
+      if (!aIsPriority && bIsPriority) return 1;  // b comes first
+
+      // If both are priority or both are not, sort by date
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
 
     return NextResponse.json(requests, { headers });
 
   } catch (error: any) {
-    console.error('❌ [API ADMIN ERROR] Klaida:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('❌ [API ADMIN CRITICAL ERROR] Failed to fetch or process requests:', error);
+    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
   }
 }
