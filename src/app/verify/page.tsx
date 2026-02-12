@@ -4,10 +4,12 @@
 import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2, CheckCircle, AlertTriangle, ArrowRight, UserSearch } from "lucide-react";
 import Link from 'next/link';
+import { useToast } from '@/hooks/use-toast';
 
 // --- INTERNATIONALIZATION ---
 type Lang = 'LT' | 'EN' | 'PL' | 'RU';
@@ -35,7 +37,12 @@ const TRANSLATIONS = {
     successP1: "Jūs ką tik padėjote kolegai.",
     successP2: "O kaip Jūs šiandien valdote savo vairuotojų rizikas?",
     successP3: "„Nuojauta“ transporto versle kainuoja per brangiai. Prisijunkite prie bendruomenės, kuri sprendimus priima remdamasi faktais.",
-    successBtn: "Prisijungti prie Patikimų Vežėjų"
+    successBtn: "Prisijungti prie Patikimų Vežėjų",
+    delegatePrompt: "Gavote klaidingai? Nurodykite atsakingą asmenį",
+    delegateSave: "Persiųsti",
+    delegateEmailPlaceholder: "Atsakingo asmens el. paštas...",
+    delegateSuccess: "Užklausa sėkmingai persiųsta.",
+    delegateError: "Klaida persiunčiant užklausą."
   },
   EN: {
     title: "Driver Employment Verification",
@@ -59,7 +66,12 @@ const TRANSLATIONS = {
     successP1: "You have just helped a colleague.",
     successP2: "And how do you manage your driver risks today?",
     successP3: "\"Gut feeling\" is too expensive in the transport business. Join a community that makes decisions based on facts.",
-    successBtn: "Join Trusted Carriers"
+    successBtn: "Join Trusted Carriers",
+    delegatePrompt: "Wrong recipient? Delegate to the right person",
+    delegateSave: "Forward",
+    delegateEmailPlaceholder: "Responsible person's email...",
+    delegateSuccess: "Request forwarded successfully.",
+    delegateError: "Error forwarding request."
   },
   PL: {
     title: "Weryfikacja Historii Zatrudnienia Kierowcy",
@@ -83,7 +95,12 @@ const TRANSLATIONS = {
     successP1: "Właśnie pomogłeś koledze.",
     successP2: "A jak dziś zarządzasz ryzykiem związanym z kierowcami?",
     successP3: "\"Przeczucie\" w branży transportowej jest zbyt drogie. Dołącz do społeczności, która podejmuje decyzje w oparciu o fakty.",
-    successBtn: "Dołącz do Zaufanych Przewoźników"
+    successBtn: "Dołącz do Zaufanych Przewoźników",
+    delegatePrompt: "Zły odbiorca? Przekaż właściwej osobie",
+    delegateSave: "Przekaż dalej",
+    delegateEmailPlaceholder: "Adres e-mail osoby odpowiedzialnej...",
+    delegateSuccess: "Zapytanie pomyślnie przekazane.",
+    delegateError: "Błąd podczas przekazywania zapytania."
   },
   RU: {
     title: "Проверка истории работы водителя",
@@ -107,11 +124,14 @@ const TRANSLATIONS = {
     successP1: "Вы только что помогли коллеге.",
     successP2: "А как вы сегодня управляете рисками, связанными с вашими водителями?",
     successP3: "\"Интуиция\" в транспортном бизнесе стоит слишком дорого. Присоединяйтесь к сообществу, которое принимает решения на основе фактов.",
-    successBtn: "Присоединиться к доверенным перевозчикам"
+    successBtn: "Присоединиться к доверенным перевозчикам",
+    delegatePrompt: "Ошиблись адресатом? Укажите ответственного",
+    delegateSave: "Переслать",
+    delegateEmailPlaceholder: "Эл. почта ответственного лица...",
+    delegateSuccess: "Запрос успешно переслан.",
+    delegateError: "Ошибка при пересылке запроса."
   }
 };
-// --- END INTERNATIONALIZATION ---
-
 
 interface RequestDetails {
     driverName: string;
@@ -131,6 +151,7 @@ const renderWithBold = (text: string) => {
 };
 
 function VerificationPageContent() {
+  const { toast } = useToast();
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
 
@@ -145,6 +166,11 @@ function VerificationPageContent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   
+  // State for delegation
+  const [isDelegating, setIsDelegating] = useState(false);
+  const [delegateEmail, setDelegateEmail] = useState('');
+  const [isSubmittingDelegate, setIsSubmittingDelegate] = useState(false);
+
   const t = (key: keyof typeof TRANSLATIONS.LT, params?: Record<string, string>) => {
       let str = TRANSLATIONS[language]?.[key] || TRANSLATIONS['EN'][key] || '';
       if (params) {
@@ -196,6 +222,30 @@ function VerificationPageContent() {
       setIsSubmitting(false);
     }, 1000);
   };
+
+  const handleDelegateSubmit = async () => {
+    if (!delegateEmail.includes('@') || !token) {
+        toast({ variant: 'destructive', title: 'Klaida', description: 'Neteisingas el. pašto formatas.' });
+        return;
+    }
+    setIsSubmittingDelegate(true);
+    try {
+        const response = await fetch('/api/checks/delegate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token, newEmail: delegateEmail }),
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Serverio klaida');
+        
+        toast({ title: 'Sėkmė!', description: t('delegateSuccess') });
+        setIsDelegating(false);
+    } catch (err: any) {
+        toast({ variant: 'destructive', title: 'Klaida', description: err.message || t('delegateError') });
+    } finally {
+        setIsSubmittingDelegate(false);
+    }
+  };
   
   const renderQuestion1 = () => {
     if (!requestDetails) return '';
@@ -203,7 +253,7 @@ function VerificationPageContent() {
   };
   
   const LanguageSwitcher = () => (
-    <div className="absolute top-4 right-4 flex gap-1 border bg-muted p-1 rounded-md z-10">
+    <div className="flex gap-1">
         {(['LT', 'EN', 'PL', 'RU'] as Lang[]).map(lang => (
             <Button
                 key={lang}
@@ -230,8 +280,8 @@ function VerificationPageContent() {
   if (step === 'invalid') {
      return (
       <Card className="w-full max-w-md border-destructive relative">
-        <LanguageSwitcher />
-        <CardHeader className="text-center items-center">
+        <div className="absolute top-2 right-2"><LanguageSwitcher /></div>
+        <CardHeader className="text-center items-center pt-12">
             <AlertTriangle className="h-10 w-10 text-destructive mb-2" />
             <CardTitle>{t('invalidLinkTitle')}</CardTitle>
             <CardDescription>
@@ -245,8 +295,8 @@ function VerificationPageContent() {
   if (step === 'success') {
     return (
         <div className="text-center space-y-6 py-4 w-full max-w-lg relative">
-          <LanguageSwitcher />
-          <div className="flex justify-center mb-4">
+          <div className="absolute top-0 right-0"><LanguageSwitcher /></div>
+          <div className="flex justify-center mb-4 pt-8">
             <div className="rounded-full bg-green-500/10 p-4 ring-1 ring-green-500/50">
               <CheckCircle className="w-16 h-16 text-green-500" />
             </div>
@@ -278,11 +328,17 @@ function VerificationPageContent() {
   }
   
   return (
-    <Card className="w-full max-w-2xl relative">
-        <LanguageSwitcher />
+    <Card className="w-full max-w-2xl">
+        <div className="flex items-center justify-between p-4 border-b">
+            <Link href="/" className="group flex items-center gap-2 hover:opacity-90 transition-opacity cursor-pointer">
+                <UserSearch className="w-8 h-8 text-primary" />
+                <span className="text-xl font-bold text-slate-800 dark:text-white tracking-tight italic">DriverCheck</span>
+            </Link>
+            <LanguageSwitcher />
+        </div>
         <form onSubmit={handleSubmit}>
             <CardHeader className="text-center">
-                <CardTitle className="text-2xl">{t('title')}</CardTitle>
+                <CardTitle className="text-2xl pt-2">{t('title')}</CardTitle>
                  <CardDescription className="text-base text-muted-foreground px-4 space-y-2 pt-2">
                     <p>{renderWithBold(t('intro', { name: requestDetails?.driverName || '...' }))}</p>
                     <p>{renderWithBold(t('companyInfo', { company: requestDetails?.targetCompany || '...' }))}</p>
@@ -340,6 +396,26 @@ function VerificationPageContent() {
                     {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     {t('btnConfirm')}
                 </Button>
+                 <div className="mt-4 text-center">
+                  {!isDelegating ? (
+                    <button type="button" onClick={() => setIsDelegating(true)} className="text-xs text-muted-foreground underline hover:text-primary">
+                      {t('delegatePrompt')}
+                    </button>
+                  ) : (
+                    <div className="flex w-full max-w-sm mx-auto items-center gap-2">
+                      <Input
+                        type="email"
+                        placeholder={t('delegateEmailPlaceholder')}
+                        value={delegateEmail}
+                        onChange={(e) => setDelegateEmail(e.target.value)}
+                        disabled={isSubmittingDelegate}
+                      />
+                      <Button type="button" onClick={handleDelegateSubmit} disabled={isSubmittingDelegate || !delegateEmail}>
+                        {isSubmittingDelegate ? <Loader2 className="animate-spin h-4 w-4" /> : t('delegateSave')}
+                      </Button>
+                    </div>
+                  )}
+                </div>
             </CardFooter>
         </form>
     </Card>
@@ -348,17 +424,7 @@ function VerificationPageContent() {
 
 export default function VerificationPage() {
     return (
-        <div className="flex min-h-screen w-full items-center justify-center bg-slate-900 p-4 relative pt-20">
-            <div className="absolute top-8 left-0 right-0 flex justify-center z-10">
-              <Link href="/" className="group flex items-center gap-3 hover:opacity-90 transition-opacity cursor-pointer">
-                <div className="relative">
-                  <UserSearch className="w-10 h-10 text-blue-500" strokeWidth={2.5} />
-                </div>
-                <span className="text-3xl font-bold text-white tracking-tight italic">
-                  Driver<span className="text-slate-300">Check</span>
-                </span>
-              </Link>
-            </div>
+        <div className="flex min-h-screen w-full items-center justify-center bg-slate-100 dark:bg-slate-900 p-4">
             <Suspense fallback={<div className="flex flex-col items-center justify-center text-center gap-4 p-8"><Loader2 className="h-10 w-10 animate-spin text-primary" /><p className="text-muted-foreground">Kraunasi...</p></div>}>
                 <VerificationPageContent />
             </Suspense>

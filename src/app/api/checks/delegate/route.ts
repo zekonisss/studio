@@ -12,11 +12,10 @@ export async function POST(req: NextRequest) {
         const body = await req.json();
         const { token, newEmail } = body;
 
-        if (!token || !newEmail) {
-            return NextResponse.json({ success: false, error: 'Trūksta būtinų duomenų (rakto arba naujo el. pašto).' }, { status: 400 });
+        if (!token || !newEmail || !newEmail.includes('@')) {
+            return NextResponse.json({ success: false, error: 'Trūksta būtinų duomenų arba neteisingas el. pašto formatas.' }, { status: 400 });
         }
 
-        // 1. Find the request by token
         const requestsRef = adminDb.collection('verification_requests');
         const q = requestsRef.where('token', '==', token).limit(1);
         const snapshot = await q.get();
@@ -27,37 +26,31 @@ export async function POST(req: NextRequest) {
 
         const requestDoc = snapshot.docs[0];
         const requestData = requestDoc.data();
-        const originalEmail = requestData.targetEmail;
 
-        const batch = adminDb.batch();
-
-        // 2. Update the original request's email and add an audit trail
-        batch.update(requestDoc.ref, {
-            originalEmail: originalEmail, // Save the old email for auditing
+        // Update the original request
+        await requestDoc.ref.update({
             targetEmail: newEmail,
             delegatedAt: Timestamp.now(),
+            status: 'PENDING', // Reset status so it can be sent again
+            emailStatus: 'PENDING',
         });
         
-        // 3. Log the new contact information for future use
-        const contactsRef = adminDb.collection('company_contacts').doc(); // Auto-generate ID
-        batch.set(contactsRef, {
+        // Log the new contact info to the catalog
+        const normalizedCompany = (requestData.targetCompany || 'unknown').toLowerCase().trim().replace(/[\s\W]+/g, '-');
+        const contactsRef = adminDb.collection('company_contacts_catalog').doc(normalizedCompany);
+        await contactsRef.set({
             companyName: requestData.targetCompany,
             email: newEmail,
-            source: 'delegation',
-            addedAt: Timestamp.now(),
-            driverNameContext: requestData.driverName, // Add context
-        });
-        
-        await batch.commit();
+            source: 'USER_FEEDBACK',
+            updatedAt: Timestamp.now()
+        }, { merge: true });
 
-        // 4. Mock resending the email (in a real scenario, you'd call your email service here)
-        const verificationLink = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/verify?token=${token}`; // Token remains the same
-        console.log(`[EMAIL DELEGATED] Forwarding request for driver '${requestData.driverName}' to new email '${newEmail}'. Link: ${verificationLink}`);
+        console.log(`[DELEGATION] User corrected email for company '${requestData.targetCompany}' to '${newEmail}'.`);
         
-        return NextResponse.json({ success: true, message: "Užklausa persiųsta." });
+        return NextResponse.json({ success: true, message: "Užklausa sėkmingai persiųsta nauju adresu." });
 
     } catch (error: any) {
         console.error('Error delegating verification request:', error);
-        return NextResponse.json({ success: false, error: error.message || 'Įvyko vidinė serverio klaida persiunčiant užklausą.' }, { status: 500 });
+        return NextResponse.json({ success: false, error: error.message || 'Įvyko vidinė serverio klaida.' }, { status: 500 });
     }
 }
