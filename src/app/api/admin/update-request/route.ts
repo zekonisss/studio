@@ -20,6 +20,8 @@ export async function PATCH(request: NextRequest) {
     if (!docSnap.exists) {
         return NextResponse.json({ error: 'Request not found' }, { status: 404 });
     }
+    
+    const docData = docSnap.data();
 
     await requestRef.update({
       targetEmail: newEmail,
@@ -28,9 +30,13 @@ export async function PATCH(request: NextRequest) {
       updatedAt: Timestamp.now(),
     });
 
-    // Mock resending email
-    const docData = docSnap.data();
-    console.log(`[ADMIN ACTION] Email for request ID ${requestId} (Driver: ${docData?.driverName}) resent to new address: ${newEmail}`);
+    // --- DEBUG LOGGING ---
+    if (docData && docData.token) {
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+        console.log('\n🟠 [ADMIN UPDATE PREVIEW] Verification Link:');
+        console.log(`${baseUrl}/verify?token=${docData.token}`);
+        console.log('------------------------------------------------------\n');
+    }
 
     return NextResponse.json({ success: true, message: 'Request updated and queued for resending.' });
 

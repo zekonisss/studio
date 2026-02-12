@@ -1,3 +1,4 @@
+
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 import { Timestamp } from 'firebase-admin/firestore';
@@ -104,7 +105,7 @@ export async function POST(request: NextRequest) {
       emailSource,
       status,
       requesterCompanyName: body.requesterCompanyName || '',
-      birthDate: body.birthDate || null,
+      driverBirthDate: body.driverBirthDate || null,
       startDate: body.startDate || null,
       endDate: body.endDate || null,
       isCurrentEmployer: body.isCurrentEmployer || false,
@@ -115,6 +116,13 @@ export async function POST(request: NextRequest) {
 
     const docRef = await adminDb.collection('verification_requests').add(newRequest);
     console.log("[API] Išsaugota! ID:", docRef.id, "Status:", status);
+    
+    // --- DEBUG LOGGING ---
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const debugLink = `${baseUrl}/verify?token=${newRequest.token}`;
+    console.log('\n🔵 [EMAIL PREVIEW] Click here to see what the company sees:');
+    console.log(debugLink);
+    console.log('------------------------------------------------------\n');
 
     return NextResponse.json({ success: true, id: docRef.id });
 
