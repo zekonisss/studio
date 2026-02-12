@@ -19,7 +19,7 @@ async function findCompanyEmail(companyName: string): Promise<string | null> {
     return null;
   }
   const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
   const prompt = `Find the public general info or HR/personnel department email address for the European transport/logistics company named '${companyName}'. The company is likely based in Lithuania, Latvia, Poland, or Estonia.
 

@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
     
     // Generate content using the Genkit AI instance
     const { output } = await ai.generate({
-      model: googleAI.model('gemini-1.5-flash'),
+      model: googleAI.model('gemini-2.5-flash'),
       prompt: [
         { text: prompt },
         { media: { url: dataUri, contentType: file.type } }
