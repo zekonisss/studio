@@ -35,11 +35,11 @@ export default function AdminPage() {
                             <TabsTrigger value="audit-log">{t('admin.tabs.auditLog')}</TabsTrigger>
                             <TabsTrigger value="statistics">{t('admin.tabs.statistics')}</TabsTrigger>
                         </TabsList>
+                        <TabsContent value="requests">
+                            <VerificationRequestsTab />
+                        </TabsContent>
                         <TabsContent value="users">
                             <UserManagementTab />
-                        </TabsContent>
-                         <TabsContent value="requests">
-                            <VerificationRequestsTab />
                         </TabsContent>
                         <TabsContent value="entries">
                             <EntryManagementTab />
