@@ -8,11 +8,17 @@ import { Timestamp } from 'firebase-admin/firestore';
 export const dynamic = 'force-dynamic';
 
 const KNOWN_COMPANIES: Record<string, string> = {
-  'manvesta': 'driver@manvesta.lt',
-  'girteka': 'drivers@girteka.eu',
-  'vlantana': 'cv@vlantana.lt',
+  // Verified by User
+  'baltic transline': 'job@baltictransline.lt', 
+  'manvesta': 'drivers@manvesta.lt',
+  
+  // High Confidence Common Patterns
+  'hoptrans': 'atranka@hoptrans.eu',
+  'girteka': 'drivers@girteka.eu', 
+  'vlantana': 'atrankos@vlantana.lt',
+  'finejas': 'drivers@finejas.lt',
   'kreiss': 'driver@kreiss.lv',
-  'finejas': 'vairuotojai@finejas.lt'
+  'transtira': 'vairuotojai@transtira.lt'
 };
 
 /**
@@ -42,7 +48,17 @@ async function findCompanyEmail(companyName: string): Promise<string | null> {
     model: "gemini-2.5-flash",
   });
 
-  const prompt = `Find the public email for transport company '${companyName}' (Europe). Priority: 1. Driver recruitment (driver@, vairuotojams@). 2. HR (cv@, personalas@). 3. General (info@). Return ONLY the email. If absolutely not found, return 'null'.`;
+  const prompt = `Task: Find the OFFICIAL, PUBLIC email address for the transport company '${companyName}' (Europe).
+
+    RULES:
+    1. **Do NOT guess.** Do not construct emails like 'driver@' unless you are 100% sure it exists.
+    2. **Prioritize Safety:** Look for the main general contact email first:
+       - 'info@${companyName}.lt' (or .eu/.com)
+       - 'office@...'
+       - 'cv@...'
+       - 'contact@...'
+    3. **Accuracy over Specificity:** It is better to return a real 'info@' email than a fake 'driver@' email.
+    4. Return ONLY the email address. If no public email is found, return 'null'.`;
 
   try {
     const result = await model.generateContent(prompt);
