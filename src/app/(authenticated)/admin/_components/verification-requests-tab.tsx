@@ -26,7 +26,7 @@ export default function VerificationRequestsTab() {
   const fetchRequests = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('/api/admin/all-requests');
+      const response = await fetch('/api/admin/all-requests?t=' + new Date().getTime(), { cache: 'no-store' });
       if (!response.ok) {
         throw new Error('Failed to fetch requests');
       }
@@ -75,11 +75,13 @@ export default function VerificationRequestsTab() {
   };
   
   const getStatusBadge = (status: VerificationRequest['status']) => {
-    switch (status) {
+    const upperCaseStatus = status?.toUpperCase();
+    
+    switch (upperCaseStatus) {
       case 'NEW':
         return <Badge variant="destructive"><AlertTriangle className="mr-1 h-3 w-3" />{t('admin.requests.status.new')}</Badge>;
       case 'RESEARCH':
-        return <Badge variant="destructive" className="bg-purple-500 hover:bg-purple-600"><Search className="mr-1 h-3 w-3" />{t('admin.requests.status.research')}</Badge>;
+        return <Badge variant="destructive"><AlertTriangle className="mr-1 h-3 w-3" />REIKIA PERŽIŪROS</Badge>;
       case 'PENDING':
         return <Badge variant="secondary" className="bg-yellow-500/10 text-yellow-700 border-yellow-500/20"><Clock className="mr-1 h-3 w-3" />{t('admin.requests.status.pending')}</Badge>;
       case 'COMPLETED':
@@ -134,7 +136,12 @@ export default function VerificationRequestsTab() {
                 </TableRow>
               ) : (
                 requests.map((req) => (
-                  <TableRow key={req.id} className={cn((req.status === 'NEW' || req.status === 'RESEARCH') && 'bg-red-50 dark:bg-red-900/10')}>
+                  <TableRow 
+                    key={req.id} 
+                    className={cn(
+                      (req.status?.toUpperCase() === 'NEW' || req.status?.toUpperCase() === 'RESEARCH') && 'bg-red-50 dark:bg-red-900/10'
+                    )}
+                  >
                     <TableCell className="font-mono text-xs">
                       {format(new Date(req.createdAt), 'yyyy-MM-dd HH:mm')}
                     </TableCell>
