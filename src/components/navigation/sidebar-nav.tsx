@@ -29,7 +29,6 @@ import { useLanguage } from "@/contexts/language-context";
 
 const mainNavItemsBase = [
   { href: "/dashboard", labelKey: "sidebar.dashboard", icon: LayoutDashboard },
-  { href: "/dashboard/ops", labelKey: "sidebar.opsCenter", icon: GanttChartSquare },
   { href: "/search", labelKey: "sidebar.search", icon: Search },
   { href: "/reports/add", labelKey: "sidebar.addReport", icon: FilePlus2 },
 ];
