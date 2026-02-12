@@ -1,4 +1,3 @@
-
 // src/types/index.ts
 
 export interface Report {
@@ -204,9 +203,9 @@ export interface SignupFormValuesExtended {
 
 export interface VerificationRequest {
   id: string;
+  token: string;
   driverName: string;
   targetCompany: string;
-  token: string;
   status: 'PENDING' | 'RESEARCH' | 'COMPLETED' | 'EXPIRED' | 'REJECTED' | 'NEW';
   createdAt: string; // ISO String
   updatedAt?: string | null;

@@ -77,17 +77,17 @@ export default function VerificationRequestsTab() {
     }
   };
 
-  const handlePreview = (token: string | undefined) => {
+  const handlePreview = (token?: string) => {
     if (!token) {
         toast({
-            variant: "destructive",
-            title: "Klaida",
-            description: "Šiai užklausai trūksta patvirtinimo rakto (token).",
+            variant: 'destructive',
+            title: 'Klaida',
+            description: 'Užklausos raktas nerastas. Negalima sugeneruoti peržiūros.'
         });
         return;
     }
-    const url = `${window.location.origin}/verify?token=${token}`;
-    window.open(url, '_blank');
+    const previewUrl = `${window.location.origin}/verify?token=${token}`;
+    window.open(previewUrl, '_blank');
   };
   
   const getStatusBadge = (status: VerificationRequest['status']) => {
@@ -145,7 +145,7 @@ export default function VerificationRequestsTab() {
                     <TableCell><Skeleton className="h-9 w-full" /></TableCell>
                     <TableCell><Skeleton className="h-5 w-20" /></TableCell>
                     <TableCell><Skeleton className="h-6 w-28" /></TableCell>
-                    <TableCell><Skeleton className="h-9 w-9 ml-auto" /></TableCell>
+                    <TableCell><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
                   </TableRow>
                 ))
               ) : requests.length === 0 ? (
@@ -238,15 +238,13 @@ export default function VerificationRequestsTab() {
                     <TableCell>{getStatusBadge(req.status)}</TableCell>
                     <TableCell className="text-right">
                         <TooltipProvider>
-                            <Tooltip>
+                             <Tooltip>
                                 <TooltipTrigger asChild>
-                                    <Button variant="ghost" size="icon" onClick={() => handlePreview(req.token)}>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handlePreview(req.token)}>
                                         <ExternalLink className="h-4 w-4" />
                                     </Button>
                                 </TooltipTrigger>
-                                <TooltipContent>
-                                    <p>Peržiūrėti kaip įmonė</p>
-                                </TooltipContent>
+                                <TooltipContent><p>Peržiūrėti kaip įmonė</p></TooltipContent>
                             </Tooltip>
                         </TooltipProvider>
                     </TableCell>
