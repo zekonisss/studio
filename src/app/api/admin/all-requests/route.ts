@@ -1,42 +1,48 @@
 import { NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 import type { VerificationRequest } from '@/types';
+import type { QueryDocumentSnapshot } from 'firebase-admin/firestore';
 
-// --- SVARBU: Ši eilutė priverčia serverį visada imti naujausius duomenis ---
+// PRIVERČIAME NECACHINTI
 export const dynamic = 'force-dynamic'; 
 
-// Helper to convert Firestore Timestamps or ISO strings to Date objects
 const toDate = (dateValue: any): Date => {
-    if (dateValue?.toDate) { 
-        return dateValue.toDate();
-    }
+    if (dateValue?.toDate) return dateValue.toDate();
     if (typeof dateValue === 'string') {
         const d = new Date(dateValue);
-        if (!isNaN(d.getTime())) {
-            return d;
-        }
+        if (!isNaN(d.getTime())) return d;
     }
     return new Date(0); 
 }
 
 export async function GET() {
+  console.log("⚡ [ADMIN API] Bandoma gauti užklausas..."); // <--- LOG 1
+
   if (!adminDb) {
+    console.error("❌ [ADMIN API] Nėra adminDb ryšio!");
     return NextResponse.json({ error: 'Server configuration error.' }, { status: 500 });
   }
 
   try {
-    // Išjungiame kešavimą ugniasienės lygyje (papildoma apsauga)
     const headers = new Headers();
     headers.set('Cache-Control', 'no-store, max-age=0');
 
-    const snapshot = await adminDb.collection('verification_requests').get();
+    // 1. Tikriname kolekcijos pavadinimą
+    const collectionRef = adminDb.collection('verification_requests');
+    const snapshot = await collectionRef.get();
+
+    console.log(`⚡ [ADMIN API] Rasta dokumentų DB: ${snapshot.size}`); // <--- LOG 2 (Svarbiausias!)
 
     if (snapshot.empty) {
+      console.warn("⚠️ [ADMIN API] Kolekcija tuščia!");
       return NextResponse.json([], { headers });
     }
 
-    const requests: VerificationRequest[] = snapshot.docs.map(doc => {
+    const requests = snapshot.docs.map((doc: QueryDocumentSnapshot) => {
       const data = doc.data();
+      // Atspausdiname kiekvieno ID ir Statusą terminale
+      console.log(`📄 Doc: ${doc.id} | Status: ${data.status} | Email: ${data.targetEmail}`);
+      
       return {
         id: doc.id,
         ...data,
@@ -45,31 +51,22 @@ export async function GET() {
       } as any;
     });
 
-    // Rūšiavimas: prioritetiniai statusai ('NEW', 'RESEARCH') viršuje, tada pagal datą
-    const priorityStatuses = new Set(['NEW', 'RESEARCH', 'ACTION NEEDED']);
+    // Rūšiavimas
+    requests.sort((a: any, b: any) => {
+      // Prioritetiniai statusai
+      const priority = ['NEW', 'New', 'RESEARCH', 'Researching', 'Action Needed'];
+      const aPrio = priority.includes(a.status);
+      const bPrio = priority.includes(b.status);
 
-    requests.sort((a, b) => {
-      const statusA = (a.status || '').toUpperCase();
-      const statusB = (b.status || '').toUpperCase();
-      
-      const isAPriority = priorityStatuses.has(statusA);
-      const isBPriority = priorityStatuses.has(statusB);
-
-      if (isAPriority && !isBPriority) {
-        return -1; // a comes first
-      }
-      if (!isAPriority && isBPriority) {
-        return 1; // b comes first
-      }
-
-      // If both are priority or neither are, sort by date descending
+      if (aPrio && !bPrio) return -1;
+      if (!aPrio && bPrio) return 1;
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
 
     return NextResponse.json(requests, { headers });
 
   } catch (error: any) {
-    console.error('[API ADMIN ERROR] Fetching all requests failed:', error);
-    return NextResponse.json({ error: 'Internal Server Error', details: error.message }, { status: 500 });
+    console.error('❌ [API ADMIN ERROR] Klaida:', error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
