@@ -8,24 +8,20 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { RefreshCw, AlertTriangle, Clock, CheckCircle } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { RefreshCw, AlertTriangle, Clock, CheckCircle, Send, Loader2, Search } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/hooks/use-toast';
+import type { VerificationRequest } from '@/types';
 
-// Define the shape of a request object based on the API response
-interface VerificationRequest {
-  id: string;
-  createdAt: string;
-  driverName: string;
-  targetCompany: string;
-  targetEmail: string | null;
-  status: 'NEW' | 'PENDING' | 'COMPLETED' | 'EXPIRED';
-  emailSource: string;
-}
 
 export default function VerificationRequestsTab() {
-  const { t, locale } = useLanguage();
+  const { t } = useLanguage();
+  const { toast } = useToast();
   const [requests, setRequests] = useState<VerificationRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [emailInputs, setEmailInputs] = useState<Record<string, string>>({});
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   const fetchRequests = async () => {
     setIsLoading(true);
@@ -38,7 +34,7 @@ export default function VerificationRequestsTab() {
       setRequests(data);
     } catch (error) {
       console.error(error);
-      // In a real app, you'd show a toast notification here
+      toast({ variant: 'destructive', title: 'Klaida', description: 'Nepavyko gauti užklausų sąrašo.'});
     } finally {
       setIsLoading(false);
     }
@@ -47,17 +43,49 @@ export default function VerificationRequestsTab() {
   useEffect(() => {
     fetchRequests();
   }, []);
+
+  const handleEmailInputChange = (requestId: string, value: string) => {
+    setEmailInputs(prev => ({ ...prev, [requestId]: value }));
+  };
+
+  const handleUpdateEmail = async (requestId: string) => {
+    const newEmail = emailInputs[requestId];
+    if (!newEmail || !newEmail.includes('@')) {
+      toast({ variant: 'destructive', title: 'Klaida', description: 'Prašome įvesti teisingą el. pašto adresą.' });
+      return;
+    }
+
+    setUpdatingId(requestId);
+    try {
+      const response = await fetch('/api/admin/update-request', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ requestId, newEmail }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Serverio klaida');
+      
+      toast({ title: 'Pavyko!', description: 'Užklausa atnaujinta ir laiškas sėkmingai išsiųstas.' });
+      fetchRequests(); // Re-fetch the data to show the updated state
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Klaida', description: error.message });
+    } finally {
+      setUpdatingId(null);
+    }
+  };
   
   const getStatusBadge = (status: VerificationRequest['status']) => {
     switch (status) {
       case 'NEW':
-        return <Badge variant="destructive"><AlertTriangle className="mr-1 h-3 w-3" />Reikia Veiksmo</Badge>;
+        return <Badge variant="destructive"><AlertTriangle className="mr-1 h-3 w-3" />{t('admin.requests.status.new')}</Badge>;
+      case 'RESEARCH':
+        return <Badge variant="destructive" className="bg-purple-500 hover:bg-purple-600"><Search className="mr-1 h-3 w-3" />{t('admin.requests.status.research')}</Badge>;
       case 'PENDING':
-        return <Badge variant="secondary" className="bg-yellow-500/10 text-yellow-700 border-yellow-500/20"><Clock className="mr-1 h-3 w-3" />Laukiama</Badge>;
+        return <Badge variant="secondary" className="bg-yellow-500/10 text-yellow-700 border-yellow-500/20"><Clock className="mr-1 h-3 w-3" />{t('admin.requests.status.pending')}</Badge>;
       case 'COMPLETED':
-        return <Badge variant="secondary" className="bg-green-500/10 text-green-700 border-green-500/20"><CheckCircle className="mr-1 h-3 w-3" />Atsakyta</Badge>;
+        return <Badge variant="secondary" className="bg-green-500/10 text-green-700 border-green-500/20"><CheckCircle className="mr-1 h-3 w-3" />{t('admin.requests.status.completed')}</Badge>;
       case 'EXPIRED':
-        return <Badge variant="outline">Pasibaigęs galiojimas</Badge>;
+        return <Badge variant="outline">{t('admin.requests.status.expired')}</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
@@ -85,7 +113,6 @@ export default function VerificationRequestsTab() {
                 <TableHead>Tikrinama Įmonė</TableHead>
                 <TableHead>Kontaktinis El. Paštas</TableHead>
                 <TableHead>Būsena</TableHead>
-                <TableHead className="text-right">Veiksmai</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -95,9 +122,8 @@ export default function VerificationRequestsTab() {
                     <TableCell><Skeleton className="h-5 w-24" /></TableCell>
                     <TableCell><Skeleton className="h-5 w-32" /></TableCell>
                     <TableCell><Skeleton className="h-5 w-40" /></TableCell>
-                    <TableCell><Skeleton className="h-5 w-48" /></TableCell>
+                    <TableCell><Skeleton className="h-9 w-full" /></TableCell>
                     <TableCell><Skeleton className="h-6 w-28" /></TableCell>
-                    <TableCell className="text-right"><Skeleton className="h-8 w-20 ml-auto" /></TableCell>
                   </TableRow>
                 ))
               ) : requests.length === 0 ? (
@@ -108,20 +134,39 @@ export default function VerificationRequestsTab() {
                 </TableRow>
               ) : (
                 requests.map((req) => (
-                  <TableRow key={req.id} className={cn(req.status === 'NEW' && 'bg-red-50 dark:bg-red-900/10')}>
+                  <TableRow key={req.id} className={cn((req.status === 'NEW' || req.status === 'RESEARCH') && 'bg-red-50 dark:bg-red-900/10')}>
                     <TableCell className="font-mono text-xs">
                       {format(new Date(req.createdAt), 'yyyy-MM-dd HH:mm')}
                     </TableCell>
                     <TableCell className="font-medium">{req.driverName}</TableCell>
                     <TableCell>{req.targetCompany}</TableCell>
                     <TableCell>
-                      <div>{req.targetEmail || <span className="text-muted-foreground italic">Nenurodytas</span>}</div>
-                      <div className="text-[10px] text-muted-foreground uppercase">{req.emailSource}</div>
+                      {req.targetEmail ? (
+                        <div>{req.targetEmail}</div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                           <Input
+                              type="email"
+                              placeholder="Įveskite el. paštą..."
+                              value={emailInputs[req.id] || ''}
+                              onChange={(e) => handleEmailInputChange(req.id, e.target.value)}
+                              disabled={updatingId === req.id}
+                              className="h-9"
+                           />
+                           <Button
+                              size="icon"
+                              variant="secondary"
+                              className="h-9 w-9 shrink-0"
+                              onClick={() => handleUpdateEmail(req.id)}
+                              disabled={updatingId === req.id || !emailInputs[req.id]}
+                           >
+                              {updatingId === req.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                           </Button>
+                        </div>
+                      )}
+                      <div className="text-[10px] text-muted-foreground uppercase mt-1">{req.emailSource}</div>
                     </TableCell>
                     <TableCell>{getStatusBadge(req.status)}</TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="ghost" size="sm">Peržiūrėti</Button>
-                    </TableCell>
                   </TableRow>
                 ))
               )}
