@@ -1,4 +1,5 @@
-// Force cache refresh for ChunkLoadError - attempt 4.
+
+// Force cache refresh for ChunkLoadError - attempt 5.
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   generateBuildId: async () => {
