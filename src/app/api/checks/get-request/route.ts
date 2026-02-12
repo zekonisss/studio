@@ -1,4 +1,5 @@
 
+
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 
@@ -27,7 +28,7 @@ export async function GET(req: NextRequest) {
         const requestDoc = snapshot.docs[0];
         const requestData = requestDoc.data();
 
-        if (requestData.status !== 'PENDING' && requestData.status !== 'RESEARCH') {
+        if (requestData.status !== 'PENDING' && requestData.status !== 'RESEARCH' && requestData.status !== 'NEW') {
              return NextResponse.json({ success: false, error: 'Ši užklausa jau buvo apdorota.' }, { status: 410 });
         }
 
@@ -46,6 +47,7 @@ export async function GET(req: NextRequest) {
           driverName: requestData.driverName,
           driverBirthDate: requestData.driverBirthDate || null,
           requesterCompany: requesterCompany,
+          targetCompany: requestData.targetCompany,
           startDate: requestData.startDate || null,
           endDate: requestData.endDate || null,
           isCurrentEmployer: requestData.isCurrentEmployer || false

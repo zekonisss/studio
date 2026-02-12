@@ -13,6 +13,7 @@ interface RequestDetails {
     driverName: string;
     driverBirthDate?: string | null;
     requesterCompany: string;
+    targetCompany?: string;
     startDate?: string | null;
     endDate?: string | null;
     isCurrentEmployer?: boolean;
@@ -158,16 +159,39 @@ function VerificationPageContent() {
         <form onSubmit={handleSubmit}>
             <CardHeader className="text-center">
                 <CardTitle className="text-2xl">Vairuotojo Darbo Istorijos Patikra</CardTitle>
-                <CardDescription className="text-base text-muted-foreground px-4">
-                    <p className="mt-2">
-                        <strong className="font-semibold text-foreground">DriverCheck</strong> platformoje buvo inicijuota užklausa dėl vairuotojo <strong className="font-semibold text-foreground">{requestDetails?.driverName}</strong>. Šis asmuo nurodė Jūsų įmonę kaip buvusią darbovietę.
+                 <CardDescription className="text-base text-muted-foreground px-4 space-y-2 pt-2">
+                    <p>
+                        <strong>DriverCheck</strong> – vairuotojų patikros sistemoje buvo sukurta užklausa dėl vairuotojo <strong>{requestDetails?.driverName}</strong>.
                     </p>
-                    <p className="mt-2">
-                        Prašome peržiūrėti ir patvirtinti žemiau pateiktus duomenis.
+                    <p>
+                        Jūsų įmonė <strong>{requestDetails?.targetCompany}</strong> buvo nurodyta kaip buvusi šio vairuotojo darbovietė.
+                    </p>
+                    <p>
+                        Maloniai kviečiame Jus patvirtinti arba patikslinti šį įrašą.
                     </p>
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6 pt-4">
+
+                <div className="px-6">
+                    <div className="bg-muted/50 p-4 rounded-md space-y-2 border text-left">
+                        <h4 className="font-semibold text-foreground">Užklausos duomenys</h4>
+                        <div className="text-sm">
+                            <strong>Vairuotojas:</strong> {requestDetails?.driverName}
+                        </div>
+                        {requestDetails?.driverBirthDate && (
+                             <div className="text-sm">
+                                <strong>Gimimo data:</strong> {new Date(requestDetails.driverBirthDate).toLocaleDateString('lt-LT')}
+                            </div>
+                        )}
+                        {(requestDetails?.startDate) && (
+                            <div className="text-sm">
+                                <strong>Darbo laikotarpis:</strong> {new Date(requestDetails.startDate).toLocaleDateString('lt-LT')} - {requestDetails.isCurrentEmployer ? 'dabar' : (requestDetails.endDate ? new Date(requestDetails.endDate).toLocaleDateString('lt-LT') : 'nežinoma')}
+                            </div>
+                        )}
+                    </div>
+                </div>
+
                 <div className="text-center border-y py-4 bg-muted/50">
                     <p className="text-sm text-muted-foreground">Užklausą siunčia: <span className="font-bold text-foreground">{requestDetails?.requesterCompany}</span></p>
                 </div>
@@ -240,5 +264,3 @@ export default function VerificationPage() {
         </div>
     );
 }
-
-    
