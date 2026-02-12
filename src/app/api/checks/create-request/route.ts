@@ -7,12 +7,31 @@ import { Timestamp } from 'firebase-admin/firestore';
 
 export const dynamic = 'force-dynamic';
 
+const KNOWN_COMPANIES: Record<string, string> = {
+  'manvesta': 'driver@manvesta.lt',
+  'girteka': 'drivers@girteka.eu',
+  'vlantana': 'cv@vlantana.lt',
+  'kreiss': 'driver@kreiss.lv',
+  'finejas': 'vairuotojai@finejas.lt'
+};
+
 /**
- * Uses Gemini AI to find a public email address for a given company.
+ * Finds a company's email using a hybrid strategy: first a dictionary lookup, then AI fallback.
  * @param companyName The name of the company to search for.
  * @returns A string containing the email address or null if not found.
  */
 async function findCompanyEmail(companyName: string): Promise<string | null> {
+  // Step 1: Normalization and Dictionary Check
+  const normalizedCompanyName = companyName.toLowerCase().replace(/uab|ab|mb/g, '').replace(/\s+/g, '');
+  for (const key in KNOWN_COMPANIES) {
+    if (normalizedCompanyName.includes(key)) {
+      const foundEmail = KNOWN_COMPANIES[key];
+      console.log(`📚 Found in Known List: ${foundEmail}`);
+      return foundEmail;
+    }
+  }
+
+  // Step 2: AI Fallback
   const apiKey = process.env.GOOGLE_GENAI_API_KEY || process.env.GEMINI_API_KEY;
   if (!apiKey) {
     console.error("🔴 Gemini API key is missing. Cannot perform AI email lookup.");
@@ -21,17 +40,15 @@ async function findCompanyEmail(companyName: string): Promise<string | null> {
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({
     model: "gemini-2.5-flash",
-    tools: [{ googleSearchRetrieval: {} }],
   });
 
-  const prompt = `Use Google Search to find the OFFICIAL driver recruitment email for '${companyName}'. Visit their careers/vairuotojams page. Look for emails like 'driver@', 'personalas@'. Do NOT guess. If you cannot verify the email on the web, return 'null'.`;
+  const prompt = `Find the public email for transport company '${companyName}' (Europe). Priority: 1. Driver recruitment (driver@, vairuotojams@). 2. HR (cv@, personalas@). 3. General (info@). Return ONLY the email. If absolutely not found, return 'null'.`;
 
   try {
     const result = await model.generateContent(prompt);
     const response = await result.response;
     const text = response.text().trim();
 
-    // Clean the response from any potential markdown or extra characters
     const cleanedText = text.replace(/`/g, "").replace(/json/g, "").trim();
 
     if (cleanedText.toLowerCase() === 'null' || !cleanedText.includes('@')) {
@@ -50,7 +67,6 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { driverName, targetCompany, requesterId, targetEmail, driverBirthDate, startDate, endDate, isCurrentEmployer } = body;
 
-    // 1. Validation
     if (!driverName || !targetCompany || !requesterId) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
@@ -59,24 +75,20 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Database connection failed' }, { status: 500 });
     }
 
-    // 2. Email Discovery Logic
     let finalEmail: string | null = targetEmail || null;
-    let emailSource: 'USER' | 'AI_GEMINI' | 'NONE' = targetEmail ? 'USER' : 'NONE';
+    let emailSource: 'USER' | 'AI_GEMINI' | 'DICTIONARY' | 'NONE' = targetEmail ? 'USER' : 'NONE';
 
     if (!finalEmail) {
-      console.log(`🤖 AI is searching for an email for company: "${targetCompany}"...`);
+      console.log(`🧠 Hybrid lookup for company: "${targetCompany}"...`);
       finalEmail = await findCompanyEmail(targetCompany);
-      console.log("♊ Gemini AI found email:", finalEmail);
+      console.log("♊ Found email:", finalEmail);
       if(finalEmail) {
-          emailSource = 'AI_GEMINI';
+          // This source isn't perfect, but indicates a non-user source
+          emailSource = 'AI_GEMINI'; 
       }
     }
 
-    // 3. Set Status based on email availability
-    // If no email is found by user or AI, it needs manual research by an admin.
     const status = finalEmail ? 'PENDING' : 'RESEARCH';
-
-    // 4. Prepare data for Firestore
     const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
     
     const newRequest = {
@@ -103,10 +115,8 @@ export async function POST(request: Request) {
       ],
     };
 
-    // 5. Save to Firestore
     const docRef = await adminDb.collection('verification_requests').add(newRequest);
 
-    // 6. CRITICAL: Debug log for the verification link
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
     const debugLink = `${baseUrl}/verify?token=${token}`;
     
@@ -118,7 +128,7 @@ export async function POST(request: Request) {
       success: true, 
       id: docRef.id,
       message: 'Request created successfully',
-      debugLink: debugLink // For easier debugging
+      debugLink: debugLink
     });
 
   } catch (error: any) {
