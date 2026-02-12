@@ -19,18 +19,12 @@ async function findCompanyEmail(companyName: string): Promise<string | null> {
     return null;
   }
   const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+  const model = genAI.getGenerativeModel({
+    model: "gemini-2.5-flash",
+    tools: [{ googleSearchRetrieval: {} }],
+  });
 
-    const prompt = `Act as an expert Recruiter Data Analyst.
-    Find the specific **DRIVER RECRUITMENT** email address for the transport company '${companyName}' (Lithuania/Europe).
-
-    STRICT PRIORITY RULES (Follow in order):
-    1.  **Top Priority:** Search for emails starting EXACTLY with: 'driver@', 'vairuotojams@', 'darbas@', 'atranka@'.
-    2.  **Specific Check:** If the company is "Manvesta", look for 'driver@manvesta.lt'.
-    3.  **Pattern Matching:** If the domain is found (e.g., @company.com), prioritize 'driver@company.com' or 'vairuotojams@company.com' if it likely exists.
-    4.  **Last Resort:** Only if absolutely NO driver-specific email exists, return the general 'cv@' or 'info@' address.
-    
-    Output: Return ONLY the email address string. No text.`;
+  const prompt = `Use Google Search to find the OFFICIAL driver recruitment email for '${companyName}'. Visit their careers/vairuotojams page. Look for emails like 'driver@', 'personalas@'. Do NOT guess. If you cannot verify the email on the web, return 'null'.`;
 
   try {
     const result = await model.generateContent(prompt);
