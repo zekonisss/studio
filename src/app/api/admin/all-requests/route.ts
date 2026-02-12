@@ -45,10 +45,15 @@ export async function GET() {
       } as any;
     });
 
-    // Rūšiavimas: 'NEW' ir 'RESEARCH' viršuje, tada pagal datą
+    // Rūšiavimas: prioritetiniai statusai ('NEW', 'RESEARCH') viršuje, tada pagal datą
+    const priorityStatuses = new Set(['NEW', 'RESEARCH', 'ACTION NEEDED']);
+
     requests.sort((a, b) => {
-      const isAPriority = a.status === 'NEW' || a.status === 'RESEARCH';
-      const isBPriority = b.status === 'NEW' || b.status === 'RESEARCH';
+      const statusA = (a.status || '').toUpperCase();
+      const statusB = (b.status || '').toUpperCase();
+      
+      const isAPriority = priorityStatuses.has(statusA);
+      const isBPriority = priorityStatuses.has(statusB);
 
       if (isAPriority && !isBPriority) {
         return -1; // a comes first
@@ -57,7 +62,7 @@ export async function GET() {
         return 1; // b comes first
       }
 
-      // If both are priority (or both are not), sort by date descending
+      // If both are priority or neither are, sort by date descending
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
 
