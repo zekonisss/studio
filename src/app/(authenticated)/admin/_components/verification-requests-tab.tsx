@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { RefreshCw, AlertTriangle, Clock, CheckCircle, Send, Loader2, Search, Eye, Mail, CornerDownRight } from 'lucide-react';
+import { RefreshCw, AlertTriangle, Clock, CheckCircle, Send, Loader2, Search, Eye, Mail, CornerDownRight, ExternalLink } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import type { VerificationRequest } from '@/types';
@@ -76,6 +76,19 @@ export default function VerificationRequestsTab() {
       setUpdatingId(null);
     }
   };
+
+  const handlePreview = (token: string | undefined) => {
+    if (!token) {
+        toast({
+            variant: "destructive",
+            title: "Klaida",
+            description: "Šiai užklausai trūksta patvirtinimo rakto (token).",
+        });
+        return;
+    }
+    const url = `${window.location.origin}/verify?token=${token}`;
+    window.open(url, '_blank');
+  };
   
   const getStatusBadge = (status: VerificationRequest['status']) => {
     const upperCaseStatus = status?.toUpperCase();
@@ -119,6 +132,7 @@ export default function VerificationRequestsTab() {
                 <TableHead>Kontaktinis El. Paštas</TableHead>
                 <TableHead>Sekimas</TableHead>
                 <TableHead>Būsena</TableHead>
+                <TableHead className="text-right">Veiksmai</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -131,11 +145,12 @@ export default function VerificationRequestsTab() {
                     <TableCell><Skeleton className="h-9 w-full" /></TableCell>
                     <TableCell><Skeleton className="h-5 w-20" /></TableCell>
                     <TableCell><Skeleton className="h-6 w-28" /></TableCell>
+                    <TableCell><Skeleton className="h-9 w-9 ml-auto" /></TableCell>
                   </TableRow>
                 ))
               ) : requests.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                  <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
                     Naujų užklausų nerasta.
                   </TableCell>
                 </TableRow>
@@ -221,6 +236,20 @@ export default function VerificationRequestsTab() {
                         </TooltipProvider>
                     </TableCell>
                     <TableCell>{getStatusBadge(req.status)}</TableCell>
+                    <TableCell className="text-right">
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button variant="ghost" size="icon" onClick={() => handlePreview(req.token)}>
+                                        <ExternalLink className="h-4 w-4" />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>Peržiūrėti kaip įmonė</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    </TableCell>
                   </TableRow>
                 ))
               )}
