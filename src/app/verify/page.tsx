@@ -302,10 +302,6 @@ function VerificationPageContent() {
                         )}
                     </div>
                 </div>
-
-                <div className="text-center border-y py-4 bg-muted/50">
-                    <p className="text-sm text-muted-foreground">Užklausą siunčia: <span className="font-bold text-foreground">{requestDetails?.requesterCompany}</span></p>
-                </div>
             
                 <div className="space-y-3 px-6">
                     <label className="font-medium">1. {renderQuestion1()}</label>
@@ -354,7 +350,7 @@ export default function VerificationPage() {
     return (
         <div className="flex min-h-screen w-full items-center justify-center bg-slate-900 p-4 relative pt-20">
             <div className="absolute top-8 left-0 right-0 flex justify-center z-10">
-              <Link href="/" className="group flex items-center gap-3 hover:opacity-90 transition-opacity">
+              <Link href="/" className="group flex items-center gap-3 hover:opacity-90 transition-opacity cursor-pointer">
                 <div className="relative">
                   <UserSearch className="w-10 h-10 text-blue-500" strokeWidth={2.5} />
                 </div>
@@ -369,5 +365,3 @@ export default function VerificationPage() {
         </div>
     );
 }
-
-    
