@@ -1,9 +1,7 @@
 import { NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
-import type { VerificationRequest } from '@/types';
-import type { QueryDocumentSnapshot } from 'firebase-admin/firestore';
+import { QueryDocumentSnapshot } from 'firebase-admin/firestore'; // Importuojame tipą
 
-// PRIVERČIAME NECACHINTI
 export const dynamic = 'force-dynamic'; 
 
 const toDate = (dateValue: any): Date => {
@@ -16,10 +14,10 @@ const toDate = (dateValue: any): Date => {
 }
 
 export async function GET() {
-  console.log("⚡ [ADMIN API] Bandoma gauti užklausas..."); // <--- LOG 1
+  // LOG 1: Start
+  console.log("⚡ [ADMIN API] Bandoma gauti užklausas (Live)...");
 
   if (!adminDb) {
-    console.error("❌ [ADMIN API] Nėra adminDb ryšio!");
     return NextResponse.json({ error: 'Server configuration error.' }, { status: 500 });
   }
 
@@ -27,22 +25,19 @@ export async function GET() {
     const headers = new Headers();
     headers.set('Cache-Control', 'no-store, max-age=0');
 
-    // 1. Tikriname kolekcijos pavadinimą
     const collectionRef = adminDb.collection('verification_requests');
     const snapshot = await collectionRef.get();
 
-    console.log(`⚡ [ADMIN API] Rasta dokumentų DB: ${snapshot.size}`); // <--- LOG 2 (Svarbiausias!)
+    // LOG 2: Kiek radome?
+    console.log(`⚡ [ADMIN API] Rasta dokumentų DB: ${snapshot.size}`);
 
     if (snapshot.empty) {
-      console.warn("⚠️ [ADMIN API] Kolekcija tuščia!");
       return NextResponse.json([], { headers });
     }
 
+    // Čia pridedame tipą (doc: QueryDocumentSnapshot)
     const requests = snapshot.docs.map((doc: QueryDocumentSnapshot) => {
       const data = doc.data();
-      // Atspausdiname kiekvieno ID ir Statusą terminale
-      console.log(`📄 Doc: ${doc.id} | Status: ${data.status} | Email: ${data.targetEmail}`);
-      
       return {
         id: doc.id,
         ...data,
@@ -51,9 +46,8 @@ export async function GET() {
       } as any;
     });
 
-    // Rūšiavimas
+    // Rūšiavimas su tipais (a: any, b: any)
     requests.sort((a: any, b: any) => {
-      // Prioritetiniai statusai
       const priority = ['NEW', 'New', 'RESEARCH', 'Researching', 'Action Needed'];
       const aPrio = priority.includes(a.status);
       const bPrio = priority.includes(b.status);
