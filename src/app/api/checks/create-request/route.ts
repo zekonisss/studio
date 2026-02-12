@@ -21,13 +21,14 @@ async function findCompanyEmail(companyName: string): Promise<string | null> {
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
-  const prompt = `Find the public general info or HR/personnel department email address for the European transport/logistics company named '${companyName}'. The company is likely based in Lithuania, Latvia, Poland, or Estonia.
-
-RULES:
-1. Search for common emails like info@..., cv@..., personalas@..., biuras@..., rekrutacja@...
-2. Return ONLY the single, most relevant email address.
-3. Do NOT include any other text, explanations, or markdown.
-4. If no public email can be found, return the exact string 'null'.`;
+  const prompt = `Find the specific email address for **DRIVER RECRUITMENT** (vairuotojų įdarbinimas) or the Transport Department for the logistics company '${companyName}'.
+  
+  PRIORITY RULES:
+  1. Look for emails starting with: "driver", "vairuotojams", "transport", "personalas".
+  2. The company is likely in Lithuania/Europe.
+  3. If a specific driver email exists (like driver@...), return THAT one.
+  4. Only if no driver-specific email is found, return the general HR email (cv@... or info@...).
+  5. Return ONLY the email address string. No text.`;
 
   try {
     const result = await model.generateContent(prompt);
