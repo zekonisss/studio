@@ -45,14 +45,19 @@ export async function GET() {
       } as any;
     });
 
-    // Rūšiavimas: 'NEW' viršuje, tada pagal datą
+    // Rūšiavimas: 'NEW' ir 'RESEARCH' viršuje, tada pagal datą
     requests.sort((a, b) => {
-      if (a.status === 'NEW' && b.status !== 'NEW') {
-        return -1; 
+      const isAPriority = a.status === 'NEW' || a.status === 'RESEARCH';
+      const isBPriority = b.status === 'NEW' || b.status === 'RESEARCH';
+
+      if (isAPriority && !isBPriority) {
+        return -1; // a comes first
       }
-      if (b.status === 'NEW' && a.status !== 'NEW') {
-        return 1; 
+      if (!isAPriority && isBPriority) {
+        return 1; // b comes first
       }
+
+      // If both are priority (or both are not), sort by date descending
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
 
