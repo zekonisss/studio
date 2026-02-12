@@ -9,14 +9,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { RefreshCw, AlertTriangle, Clock, CheckCircle, Send, Loader2, Search } from 'lucide-react';
+import { RefreshCw, AlertTriangle, Clock, CheckCircle, Send, Loader2, Search, Eye, Mail, CornerDownRight } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import type { VerificationRequest } from '@/types';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 
 export default function VerificationRequestsTab() {
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
   const { toast } = useToast();
   const [requests, setRequests] = useState<VerificationRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -42,6 +43,7 @@ export default function VerificationRequestsTab() {
 
   useEffect(() => {
     fetchRequests();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleEmailInputChange = (requestId: string, value: string) => {
@@ -114,6 +116,7 @@ export default function VerificationRequestsTab() {
                 <TableHead>Vairuotojas</TableHead>
                 <TableHead>Tikrinama Įmonė</TableHead>
                 <TableHead>Kontaktinis El. Paštas</TableHead>
+                <TableHead>Sekimas</TableHead>
                 <TableHead>Būsena</TableHead>
               </TableRow>
             </TableHeader>
@@ -125,6 +128,7 @@ export default function VerificationRequestsTab() {
                     <TableCell><Skeleton className="h-5 w-32" /></TableCell>
                     <TableCell><Skeleton className="h-5 w-40" /></TableCell>
                     <TableCell><Skeleton className="h-9 w-full" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-20" /></TableCell>
                     <TableCell><Skeleton className="h-6 w-28" /></TableCell>
                   </TableRow>
                 ))
@@ -172,6 +176,48 @@ export default function VerificationRequestsTab() {
                         </div>
                       )}
                       <div className="text-[10px] text-muted-foreground uppercase mt-1">{req.emailSource}</div>
+                    </TableCell>
+                    <TableCell>
+                        <TooltipProvider>
+                            {req.emailStatus === 'OPENED' && (
+                                <Tooltip>
+                                    <TooltipTrigger>
+                                        <div className="flex items-center gap-1.5 text-green-600">
+                                            <Eye className="h-4 w-4" />
+                                            <span className="font-semibold">Perskaityta</span>
+                                        </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        {req.openedAt ? `Atidaryta: ${new Date(req.openedAt).toLocaleString(locale)}` : 'Atidarymo data nenustatyta'}
+                                    </TooltipContent>
+                                </Tooltip>
+                            )}
+                            {(req.emailStatus === 'SENT' || req.emailStatus === 'DELIVERED') && (
+                                <div className="flex items-center gap-1.5 text-muted-foreground">
+                                    <Mail className="h-4 w-4" />
+                                    <span>Išsiųsta</span>
+                                </div>
+                            )}
+                             {req.emailStatus === 'BOUNCED' && (
+                                <Tooltip>
+                                     <TooltipTrigger>
+                                        <div className="flex items-center gap-1.5 text-destructive">
+                                            <AlertTriangle className="h-4 w-4" />
+                                            <span>Grįžo</span>
+                                        </div>
+                                     </TooltipTrigger>
+                                     <TooltipContent>
+                                        <p>Laiškas nepasiekė adresato.</p>
+                                     </TooltipContent>
+                                </Tooltip>
+                            )}
+                            {req.delegateEmail && (
+                                <div className="flex items-center gap-1 text-xs text-blue-600 mt-1" title={`Persiųsta: ${req.delegateEmail}`}>
+                                    <CornerDownRight className="h-3 w-3 shrink-0" />
+                                    <span className="truncate">{req.delegateEmail}</span>
+                                </div>
+                            )}
+                        </TooltipProvider>
                     </TableCell>
                     <TableCell>{getStatusBadge(req.status)}</TableCell>
                   </TableRow>

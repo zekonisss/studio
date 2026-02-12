@@ -1,4 +1,3 @@
-
 // src/types/index.ts
 
 export interface Report {
@@ -206,11 +205,17 @@ export interface VerificationRequest {
   id: string;
   driverName: string;
   targetCompany: string;
-  status: 'PENDING' | 'RESEARCH' | 'COMPLETED' | 'EXPIRED' | 'REJECTED';
+  status: 'PENDING' | 'RESEARCH' | 'COMPLETED' | 'EXPIRED' | 'REJECTED' | 'NEW';
   createdAt: string; // ISO String
+  updatedAt?: string | null;
+  targetEmail?: string | null;
+  emailSource?: 'USER' | 'AI_GEMINI' | 'ADMIN_FIX' | 'NONE';
   response?: {
     workedHere: boolean;
     wouldRehire: boolean;
     comment: string;
   };
+  emailStatus?: 'SENT' | 'DELIVERED' | 'OPENED' | 'BOUNCED' | null;
+  openedAt?: string | null;
+  delegateEmail?: string | null;
 }

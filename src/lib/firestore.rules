@@ -2,72 +2,86 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper Functions
+    // --- PAGALBINĖS FUNKCIJOS ---
+
     function getUserDoc(userId) {
       return get(/databases/$(database)/documents/users/$(userId));
     }
 
-    function isAdmin(userId) {
-      // Check if the user is authenticated and has the isAdmin flag in their document.
-      let userDoc = getUserDoc(userId);
-      return request.auth != null &&
-             userDoc != null &&
-             userDoc.data.isAdmin == true;
+    function isRequestingUserAdmin() {
+      return request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
 
-    function isAllowedToOperate(userId) {
-      // Check if the user is an admin OR has an active/trial subscription.
-      if (isAdmin(userId)) {
-        return true;
-      }
+    function isAllowedToRead(userId) {
       let userDoc = getUserDoc(userId);
       return request.auth != null && 
              userDoc != null &&
              (userDoc.data.paymentStatus == 'active' || userDoc.data.paymentStatus == 'trial');
     }
 
-    // USERS collection
+    function hasCredits(userId, creditField) {
+       let userData = getUserDoc(userId).data;
+       return userData.paymentStatus == 'active' || 
+              (userData.paymentStatus == 'trial' && userData.get(creditField, 0) > 0);
+    }
+
+    // --- KOLEKCIJOS ---
+
     match /users/{userId} {
       allow create: if request.auth.uid == userId;
-      allow get: if request.auth.uid == userId || isAdmin(request.auth.uid);
-      allow list: if isAdmin(request.auth.uid);
-      allow write: if request.auth.uid == userId || isAdmin(request.auth.uid);
+      allow get: if request.auth.uid == userId || isRequestingUserAdmin();
+      allow list: if isRequestingUserAdmin();
+      allow write: if request.auth.uid == userId || isRequestingUserAdmin();
     }
 
-    // REPORTS collection
     match /reports/{reportId} {
-      allow create: if isAllowedToOperate(request.auth.uid);
-      allow read, list: if isAllowedToOperate(request.auth.uid);
-
-      // Update is allowed for admins, or for the owner if they are marking it for deletion.
-      allow update: if isAdmin(request.auth.uid) || 
-                    (resource.data.reporterId == request.auth.uid && 
-                     request.resource.data.status == 'pending_delete');
-
-      // Actual deletion is only allowed for admins.
-      allow delete: if isAdmin(request.auth.uid);
+      allow create: if isRequestingUserAdmin() || 
+                     (isAllowedToRead(request.auth.uid) && hasCredits(request.auth.uid, 'reportCredits'));
+      allow read, list: if isRequestingUserAdmin() || isAllowedToRead(request.auth.uid);
+      allow update: if isRequestingUserAdmin() || 
+                    (resource.data.reporterId == request.auth.uid && request.resource.data.status == 'pending_delete');
+      allow delete: if isRequestingUserAdmin();
+    }
+    
+    match /verification_requests/{requestId} {
+      allow create: if request.auth != null;
+      allow read, list: if isRequestingUserAdmin() || request.auth.uid == resource.data.requesterId;
+      allow update, delete: if isRequestingUserAdmin();
     }
 
-    // SEARCH LOGS collection
     match /searchLogs/{logId} {
-      allow create: if isAllowedToOperate(request.auth.uid) &&
-                     request.resource.data.userId == request.auth.uid;
-      // Read a single document
-      allow read: if isAdmin(request.auth.uid) || resource.data.userId == request.auth.uid;
-      // Query the collection
-      allow list: if isAllowedToOperate(request.auth.uid);
+      allow create: if isRequestingUserAdmin() ||
+                     (isAllowedToRead(request.auth.uid) && 
+                      request.resource.data.userId == request.auth.uid &&
+                      hasCredits(request.auth.uid, 'searchCredits'));
+      allow read: if isRequestingUserAdmin() || resource.data.userId == request.auth.uid;
+      allow list: if isRequestingUserAdmin() || 
+                  (isAllowedToRead(request.auth.uid) && request.query.where[0][1] == 'userId');
+      allow update, delete: if false;
+    }
+    
+    match /loginLogs/{logId} {
+      // 1. ALLOW WRITES: Any logged-in user must be able to create a log entry.
+      allow create: if request.auth != null;
+
+      // 2. ALLOW READS: Admins see all. Users see their own.
+      allow read, list: if request.auth != null && (
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true || 
+          resource.data.userId == request.auth.uid
+      );
+
+      // 3. SECURITY: No updates or deletes allowed.
       allow update, delete: if false;
     }
 
-    // AUDIT LOGS collection
     match /auditLogs/{logId} {
-      allow read, create: if isAdmin(request.auth.uid);
+      // Corrected Rule: Allow admins to create, read and list logs.
+      allow create, read, list: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
       allow update, delete: if false;
     }
 
-    // NOTIFICATIONS collection
     match /notifications/{notificationId} {
-      allow create: if isAdmin(request.auth.uid);
+      allow create: if isRequestingUserAdmin();
       allow read, update: if resource.data.userId == request.auth.uid;
       allow delete: if false;
     }
