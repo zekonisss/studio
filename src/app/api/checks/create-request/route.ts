@@ -1,15 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getFirestore } from 'firebase-admin/firestore';
-import { initializeApp, getApps, cert } from 'firebase-admin/app';
+import { adminDb } from '@/lib/firebase-admin';
+import { Timestamp } from 'firebase-admin/firestore';
 import { GoogleGenerativeAI } from '@google/generative-ai'; 
 import crypto from 'crypto';
-
-// --- INIT FIREBASE ---
-if (!getApps().length) {
-  const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY as string);
-  initializeApp({ credential: cert(serviceAccount) });
-}
-const db = getFirestore();
 
 // --- SAUGI AI PAIEŠKA (Su 'try/catch') ---
 async function findEmailSafe(companyName: string) {
@@ -49,6 +42,10 @@ async function findEmailSafe(companyName: string) {
 }
 
 export async function POST(request: NextRequest) {
+  if (!adminDb) {
+    return NextResponse.json({ error: 'Server configuration error.' }, { status: 500 });
+  }
+  
   try {
     console.log("[API] Gauta nauja užklausa...");
     const body = await request.json();
@@ -59,7 +56,7 @@ export async function POST(request: NextRequest) {
     let targetEmail = body.targetEmail || null;
 
     // --- DUBLIKATŲ PATIKRA ---
-    const snapshot = await db.collection('verification_requests')
+    const snapshot = await adminDb.collection('verification_requests')
       .where('requesterId', '==', requesterId)
       .get();
       
@@ -67,7 +64,7 @@ export async function POST(request: NextRequest) {
       const data = doc.data();
       const isActive = data.status === 'PENDING' || data.status === 'COMPLETED' || data.status === 'NEW';
       if (!isActive) return false;
-      const created = new Date(data.createdAt);
+      const created = data.createdAt.toDate();
       if ((new Date().getTime() - created.getTime()) / (1000 * 3600 * 24) > 30) return false;
       return (data.driverName || '').toLowerCase() === driverName.toLowerCase() && 
              (data.targetCompany || '').toLowerCase() === targetCompany.toLowerCase();
@@ -88,16 +85,13 @@ export async function POST(request: NextRequest) {
        if (aiEmail) {
          targetEmail = aiEmail;
          emailSource = 'AI_GEMINI';
-         status = 'PENDING'; // Žalia/Geltona (Geras adresas)
+         status = 'PENDING';
        } else {
-         // SVARBUS PATAISYMAS: 
-         // Jei neradome el. pašto, statusas turi būti 'NEW' (Didžiosiomis!), kad Adminas matytų.
          targetEmail = null; 
          emailSource = 'NONE';
-         status = 'NEW'; // <--- ČIA BUVO KLAIDA ("New" vs "NEW")
+         status = 'NEW';
        }
     } else {
-        // Jei vartotojas pats įvedė el. paštą
         status = 'PENDING';
     }
 
@@ -108,18 +102,18 @@ export async function POST(request: NextRequest) {
       targetCompany,
       targetEmail, 
       emailSource,
-      status, // Dabar čia bus arba 'PENDING', arba 'NEW'
+      status,
       requesterCompanyName: body.requesterCompanyName || '',
       birthDate: body.birthDate || null,
       startDate: body.startDate || null,
       endDate: body.endDate || null,
       isCurrentEmployer: body.isCurrentEmployer || false,
       token: crypto.randomBytes(32).toString('hex'),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now()
     };
 
-    const docRef = await db.collection('verification_requests').add(newRequest);
+    const docRef = await adminDb.collection('verification_requests').add(newRequest);
     console.log("[API] Išsaugota! ID:", docRef.id, "Status:", status);
 
     return NextResponse.json({ success: true, id: docRef.id });
