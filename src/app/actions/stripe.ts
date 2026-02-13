@@ -1,3 +1,4 @@
+
 'use server';
 
 import { stripe } from '@/lib/stripe';
@@ -71,7 +72,18 @@ export async function createCheckoutSession(data: CreateCheckoutSessionData): Pr
             success_url: `${origin}/dashboard?payment=success`,
             cancel_url: `${origin}/account?tab=payment`,
             
-            // --- ŠTAI PATAISYMAS (BŪTINAS B2B MOKESČIAMS) ---
+            allow_promotion_codes: true,
+
+            custom_text: {
+                sidebar: {
+                  header: 'Kodėl verta?',
+                  message: 'Jūsų narystė suteikia pilną prieigą prie duomenų bazės, momentinę aktyvaciją ir prioritetinį palaikymą. Saugus apmokėjimas garantuotas.',
+                },
+                submit: {
+                  message: 'Jokių paslėptų mokesčių.',
+                },
+            },
+
             tax_id_collection: {
                 enabled: true,
             },
@@ -79,7 +91,6 @@ export async function createCheckoutSession(data: CreateCheckoutSessionData): Pr
                 name: 'auto',
                 address: 'auto',
             },
-            // ------------------------------------------------
         });
         
         if (!session.url) {
