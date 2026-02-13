@@ -1,4 +1,3 @@
-
 'use server';
 
 import { stripe } from '@/lib/stripe';
@@ -74,16 +73,6 @@ export async function createCheckoutSession(data: CreateCheckoutSessionData): Pr
             
             allow_promotion_codes: true,
 
-            custom_text: {
-                sidebar: {
-                  header: 'Kodėl verta?',
-                  message: 'Jūsų narystė suteikia pilną prieigą prie duomenų bazės, momentinę aktyvaciją ir prioritetinį palaikymą. Saugus apmokėjimas garantuotas.',
-                },
-                submit: {
-                  message: 'Jokių paslėptų mokesčių.',
-                },
-            },
-
             tax_id_collection: {
                 enabled: true,
             },
@@ -154,7 +143,7 @@ export async function createCustomerPortalSession(userId: string): Promise<{ url
         }
 
         const userDocRef = adminDb.collection('users').doc(userId);
-        const userDoc = await userDocRef.get();
+        const userDoc = await getDoc(userDocRef);
         const stripeCustomerId = userDoc.data()?.stripeCustomerId;
 
         if (!stripeCustomerId) {
