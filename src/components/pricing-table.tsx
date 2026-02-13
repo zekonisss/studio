@@ -15,34 +15,31 @@ import { Loader2, Check, Star, Mail } from 'lucide-react';
 import { useLanguage } from '@/contexts/language-context';
 
 type BillingCycle = 'monthly' | 'yearly';
-type PlanName = 'SOLO' | 'GROWTH' | 'SCALE';
+type PlanName = 'SOLO' | 'TEAM' | 'SCALE';
 
 const plans = [
     {
         name: 'SOLO',
-        title: 'START',
+        title: 'SOLO',
         description: 'Tinka pradedantiesiems ir individualiems specialistams.',
-        prices: { monthly: 29, yearly: 290 },
-        oldPrices: { monthly: 49, yearly: 490 },
-        badge: 'EARLY ACCESS',
-        features: ['1 Vartotojas', '50 paieškų/mėn.', 'AI Analizė', '10 metų archyvas'],
+        prices: { monthly: 35, yearly: 348 },
+        features: ['1 Vartotojas', '30 Užklausų / mėn.', 'Bazinė rizikos analizė', 'El. pašto palaikymas'],
     },
     {
-        name: 'GROWTH',
-        title: 'PRO',
+        name: 'TEAM',
+        title: 'TEAM',
         description: 'Augančioms komandoms ir verslui.',
-        prices: { monthly: 69, yearly: 690 },
-        oldPrices: { monthly: 129, yearly: 1290 },
+        prices: { monthly: 69, yearly: 708 },
         badge: 'Populiariausias',
         isPopular: true,
-        features: ['5 Vartotojai', '300 paieškų/mėn.', 'Excel Importas', 'Stebimų asmenų sąrašas (Watchlist)', 'Prioritetinė AI analizė'],
+        features: ['5 Vartotojai', '300 Užklausų / mėn.', 'Išplėstinė rizikos analizė', 'Prioritetinis palaikymas', 'Kolegų pakvietimas'],
     },
     {
         name: 'SCALE',
         title: 'ENTERPRISE',
         description: 'Didelėms organizacijoms ir integracijoms.',
         prices: { monthly: 'Susisiekti', yearly: 'Susisiekti' },
-        features: ['Neriboti vartotojai', 'Neribotos paieškos', 'API Integracija (Greitai)', 'Prioritetinis apdorojimas', 'Didelės apimties importas'],
+        features: ['Neriboti vartotojai', 'Neribotos paieškos', 'API Integracija (Greitai)', 'Prioritetinis palaikymas', 'Didelės apimties importas'],
     },
 ];
 
@@ -118,13 +115,11 @@ export function PricingTable() {
                 {plans.map((plan) => {
                     const isCustomPrice = typeof plan.prices.monthly === 'string';
                     let price: string | number;
-                    let oldPrice: number | undefined;
 
                     if (isCustomPrice) {
                         price = plan.prices.monthly;
                     } else {
                         price = billingCycle === 'monthly' ? plan.prices.monthly : Math.round(plan.prices.yearly / 12);
-                        oldPrice = billingCycle === 'monthly' ? plan.oldPrices?.monthly : plan.oldPrices ? Math.round(plan.oldPrices.yearly / 12) : undefined;
                     }
                     
                     return (
@@ -165,7 +160,6 @@ export function PricingTable() {
                                     {typeof price === 'number' ? (
                                         <div className="flex items-baseline gap-2">
                                             <span className="text-5xl font-bold tracking-tight">€{price}</span>
-                                            {oldPrice && <span className="text-2xl font-medium text-muted-foreground line-through">€{oldPrice}</span>}
                                             <span className="text-muted-foreground">/mėn</span>
                                         </div>
                                     ) : (
