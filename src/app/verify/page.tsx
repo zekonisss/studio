@@ -39,10 +39,10 @@ const TRANSLATIONS = {
     successP3: "„Nuojauta“ transporto versle kainuoja per brangiai. Prisijunkite prie bendruomenės, kuri sprendimus priima remdamasi faktais.",
     successBtn: "Prisijungti prie Patikimų Vežėjų",
     delegatePrompt: "Gavote klaidingai? Nurodykite atsakingą asmenį",
-    delegateSave: "Persiųsti",
-    delegateEmailPlaceholder: "Atsakingo asmens el. paštas...",
-    delegateSuccess: "Užklausa sėkmingai persiųsta.",
-    delegateError: "Klaida persiunčiant užklausą."
+    save: "Persiųsti",
+    enterEmail: "Atsakingo asmens el. paštas...",
+    successUpdated: "Užklausa sėkmingai persiųsta.",
+    errorUpdating: "Klaida persiunčiant užklausą."
   },
   EN: {
     title: "Driver Employment Verification",
@@ -68,10 +68,10 @@ const TRANSLATIONS = {
     successP3: "\"Gut feeling\" is too expensive in the transport business. Join a community that makes decisions based on facts.",
     successBtn: "Join Trusted Carriers",
     delegatePrompt: "Wrong recipient? Delegate to the right person",
-    delegateSave: "Forward",
-    delegateEmailPlaceholder: "Responsible person's email...",
-    delegateSuccess: "Request forwarded successfully.",
-    delegateError: "Error forwarding request."
+    save: "Forward",
+    enterEmail: "Responsible person's email...",
+    successUpdated: "Request forwarded successfully.",
+    errorUpdating: "Error forwarding request."
   },
   PL: {
     title: "Weryfikacja Historii Zatrudnienia Kierowcy",
@@ -97,10 +97,10 @@ const TRANSLATIONS = {
     successP3: "\"Przeczucie\" w branży transportowej jest zbyt drogie. Dołącz do społeczności, która podejmuje decyzje w oparciu o fakty.",
     successBtn: "Dołącz do Zaufanych Przewoźników",
     delegatePrompt: "Zły odbiorca? Przekaż właściwej osobie",
-    delegateSave: "Przekaż dalej",
-    delegateEmailPlaceholder: "Adres e-mail osoby odpowiedzialnej...",
-    delegateSuccess: "Zapytanie pomyślnie przekazane.",
-    delegateError: "Błąd podczas przekazywania zapytania."
+    save: "Przekaż dalej",
+    enterEmail: "Adres e-mail osoby odpowiedzialnej...",
+    successUpdated: "Zapytanie pomyślnie przekazane.",
+    errorUpdating: "Błąd podczas przekazywania zapytania."
   },
   RU: {
     title: "Проверка истории работы водителя",
@@ -126,10 +126,10 @@ const TRANSLATIONS = {
     successP3: "\"Интуиция\" в транспортном бизнесе стоит слишком дорого. Присоединяйтесь к сообществу, которое принимает решения на основе фактов.",
     successBtn: "Присоединиться к доверенным перевозчикам",
     delegatePrompt: "Ошиблись адресатом? Укажите ответственного",
-    delegateSave: "Переслать",
-    delegateEmailPlaceholder: "Эл. почта ответственного лица...",
-    delegateSuccess: "Запрос успешно переслан.",
-    delegateError: "Ошибка при пересылке запроса."
+    save: "Переслать",
+    enterEmail: "Эл. почта ответственного лица...",
+    successUpdated: "Запрос успешно переслан.",
+    errorUpdating: "Ошибка при пересылке запроса."
   }
 };
 
@@ -166,7 +166,6 @@ function VerificationPageContent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   
-  // State for delegation
   const [isDelegating, setIsDelegating] = useState(false);
   const [delegateEmail, setDelegateEmail] = useState('');
   const [isSubmittingDelegate, setIsSubmittingDelegate] = useState(false);
@@ -238,10 +237,10 @@ function VerificationPageContent() {
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || 'Serverio klaida');
         
-        toast({ title: 'Sėkmė!', description: t('delegateSuccess') });
+        toast({ title: 'Sėkmė!', description: t('successUpdated') });
         setIsDelegating(false);
     } catch (err: any) {
-        toast({ variant: 'destructive', title: 'Klaida', description: err.message || t('delegateError') });
+        toast({ variant: 'destructive', title: 'Klaida', description: err.message || t('errorUpdating') });
     } finally {
         setIsSubmittingDelegate(false);
     }
@@ -280,7 +279,9 @@ function VerificationPageContent() {
   if (step === 'invalid') {
      return (
       <Card className="w-full max-w-md border-destructive relative">
-        <div className="absolute top-2 right-2"><LanguageSwitcher /></div>
+        <header className="flex justify-end p-2 absolute top-0 right-0">
+          <LanguageSwitcher />
+        </header>
         <CardHeader className="text-center items-center pt-12">
             <AlertTriangle className="h-10 w-10 text-destructive mb-2" />
             <CardTitle>{t('invalidLinkTitle')}</CardTitle>
@@ -295,7 +296,7 @@ function VerificationPageContent() {
   if (step === 'success') {
     return (
         <div className="text-center space-y-6 py-4 w-full max-w-lg relative">
-          <div className="absolute top-0 right-0"><LanguageSwitcher /></div>
+          <header className="absolute top-0 right-0"><LanguageSwitcher /></header>
           <div className="flex justify-center mb-4 pt-8">
             <div className="rounded-full bg-green-500/10 p-4 ring-1 ring-green-500/50">
               <CheckCircle className="w-16 h-16 text-green-500" />
@@ -329,13 +330,13 @@ function VerificationPageContent() {
   
   return (
     <Card className="w-full max-w-2xl">
-        <div className="flex items-center justify-between p-4 border-b">
+        <header className="flex items-center justify-between p-4 border-b">
             <Link href="/" className="group flex items-center gap-2 hover:opacity-90 transition-opacity cursor-pointer">
                 <UserSearch className="w-8 h-8 text-primary" />
                 <span className="text-xl font-bold text-slate-800 dark:text-white tracking-tight italic">DriverCheck</span>
             </Link>
             <LanguageSwitcher />
-        </div>
+        </header>
         <form onSubmit={handleSubmit}>
             <CardHeader className="text-center">
                 <CardTitle className="text-2xl pt-2">{t('title')}</CardTitle>
@@ -405,13 +406,13 @@ function VerificationPageContent() {
                     <div className="flex w-full max-w-sm mx-auto items-center gap-2">
                       <Input
                         type="email"
-                        placeholder={t('delegateEmailPlaceholder')}
+                        placeholder={t('enterEmail')}
                         value={delegateEmail}
                         onChange={(e) => setDelegateEmail(e.target.value)}
                         disabled={isSubmittingDelegate}
                       />
                       <Button type="button" onClick={handleDelegateSubmit} disabled={isSubmittingDelegate || !delegateEmail}>
-                        {isSubmittingDelegate ? <Loader2 className="animate-spin h-4 w-4" /> : t('delegateSave')}
+                        {isSubmittingDelegate ? <Loader2 className="animate-spin h-4 w-4" /> : t('save')}
                       </Button>
                     </div>
                   )}

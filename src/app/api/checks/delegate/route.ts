@@ -1,7 +1,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
-import { Timestamp } from 'firebase-admin/firestore';
+import { Timestamp, FieldValue } from 'firebase-admin/firestore';
 
 export async function POST(req: NextRequest) {
     if (!adminDb) {
@@ -33,6 +33,12 @@ export async function POST(req: NextRequest) {
             delegatedAt: Timestamp.now(),
             status: 'PENDING', // Reset status so it can be sent again
             emailStatus: 'PENDING',
+            emailSource: 'RECIPIENT_CORRECTION',
+            history: FieldValue.arrayUnion({
+                action: 'DELEGATED',
+                timestamp: Timestamp.now(),
+                details: `Originalus gavėjas persiuntė užklausą naujam kontaktui: ${newEmail}`
+            })
         });
         
         // Log the new contact info to the catalog
