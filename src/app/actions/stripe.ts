@@ -63,6 +63,7 @@ export async function createCheckoutSession(data: CreateCheckoutSessionData): Pr
             customer: stripeCustomerId,
             mode: 'subscription',
             payment_method_types: ['card', 'sepa_debit'],
+            locale: 'auto',
             line_items: [{
                 price: priceId,
                 quantity: 1,
