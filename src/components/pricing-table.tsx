@@ -107,7 +107,7 @@ export function PricingTable() {
                 />
                 <Label htmlFor="billing-cycle" className={cn('flex items-center gap-2', billingCycle === 'yearly' ? 'text-foreground' : 'text-muted-foreground')}>
                     Metinis 
-                    <span className="hidden sm:inline text-xs font-semibold px-2 py-0.5 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 rounded-full">-20%</span>
+                    <span className="hidden sm:inline text-xs font-semibold px-2 py-0.5 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 rounded-full">geresnė kaina</span>
                 </Label>
             </div>
 
