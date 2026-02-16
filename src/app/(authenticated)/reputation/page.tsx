@@ -7,7 +7,6 @@ import { useToast } from "@/hooks/use-toast";
 
 export default function ReputationPage() {
   const { toast } = useToast();
-  const currentYear = new Date().getFullYear();
 
   const embedCode = `
 <a href="https://drivercheck.lt" target="_blank" style="text-decoration:none;">
@@ -20,7 +19,7 @@ export default function ReputationPage() {
     </svg>
     <div style="line-height:1.2;">
         <span style="font-size:16px;font-weight:700;font-style:italic;color:#1e293b;">DriverCheck</span>
-        <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Patikimas Partneris ${currentYear}</div>
+        <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Patikimas Partneris 2026</div>
     </div>
   </div>
 </a>
@@ -81,7 +80,7 @@ export default function ReputationPage() {
                     </svg>
                     <div style={{lineHeight: 1.2}}>
                         <span style={{fontSize: '16px', fontWeight: 700, fontStyle: 'italic', color: '#1e293b'}}>DriverCheck</span>
-                        <div style={{fontSize: '11px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px'}}>Patikimas Partneris {currentYear}</div>
+                        <div style={{fontSize: '11px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px'}}>Patikimas Partneris 2026</div>
                     </div>
                 </div>
              </div>
