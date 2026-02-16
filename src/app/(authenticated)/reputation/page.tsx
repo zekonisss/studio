@@ -13,37 +13,39 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Star, Copy, Loader2, Package, CheckCircle } from "lucide-react";
 import { submitMerchOrder } from "./actions";
-
-const OrderSchema = z.object({
-  recipient: z.string().min(3, { message: "Privaloma nurodyti gavėją." }),
-  companyName: z.string().min(2, { message: "Įmonės pavadinimas yra privalomas." }),
-  address: z.string().min(5, { message: "Adresas turi būti bent 5 simbolių." }),
-  city: z.string().min(3, { message: "Miestas yra privalomas." }),
-  postalCode: z.string().min(4, { message: "Pašto kodas yra privalomas." }),
-  phone: z.string().min(8, { message: "Nurodykite teisingą telefono numerį." }),
-  comment: z.string().optional(),
-});
-
-type OrderFormValues = z.infer<typeof OrderSchema>;
+import { useLanguage } from "@/contexts/language-context";
 
 export default function ReputationPage() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { t } = useLanguage();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+
+  const OrderSchema = z.object({
+    recipient: z.string().min(3, { message: t('reputation.validation.recipientRequired') }),
+    companyName: z.string().min(2, { message: t('reputation.validation.companyNameRequired') }),
+    address: z.string().min(5, { message: t('reputation.validation.addressMin') }),
+    city: z.string().min(3, { message: t('reputation.validation.cityRequired') }),
+    postalCode: z.string().min(4, { message: t('reputation.validation.postalCodeRequired') }),
+    phone: z.string().min(8, { message: t('reputation.validation.phoneInvalid') }),
+    comment: z.string().optional(),
+  });
+  
+  type OrderFormValues = z.infer<typeof OrderSchema>;
 
   const embedCode = `
 <a href="https://drivercheck.lt" target="_blank" style="text-decoration:none;">
   <div style="display:inline-flex;align-items:center;gap:12px;font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;background-color:#f8fafc;border:1px solid #e2e8f0;padding:8px 12px;border-radius:8px;">
-    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="10" cy="7" r="4"></circle>
         <path d="M10.3 15H7a4 4 0 0 0-4 4v2"></path>
         <circle cx="17" cy="17" r="3"></circle>
         <path d="m21 21-1.9-1.9"></path>
     </svg>
     <div>
-        <div style="font-size:20px;font-weight:700;font-style:italic;color:#1e293b;line-height:1;">DriverCheck</div>
-        <div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-top:4px;">Patikimas Partneris 2026</div>
+        <div style="font-size:24px;font-weight:700;font-style:italic;color:#1e293b;line-height:1;">DriverCheck</div>
+        <div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-top:4px;">${t('reputation.badge.partnerText')}</div>
     </div>
   </div>
 </a>
@@ -52,8 +54,8 @@ export default function ReputationPage() {
   const handleCopyCode = () => {
     navigator.clipboard.writeText(embedCode);
     toast({
-      title: "Kodas nukopijuotas",
-      description: "Dabar galite jį įklijuoti į savo svetainės HTML kodą.",
+      title: t('toast.reputation.codeCopied.title'),
+      description: t('toast.reputation.codeCopied.description'),
     });
   };
 
@@ -78,8 +80,8 @@ export default function ReputationPage() {
       if (result.success) {
         setIsSubmitted(true);
         toast({
-          title: "Užsakymas priimtas!",
-          description: "Ačiū! Išsiųsime atributiką artimiausiu metu.",
+          title: t('toast.reputation.orderSuccess.title'),
+          description: t('toast.reputation.orderSuccess.description'),
         });
       } else {
         throw new Error(result.error);
@@ -87,8 +89,8 @@ export default function ReputationPage() {
     } catch (error: any) {
       toast({
         variant: "destructive",
-        title: "Klaida",
-        description: error.message || "Nepavyko išsiųsti užsakymo.",
+        title: t('common.error'),
+        description: t('toast.reputation.orderError.description'),
       });
     } finally {
       setIsSubmitting(false);
@@ -102,8 +104,8 @@ export default function ReputationPage() {
           <Star className="h-8 w-8 text-primary" />
         </div>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Jūsų Patikimumo Ženklas</h1>
-          <p className="text-muted-foreground mt-1 max-w-2xl">Parodykite vairuotojams ir partneriams, kad esate skaidri ir patikima įmonė.</p>
+          <h1 className="text-3xl font-bold tracking-tight">{t('reputation.title')}</h1>
+          <p className="text-muted-foreground mt-1 max-w-2xl">{t('reputation.description')}</p>
         </div>
       </div>
 
@@ -111,15 +113,15 @@ export default function ReputationPage() {
         {/* Main Form Card */}
         <Card className="col-span-1 lg:col-span-2">
           <CardHeader>
-            <CardTitle>Užsisakyti Partnerio Atributiką</CardTitle>
-            <CardDescription>Gaukite 'DriverCheck' lipduką ant durų ir sertifikatą rėmeliui. Tai parodo vairuotojams, kad esate skaidri įmonė.</CardDescription>
+            <CardTitle>{t('reputation.order.title')}</CardTitle>
+            <CardDescription>{t('reputation.order.description')}</CardDescription>
           </CardHeader>
           <CardContent>
             {isSubmitted ? (
               <div className="flex flex-col items-center justify-center text-center h-96">
                   <CheckCircle className="w-16 h-16 text-green-500 mb-4" />
-                  <h3 className="text-xl font-bold">Užsakymas priimtas!</h3>
-                  <p className="text-muted-foreground mt-2">Dėkojame, jūsų atributiką išsiųsime artimiausiu metu.</p>
+                  <h3 className="text-xl font-bold">{t('toast.reputation.orderSuccess.title')}</h3>
+                  <p className="text-muted-foreground mt-2">{t('toast.reputation.orderSuccess.description')}</p>
               </div>
             ) : (
               <Form {...form}>
@@ -127,14 +129,14 @@ export default function ReputationPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <FormField control={form.control} name="recipient" render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Gavėjas</FormLabel>
+                        <FormLabel>{t('reputation.form.recipient')}</FormLabel>
                         <FormControl><Input placeholder="Vardenis Pavardenis" {...field} /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )} />
                     <FormField control={form.control} name="companyName" render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Įmonės pavadinimas</FormLabel>
+                        <FormLabel>{t('reputation.form.companyName')}</FormLabel>
                         <FormControl><Input {...field} /></FormControl>
                         <FormMessage />
                       </FormItem>
@@ -142,7 +144,7 @@ export default function ReputationPage() {
                   </div>
                   <FormField control={form.control} name="address" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Pristatymo Adresas</FormLabel>
+                      <FormLabel>{t('reputation.form.address')}</FormLabel>
                       <FormControl><Input placeholder="Gatvė, namo nr., buto nr." {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
@@ -150,14 +152,14 @@ export default function ReputationPage() {
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <FormField control={form.control} name="city" render={({ field }) => (
                             <FormItem>
-                            <FormLabel>Miestas</FormLabel>
+                            <FormLabel>{t('reputation.form.city')}</FormLabel>
                             <FormControl><Input placeholder="Vilnius" {...field} /></FormControl>
                             <FormMessage />
                             </FormItem>
                         )} />
                         <FormField control={form.control} name="postalCode" render={({ field }) => (
                             <FormItem>
-                            <FormLabel>Pašto kodas</FormLabel>
+                            <FormLabel>{t('reputation.form.postalCode')}</FormLabel>
                             <FormControl><Input placeholder="LT-XXXXX" {...field} /></FormControl>
                             <FormMessage />
                             </FormItem>
@@ -165,22 +167,22 @@ export default function ReputationPage() {
                     </div>
                    <FormField control={form.control} name="phone" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Telefonas</FormLabel>
+                      <FormLabel>{t('reputation.form.phone')}</FormLabel>
                       <FormControl><Input placeholder="+370..." {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
                    <FormField control={form.control} name="comment" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Komentaras (neprivaloma)</FormLabel>
-                      <FormControl><Textarea placeholder="Papildoma informacija kurjeriui..." {...field} /></FormControl>
+                      <FormLabel>{t('reputation.form.commentOptional')}</FormLabel>
+                      <FormControl><Textarea placeholder={t('reputation.form.commentPlaceholder')} {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
                   <div className="flex justify-end">
                     <Button type="submit" size="lg" disabled={isSubmitting}>
                       {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Package className="mr-2 h-4 w-4" />}
-                      Užsakyti (Nemokamai)
+                      {t('reputation.form.submitButton')}
                     </Button>
                   </div>
                 </form>
@@ -193,21 +195,21 @@ export default function ReputationPage() {
         <div className="col-span-1">
           <Card>
             <CardHeader>
-              <CardTitle>Svetainės Ženklelis</CardTitle>
-              <CardDescription>Įdėkite HTML kodą į savo svetainę.</CardDescription>
+              <CardTitle>{t('reputation.badge.title')}</CardTitle>
+              <CardDescription>{t('reputation.badge.description')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="border rounded-xl p-4 flex items-center justify-center bg-muted/30">
                 <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 px-4 py-3 rounded-lg shadow-sm">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="10" cy="7" r="4"></circle>
                     <path d="M10.3 15H7a4 4 0 0 0-4 4v2"></path>
                     <circle cx="17" cy="17" r="3"></circle>
                     <path d="m21 21-1.9-1.9"></path>
                   </svg>
                   <div>
-                    <div style={{fontSize: '20px', fontWeight: 700, fontStyle: 'italic', color: '#1e293b', lineHeight: '1'}}>DriverCheck</div>
-                    <div style={{fontSize: '10px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '4px'}}>Patikimas Partneris 2026</div>
+                    <div style={{fontSize: '24px', fontWeight: 700, fontStyle: 'italic', color: '#1e293b', lineHeight: '1'}}>DriverCheck</div>
+                    <div style={{fontSize: '10px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '4px'}}>{t('reputation.badge.partnerText')}</div>
                   </div>
                 </div>
               </div>
@@ -217,7 +219,7 @@ export default function ReputationPage() {
                 </pre>
                 <Button size="sm" variant="secondary" className="absolute top-2 right-2" onClick={handleCopyCode}>
                   <Copy className="h-4 w-4 mr-1" />
-                  Kopijuoti kodą
+                  {t('reputation.badge.copyCode')}
                 </Button>
               </div>
             </CardContent>
