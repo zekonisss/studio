@@ -11,7 +11,7 @@ export default function ReputationPage() {
   const embedCode = `
 <a href="https://drivercheck.lt" target="_blank" style="text-decoration:none;">
   <div style="display:inline-flex;align-items:center;gap:8px;font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;background-color:#f8fafc;border:1px solid #e2e8f0;padding:8px 12px;border-radius:8px;">
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="10" cy="7" r="4"></circle>
         <path d="M10.3 15H7a4 4 0 0 0-4 4v2"></path>
         <circle cx="17" cy="17" r="3"></circle>
@@ -72,7 +72,7 @@ export default function ReputationPage() {
              <div className="border rounded-xl p-8 flex items-center justify-center bg-muted/30">
                 {/* Preview */}
                 <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 px-4 py-3 rounded-lg shadow-sm">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <circle cx="10" cy="7" r="4"></circle>
                         <path d="M10.3 15H7a4 4 0 0 0-4 4v2"></path>
                         <circle cx="17" cy="17" r="3"></circle>
