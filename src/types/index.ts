@@ -220,3 +220,21 @@ export interface VerificationRequest {
   openedAt?: string | null;
   delegateEmail?: string | null;
 }
+
+export interface MerchOrder {
+  id: string;
+  userId: string;
+  recipient: string;
+  companyName: string;
+  address: string;
+  phone: string;
+  comment?: string;
+  status: 'PENDING' | 'SENT';
+  createdAt: string; // ISO string on client
+  sentAt?: string; // ISO string on client
+}
+
+export interface MerchOrderFirestore extends Omit<MerchOrder, 'id' | 'createdAt' | 'sentAt'> {
+  createdAt: any; // Firestore Timestamp
+  sentAt?: any;
+}

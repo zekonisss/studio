@@ -40,6 +40,7 @@ export const translationsMaster: Record<string, Partial<Record<Locale, string>>>
   'sidebar.reputation': { lt: 'Reputacija', en: 'Reputation', ru: 'Репутация', pl: 'Reputacja', lv: 'Reputācija', et: 'Maine' },
   'sidebar.adminPanel': { lt: 'Admino Panelė', en: 'Admin Panel', ru: 'Админ-панель', pl: 'Panel admina', lv: 'Adminu panelis', et: 'Admini paneel' },
   'sidebar.importReports': { lt: 'Importuoti įrašus', en: 'Import Reports', ru: 'Импорт записей', pl: 'Importuj wpisy', lv: 'Importēt ierakstus', et: 'Impordi kirjed' },
+  'sidebar.merchOrders': { lt: 'Atributikos užsakymai', en: 'Merch Orders', ru: 'Заказы атрибутики', pl: 'Zamówienia gadżetów', lv: 'Preču pasūtījumi', et: 'Kauba tellimused' },
   'sidebar.logout': { lt: 'Atsijungti', en: 'Log Out', ru: 'Выйти', pl: 'Wyloguj', lv: 'Iziet', et: 'Logi välja' },
   'sidebar.section.main': { lt: 'Pagrindinis', en: 'Main', ru: 'Главное', pl: 'Główne', lv: 'Galvenais', et: 'Põhiline' },
   'sidebar.section.history': { lt: 'Istorija', en: 'History', ru: 'История', pl: 'Historia', lv: 'Vēsture', et: 'Ajalugu' },

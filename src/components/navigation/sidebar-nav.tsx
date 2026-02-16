@@ -21,7 +21,8 @@ import {
   ScrollText,
   ShieldCheck,
   Users,
-  Star
+  Star,
+  Package
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import type { ReactNode } from "react";
@@ -58,6 +59,7 @@ const legalNavItemsBase = [
 const adminNavItemsBase = [
   { href: "/admin", labelKey: "sidebar.adminPanel", icon: ShieldAlert },
   { href: "/reports/import", labelKey: "sidebar.importReports", icon: FileSpreadsheet },
+  { href: "/admin/merch-orders", labelKey: "sidebar.merchOrders", icon: Package },
 ];
 
 interface SidebarNavProps {
