@@ -157,8 +157,8 @@ export default function SearchPage() {
         if (!targetCompany || !startDate || !driverBirthDate) {
             toast({
                 variant: "destructive",
-                title: "Trūksta duomenų",
-                description: "Prašome užpildyti vairuotojo gimimo datą, įmonės pavadinimą ir darbo pradžios laukus.",
+                title: t('toast.verification.missingDataTitle'),
+                description: t('toast.verification.missingDataDescription'),
             });
             return;
         }
@@ -188,12 +188,12 @@ export default function SearchPage() {
             if (data.isDuplicate) {
                 toast({
                     variant: "default",
-                    title: "Užklausa jau egzistuoja",
-                    description: "Tokia patikros užklausa šiai įmonei apie šį vairuotoją jau buvo išsiųsta neseniai.",
+                    title: t('toast.verification.requestExistsTitle'),
+                    description: t('toast.verification.requestExistsDescription'),
                 });
             } else {
                 toast({
-                    title: "Užklausa apdorota!",
+                    title: t('toast.verification.requestProcessedTitle'),
                     description: data.message,
                 });
             }
@@ -215,8 +215,8 @@ export default function SearchPage() {
         } catch (error: any) {
             toast({
                 variant: "destructive",
-                title: "Klaida",
-                description: error.message || "Nepavyko išsiųsti užklausos.",
+                title: t('common.error'),
+                description: error.message || t('toast.verification.requestFailedDescription'),
             });
         } finally {
             setIsRequesting(false);
@@ -338,16 +338,16 @@ export default function SearchPage() {
                                                     {t('search.noResults.title')}
                                                 </CardTitle>
                                                 <CardDescription className="mt-3 text-muted-foreground max-w-md mx-auto leading-relaxed">
-                                                    Pagal užklausą <span className="font-semibold text-foreground">"{currentQuery}"</span> įrašų nerasta.
+                                                    {t('search.noResults.description', { query: currentQuery })}
                                                 </CardDescription>
                                             </CardHeader>
                                             <CardContent>
                                                 <div className="mt-4 pt-6 border-t border-slate-200 dark:border-slate-800/50 w-full max-w-lg mx-auto">
-                                                    <h4 className="font-semibold text-foreground">Neturite įrašo? Išsiųskite patikros užklausą</h4>
-                                                    <p className="text-sm text-muted-foreground mt-1 mb-4">Nurodykite buvusio darbdavio duomenis ir mes išsiųsime saugią nuorodą atsiliepimui pateikti.</p>
+                                                    <h4 className="font-semibold text-foreground">{t('search.verification.title')}</h4>
+                                                    <p className="text-sm text-muted-foreground mt-1 mb-4">{t('search.verification.description')}</p>
                                                     <div className="space-y-4 text-left">
                                                         <div>
-                                                            <Label htmlFor="driverBirthDate">Vairuotojo Gimimo Data</Label>
+                                                            <Label htmlFor="driverBirthDate">{t('search.verification.driverBirthDate')}</Label>
                                                             <Input
                                                                 id="driverBirthDate"
                                                                 type="date"
@@ -359,7 +359,7 @@ export default function SearchPage() {
                                                             />
                                                         </div>
                                                         <div>
-                                                            <Label htmlFor="targetCompany">Buvusio Darbdavio Įmonės Pavadinimas</Label>
+                                                            <Label htmlFor="targetCompany">{t('search.verification.formerEmployer')}</Label>
                                                             <Input
                                                                 id="targetCompany"
                                                                 placeholder="UAB Pavyzdys"
@@ -371,24 +371,24 @@ export default function SearchPage() {
                                                         </div>
                                                         <div className="grid grid-cols-2 gap-4">
                                                            <div>
-                                                                <Label htmlFor="startDate">Darbo pradžia</Label>
-                                                                <Input type="date" id="startDate" value={startDate} onChange={(e) => setStartDate(e.target.value)} disabled={isRequesting} required />
+                                                                <Label htmlFor="startDate">{t('search.verification.startDate')}</Label>
+                                                                <Input type="date" id="startDate" value={startDate} onChange={(e) => setStartDate(e.target.value)} disabled={isRequesting} required max="9999-12-31" />
                                                             </div>
                                                             <div>
-                                                                <Label htmlFor="endDate">Darbo pabaiga</Label>
-                                                                <Input type="date" id="endDate" value={endDate} onChange={(e) => setEndDate(e.target.value)} disabled={isRequesting || isCurrentEmployer} />
+                                                                <Label htmlFor="endDate">{t('search.verification.endDate')}</Label>
+                                                                <Input type="date" id="endDate" value={endDate} onChange={(e) => setEndDate(e.target.value)} disabled={isRequesting || isCurrentEmployer} max="9999-12-31" />
                                                             </div>
                                                         </div>
                                                          <div className="flex items-center space-x-2">
                                                             <Checkbox id="isCurrentEmployer" checked={isCurrentEmployer} onCheckedChange={(checked) => setIsCurrentEmployer(!!checked)} disabled={isRequesting} />
-                                                            <Label htmlFor="isCurrentEmployer" className="text-sm font-normal">Šiuo metu dirba šioje įmonėje</Label>
+                                                            <Label htmlFor="isCurrentEmployer" className="text-sm font-normal">{t('search.verification.isCurrentEmployer')}</Label>
                                                         </div>
                                                         <div>
-                                                            <Label htmlFor="targetEmail">Darbdavio El. Paštas (neprivaloma)</Label>
+                                                            <Label htmlFor="targetEmail">{t('search.verification.employerEmail')}</Label>
                                                             <Input
                                                                 id="targetEmail"
                                                                 type="email"
-                                                                placeholder="Jei nežinote, palikite tuščią - mes surasime"
+                                                                placeholder={t('search.verification.employerEmailPlaceholder')}
                                                                 value={targetEmail}
                                                                 onChange={(e) => setTargetEmail(e.target.value)}
                                                                 disabled={isRequesting}
@@ -396,7 +396,7 @@ export default function SearchPage() {
                                                         </div>
                                                         <Button className="w-full" onClick={handleVerificationRequest} disabled={isRequesting || !targetCompany || !startDate || !driverBirthDate}>
                                                             {isRequesting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
-                                                            Siųsti Užklausą
+                                                            {t('search.verification.sendRequestButton')}
                                                         </Button>
                                                     </div>
                                                 </div>
@@ -422,17 +422,17 @@ export default function SearchPage() {
                                     )}
                                      <Card className="mt-8">
                                         <CardHeader>
-                                            <CardTitle>Išsiųstos Patikros Užklausos</CardTitle>
-                                            <CardDescription>Jūsų paskutinių patikros užklausų būsena.</CardDescription>
+                                            <CardTitle>{t('search.verification.requestsSentTitle')}</CardTitle>
+                                            <CardDescription>{t('search.verification.requestsSentDescription')}</CardDescription>
                                         </CardHeader>
                                         <CardContent>
                                             <Table>
                                                 <TableHeader>
                                                     <TableRow>
-                                                        <TableHead>Vairuotojas</TableHead>
-                                                        <TableHead>Tikrinama Įmonė</TableHead>
-                                                        <TableHead>Užklausos Data</TableHead>
-                                                        <TableHead className="text-right">Būsena</TableHead>
+                                                        <TableHead>{t('search.verification.table.driver')}</TableHead>
+                                                        <TableHead>{t('search.verification.table.company')}</TableHead>
+                                                        <TableHead>{t('search.verification.table.requestDate')}</TableHead>
+                                                        <TableHead className="text-right">{t('search.verification.table.status')}</TableHead>
                                                     </TableRow>
                                                 </TableHeader>
                                                 <TableBody>
@@ -448,7 +448,7 @@ export default function SearchPage() {
                                                     ) : requests.length === 0 ? (
                                                         <TableRow>
                                                             <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
-                                                                Užklausų kol kas nėra.
+                                                                {t('search.verification.table.noRequests')}
                                                             </TableCell>
                                                         </TableRow>
                                                     ) : requests.map(req => (
@@ -486,5 +486,3 @@ export default function SearchPage() {
         </div>
     );
 }
-
-    
