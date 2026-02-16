@@ -37,6 +37,7 @@ export const translationsMaster: Record<string, Partial<Record<Locale, string>>>
   'sidebar.support': { lt: 'Pagalba', en: 'Support', ru: 'Поддержка', pl: 'Wsparcie', lv: 'Atbalsts', et: 'Tugi' },
   'sidebar.terms': { lt: 'Taisyklės', en: 'Terms', ru: 'Условия', pl: 'Regulamin', lv: 'Noteikumi', et: 'Tingimused' },
   'sidebar.privacy': { lt: 'Privatumas', en: 'Privacy', ru: 'Приватность', pl: 'Prywatność', lv: 'Privātums', et: 'Privaatsus' },
+  'sidebar.reputation': { lt: 'Reputacija', en: 'Reputation', ru: 'Репутация', pl: 'Reputacja', lv: 'Reputācija', et: 'Maine' },
   'sidebar.adminPanel': { lt: 'Admino Panelė', en: 'Admin Panel', ru: 'Админ-панель', pl: 'Panel admina', lv: 'Adminu panelis', et: 'Admini paneel' },
   'sidebar.importReports': { lt: 'Importuoti įrašus', en: 'Import Reports', ru: 'Импорт записей', pl: 'Importuj wpisy', lv: 'Importēt ierakstus', et: 'Impordi kirjed' },
   'sidebar.logout': { lt: 'Atsijungti', en: 'Log Out', ru: 'Выйти', pl: 'Wyloguj', lv: 'Iziet', et: 'Logi välja' },

@@ -21,7 +21,7 @@ import {
   ScrollText,
   ShieldCheck,
   Users,
-  GanttChartSquare
+  Star
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import type { ReactNode } from "react";
@@ -40,6 +40,7 @@ const historyNavItemsBase = [
 
 const accountNavItemsBase = [
   { href: "/account", labelKey: "sidebar.account", icon: UserCircle },
+  { href: "/reputation", labelKey: "sidebar.reputation", icon: Star },
 ];
 
 const teamNavItemBase = {
@@ -78,7 +79,7 @@ export function SidebarNav({ isInSheet = false }: SidebarNavProps) {
 
   const mainNavItems = mainNavItemsBase.map(item => ({ ...item, label: t(item.labelKey) }));
   const historyNavItems = historyNavItemsBase.map(item => ({ ...item, label: t(item.labelKey) }));
-  const accountNavItems = finalAccountItems.map(item => ({ ...item, label: t(item.labelKey) }));
+  const accountNavItems = finalAccountItems.map(item => ({ ...item, label: t(item.labelKey) })).sort((a, b) => a.href === '/reputation' ? 1 : b.href === '/reputation' ? -1 : 0);
   const legalNavItems = legalNavItemsBase.map(item => ({ ...item, label: t(item.labelKey) }));
   const adminNavItems = adminNavItemsBase.map(item => ({ ...item, label: t(item.labelKey) }));
 
@@ -93,7 +94,7 @@ export function SidebarNav({ isInSheet = false }: SidebarNavProps) {
     return items.map((item) => {
       let isActive: boolean;
       // Pages that should only be active on an exact match
-      const exactMatchPaths = ['/dashboard', '/account', '/admin'];
+      const exactMatchPaths = ['/dashboard', '/account', '/admin', '/reputation'];
       
       if (exactMatchPaths.includes(item.href)) {
           isActive = pathname === item.href;
