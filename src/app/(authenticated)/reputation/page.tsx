@@ -17,9 +17,9 @@ export default function ReputationPage() {
         <circle cx="17" cy="17" r="3"></circle>
         <path d="m21 21-1.9-1.9"></path>
     </svg>
-    <div style="line-height:1.2;">
-        <span style="font-size:16px;font-weight:700;font-style:italic;color:#1e293b;">DriverCheck</span>
-        <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Patikimas Partneris 2026</div>
+    <div>
+        <div style="font-size:18px;font-weight:700;font-style:italic;color:#1e293b;line-height:1;">DriverCheck</div>
+        <div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-top:2px;">Patikimas Partneris 2026</div>
     </div>
   </div>
 </a>
@@ -78,9 +78,9 @@ export default function ReputationPage() {
                         <circle cx="17" cy="17" r="3"></circle>
                         <path d="m21 21-1.9-1.9"></path>
                     </svg>
-                    <div style={{lineHeight: 1.2}}>
-                        <span style={{fontSize: '16px', fontWeight: 700, fontStyle: 'italic', color: '#1e293b'}}>DriverCheck</span>
-                        <div style={{fontSize: '11px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px'}}>Patikimas Partneris 2026</div>
+                    <div>
+                        <div style={{fontSize: '18px', fontWeight: 700, fontStyle: 'italic', color: '#1e293b', lineHeight: '1'}}>DriverCheck</div>
+                        <div style={{fontSize: '10px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '2px'}}>Patikimas Partneris 2026</div>
                     </div>
                 </div>
              </div>
