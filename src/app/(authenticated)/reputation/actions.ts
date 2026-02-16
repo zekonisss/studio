@@ -7,6 +7,8 @@ interface MerchOrderData {
   recipient: string;
   companyName: string;
   address: string;
+  city: string;
+  postalCode: string;
   phone: string;
   comment?: string;
   userId: string;
@@ -17,7 +19,7 @@ export async function submitMerchOrder(data: MerchOrderData) {
     return { success: false, error: 'Serverio konfigūracijos klaida.' };
   }
 
-  if (!data.recipient || !data.companyName || !data.address || !data.phone || !data.userId) {
+  if (!data.recipient || !data.companyName || !data.address || !data.city || !data.postalCode || !data.phone || !data.userId) {
     return { success: false, error: 'Trūksta būtinų duomenų.' };
   }
 

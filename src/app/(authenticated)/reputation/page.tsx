@@ -17,7 +17,9 @@ import { submitMerchOrder } from "./actions";
 const OrderSchema = z.object({
   recipient: z.string().min(3, { message: "Privaloma nurodyti gavėją." }),
   companyName: z.string().min(2, { message: "Įmonės pavadinimas yra privalomas." }),
-  address: z.string().min(10, { message: "Adresas turi būti bent 10 simbolių." }),
+  address: z.string().min(5, { message: "Adresas turi būti bent 5 simbolių." }),
+  city: z.string().min(3, { message: "Miestas yra privalomas." }),
+  postalCode: z.string().min(4, { message: "Pašto kodas yra privalomas." }),
   phone: z.string().min(8, { message: "Nurodykite teisingą telefono numerį." }),
   comment: z.string().optional(),
 });
@@ -61,6 +63,8 @@ export default function ReputationPage() {
       recipient: user?.contactPerson || "",
       companyName: user?.companyName || "",
       address: user?.address || "",
+      city: "",
+      postalCode: "",
       phone: user?.phone || "",
       comment: "",
     },
@@ -139,10 +143,26 @@ export default function ReputationPage() {
                   <FormField control={form.control} name="address" render={({ field }) => (
                     <FormItem>
                       <FormLabel>Pristatymo Adresas</FormLabel>
-                      <FormControl><Input placeholder="Gatvė, miestas, pašto kodas" {...field} /></FormControl>
+                      <FormControl><Input placeholder="Gatvė, namo nr., buto nr." {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <FormField control={form.control} name="city" render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Miestas</FormLabel>
+                            <FormControl><Input placeholder="Vilnius" {...field} /></FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )} />
+                        <FormField control={form.control} name="postalCode" render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Pašto kodas</FormLabel>
+                            <FormControl><Input placeholder="LT-XXXXX" {...field} /></FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )} />
+                    </div>
                    <FormField control={form.control} name="phone" render={({ field }) => (
                     <FormItem>
                       <FormLabel>Telefonas</FormLabel>

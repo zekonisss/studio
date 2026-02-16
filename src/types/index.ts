@@ -227,6 +227,8 @@ export interface MerchOrder {
   recipient: string;
   companyName: string;
   address: string;
+  city: string;
+  postalCode: string;
   phone: string;
   comment?: string;
   status: 'PENDING' | 'SENT';
