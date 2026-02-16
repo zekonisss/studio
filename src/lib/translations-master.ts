@@ -884,4 +884,60 @@ export const translationsMaster: Record<string, Partial<Record<Locale, string>>>
   'ops.daySelector.prevDay': { lt: 'Ankstesnė diena', en: 'Previous Day' },
   'ops.daySelector.nextDay': { lt: 'Kita diena', en: 'Next Day' },
   'ops.daySelector.fineDay': { lt: 'Baudos diena', en: 'Day of Fine' },
+  'activityFeed.title': {
+    lt: 'Rinkos Aktyvumas',
+    en: 'Market Activity',
+    ru: 'Активность рынка',
+    pl: 'Aktywność na rynku',
+    lv: 'Tirgus aktivitāte',
+    et: 'Turu aktiivsus'
+  },
+  'activityFeed.description': {
+    lt: 'Paskutinės patikros sistemoje',
+    en: 'Latest checks in the system',
+    ru: 'Последние проверки в системе',
+    pl: 'Ostatnie kontrole w systemie',
+    lv: 'Jaunākās pārbaudes sistēmā',
+    et: 'Viimased kontrollid süsteemis'
+  },
+  'activityFeed.check': {
+    lt: 'Patikra',
+    en: 'Check',
+    ru: 'Проверка',
+    pl: 'Kontrola',
+    lv: 'Pārbaude',
+    et: 'Kontroll'
+  },
+  'activityFeed.anonymized': {
+    lt: 'Duomenys anonimizuoti.',
+    en: 'Data is anonymized.',
+    ru: 'Данные анонимизированы.',
+    pl: 'Dane są zanonimizowane.',
+    lv: 'Dati ir anonimizēti.',
+    et: 'Andmed on anonüümitud.'
+  },
+   'activityFeed.loading': {
+    lt: 'Kraunama...',
+    en: 'Loading...',
+    ru: 'Загрузка...',
+    pl: 'Ładowanie...',
+    lv: 'Ielādē...',
+    et: 'Laadimine...'
+  },
+  'search.initial.title': {
+    lt: 'Pradėkite paiešką',
+    en: 'Start Your Search',
+    ru: 'Начните поиск',
+    pl: 'Rozpocznij wyszukiwanie',
+    lv: 'Sāciet meklēšanu',
+    et: 'Alusta otsingut'
+  },
+  'search.initial.description': {
+    lt: 'Įveskite vardą, pavardę, kad patikrintumėte duomenų bazę.',
+    en: 'Enter a name and surname to check the database.',
+    ru: 'Введите имя и фамилию, чтобы проверить базу данных.',
+    pl: 'Wprowadź imię i nazwisko, aby sprawdzić bazę danych.',
+    lv: 'Ievadiet vārdu un uzvārdu, lai pārbaudītu datu bāzi.',
+    et: 'Andmebaasi kontrollimiseks sisestage ees- ja perekonnanimi.'
+  }
 };
