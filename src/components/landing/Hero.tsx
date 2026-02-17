@@ -1,4 +1,3 @@
-
 "use client";
 
 import { ArrowRight, Info, ShieldCheck, CheckCircle } from "lucide-react";
@@ -13,49 +12,33 @@ interface HeroProps {
 export function Hero({ count }: HeroProps) {
   const { t } = useLanguage();
   return (
-    <section className="relative flex items-center justify-center min-h-[90vh] overflow-hidden bg-black text-white">
-      
-      {/* Video Background & Overlay */}
-      <div className="absolute inset-0 z-0">
-        <video
-          autoPlay
-          muted
-          loop
-          playsInline
-          className="w-full h-full object-cover"
-        >
-          <source src="/hero-bg.mp4" type="video/mp4" />
-          Your browser does not support the video tag.
-        </video>
-        <div className="absolute inset-0 bg-black/50"></div>
-      </div>
-
+    <section className="relative flex items-center justify-center min-h-[90vh] overflow-hidden">
       {/* Content */}
       <div className="container mx-auto px-4 md:px-6 text-center relative z-10">
         
         {/* BADGE */}
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-slate-300 text-sm mb-8 backdrop-blur-md transition-colors">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-card/50 border border-border text-foreground/80 text-sm mb-8 backdrop-blur-md transition-colors">
           <span className="relative flex h-2 w-2">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
             <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-400"></span>
           </span>
           <span>
             {t('landing.hero.badge.text')}{" "}
-            <strong className="text-white">
+            <strong className="text-foreground">
                <AnimatedCounter value={count > 0 ? count : 1542} />
             </strong>
           </span>
         </div>
 
         {/* ANTRAŠTĖ */}
-        <h1 className="text-4xl md:text-6xl font-bold text-white tracking-tight mb-6 leading-tight max-w-5xl mx-auto transition-colors">
+        <h1 className="text-4xl md:text-6xl font-bold text-foreground tracking-tight mb-6 leading-tight max-w-5xl mx-auto transition-colors">
           {t('landing.hero.title.line1')} <br />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500">
             {t('landing.hero.title.line2')}
           </span>
         </h1>
 
-        <p className="text-lg md:text-xl text-slate-300 mb-10 max-w-2xl mx-auto leading-relaxed transition-colors">
+        <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed transition-colors">
           {t('landing.hero.subtitle')}
         </p>
 
@@ -76,17 +59,17 @@ export function Hero({ count }: HeroProps) {
         </div>
 
         {/* TRUST MARKERS */}
-        <div className="mt-16 pt-8 border-t border-white/10 flex flex-wrap justify-center gap-x-12 gap-y-6 opacity-80">
-            <div className="flex items-center gap-2 text-slate-300 text-sm md:text-base font-medium">
-                <ShieldCheck className="w-5 h-5 text-emerald-400" />
+        <div className="mt-16 pt-8 border-t border-border/20 flex flex-wrap justify-center gap-x-12 gap-y-6 text-muted-foreground opacity-80">
+            <div className="flex items-center gap-2 text-sm md:text-base font-medium">
+                <ShieldCheck className="w-5 h-5 text-emerald-500" />
                 <span>{t('landing.hero.trust1')}</span>
             </div>
-            <div className="flex items-center gap-2 text-slate-300 text-sm md:text-base font-medium">
-                <CheckCircle className="w-5 h-5 text-blue-400" />
+            <div className="flex items-center gap-2 text-sm md:text-base font-medium">
+                <CheckCircle className="w-5 h-5 text-blue-500" />
                 <span>{t('landing.hero.trust2')}</span>
             </div>
-             <div className="flex items-center gap-2 text-slate-300 text-sm md:text-base font-medium">
-                <Info className="w-5 h-5 text-slate-400" />
+             <div className="flex items-center gap-2 text-sm md:text-base font-medium">
+                <Info className="w-5 h-5 text-slate-500" />
                 <span>{t('landing.hero.trust3')}</span>
             </div>
         </div>
