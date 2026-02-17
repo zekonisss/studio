@@ -16,7 +16,7 @@ export function Hero({ count }: HeroProps) {
     <section className="relative flex items-center justify-center min-h-[90vh] overflow-hidden bg-black text-white">
       
       {/* Video Background & Overlay */}
-      <div className="absolute top-0 left-0 w-full h-full z-0">
+      <div className="absolute inset-0 z-0">
         <video
           autoPlay
           muted
