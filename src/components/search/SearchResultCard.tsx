@@ -86,7 +86,6 @@ export function SearchResultCard({ report }: SearchResultCardProps) {
       setIsTranslated(true);
     } catch (error) {
       console.error("Translation failed:", error);
-      // Optional: Show a toast to the user
     } finally {
       setIsTranslating(false);
     }
@@ -182,11 +181,11 @@ export function SearchResultCard({ report }: SearchResultCardProps) {
                             onClick={handleTranslate}
                             disabled={isTranslating || isTranslated}
                             className={cn(
-                              "absolute top-2 right-2 p-2 rounded-full transition-all border shadow-sm",
+                              "absolute top-2 right-2 p-2 rounded-full transition-all border shadow-md z-10",
                               isTranslated 
-                                ? "bg-green-50 border-green-200 text-green-600" 
-                                : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-primary hover:scale-110 hover:shadow-md",
-                              "disabled:opacity-50 disabled:cursor-not-allowed"
+                                ? "bg-green-600 border-green-700 text-white" 
+                                : "bg-primary border-primary text-white hover:scale-110 hover:shadow-lg hover:brightness-110",
+                              "disabled:opacity-70 disabled:cursor-not-allowed"
                             )}
                           >
                             <span className="sr-only">Translate</span>
@@ -203,7 +202,11 @@ export function SearchResultCard({ report }: SearchResultCardProps) {
                 )}
                 
                 <FileText className={cn("absolute top-4 left-4 w-4 h-4 opacity-50", colors.icon)} />
-                <p className={cn("pl-6 text-sm", !isExpanded && "line-clamp-2")}>
+                <p className={cn(
+                    "pl-6 text-sm", 
+                    !isExpanded && "line-clamp-2",
+                    locale !== 'lt' && "pr-12" // Pridedame tarpą iš dešinės, kad tekstas neužliptų ant mygtuko
+                )}>
                     {displayText}
                 </p>
                 
