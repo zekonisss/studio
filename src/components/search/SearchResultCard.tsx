@@ -170,7 +170,7 @@ export function SearchResultCard({ report }: SearchResultCardProps) {
         {/* KOMENTARAS (DOSSIER STYLE) */}
         <div className="mt-5 relative">
             <div className={cn(
-                "relative p-4 rounded-lg border italic text-slate-700 dark:text-slate-300 leading-relaxed",
+                "relative p-4 rounded-lg border italic text-slate-700 dark:text-slate-300 leading-relaxed min-h-[80px]",
                 colors.subBg, colors.borderMain
             )}>
                 
@@ -181,12 +181,18 @@ export function SearchResultCard({ report }: SearchResultCardProps) {
                           <button
                             onClick={handleTranslate}
                             disabled={isTranslating || isTranslated}
-                            className="absolute top-2 right-2 p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-white rounded-lg hover:bg-slate-200/50 dark:hover:bg-slate-800 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+                            className={cn(
+                              "absolute top-2 right-2 p-2 rounded-full transition-all border shadow-sm",
+                              isTranslated 
+                                ? "bg-green-50 border-green-200 text-green-600" 
+                                : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-primary hover:scale-110 hover:shadow-md",
+                              "disabled:opacity-50 disabled:cursor-not-allowed"
+                            )}
                           >
                             <span className="sr-only">Translate</span>
-                            {isTranslating ? <Loader2 className="w-4 h-4 animate-spin" /> : 
-                             isTranslated ? <Check className="w-4 h-4 text-green-500" /> : 
-                             <Languages className="w-4 h-4" />}
+                            {isTranslating ? <Loader2 className="w-5 h-5 animate-spin" /> : 
+                             isTranslated ? <Check className="w-5 h-5" /> : 
+                             <Languages className="w-5 h-5" />}
                           </button>
                         </TooltipTrigger>
                         <TooltipContent>
