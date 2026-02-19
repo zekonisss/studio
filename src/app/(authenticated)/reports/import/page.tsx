@@ -285,7 +285,7 @@ export default function ReportsImportPage() {
     if (!user) return;
     setIsExporting(true);
     try {
-        const result = await getAllMyRecords(user.companyName);
+        const result = await getAllMyRecords(user.id, user.companyName);
         
         if (!result.success || !result.data) {
             throw new Error(result.error || "Nepavyko gauti duomenų eksportui.");
