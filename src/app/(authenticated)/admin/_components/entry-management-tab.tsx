@@ -1,14 +1,15 @@
+
 "use client";
 
 import { useState, useEffect, useMemo } from 'react';
 import type { Report, UserProfile } from '@/types';
-import { getAllReports, reviewDeletionRequest, addAuditLogEntry, deleteAllReports, fixMissingStatus, getAllUsers } from '@/lib/storage';
+import { getAllReports, reviewDeletionRequest, addAuditLogEntry, deleteAllReports, fixMissingStatus, getAllUsers, deleteReportsBatch } from '@/lib/storage';
 import { useLanguage } from '@/contexts/language-context';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { MoreHorizontal, Loader2, Trash2, Wrench } from 'lucide-react';
+import { MoreHorizontal, Loader2, Trash2, Wrench, ChevronUp, ChevronDown } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { getCategoryNameForDisplay } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -17,9 +18,14 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { DeleteEntryDialog } from './modals/delete-entry-dialog';
 import { DeleteAllEntriesDialog } from './modals/delete-all-entries-dialog';
+import { DeleteSelectedEntriesDialog } from './modals/delete-selected-entries-dialog';
 import { AdminEntryDetailsModal } from './modals/admin-entry-details-modal';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+
+type SortField = 'company' | 'date';
+type SortDirection = 'asc' | 'desc';
 
 export default function EntryManagementTab() {
   const { t, locale } = useLanguage();
@@ -30,10 +36,21 @@ export default function EntryManagementTab() {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedCompany, setSelectedCompany] = useState<string>('all');
+  
+  // Selection state
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  // Sorting state
+  const [sortField, setSortField] = useState<SortField>('date');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
   // State for single entry deletion
   const [reportToDelete, setReportToDelete] = useState<Report | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  
+  // State for multi deletion
+  const [isDeleteSelectedDialogOpen, setIsDeleteSelectedDialogOpen] = useState(false);
+  const [isDeletingSelected, setIsDeletingSelected] = useState(false);
   
   // State for all entries deletion
   const [isDeleteAllDialogOpen, setIsDeleteAllDialogOpen] = useState(false);
@@ -84,11 +101,52 @@ export default function EntryManagementTab() {
   }, [reports]);
 
   const filteredReports = useMemo(() => {
-      if (selectedCompany === 'all') {
-          return reports;
+      let result = selectedCompany === 'all' 
+        ? reports 
+        : reports.filter(r => r.reporterCompanyName === selectedCompany);
+      
+      // Apply sorting
+      result = [...result].sort((a, b) => {
+          if (sortField === 'company') {
+              const nameA = a.reporterCompanyName || '';
+              const nameB = b.reporterCompanyName || '';
+              return sortDirection === 'asc' ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
+          } else { // date
+              const timeA = new Date(a.createdAt).getTime();
+              const timeB = new Date(b.createdAt).getTime();
+              return sortDirection === 'asc' ? timeA - timeB : timeB - timeA;
+          }
+      });
+
+      return result;
+  }, [reports, selectedCompany, sortField, sortDirection]);
+
+  const handleToggleSelectAll = (checked: boolean) => {
+      if (checked) {
+          const allIds = new Set(filteredReports.map(r => r.id));
+          setSelectedIds(allIds);
+      } else {
+          setSelectedIds(new Set());
       }
-      return reports.filter(r => r.reporterCompanyName === selectedCompany);
-  }, [reports, selectedCompany]);
+  };
+
+  const handleToggleSelect = (id: string, checked: boolean) => {
+      setSelectedIds(prev => {
+          const next = new Set(prev);
+          if (checked) next.add(id);
+          else next.delete(id);
+          return next;
+      });
+  };
+
+  const toggleSort = (field: SortField) => {
+      if (sortField === field) {
+          setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+      } else {
+          setSortField(field);
+          setSortDirection('asc');
+      }
+  };
   
   const handleViewDetails = (report: Report) => {
     setReportToView(report);
@@ -118,6 +176,11 @@ export default function EntryManagementTab() {
       });
       
       setReports(prev => prev.filter(r => r.id !== reportToDelete.id));
+      setSelectedIds(prev => {
+          const next = new Set(prev);
+          next.delete(reportToDelete.id);
+          return next;
+      });
 
     } catch (error) {
       console.error("Error deleting report:", error);
@@ -126,6 +189,36 @@ export default function EntryManagementTab() {
       setIsDeleting(false);
       setReportToDelete(null);
     }
+  };
+
+  const handleDeleteSelectedConfirm = async () => {
+      if (selectedIds.size === 0 || !adminUser) return;
+      setIsDeletingSelected(true);
+      try {
+          const idsArray = Array.from(selectedIds);
+          await deleteReportsBatch(idsArray);
+
+          await addAuditLogEntry({
+              adminId: adminUser.id,
+              adminName: adminUser.contactPerson,
+              actionKey: 'reports.batch.deleted',
+              details: { count: idsArray.length, ids: idsArray }
+          });
+
+          toast({
+              title: "Įrašai ištrinti",
+              description: `Sėkmingai ištrinta ${idsArray.length} pasirinktų įrašų.`
+          });
+
+          setReports(prev => prev.filter(r => !selectedIds.has(r.id)));
+          setSelectedIds(new Set());
+      } catch (error) {
+          console.error("Batch delete error:", error);
+          toast({ variant: "destructive", title: "Klaida", description: "Nepavyko ištrinti pasirinktų įrašų." });
+      } finally {
+          setIsDeletingSelected(false);
+          setIsDeleteSelectedDialogOpen(false);
+      }
   };
 
   const handleDeleteAllConfirm = async () => {
@@ -147,6 +240,7 @@ export default function EntryManagementTab() {
         });
         
         setReports(prev => prev.filter(r => r.status !== 'active'));
+        setSelectedIds(new Set());
     } catch (error) {
         console.error("Error deleting all reports:", error);
         toast({ variant: "destructive", title: "Klaida", description: "Nepavyko ištrinti visų įrašų." });
@@ -170,7 +264,12 @@ export default function EntryManagementTab() {
     } finally {
         setIsFixing(false);
     }
-  }
+  };
+
+  const SortIcon = ({ field }: { field: SortField }) => {
+      if (sortField !== field) return null;
+      return sortDirection === 'asc' ? <ChevronUp className="ml-1 h-4 w-4" /> : <ChevronDown className="ml-1 h-4 w-4" />;
+  };
 
   return (
     <>
@@ -186,6 +285,13 @@ export default function EntryManagementTab() {
         report={reportToDelete}
         isDeleting={isDeleting}
       />
+      <DeleteSelectedEntriesDialog
+        isOpen={isDeleteSelectedDialogOpen}
+        onClose={() => setIsDeleteSelectedDialogOpen(false)}
+        onConfirm={handleDeleteSelectedConfirm}
+        count={selectedIds.size}
+        isDeleting={isDeletingSelected}
+      />
       <DeleteAllEntriesDialog
         isOpen={isDeleteAllDialogOpen}
         onClose={() => setIsDeleteAllDialogOpen(false)}
@@ -200,6 +306,16 @@ export default function EntryManagementTab() {
               <CardDescription>Čia rodomi visi aktyvūs sistemos įrašai. Prašymai ištrinti ir ištrinti įrašai valdomi kituose skirtukuose.</CardDescription>
             </div>
             <div className="flex flex-col sm:flex-row items-center gap-2">
+                 {selectedIds.size > 0 && (
+                    <Button
+                        variant="destructive"
+                        onClick={() => setIsDeleteSelectedDialogOpen(true)}
+                        className="animate-in fade-in zoom-in duration-200"
+                    >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        {t('admin.entries.actions.deleteSelected', { count: selectedIds.size })}
+                    </Button>
+                 )}
                  <div className="w-full sm:w-52">
                     <Select value={selectedCompany} onValueChange={setSelectedCompany}>
                         <SelectTrigger className="w-full">
@@ -232,14 +348,36 @@ export default function EntryManagementTab() {
             </div>
         </CardHeader>
         <CardContent>
-          <ScrollArea className="h-[400px]">
+          <ScrollArea className="h-[600px] border rounded-md">
             <Table>
-              <TableHeader>
+              <TableHeader className="sticky top-0 bg-background z-10">
                 <TableRow>
+                  <TableHead className="w-[50px]">
+                      <Checkbox 
+                        checked={filteredReports.length > 0 && selectedIds.size === filteredReports.length}
+                        onCheckedChange={handleToggleSelectAll}
+                      />
+                  </TableHead>
                   <TableHead>{t('admin.entries.table.personInEntry')}</TableHead>
                   <TableHead>{t('admin.entries.table.category')}</TableHead>
-                  <TableHead>Įkėlė</TableHead>
-                  <TableHead>{t('admin.entries.table.submissionDate')}</TableHead>
+                  <TableHead 
+                    className="cursor-pointer hover:bg-muted/50 transition-colors"
+                    onClick={() => toggleSort('company')}
+                  >
+                    <div className="flex items-center">
+                        Įkėlė
+                        <SortIcon field="company" />
+                    </div>
+                  </TableHead>
+                  <TableHead 
+                    className="cursor-pointer hover:bg-muted/50 transition-colors"
+                    onClick={() => toggleSort('date')}
+                  >
+                    <div className="flex items-center">
+                        {t('admin.entries.table.submissionDate')}
+                        <SortIcon field="date" />
+                    </div>
+                  </TableHead>
                   <TableHead className="text-right">{t('admin.entries.table.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
@@ -247,6 +385,7 @@ export default function EntryManagementTab() {
                 {isLoading ? (
                   [...Array(5)].map((_, i) => (
                     <TableRow key={i}>
+                        <TableCell><Skeleton className="h-4 w-4" /></TableCell>
                         <TableCell><Skeleton className="h-5 w-32" /></TableCell>
                         <TableCell><Skeleton className="h-5 w-24" /></TableCell>
                         <TableCell><Skeleton className="h-5 w-36" /></TableCell>
@@ -256,13 +395,19 @@ export default function EntryManagementTab() {
                   ))
                 ) : filteredReports.length === 0 ? (
                   <TableRow>
-                      <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                      <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
                           {selectedCompany === 'all' ? t('admin.entries.noEntriesFound') : 'Pasirinkta įmonė neturi aktyvių įrašų.'}
                       </TableCell>
                   </TableRow>
                 ) : (
                   filteredReports.map((report) => (
-                    <TableRow key={report.id}>
+                    <TableRow key={report.id} className={selectedIds.has(report.id) ? "bg-muted/50" : ""}>
+                      <TableCell>
+                          <Checkbox 
+                            checked={selectedIds.has(report.id)}
+                            onCheckedChange={(checked) => handleToggleSelect(report.id, !!checked)}
+                          />
+                      </TableCell>
                       <TableCell className="font-medium">{report.fullName}</TableCell>
                       <TableCell>
                         <Badge variant={DESTRUCTIVE_REPORT_MAIN_CATEGORIES.includes(report.category) ? 'destructive' : 'secondary'}>

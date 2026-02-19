@@ -175,6 +175,20 @@ export async function reviewDeletionRequest(
     }
 }
 
+export async function deleteReportsBatch(reportIds: string[]): Promise<void> {
+    if (reportIds.length === 0) return;
+    const batch = writeBatch(db);
+    reportIds.forEach(id => {
+        const reportRef = doc(db, "reports", id);
+        batch.update(reportRef, {
+            status: 'deleted',
+            deletedAt: serverTimestamp(),
+            statusUpdatedAt: serverTimestamp()
+        });
+    });
+    await batch.commit();
+}
+
 export async function deleteAllReports(): Promise<number> {
     const reportsCol = collection(db, "reports");
     // We only want to "delete" active reports in this mass operation.
