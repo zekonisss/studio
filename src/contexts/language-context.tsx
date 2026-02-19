@@ -1,4 +1,3 @@
-
 "use client";
 
 import type { Dispatch, ReactNode, SetStateAction } from 'react';
@@ -23,12 +22,24 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
     setIsClient(true);
   }, []);
 
+  // Sync state with cookies and localStorage
   useEffect(() => {
     if (isClient) {
+      // 1. Check cookies (set by middleware or previous session)
+      const cookieLocale = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('NEXT_LOCALE='))
+        ?.split('=')[1] as Locale | undefined;
+
+      // 2. Check localStorage (legacy or user override)
       const storedLocale = localStorage.getItem('drivercheck-locale') as Locale | null;
-      if (storedLocale && supportedLocales.includes(storedLocale)) {
+
+      if (cookieLocale && supportedLocales.includes(cookieLocale)) {
+        setLocale(cookieLocale);
+      } else if (storedLocale && supportedLocales.includes(storedLocale)) {
         setLocale(storedLocale);
       } else {
+        // 3. Fallback to browser detection (handled by middleware usually, but safeguard here)
         const browserLang = navigator.language.split('-')[0] as Locale;
         if (supportedLocales.includes(browserLang)) {
           setLocale(browserLang);
@@ -39,9 +50,11 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [isClient]);
 
+  // Update persistence layers when locale changes
   useEffect(() => {
     if (isClient) {
       localStorage.setItem('drivercheck-locale', locale);
+      document.cookie = `NEXT_LOCALE=${locale}; path=/; max-age=${60 * 60 * 24 * 365}`;
       document.documentElement.lang = locale;
     }
   }, [locale, isClient]);
@@ -50,10 +63,9 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
     const translationsForKey = translationsMaster[key];
 
     if (!translationsForKey) {
-      return key; // Grąžiname raktą, jei vertimų išvis nėra
+      return key;
     }
 
-    // Bandoma gauti vertimą pagal esamą lokalę, jei nepavyksta - pagal anglų, tada pirmą pasitaikiusį, galiausiai patį raktą.
     let translation = translationsForKey[locale] ?? translationsForKey['en'] ?? Object.values(translationsForKey).find(Boolean) ?? key;
 
     if (params) {
