@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useRef, useMemo } from 'react';
@@ -38,7 +37,8 @@ import {
   Globe,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { importAllReports, getAllReportsForExport } from './actions';
+import { importAllReports } from './actions';
+import { getAllMyRecords } from '@/app/actions/export-records';
 import { cleanImportRecord, type CleanImportResult } from '@/app/actions/genkit-import';
 import { useAuth } from '@/hooks/use-auth';
 import { getCategoryNameForDisplay, cn } from '@/lib/utils';
@@ -285,17 +285,45 @@ export default function ReportsImportPage() {
     if (!user) return;
     setIsExporting(true);
     try {
-        const reportsToExport = await getAllReportsForExport(user.companyName);
-        if (reportsToExport.length === 0) {
-            toast({ title: "Nėra duomenų eksportui" });
+        const result = await getAllMyRecords(user.companyName);
+        
+        if (!result.success || !result.data) {
+            throw new Error(result.error || "Nepavyko gauti duomenų eksportui.");
+        }
+
+        if (result.data.length === 0) {
+            toast({ title: "Jūsų įmonė neturi įrašų eksportavimui." });
             return;
         }
-        const worksheet = XLSX.utils.json_to_sheet(reportsToExport);
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "Reports");
-        XLSX.writeFile(workbook, `DriverCheck_Reports_${user.companyName}_${new Date().toISOString().split('T')[0]}.xlsx`);
+
+        // CSV Formato generavimas
+        const headers = ["Data", "Vairuotojas", "Kategorija", "Statusas", "Komentaras", "Susijusi imone"];
+        const csvRows = result.data.map(r => {
+            const date = new Date(r.createdAt).toLocaleDateString('lt-LT');
+            // Išvalome komentarą nuo naujų eilučių ir kabučių, kad nesulaužytų CSV struktūros
+            const cleanComment = (r.comment || '').replace(/\n/g, ' ').replace(/"/g, '""');
+            const cleanName = (r.fullName || '').replace(/"/g, '""');
+            const cleanCompany = (r.subjectCompany || '').replace(/"/g, '""');
+            
+            return `"${date}","${cleanName}","${r.category}","${r.status}","${cleanComment}","${cleanCompany}"`;
+        });
+
+        const csvContent = [headers.join(","), ...csvRows].join("\n");
+        
+        // Pridedame BOM (\uFEFF), kad „Excel“ teisingai suprastų UTF-8 koduotę (lietuviškas raides)
+        const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `drivercheck_duomenu_baze_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        toast({ title: "Duomenys sėkmingai paruošti", description: "CSV failas atsisiųstas į jūsų įrenginį." });
     } catch (error: any) {
-        toast({ variant: "destructive", title: "Eksportavimo klaida" });
+        console.error(error);
+        toast({ variant: "destructive", title: "Eksportavimo klaida", description: error.message });
     } finally {
         setIsExporting(false);
     }
@@ -375,7 +403,7 @@ export default function ReportsImportPage() {
           </Button>
           {isParsing && <Button onClick={handleCancel} variant="destructive" className="w-full sm:w-auto"><XCircle className="mr-2 h-4 w-4" />Stabdyti analizę</Button>}
            <Button onClick={handleExport} disabled={isExporting} variant="outline" className="w-full sm:w-auto">
-            {isExporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}Eksportuoti į Excel</Button>
+            {isExporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}Parsisiųsti DB į Excel</Button>
         </div>
 
         {records.length > 0 && (
